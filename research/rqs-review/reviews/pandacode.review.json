@@ -42,7 +42,7 @@
   "PUR-3": {
    "level": 2,
    "confidence": "derived",
-   "evidence": ["probe deps.counts: 47 unique dependencies, 13 npm runtime", "src-tauri/src/agent_tools.rs:326-356", "src-tauri/src/vm/tools.rs:27-40", "src-tauri/src/simulator/tools.rs:29-41", "src-tauri/src/bots/tools.rs:18-24", "AGENTS.md:38", "rg -l '\"antigravity\"' src-tauri/src | wc -l -> 22", "package.json:44 (three, used by src/simulator-3d.ts, simulator-hardware.ts, simulator-studio.ts)"],
+   "evidence": ["probe deps.counts: 47 unique dependencies, 13 npm runtime", "src-tauri/src/agent_tools.rs:326-356", "src-tauri/src/vm/tools.rs:27-40", "src-tauri/src/simulator/tools.rs:29-41", "src-tauri/src/bots/tools.rs:18-24", "AGENTS.md:38", "rg -l '\"antigravity\"' src-tauri/src | wc -l -> 22", "package.json:45 (three, used by src/simulator-3d.ts, simulator-hardware.ts, simulator-studio.ts)"],
    "note": "The dependency set is lean (no React or Electron, docs/design.md:7) and features have their own docs. The surface is broad (bots on five channels, six VM and cloud providers, simulators, wallpapers, moodboards) with no measured use, adding a harness touches at least ten files (AGENTS.md:38), and three.js is used only for simulator device frames.",
    "source": "review"
   },
