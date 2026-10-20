@@ -150,7 +150,7 @@
     "apps/server/integration/TransferBudgetReport.integration.ts:40-46; .github/workflows/ci.yml:368-373 (wire budgets fail CI)",
     "apps/server/src/scheduledTasks/webhookRoute.ts:18,45-63 (1 MiB webhook body limit, HTTP 413)",
     "apps/server/src/process/agentScope.ts:182-183 (per-agent MemoryHigh/MemoryMax via systemd-run, Linux only)",
-    "apps/server/src/telemetry/AnalyticsService.ts:84-87 (at most 1,000 buffered events)"
+    "apps/server/src/telemetry/AnalyticsService.ts:82-85 (at most 1,000 buffered events)"
    ],
    "note": "Output and stream limits exist, history pages through bounded HTTP pages, and wire budgets fail CI. Memory caps are Linux/systemd only and not documented for users. No test at 10x expected size.",
    "source": "review"
@@ -468,7 +468,7 @@
     "packages/client-runtime/src/operations/commands.ts:253-259 (client-allocated UUID CommandIds)",
     "docs/orchestration-v2/README.md:108 (duplicate command ids return the same receipt)",
     "docs/orchestration-v2/orchestrator-mcp-server.md:502-505 (clientRequestId derives stable ids; retries return the same durable work)",
-    "docs/orchestration-v2/orchestrator-mcp-server.md:546-565 (integration coverage includes idempotent retries)",
+    "docs/orchestration-v2/orchestrator-mcp-server.md:542-561 (integration coverage includes idempotent retries)",
     "packages/shared/src/composerContextReferences.ts:272 (cursor paging)",
     "apps/server/src/telemetry/AnalyticsService.ts:1-4 (event uuids dedupe retried sends)"
    ],
@@ -568,8 +568,8 @@
    "evidence": [
     "docs/internals/overview.md:1-45 (ownership, RPC contract and adapter boundaries)",
     "AGENTS.md:152-170 ('How it works', 'Where code lives')",
-    "vite.config.ts:7-18,160-161 (no-restricted-imports: no root import of client-runtime)",
-    "vite.config.ts:166,169 (t3code/no-raw-mcp-registration and t3code/no-rpc-permission-bypass as errors)",
+    "vite.config.ts:7-18,162-165 (no-restricted-imports: no root import of client-runtime)",
+    "vite.config.ts:171,173,201 (t3code/no-raw-mcp-registration and t3code/no-rpc-permission-bypass as errors)",
     "package.json:31 (knip --exports per workspace in CI)",
     "docs/internals/adding-a-provider.md:107-108 (acknowledged exception: some drivers still in apps/server)"
    ],
@@ -619,7 +619,7 @@
    "level": 3,
    "confidence": "derived",
    "evidence": [
-    "oxlint-plugin-t3code/rules/no-low-value-comments.ts:8-9,87-88 (TODO/FIXME/XXX/HACK must link an issue; error per vite.config.ts:162)",
+    "oxlint-plugin-t3code/rules/no-low-value-comments.ts:8-9,87-88 (TODO/FIXME/XXX/HACK must link an issue; error per vite.config.ts:168)",
     "probe static.debt_markers: 7 markers outside tests (0.01 per 1k lines), mostly in patches/",
     "AGENTS.md 'Plans and work artifacts' (active work tracked in its GitHub issue or project item)",
     ".github/workflows/mobile-eas-preview.yml:69-72 (pin with an explicit unpin trigger and issue link)"
@@ -647,7 +647,7 @@
     ".github/workflows/release.yml:686-701 (publish waits for quality, tests and all six desktop builds)",
     "docs/operations/release.md:45-49 (each CLI archive built, signed and smoke-tested on its own architecture)",
     ".github/scripts/check-nightly-release.cjs:1 (minimum 6 hours between nightlies)",
-    "docs/internals/server-updates.md:17-31 (trial/commit service updates with rollback); docs/user/updating.md:45"
+    "docs/internals/server-updates.md:17-31 (trial/commit service updates with rollback); docs/user/updating.md:104"
    ],
    "note": "Releases are automated, qualified and staged through channels with rollback paths. Release notes are generated from commit titles rather than a curated changelog, and there is no LTS line.",
    "source": "review"
