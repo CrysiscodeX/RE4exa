@@ -1,0 +1,1197 @@
+{
+ "rqs_review": 1,
+ "target": {
+  "path": "/home/user/GitHub_Repos_Dump/stablyai__orca",
+  "name": "orca",
+  "head": "997d34b04389665795966ec4c0325b5cbfabf9ee",
+  "shallow": true
+ },
+ "profile": "agent-harness",
+ "flags": {
+  "uses_llm": true,
+  "has_ui": true,
+  "executes_code": true,
+  "network_service": true,
+  "parses_untrusted": true,
+  "uses_crypto": true,
+  "heavy_compute": false,
+  "distributed": true
+ },
+ "reviewer": {
+  "id": "reviewer-orca",
+  "kind": "agent",
+  "conflicts": "none"
+ },
+ "date": "2026-10-20",
+ "scores": {
+  "PUR-1": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "README.md:19-20",
+    "README.md:147-151",
+    "README.md:215-230",
+    "docs/site/content/docs/index.mdx:10-25",
+    "docs/site/content/docs/agents/hibernation.mdx:54",
+    "src/cli/agent-context.ts:30-55"
+   ],
+   "note": "README states the product, its users (developers running several agents; agents drive Orca through the CLI) and install paths; non-goals are in the docs index ('What Orca is not'). Limitations are scattered across pages, and the only machine-readable self-description is the command list from `orca agent-context --json` (no effects, costs or limits).",
+   "source": "review"
+  },
+  "PUR-2": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": [
+    "README.md:19",
+    "README.md:65",
+    "tests/tools/benchmarks/results/startup-baseline-2026-06-10T19-36-01-305Z.json",
+    "tests/tools/benchmarks/results/terminal-perf-baseline-2026-07-02T07-23-46-933Z.json",
+    "docs/audits/crashpad-read-limit/README.md",
+    ".github/workflows/performance-contracts.yml:3-9"
+   ],
+   "note": "Internal performance and memory-retention claims have dated baselines, platform details and reproduce scripts (46 docs/audits entries with results.json and source hashes). The headline value claims ('100x builders', 'Ghostty-class terminals') have no harness, and results are not versioned per release.",
+   "source": "review"
+  },
+  "PUR-3": {
+   "level": 2,
+   "confidence": "inferred",
+   "evidence": [
+    "AGENTS.md:17-19",
+    "measurement: git ls-files src '*.ts|*.tsx' minus *.test/*.spec/fixtures/harness = 16,956 files, 2,101,263 lines",
+    "measurement: rg -c 'path: \\[' src/cli/specs = 284 command specs",
+    "src/shared/rpc-contract/rpc-params-catalog.generated.ts:658 (748 RPC methods)",
+    "measurement: 97 workflow files, 24,938 YAML lines; 982 entries in config/scripts",
+    "src/cli/bundled-skill-guides.ts:24 (legacy duplicate skill linear-tickets kept beside orca-linear)"
+   ],
+   "note": "A written reuse-before-reimplementing rule exists and ratchets stop some growth, but there is no necessity gate or per-release surface tracking. Scope is very broad (34 agents, mobile app, cloud relay, computer use, emulators, VM recipes, five issue trackers) and legacy duplicates are kept for compatibility.",
+   "source": "review"
+  },
+  "COR-1": {
+   "level": 4,
+   "confidence": "derived",
+   "evidence": [
+    "measurement: git ls-files *.test.*|*.spec.* = 15,404 files; test/production lines 2,962,902 / 2,101,263 = 1.41",
+    ".github/workflows/pr.yml:937-952",
+    ".github/workflows/pr.yml:1672-1690",
+    ".github/workflows/pr-test-loc.yml:1-40",
+    ".github/workflows/pr.yml:1696-1703",
+    "tests/playwright.config.ts:38"
+   ],
+   "note": "Sharded unit and contract tests gate every non-draft code PR through the aggregate 'PR checks passed' job, and test-vs-non-test LoC is posted on every PR. The 563-spec Playwright e2e suite is advisory and, per pr.yml, red on main; no coverage measurement; the full unit suite runs on Linux only (Windows and macOS lanes are targeted).",
+   "source": "review"
+  },
+  "COR-2": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    ".github/workflows/pr.yml:600-660",
+    ".github/workflows/pr.yml:671-768",
+    ".github/workflows/pr.yml:803-935",
+    ".github/workflows/pr.yml:1040-1086",
+    "src/main/daemon/hangul-cell-width-agreement.test.ts:1-13",
+    "src/shared/terminal-partial-escape-tail.fuzz.test.ts:8-12",
+    "AGENTS.md:112-114"
+   ],
+   "note": "Oracles independent of the product run as merge-gating PR jobs: real Git releases, pinned and latest Codex CLI, real zsh/fish, the newest published release for wire compatibility, xterm Unicode tables, and captured agent transcripts. Not every capability has one.",
+   "source": "review"
+  },
+  "COR-3": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "command: git ls-files | grep '.fuzz.test.' -> 3 files (headless-emulator-fidelity, serialize-grid.differential, terminal-partial-escape-tail)",
+    "src/shared/terminal-partial-escape-tail.fuzz.test.ts:10-11",
+    "config/reliability-gates.jsonc:5995 (sole-delta mutants recorded; 17 'mutant' mentions)",
+    "command: jq .devDependencies package.json | grep -iE 'fast-check|stryker' -> none"
+   ],
+   "note": "Differential fuzzers cover the terminal escape and grid parsers (CI-sized slice of a 25.6M-case sweep) and hand-applied mutants are recorded for specific reliability gates. No mutation-testing tool, no property-based library, and other untrusted-input parsers (hook JSON, orca.yaml, OSC 7501) are not fuzzed.",
+   "source": "review"
+  },
+  "COR-4": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    "orca.yaml:1-4",
+    ".github/workflows/pr.yml:1277-1340",
+    ".github/workflows/pr.yml:1161-1165",
+    ".github/workflows/ssh-hostile-hosts.yml:8-9",
+    "AGENTS.md:50",
+    "AGENTS.md:114"
+   ],
+   "note": "The packaged AppImage, its CLI launch contract and the hang watchdog are exercised in PR CI, alongside real third-party CLIs, shells and hostile SSH hosts; the repo carries its own orca.yaml. Self-application of Orca to its own development is done by maintainers and is not tracked in CI.",
+   "source": "review"
+  },
+  "COR-5": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": [
+    "src/cli/agent-context.ts:51-52",
+    "tests/e2e/AGENTS.md:38-43",
+    "command: rg 'terminal-layout-parity' .github/workflows -> no match"
+   ],
+   "note": "Volatile values (UUIDs, PTY suffixes, times, pids, temp paths) are documented and relabelled so two runs of one commit compare equal, and discovery output is sorted. The run-twice check is a local script, not CI, and identifiers are random rather than content-addressed.",
+   "source": "review"
+  },
+  "REL-1": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "src/main/durable-file-write.ts:1-4",
+    "src/main/runtime/orchestration/db/mutation-receipts/mutation-receipt-store.ts",
+    "src/cli/retry-request-flag.ts:6-12",
+    "tests/e2e/agent-session-live-force-exit-resume.spec.ts",
+    "tests/e2e/default-tabs-mark-crash-relaunch.spec.ts",
+    ".github/workflows/win-crash-survival-e2e.yml:1-14",
+    "AGENTS.md:90-91"
+   ],
+   "note": "The terminal daemon outlives app crashes and updates, JSON state is fsynced with a .bak ring, SQLite holds orchestration state, and replays are idempotent through request ids and mutation receipts. Kill-and-resume journeys exist but sit in the non-gating e2e suite or a manually dispatched workflow.",
+   "source": "review"
+  },
+  "REL-2": {
+   "level": 4,
+   "confidence": "derived",
+   "evidence": [
+    "src/shared/agent-hook-listener/request-body.ts:6-12",
+    "src/shared/agent-hook-listener/listener-limits.ts:8-25",
+    "src/shared/program-status/protocol.ts:20-29",
+    "src/main/ssh/ssh-security-key-identity.ts:4",
+    "src/cli/specs/search.ts:36-37",
+    "src/cli/automation-runs-paging.test.ts:29",
+    "docs/audits/crashpad-read-limit/README.md",
+    "AGENTS.md:132-136"
+   ],
+   "note": "Size, depth, time and output limits are pervasive, paged for agents and asserted in tests, some at large sizes (80 MiB sparse dumps). Limits live in CLI notes and audits rather than one user-facing reference; resource use is not reported per operation.",
+   "source": "review"
+  },
+  "REL-3": {
+   "level": 4,
+   "confidence": "derived",
+   "evidence": [
+    "AGENTS.md:102",
+    "src/cli/orchestration-mutation-recovery.ts:36-49",
+    "src/shared/automations-types.ts:76-89",
+    "src/main/ssh/connection/ssh-connection-timing.ts:3",
+    "config/reliability-gates.jsonc:1-12",
+    ".github/workflows/pr.yml:353-355"
+   ],
+   "note": "Uncertain and partial outcomes are labelled in data (unverifiable, outcome_unknown, truncated, timedOut), reconnects use bounded backoff, and 149 reliability gates enumerate failure modes with oracles and known gaps, validated in PR CI. All 149 gates are still 'experimental'; none has been promoted to blocking.",
+   "source": "review"
+  },
+  "REL-4": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    "src/packages/process-host/README.md:3",
+    "config/docker/daemon-shutdown-descendants/README.md:1-13",
+    ".github/workflows/pr.yml:1161-1165",
+    ".github/workflows/pr.yml:1322",
+    "AGENTS.md:89",
+    "src/main/automations/precheck-runner.ts:122-131"
+   ],
+   "note": "Cleanup is verified by leftover checks in PR CI (setsid child stopped, unrelated canary alive, 5 s limit) with process groups and Windows job objects. Documented gap: processes already reparented before shutdown are not covered.",
+   "source": "review"
+  },
+  "PERF-1": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": [
+    "tests/tools/benchmarks/startup-time-bench.mjs",
+    "tests/tools/benchmarks/results/terminal-perf-fix-abdf-2026-07-02T07-59-11-820Z.json",
+    ".github/workflows/performance-contracts.yml:3-9",
+    ".github/workflows/pr.yml:349-351",
+    "config/reliability-gates.jsonc:69-72"
+   ],
+   "note": "Benchmarks with baselines exist for startup, daemon cold start, main-thread jank and terminal throughput; a selector fan-out budget gates PRs and performance contracts run nightly. Most perf runs are nightly or manual and budgets are not declared to callers.",
+   "source": "review"
+  },
+  "PERF-2": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": [
+    "src/cli/agent-context.ts:58-66",
+    "measurement: wc -c skills/*/SKILL.md = 23,610 bytes for 10 skill stubs",
+    "src/cli/bundled-skill-guides.ts (323,068 bytes of guides loaded on demand via `orca skills get`)",
+    "measurement: src/cli/specs/*.ts = 167,406 bytes for 284 commands (full --json catalog estimated above 150 KB from this source; not run)",
+    "skill-guides/orca-linear.md:155-176"
+   ],
+   "note": "Summary-first output, per-domain lazy guides, per-command --help and paged results with truncated/hasMore flags. The catalog size is not measured or budgeted in the repo.",
+   "source": "review"
+  },
+  "PERF-3": {
+   "level": "NA",
+   "confidence": "observed",
+   "evidence": [
+    "docs/site/content/docs/index.mdx:23",
+    "docs/site/content/docs/settings.mdx:109-117"
+   ],
+   "note": "heavy_compute not set: model inference runs in the user's own agent CLIs and providers; the only local inference is an optional on-device Whisper dictation model.",
+   "source": "review"
+  },
+  "SEC-1": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": [
+    "command: git ls-files | grep -iE 'security(\\.md|\\.txt)|threat' -> no output",
+    "probe meta.security_policy found=false (threat_model_mentions 4)",
+    "docs/site/content/docs/agents/supported.mdx:10-15",
+    "docs/reference/headless-secret-storage.md:1-20"
+   ],
+   "note": "No SECURITY.md, security contact or response expectations. Trust-boundary statements exist only as scattered doc callouts (worktree is not a sandbox; headless credential storage).",
+   "source": "review"
+  },
+  "SEC-2": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "probe deps.lockfiles: 8 lockfiles (root, mobile, cloud, docs/site, config/audit-tools, 2 Cargo.lock, Gemfile.lock)",
+    ".github/dependabot.yml:3-10",
+    "command: rg 'pnpm audit|npm audit|osv-scanner|codeql|dependency-review' .github -> no output",
+    "pnpm-workspace.yaml:15",
+    "pnpm-workspace.yaml:108-121",
+    "pnpm-workspace.yaml:167-171"
+   ],
+   "note": "Lockfiles, an install-script allowlist (allowBuilds) and a three-day minimum release age are in place, with overrides for vulnerable dompurify and katex. Automated update PRs cover only ripgrep ('Other dependencies stay manual') and no known-vulnerability scan runs in CI.",
+   "source": "review"
+  },
+  "SEC-3": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    ".github/CONTRIBUTING.md:130-140",
+    ".github/workflows/release-cut.yml:1714-1906",
+    "config/electron-builder.config.cjs:652-660",
+    ".github/workflows/mobile-android-release.yml:94-97",
+    "command: rg 'attest-build-provenance|actions/attest|cosign|sigstore|slsa' .github/workflows -> no output"
+   ],
+   "note": "Releases are built only in CI, Windows binaries are SignPath-signed with signature checks in the workflow, macOS builds are notarized with hardened runtime, and the APK ships a SHA-256 sidecar. No provenance attestation and no user verification instructions for desktop artifacts.",
+   "source": "review"
+  },
+  "SEC-4": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": [
+    "probe ci.sbom found=false (0 SBOM and 0 VEX steps)",
+    "command: rg -il 'sbom|cyclonedx' .github config/scripts package.json -> no output",
+    "docs/site/THIRD_PARTY_NOTICES.md:1-8",
+    "resources/licenses/ripgrep/README.md"
+   ],
+   "note": "No SBOM or VEX per release. Third-party notices exist only for the bundled ripgrep binary and the docs-site font.",
+   "source": "review"
+  },
+  "SEC-5": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "probe ci.pinned_actions: 15/570 third-party action refs SHA-pinned (actions/checkout@v6 x119)",
+    ".github/workflows/pullfrog.yml:59-60",
+    ".github/workflows/pullfrog.yml:81",
+    ".github/workflows/pullfrog.yml:86-95",
+    "probe ci.permissions: 87/97 workflows set top-level permissions; write-all in 0",
+    ".github/workflows/ci-closed-pr-caches.yml:3-9",
+    ".github/workflows/ci-closed-pr-caches.yml:111",
+    ".github/workflows/pr-test-loc.yml:25-28"
+   ],
+   "note": "Least privilege and isolation of privileged triggers are deliberate (the pull_request_target workflow does not check out PR code, so the probe's 'checks out PR code' flag is a false positive; write-scoped jobs run default-branch scripts). 555 refs use mutable tags, and pullfrog/pullfrog@v0 runs with id-token: write and ten provider API keys.",
+   "source": "review"
+  },
+  "SEC-6": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "mobile/google-services.json:23",
+    "src/main/browser/browser-local-https-test-certificate.ts:1-2",
+    "src/main/ssh/ssh-security-key-identity.ts:1",
+    "src/main/ssh/ssh-security-key-identity.test-fixture.ts:35",
+    "src/main/startup/main-process-ready-runtime.ts:72",
+    "src/main/observability/redactor.ts:1-10",
+    ".github/workflows/cloud-verify.yml:60-77",
+    "AGENTS.md:114"
+   ],
+   "note": "Red-line decision RL-2: not confirmed. The five flagged sites are a Firebase Android client identifier that ships in the APK by design, a static localhost test identity imported only by *.electron.test.ts files, a synthetic fixture, a PEM header constant and an in-process dispatcher label. A redactor runs at sink, bundle and server with tests. Gitleaks and TruffleHog cover only cloud/ and cloud workflows, not the desktop source.",
+   "source": "review"
+  },
+  "SEC-7": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": [
+    "probe risk.tls_off and risk.unsafe_deser: 0 outside tests",
+    "command: rg 'eval\\(|new Function\\(' src (non-test) -> only src/main/browser/browser-popup-compatibility-page-fixture.ts:4",
+    "src/main/automations/precheck-runner.ts:147-153",
+    "src/shared/ephemeral-vm-recipe-process.ts:49-55",
+    "src/cli/runtime/launch.ts:57-60",
+    "src/packages/process-host/src/spawn-resolution.ts:38",
+    ".github/workflows/pr.yml:243-262",
+    "src/renderer/src/components/editor/MermaidBlock.tsx:109",
+    "src/renderer/src/components/editor/IpynbHtmlOutput.tsx:26"
+   ],
+   "note": "Red-line decision RL-4: not confirmed. No TLS bypass, unsafe deserialization or eval in production paths; shell execution is limited to commands the user or repo configuration supplies; process spawning goes through process-host, which refuses shell:true, enforced by ratchets in PR CI; repo-supplied HTML/SVG is sanitized with DOMPurify. The repo-script trust gap is scored under AGT-2 and OPS-3.",
+   "source": "review"
+  },
+  "SEC-8": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "src/shared/agent-hook-listener/request-body.ts:6-12",
+    "src/shared/agent-hook-listener/listener-limits.ts:8-25",
+    "src/shared/program-status/protocol.ts:20-29",
+    "src/shared/e2ee-crypto.ts:6-9",
+    "src/main/daemon/serialize-grid.differential.fuzz.test.ts"
+   ],
+   "note": "Parsers are TypeScript with size, depth and time limits and malformed-input tests; fuzzing covers terminal parsers only and parsers are not isolated in a separate least-privilege process.",
+   "source": "review"
+  },
+  "SEC-9": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "src/shared/e2ee-crypto.ts:1-4",
+    "src/shared/paired-e2ee-client-handshake.ts:11",
+    "docs/reference/headless-secret-storage.md:7-10",
+    "probe crypto.pqc found=false"
+   ],
+   "note": "Cryptography is centralized in shared modules and uses current classical primitives (NaCl box, Ed25519 device proofs, AES-256-GCM). No algorithm inventory document and no post-quantum plan.",
+   "source": "review"
+  },
+  "AGT-1": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": [
+    "src/shared/jira-issue-summary-generation.ts:46-50",
+    "src/shared/jira-issue-summary-generation.test.ts:32-43",
+    "skill-guides/orca-linear.md:155-176",
+    "src/renderer/src/components/browser-pane/annotate/browser-annotation-output.ts:27-36",
+    "src/shared/tui-agent-launch-defaults.ts:18-19"
+   ],
+   "note": "Orca-built prompts tag untrusted fields, escape tag breakouts (tested) and say 'treat as data'; skill guides mark ticket text untrusted. Page-controlled DOM text forwarded to agents by Design Mode is length-bounded but unlabelled, no adversarial corpus exists, and injected instructions are not blocked by policy because agents launch with approvals off.",
+   "source": "review"
+  },
+  "AGT-2": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": [
+    "src/shared/tui-agent-launch-defaults.ts:18-22",
+    "src/shared/tui-agent-permissions.ts:13-43",
+    "src/main/agent-trust-presets.ts:10-27",
+    "src/shared/constants.ts:145",
+    "src/main/effective-hook-config.ts:64-78",
+    "src/main/runtime/rpc/rpc-caller-scope.ts:1-7",
+    "src/cli/command-spec.ts:6-7",
+    "examples/plugins/hello-orca/orca-plugin.json:16-22",
+    "src/main/plugins/plugin-host-process.ts:88"
+   ],
+   "note": "Paired and mobile callers are deny-by-default and plugins declare capabilities, but every launched agent defaults to its permission-bypass flag (Codex: --dangerously-bypass-approvals-and-sandbox), Orca pre-writes third-party folder-trust markers, and committed repo setup scripts run by default. Plugin workers are forked Node processes, so capabilities bound the host API rather than the process (inferred).",
+   "source": "review"
+  },
+  "AGT-3": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": [
+    "docs/site/content/docs/model/agents-sessions.mdx:55-58",
+    "docs/site/content/docs/cli/worktree-checkpoints.mdx:1-10",
+    "docs/site/content/docs/agents/session-history.mdx:39",
+    "docs/site/content/docs/index.mdx:24",
+    "src/shared/tui-agent-launch-defaults.ts:18-19"
+   ],
+   "note": "Live terminals, status cards, notifications and the mobile app give visibility and stop controls, and git worktrees give code-level rollback. Consequential agent actions are not approval-gated by default and there is no exportable action log.",
+   "source": "review"
+  },
+  "AGT-4": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": [
+    ".github/workflows/pr.yml:671-768",
+    ".github/workflows/zcode-transcript-contract.yml:1-30",
+    ".github/workflows/agent-state-rules-publish.yml:56",
+    "src/main/text-generation/commit-message-text-generation-regression.test.ts",
+    "AGENTS.md:50"
+   ],
+   "note": "Provider-change contract tests run against pinned and latest agent CLIs and transcript formats. There is no evaluation set with expected outcomes for model-generated text (commit messages, issue summaries, conversation names); tests cover request construction and output sanitization only.",
+   "source": "review"
+  },
+  "AGT-5": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "docs/site/content/docs/index.mdx:23",
+    "docs/site/content/docs/settings.mdx:109-117",
+    "docs/site/content/docs/telemetry.mdx:57-61",
+    "docs/site/content/docs/agents/usage-tracking.mdx:15",
+    "src/main/rate-limits/claude-oauth-usage-request.ts:18",
+    "src/main/rate-limits/claude-oauth-usage-request.ts:82",
+    "docs/site/content/docs/review/attribution.mdx:9"
+   ],
+   "note": "Bring-your-own agents, speech providers and the telemetry vendor are documented. The usage page says 'No API calls, no extra auth' while the code calls api.anthropic.com/api/oauth/usage with the user's OAuth credentials, and AI-line attribution is described but no implementation was found by searching src for attribution, provenance or gutter markers.",
+   "source": "review"
+  },
+  "AGT-6": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "docs/site/content/docs/agents/usage-tracking.mdx:5-11",
+    "docs/site/content/docs/agents/usage-tracking.mdx:36-38",
+    "src/main/automations/run-usage-collection.ts:7-31",
+    "src/shared/nested-worker-depth.ts:8",
+    "src/shared/orchestration-worker-start-prompt-budget.ts:17-25",
+    "src/shared/automations-types.ts:72-75"
+   ],
+   "note": "Usage windows, an 80% warning and estimated cost (labelled inferred pricing) are shown, and automation runs record tokens and cost. No per-task token, time or spend limit applies to agent or automation runs; only prechecks have a timeout and nested workers a depth limit.",
+   "source": "review"
+  },
+  "INT-1": {
+   "level": 4,
+   "confidence": "derived",
+   "evidence": [
+    "docs/site/content/docs/cli/reference.mdx:1-40",
+    "src/shared/runtime-rpc-envelope.ts:22-52",
+    "src/cli/agent-context.ts:6",
+    "AGENTS.md:116-118",
+    ".github/workflows/pr.yml:1040-1086",
+    ".github/workflows/pr.yml:486-488",
+    "probe agent.mcp found=false; agent.openapi found=false"
+   ],
+   "note": "A documented CLI with a zod-validated JSON envelope and a versioned discovery schema; mixed client/server versions are supported by policy and checked against the newest release in a merge-gating job; ACP client protocol is generated and drift-checked. No MCP server, OpenAPI or A2A endpoint.",
+   "source": "review"
+  },
+  "INT-2": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "src/cli/agent-context.ts:9-22",
+    "src/cli/command-spec.ts:6-7",
+    "src/shared/rpc-contract/rpc-params-catalog.generated.ts:658",
+    ".github/workflows/pr.yml:482-484"
+   ],
+   "note": "`orca agent-context --json` is generated from the live spec table, so it cannot drift from the commands, but it exposes names, usage strings and flag names only: no argument types, output schemas or effect annotations (the destructive flag in CommandSpec is not exported). The zod param schemas for 748 RPC methods stay internal.",
+   "source": "review"
+  },
+  "INT-3": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": [
+    "measurement: rg -c 'path: \\[' src/cli/specs = 284 commands",
+    "src/shared/rpc-contract/rpc-params-catalog.generated.ts:658 (748 RPC methods)",
+    "src/cli/agent-context.ts:58-66",
+    "src/cli/bundled-skill-guides.ts:24"
+   ],
+   "note": "Hundreds of commands, namespaced and documented lazily through per-domain skills; the count is reported but not justified, and tool-selection accuracy is not measured. Legacy skill names duplicate current ones.",
+   "source": "review"
+  },
+  "INT-4": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "src/cli/cli-error.ts:12-49",
+    "src/main/runtime/rpc/errors.ts:69-73",
+    "src/cli/orchestration-mutation-recovery.ts:36-49",
+    "skill-guides/orca-linear.md:155-176",
+    "src/cli/index.ts:74",
+    "src/cli/index.ts:248"
+   ],
+   "note": "Stable error codes (an allowlist the CLI treats as its contract) with nextSteps remediation and documented retry rules per domain, including an outcome_unknown disposition. Retryability is expressed per domain rather than as one flag, and every CLI failure exits with code 1.",
+   "source": "review"
+  },
+  "INT-5": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "src/cli/retry-request-flag.ts:6-12",
+    "skill-guides/orca-cli.md:65",
+    "skill-guides/orca-linear.md:155",
+    "src/main/runtime/orchestration/db/mutation-receipts/mutation-receipt-store.ts",
+    "src/cli/specs/search.ts:36-37",
+    "skill-guides/orca-jira.md:137"
+   ],
+   "note": "Idempotency keys and receipts for orchestration mutations, agent launches and Linear writes, stable handles and cursor paging. Jira writes are single-attempt by stated design, and ids are random rather than content-addressed.",
+   "source": "review"
+  },
+  "INT-6": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": [
+    "src/renderer/src/i18n/locales/ (en, es, fr, ja, ko, zh)",
+    ".github/workflows/pr.yml:498-518",
+    "docs/readme/README.zh-CN.md",
+    "config/oxlint-code-quality-native-plugins.json:3",
+    "config/oxlint-code-quality-native-plugins.json:26-30",
+    ".github/workflows/pr.yml:1337-1338",
+    "command: rg -l 'axe-core|checkA11y|toHaveNoViolations' package.json tests config src -> no output"
+   ],
+   "note": "UI text is translated into six locales with extraction and coverage checks in CI, help output is complete and the packaged CLI is smoke-tested. Accessibility evidence is limited to five jsx-a11y lint rules (run with --deny-warnings); no WCAG 2.2 audit or automated accessibility test.",
+   "source": "review"
+  },
+  "INT-7": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": [
+    "docs/site/content/docs/index.mdx:24",
+    "src/main/sqlite/",
+    "src/cli/specs/profile-state.ts:6-14",
+    "src/main/observability/local-file-sink.ts:1-5"
+   ],
+   "note": "Worktrees are plain git worktrees, state is SQLite and JSON, and profile state has JSON exports and rollback. The formats are not specified or versioned for third-party readers.",
+   "source": "review"
+  },
+  "EPI-1": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": [
+    "src/shared/runtime-rpc-envelope.ts:9-13",
+    "docs/site/content/docs/cli/orchestration.mdx:47",
+    "src/main/agent-hooks/server/server-types.ts:16-27",
+    "src/main/plugins/plugin-install-provenance.ts",
+    "docs/audits/crashpad-read-limit/README.md"
+   ],
+   "note": "Responses carry the runtime id, orchestration start receipts carry requested and effective launch parameters, and agent-status records carry authority provenance. Agent run outputs have no uniform record of input digests or tool versions.",
+   "source": "review"
+  },
+  "EPI-2": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": [
+    "AGENTS.md:102",
+    "src/cli/orchestration-mutation-recovery.ts:43-44",
+    "docs/site/content/docs/agents/usage-tracking.mdx:38",
+    "src/main/daemon/AGENTS.md"
+   ],
+   "note": "Uncertainty is a first-class class in outputs (live, unverifiable, exited; outcome_unknown; 'inferred pricing'), and weak conclusions are withheld. No calibration against outcomes.",
+   "source": "review"
+  },
+  "EPI-3": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    "skill-guides/orca-linear.md:165",
+    "skill-guides/orca-cli.md:215",
+    "src/cli/orchestration-mutation-recovery.ts:46-49",
+    "AGENTS.md:102"
+   ],
+   "note": "Absence is only reported with machine-readable coverage (truncated, hasMore, includeErrors, partial) and agents are told that missing metadata cannot establish absence; loss of contact is never read as process death. Not every command exposes coverage fields.",
+   "source": "review"
+  },
+  "EPI-4": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": [
+    "config/reliability-gates.jsonc:22-28",
+    "config/reliability-gates.jsonc:88-91",
+    "config/docker/daemon-shutdown-descendants/README.md:13",
+    "src/cli/specs/search.ts:11"
+   ],
+   "note": "Reliability evidence and audits state covered platforms and providers, coverage notes and known gaps ('This proves ... It does not prove ...'). Product outputs state truncation but not what was never examined.",
+   "source": "review"
+  },
+  "EPI-5": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": [
+    "README.md:19",
+    "README.md:65",
+    "docs/site/content/docs/model/agents-sessions.mdx:63",
+    "docs/site/content/docs/agents/supported.mdx:11-12",
+    "docs/site/content/docs/agents/usage-tracking.mdx:15",
+    "src/main/rate-limits/claude-oauth-usage-request.ts:18"
+   ],
+   "note": "Red-line decision RL-5: not confirmed. Superlatives without evidence ('100x builders', 'Ghostty-class') and two doc claims contradicted by the code ('the worktree itself is the sandbox'; 'No API calls, no extra auth'). Level 1, not 0: no headline claim is contradicted by a measurement, and internal numeric findings are dated and reproducible.",
+   "source": "review"
+  },
+  "MNT-1": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": [
+    "AGENTS.md:100-118",
+    "src/main/agent-hooks/README.md",
+    "src/packages/process-host/README.md",
+    ".github/workflows/pr.yml:243-262",
+    ".github/workflows/pr.yml:391-393",
+    ".github/scripts/check-root-directory-entries.mjs",
+    "measurement: ls | wc -l -> src/shared 2,903, src/renderer/src/lib 1,286, src/main/runtime 1,246 entries"
+   ],
+   "note": "Cross-cutting ownership rules are written down and several boundaries (process spawning, Electron imports in runtime, compat imports, root entries) are enforced by CI ratchets. There is no top-level architecture overview, and the main source directories are very large and flat.",
+   "source": "review"
+  },
+  "MNT-2": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": [
+    ".oxlintrc.json:228-255",
+    "config/max-lines-baseline.txt",
+    ".oxlintrc.json:259-268",
+    ".oxfmtrc.json",
+    "measurement: wc -l cloud/apps/relay/src/assignment-store.ts = 9,975",
+    "probe size.duplicates: 8 groups, 175,953 bytes (0.07% of text, mostly goldens)",
+    "config/knip.json",
+    "command: rg 'knip|audit:dead-code' .github/workflows -> no output"
+   ],
+   "note": "max-lines budgets (300 to 800) are enforced with a shrink-only ratchet of four exceptions and duplication is low, but cloud/ is exempt from root lint and format (9,975-line file) and dead-code analysis (knip) is not run in CI.",
+   "source": "review"
+  },
+  "MNT-3": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    ".github/workflows/pr.yml:266-347",
+    ".husky/pre-commit",
+    "config/ts-nocheck-baseline.txt",
+    "AGENTS.md:36-42",
+    "measurement: rg -c 'oxlint-disable|eslint-disable|@ts-ignore|@ts-expect-error' src (non-test) = 529"
+   ],
+   "note": "oxlint (including type-aware rules with --deny-warnings), oxfmt and typecheck run in PR CI and a pre-commit hook; @ts-nocheck is ratcheted to zero. 529 suppression comments exist without an inventory, and cloud/ is outside root lint and format.",
+   "source": "review"
+  },
+  "MNT-4": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    ".github/CONTRIBUTING.md:1-186",
+    "AGENTS.md:1-144",
+    "tests/e2e/AGENTS.md",
+    "docs/STYLEGUIDE.md",
+    ".github/workflows/pr.yml:490-496",
+    ".github/CONTRIBUTING.md:168",
+    "src/shared/telemetry-property-schemas.ts:62"
+   ],
+   "note": "Contributor and agent instructions are extensive (four AGENTS.md files) and skill guides and README links are drift-checked in CI. No architecture overview or decision records, and some references point to files that are not in the repository (release-rc.yml, telemetry-plan.md).",
+   "source": "review"
+  },
+  "MNT-5": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    "config/reliability-gates.jsonc:1-12",
+    "config/reliability-gates.jsonc:84-91",
+    ".github/workflows/pr.yml:353-355",
+    "config/max-lines-baseline.txt",
+    "probe static.debt_markers: 10 TODO/FIXME/HACK/XXX outside tests"
+   ],
+   "note": "Known gaps carry promotion and demotion triggers per gate, the manifest is validated in PR CI, and 14 shrink-only ratchet baselines record structural debt. The ledger is hand-maintained, not generated from code markers.",
+   "source": "review"
+  },
+  "EVO-1": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": [
+    ".github/CONTRIBUTING.md:142-159",
+    "probe meta.changelog found=false",
+    "README.md:167",
+    "skill-guides/orchestration/references/legacy-contract-migration.md",
+    "AGENTS.md:116-118",
+    ".github/workflows/pr.yml:1070-1081"
+   ],
+   "note": "SemVer is computed by the release workflow and wire compatibility is checked against the newest release. No in-repo changelog (release notes live on GitHub Releases, not inspected), no breaking-change policy for the 284-command CLI or RPC surface, and migration guidance exists for one orchestration contract only.",
+   "source": "review"
+  },
+  "EVO-2": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    ".github/workflows/release-cut.yml:1192-1212",
+    ".github/workflows/release-cut.yml:852-1088",
+    ".github/workflows/release-cut.yml:2388-2426",
+    ".github/workflows/release-policy.yml:1-30",
+    ".github/CONTRIBUTING.md:170-186",
+    "package.json version 1.4.214",
+    "README.md:167"
+   ],
+   "note": "Releases are automated with preflight, rendering-golden, skill-sharing and mac verification gates, and stable and rc channels exist. Release notes are outside the repo, and a daily cadence (214 patch releases on 1.4) is a churn cost for users.",
+   "source": "review"
+  },
+  "EVO-3": {
+   "level": 4,
+   "confidence": "derived",
+   "evidence": [
+    "docs/site/content/docs/install.mdx:25-35",
+    "docs/site/content/docs/install.mdx:94-102",
+    "AGENTS.md:94",
+    "AGENTS.md:122",
+    ".github/workflows/preflight-cli-platforms.yml",
+    ".github/workflows/pr.yml:680",
+    ".github/workflows/pr.yml:1347"
+   ],
+   "note": "The matrix is stated (macOS arm64/x64, Windows, Linux x64/arm64 as AppImage, deb and rpm; glibc 2.31 floor enforced at packaging; Git 2.25 baseline) and PR CI covers Linux x64 and ARM, Windows and targeted macOS lanes. The full unit suite runs on Linux only.",
+   "source": "review"
+  },
+  "EVO-4": {
+   "level": 0,
+   "confidence": "observed",
+   "evidence": [
+    "probe evo.support found=false",
+    "command: rg -i 'end of life|EOL|support period|supported versions|LTS' README.md .github docs/site/content AGENTS.md -> no relevant match"
+   ],
+   "note": "No support period or end-of-life statement for a widely distributed desktop, CLI and mobile product.",
+   "source": "review"
+  },
+  "OPS-1": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": [
+    "src/cli/specs/core.ts:21-27",
+    "src/cli/specs/vm.ts:6-20",
+    "src/cli/specs/diagnostics.ts:6-7",
+    "src/main/observability/diagnostic-bundle-upload.ts",
+    "src/main/orcad/orcad-exit-code.ts",
+    "docs/site/content/docs/troubleshooting.mdx"
+   ],
+   "note": "`orca status --json` reports readiness, `orca vm recipe doctor` validates recipes without running them by default, orcad has distinct exit codes for configuration faults, and diagnostic bundles are user-initiated. No single doctor checks agent CLIs, Git version and SSH prerequisites and prints fixes.",
+   "source": "review"
+  },
+  "OPS-2": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": [
+    "src/main/observability/tracer.ts:1-20",
+    "src/main/observability/local-file-sink.ts:1-5",
+    "measurement: rg -c 'console\\.(log|warn|error)' src/main (non-test) = 1,363",
+    "probe obs.otel found=false"
+   ],
+   "note": "Redacted NDJSON span traces with trace and span ids rotate locally (10 MB x 10, mode 0600) for the error lane; general logging is console-based with ad hoc prefixes, with no configurable levels and no OpenTelemetry or OTLP export.",
+   "source": "review"
+  },
+  "OPS-3": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": [
+    "src/shared/tui-agent-launch-defaults.ts:18-22",
+    "src/main/agent-trust-presets.ts:10-27",
+    "src/shared/constants.ts:145",
+    "src/main/persistence/loading-store/loaded-cohort-migrations.ts:97-102",
+    "probe obs.env_vars: 993 environment variables read, 139 in docs",
+    "src/main/orcad/orcad-bind-address.ts:4-13",
+    "src/main/runtime/rpc/rpc-caller-scope.ts:1-7"
+   ],
+   "note": "Settings are documented and network exposure defaults are safe (loopback until pairing, deny-by-default for paired callers), but the most consequential defaults are the permissive choice: agent approvals off, third-party folder trust pre-written, committed setup scripts run, telemetry on.",
+   "source": "review"
+  },
+  "OPS-4": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "README.md:224-230",
+    "Casks/orca.rb:4-8",
+    "config/scripts/pinned-node-downloads.mjs:1",
+    ".github/workflows/mobile-android-release.yml:94-97",
+    ".github/workflows/release-cut.yml:1830-1906",
+    "probe risk.remote_script: 2 pipe-to-shell lines, 0 outside tests"
+   ],
+   "note": "Package-manager installs carry checksums, artifacts are signed, and build-time Node downloads are hash-verified. No published verification steps for desktop downloads and no provenance to verify against.",
+   "source": "review"
+  },
+  "PRV-1": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "src/main/telemetry/consent.ts:76-112",
+    "src/main/persistence/loading-store/loaded-cohort-migrations.ts:97-102",
+    "src/renderer/src/components/TelemetryFirstLaunchSurface.tsx:1-4",
+    "src/shared/telemetry-agent-token-usage-schema.ts:5-20",
+    "measurement: 88 event types in src/shared/telemetry-event-registry.ts vs 9 categories in docs/site/content/docs/telemetry.mdx:20-29",
+    "README.md:250",
+    "src/main/crash-reporting/crashpad-capture.ts:68-71"
+   ],
+   "note": "Red-line decision RL-3: not confirmed. Telemetry is opt-out (on for new installs), honours DO_NOT_TRACK, ORCA_TELEMETRY_DISABLED and CI variables, uses strict content-free schemas, and is disclosed in the README and a docs page; crash dumps are never uploaded. It is not prominent: new installs get no in-product notice by design, and the docs neither state the default nor list most of the 88 events. Level 2, above the red line, because disclosure exists and no user content is collected.",
+   "source": "review"
+  },
+  "PRV-2": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": [
+    "docs/site/content/docs/index.mdx:25",
+    "src/main/runtime/agent-state-rules/agent-state-rules-live-update.ts:42-45",
+    "src/main/runtime/agent-state-rules/agent-state-rules-live-update.ts:119-125",
+    "src/main/rate-limits/claude-oauth-usage-request.ts:18",
+    "docs/site/content/docs/mobile.mdx:42",
+    "src/cli/specs/profile-state.ts:6-14"
+   ],
+   "note": "Local-first with an optional sign-in relay and JSON exports of profile state. Background network calls (rule-bundle downloads, provider usage endpoints) are not all documented, and there is no documented data-deletion path beyond uninstalling.",
+   "source": "review"
+  },
+  "PRV-3": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "LICENSE:1-3",
+    "command: jq .license package.json mobile/package.json cloud/package.json src/packages/process-host/package.json -> none for all four",
+    "resources/licenses/ripgrep/README.md",
+    "docs/site/THIRD_PARTY_NOTICES.md:1-8",
+    "command: rg -il license electron.vite.config.ts -> no output",
+    "command: rg -l 'GNU General Public License|SPDX-License-Identifier: (L?GPL|AGPL)' (excluding lockfiles) -> no output"
+   ],
+   "note": "Red-line decision RL-1: not confirmed. An MIT LICENSE (Lovecast Inc.) is present and no copyleft code was found; manifests lack license fields, and third-party notices cover ripgrep and fonts but not the JavaScript dependencies bundled into the app.",
+   "source": "review"
+  },
+  "PRV-4": {
+   "level": 0,
+   "confidence": "observed",
+   "evidence": [
+    "probe meta.compliance: 0 regulation mentions",
+    "command: rg -i 'GDPR|Cyber Resilience|CRA|AI Act|Accessibility Act|WCAG|CCPA' README.md docs .github AGENTS.md (excluding docs/audits) -> no output"
+   ],
+   "note": "No stated position on the EU CRA (vulnerability reporting duties since 2026-09-11, main obligations from 2027-12-11), the AI Act or accessibility law.",
+   "source": "review"
+  },
+  "SUS-1": {
+   "level": 2,
+   "confidence": "inferred",
+   "evidence": [
+    ".github/CODEOWNERS:1-10",
+    "probe meta.governance found=false",
+    "git: shallow clone, 1 commit read (contributor concentration not measurable)",
+    "LICENSE:3"
+   ],
+   "note": "Company-backed (Lovecast Inc.) with two named code owners covering localization and cloud only; no governance document; contributor concentration is unknown from the shallow clone.",
+   "source": "review"
+  },
+  "SUS-2": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": [
+    ".github/ISSUE_TEMPLATE/bug_report.yml",
+    ".github/pull_request_template.md",
+    ".github/workflows/pr.yml:1672-1690",
+    "AGENTS.md:65-69",
+    ".github/scripts/check-required-pr-context.mjs"
+   ],
+   "note": "Issue and PR templates and an aggregate required check exist. Required review and branch protection cannot be verified from the repository; AGENTS.md says agents must wait for checks 'even when repository settings allow' merging, which suggests settings do not enforce all of them.",
+   "source": "review"
+  },
+  "SUS-3": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    ".github/CONTRIBUTING.md:120",
+    "AGENTS.md:44-69",
+    ".github/pull_request_template.md:34-36",
+    "command: git log -1 --format=%B -> trailer 'Co-authored-by: E2E Test <e2e@test.local>'"
+   ],
+   "note": "Rules for how agents verify and merge changes are explicit, and PRs must include an AI agent's review summary. The AI-disclosure section is to be skipped by internal team members and no attribution trailers are kept.",
+   "source": "review"
+  }
+ },
+ "gaps": [
+  {
+   "lens": "G10",
+   "title": "Every launched agent defaults to maximum agency",
+   "case": "src/shared/tui-agent-launch-defaults.ts:18-19 sets DEFAULT_TUI_AGENT_ARGS = YOLO_TUI_AGENT_ARGS; src/shared/tui-agent-permissions.ts:17 maps Codex to --dangerously-bypass-approvals-and-sandbox (Claude, Gemini, Copilot and others likewise at lines 13-43); src/main/agent-trust-presets.ts:10-27 pre-writes Cursor, Copilot and Codex folder-trust markers so their 'trust this folder?' prompt never appears.",
+   "impact": "Agents run shell commands without approval as the user, outside the worktree, including actions induced by untrusted repository or web content (excessive agency, OWASP LLM06). This conflicts with the secure-by-default configuration duty of the EU CRA (from 2027-12-11).",
+   "fix": "Default new installs to Manual or each agent's own sandboxed mode, make the bypass flag an explicit per-repository opt-in, and write third-party trust markers only after the user confirms the folder.",
+   "severity": "high",
+   "evidence": [
+    "src/shared/tui-agent-launch-defaults.ts:18-19",
+    "src/shared/tui-agent-permissions.ts:13-43",
+    "src/main/agent-trust-presets.ts:10-27",
+    "docs/site/content/docs/agents/supported.mdx:10-19"
+   ]
+  },
+  {
+   "lens": "G7",
+   "title": "Repo setup-script trust is enforced only in the desktop renderer",
+   "case": "src/shared/constants.ts:145 defaults setupRunPolicy to 'run-by-default'; the main-process gate src/main/effective-hook-config.ts:64-78 decides from that policy alone; trust records are written by the renderer (src/renderer/src/store/slices/ui/ui-slice-trust-actions.ts:7-20) and `rg trustedOrcaHooks src` outside src/renderer finds only types and defaults; the CLI `--setup` flag defaults to inherit (src/cli/flag-help-text.ts:65) and the runtime create path consults only the policy (src/main/runtime/runtime-local-worktree-create.ts:87-99).",
+   "impact": "Setup commands committed in an untrusted clone's orca.yaml can run on worktree creation from the CLI, automations or the mobile app without the confirmation the desktop window shows (code execution from repository content; inferred from the main-process gate, full call graph not traced).",
+   "fix": "Move the content-hash trust check into shouldRunSetupForCreate in the main process, require a trusted hash or an explicit interactive 'run', and default repositories with committed scripts to 'ask'.",
+   "severity": "high",
+   "evidence": [
+    "src/shared/constants.ts:145",
+    "src/main/effective-hook-config.ts:64-78",
+    "src/renderer/src/store/slices/ui/ui-slice-trust-actions.ts:7-20",
+    "src/main/runtime/runtime-local-worktree-create.ts:87-99",
+    "src/cli/flag-help-text.ts:65"
+   ]
+  },
+  {
+   "lens": "G1",
+   "title": "Docs contradict the code on the sandbox boundary and on data flows",
+   "case": "docs/site/content/docs/model/agents-sessions.mdx:63 says 'the worktree itself is the sandbox' while docs/site/content/docs/agents/supported.mdx:11-12 says a worktree is not a security sandbox; docs/site/content/docs/agents/usage-tracking.mdx:15 says 'No API calls, no extra auth' while src/main/rate-limits/claude-oauth-usage-request.ts:18,82 calls api.anthropic.com/api/oauth/usage with the user's OAuth credentials; docs/site/content/docs/review/attribution.mdx:9 describes AI-line gutter markers, and searching src for attribution, provenance and gutter markers found no implementation.",
+   "impact": "Users choosing a trust posture or reviewing data flows get wrong information about the security boundary and about credential use (misinformation; undisclosed processing).",
+   "fix": "Correct both pages, remove or implement the attribution feature, and add a docs check that links feature and data-flow pages to code or tests.",
+   "severity": "high",
+   "evidence": [
+    "docs/site/content/docs/model/agents-sessions.mdx:63",
+    "docs/site/content/docs/agents/supported.mdx:11-12",
+    "docs/site/content/docs/agents/usage-tracking.mdx:15",
+    "src/main/rate-limits/claude-oauth-usage-request.ts:18",
+    "docs/site/content/docs/review/attribution.mdx:9"
+   ]
+  },
+  {
+   "lens": "G9",
+   "title": "Mutable action tags, a third-party agent action holding provider keys, and no dependency or repo-wide secret scanning",
+   "case": "15 of 570 third-party action references are SHA-pinned (probe ci.pinned_actions; actions/checkout@v6 x119); .github/workflows/pullfrog.yml:59-60,81,86-95 runs pullfrog/pullfrog@v0 with id-token: write and ten provider API keys; `rg 'pnpm audit|npm audit|osv-scanner|codeql|dependency-review' .github` returns nothing; Dependabot covers only ripgrep (.github/dependabot.yml:3-10); gitleaks and TruffleHog scan only cloud/ paths (.github/workflows/cloud-verify.yml:60-77).",
+   "impact": "A moved tag or compromised action runs with repository tokens or can exfiltrate provider keys, and known-vulnerable dependencies or secrets committed to the desktop source go undetected (supply-chain compromise).",
+   "fix": "Pin every action by full SHA with automated update PRs, give the review agent scoped short-lived credentials, and add osv-scanner or pnpm audit plus a repository-wide gitleaks job to PR CI.",
+   "severity": "high",
+   "evidence": [
+    ".github/workflows/pullfrog.yml:59-95",
+    ".github/dependabot.yml:3-10",
+    ".github/workflows/cloud-verify.yml:60-77"
+   ]
+  },
+  {
+   "lens": "G10",
+   "title": "No vulnerability disclosure policy, support period or regulatory position",
+   "case": "No SECURITY.md or security contact (`git ls-files | grep -iE 'security(\\.md|\\.txt)'` returns nothing; probe meta.security_policy found=false); no support or end-of-life statement (probe evo.support found=false); no mention of the CRA, AI Act or accessibility law in README, docs or .github (probe meta.compliance mentions 0).",
+   "impact": "Researchers have no reporting channel for a code-executing app with network listeners, E2EE pairing and a cloud relay, and the CRA vulnerability-reporting duties in force since 2026-09-11 and the support-period declaration due from 2027-12-11 are unprepared (coordinated-disclosure and regulatory risk).",
+   "fix": "Publish SECURITY.md with contact, scope and response times; add a threat model covering agents, repository content, paired devices, the relay and plugins; state a support period; write a CRA and AI Act position note.",
+   "severity": "high",
+   "evidence": [
+    "probe meta.security_policy",
+    "probe evo.support",
+    "probe meta.compliance"
+   ]
+  },
+  {
+   "lens": "G9",
+   "title": "Releases ship without SBOM or provenance, and rule bundles are unsigned",
+   "case": "No SBOM or VEX step (probe ci.sbom found=false); no attestation step (`rg 'attest-build-provenance|cosign|sigstore|slsa' .github/workflows` returns nothing); agent-state rule bundles are downloaded from a fixed GitHub release URL and accepted after schema validation only (src/main/runtime/agent-state-rules/agent-state-rules-live-update.ts:42-45,77-86).",
+   "impact": "Users cannot verify which source and pipeline built a release or audit shipped components, and a tampered rule bundle would be accepted if TLS or the release account were compromised (integrity of agent-status detection).",
+   "fix": "Generate a CycloneDX SBOM and SLSA provenance in release-cut.yml, publish checksums with verification steps, and sign rule bundles or pin their digests in the shipped app.",
+   "severity": "medium",
+   "evidence": [
+    "probe ci.sbom",
+    "src/main/runtime/agent-state-rules/agent-state-rules-live-update.ts:42-45"
+   ]
+  },
+  {
+   "lens": "G12",
+   "title": "Telemetry is on for new installs without an in-product notice, and the docs list a fraction of the events",
+   "case": "src/main/persistence/loading-store/loaded-cohort-migrations.ts:97-102 sets optedIn true for new installs; src/renderer/src/components/TelemetryFirstLaunchSurface.tsx:1-4 shows new users no first-launch surface; src/shared/telemetry-event-registry.ts defines 88 event types while docs/site/content/docs/telemetry.mdx:20-29 lists 9 categories and does not say collection is on by default.",
+   "impact": "Users are enrolled without seeing a notice in the product, and the disclosure is not field by field (consent quality under GDPR and ePrivacy).",
+   "fix": "Show a first-run notice to new installs (or make collection opt-in), and generate the docs event and field list from the registry in CI.",
+   "severity": "medium",
+   "evidence": [
+    "src/main/persistence/loading-store/loaded-cohort-migrations.ts:97-102",
+    "src/renderer/src/components/TelemetryFirstLaunchSurface.tsx:1-4",
+    "docs/site/content/docs/telemetry.mdx:20-29"
+   ]
+  },
+  {
+   "lens": "G8",
+   "title": "End-to-end suite is advisory and red on main",
+   "case": ".github/workflows/pr.yml:1696-1703 leaves e2e out of the verify job's needs because 'the suite is currently red on main (every scheduled run)'; crash and resume journeys such as tests/e2e/agent-session-live-force-exit-resume.spec.ts live in that suite; Windows crash survival runs only on manual dispatch (.github/workflows/win-crash-survival-e2e.yml:12-13).",
+   "impact": "Regressions in user journeys, including crash and resume paths, can merge unnoticed; 563 specs give less protection than their count suggests.",
+   "fix": "Quarantine failing specs with owners and issue links, add the path-filtered e2e job to verify's needs, and schedule the crash-survival workflow.",
+   "severity": "medium",
+   "evidence": [
+    ".github/workflows/pr.yml:1696-1703",
+    ".github/workflows/win-crash-survival-e2e.yml:12-13"
+   ]
+  },
+  {
+   "lens": "G11",
+   "title": "Agent contract lacks effect annotations, argument schemas and distinct exit codes",
+   "case": "src/cli/agent-context.ts:9-22 exports command names, usage strings and flag names only; CommandSpec.destructive (src/cli/command-spec.ts:6-7) is not exported; every CLI failure sets exit code 1 (src/cli/index.ts:74,100,205,223,248); no MCP server (probe agent.mcp found=false).",
+   "impact": "Agents cannot tell destructive from read-only commands or validate arguments before calling one of 284 commands, and scripts cannot branch on the failure class without parsing JSON.",
+   "fix": "Add readOnly, destructive and idempotent fields and a JSON Schema per command to agent-context schema v2, map error codes to documented exit codes, and serve the same contract over MCP.",
+   "severity": "medium",
+   "evidence": [
+    "src/cli/agent-context.ts:9-22",
+    "src/cli/command-spec.ts:6-7",
+    "src/cli/index.ts:74"
+   ]
+  },
+  {
+   "lens": "G13",
+   "title": "Surface size and release churn outpace reviewability and ownership",
+   "case": "16,956 production TS/TSX files and 2,101,263 lines under src (git ls-files, tests and fixtures excluded); flat directories src/shared (2,903 entries), src/renderer/src/lib (1,286) and src/main/runtime (1,246); 97 workflows with 24,938 YAML lines; 982 entries in config/scripts; config/reliability-gates.jsonc is 1.88 MB with all 149 gates 'experimental'; version 1.4.214 and README.md:167 'we ship daily'; .github/CODEOWNERS:1-10 covers only localization and cloud.",
+   "impact": "Review depth per change and the ability of a new maintainer or agent to navigate the code fall, and continuity depends on a small, partly unnamed owner set (maintainability and continuity risk).",
+   "fix": "Group flat directories into domain modules with import rules, extend CODEOWNERS to core areas, keep release notes in the repository, and promote or retire experimental gates on their stated criteria.",
+   "severity": "medium",
+   "evidence": [
+    ".github/CODEOWNERS:1-10",
+    "README.md:167",
+    "config/reliability-gates.jsonc:1-12"
+   ]
+  },
+  {
+   "lens": "G12",
+   "title": "Contributor docs and code comments reference files that are not in the repository",
+   "case": ".github/CONTRIBUTING.md:168 points to release-rc.yml, which is absent from .github/workflows; src/shared/telemetry-property-schemas.ts:62 and src/preload/api/telemetry-api.ts:53 cite telemetry-plan.md and telemetry-error-tracking.md, of which 0 files are tracked.",
+   "impact": "Contributors and agents follow references that do not exist, and the telemetry design rationale cited by the code cannot be reviewed.",
+   "fix": "Fix or remove the references and extend the README link check to CONTRIBUTING and to code comments that cite documents.",
+   "severity": "low",
+   "evidence": [
+    ".github/CONTRIBUTING.md:168",
+    "src/shared/telemetry-property-schemas.ts:62"
+   ]
+  }
+ ],
+ "opportunities": [
+  {
+   "lens": "O3",
+   "criterion": "OPP-3",
+   "title": "Ship a locked-down container recipe as the default home for bypass-mode agents",
+   "description": "Orca already boots per-workspace environments, including local Docker containers, from orca.yaml recipes (docs/site/content/docs/ways-to-run.mdx:72-90) but launches agents in bypass mode on the host by default. agent-sandbox-lockdown provides the missing isolation layout: an internal-only network, CoreDNS and tinyproxy allowlists, a read-only workspace mount, one writable outbox, a kill file and a JSONL tool-call log. Packaging that layout as a built-in recipe turns 'no approvals, inside a locked container' into the default instead of 'no approvals on the host'.",
+   "value": 5,
+   "reach": 4,
+   "confidence": "derived",
+   "horizon_fit": 1.3,
+   "effort": 3,
+   "action": "harden",
+   "evidence": [
+    "docs/site/content/docs/ways-to-run.mdx:72-90",
+    "src/shared/tui-agent-launch-defaults.ts:18-19",
+    "PromptEngineer48/agent-sandbox-lockdown README.md Layout table (docker-compose.yml, dns/Corefile, proxy/allowlist.txt, logs/tool_calls.jsonl)"
+   ]
+  },
+  {
+   "lens": "O1",
+   "criterion": "OPP-1",
+   "title": "Publish @orca/process-host as a standalone package",
+   "description": "A 38-file package with no runtime npm dependencies, no Electron imports and a Node 18 floor that owns spawning, bounded output, cancellation, Windows .cmd shim and argument encoding, and process-tree termination with exit proof (src/packages/process-host/README.md:3; package.json engines '>=18', private, version 0.0.0). Other reviewed harnesses and installers (t3code, pandacode, caveman) spawn agent CLIs and face the same Windows quoting and orphan-process problems.",
+   "value": 4,
+   "reach": 4,
+   "confidence": "observed",
+   "horizon_fit": 1.1,
+   "effort": 2,
+   "action": "extract",
+   "evidence": [
+    "src/packages/process-host/README.md:3",
+    "src/packages/process-host/package.json",
+    "AGENTS.md:86"
+   ]
+  },
+  {
+   "lens": "O9",
+   "criterion": "OPP-6",
+   "title": "Program Status Protocol consumer SDK for other harnesses",
+   "description": "Orca parses the published Program Status Protocol (OSC 7501; spec link at src/shared/program-status/protocol.ts:2) with bounded fields and capability negotiation, and fuses it with hook events and declarative screen rules (src/main/runtime/agent-state-rules/). Pi emits the protocol (earendil-works/pi packages/tui/test/program-status.test.ts), while t3code and pandacode contain no reference to it (rg '7501|program-status' finds only incidental matches). Extracting the scanner, projector and rule engine as an SDK gives every harness the same agent-state signal without screen scraping.",
+   "value": 4,
+   "reach": 4,
+   "confidence": "derived",
+   "horizon_fit": 1.3,
+   "effort": 3,
+   "action": "extract",
+   "evidence": [
+    "src/shared/program-status/protocol.ts:1-32",
+    "src/shared/program-status/osc-scanner.ts",
+    "src/main/runtime/agent-state-rules/agent-state-rule-pattern-safety.ts",
+    "earendil-works/pi packages/tui/test/program-status.test.ts"
+   ]
+  },
+  {
+   "lens": "O10",
+   "criterion": "OPP-6",
+   "title": "Serve the CLI and RPC contract over MCP with effect hints",
+   "description": "Agents already drive Orca through 284 CLI commands with a zod-validated envelope and idempotency keys, and the runtime holds zod parameter schemas for 748 RPC methods plus per-method permission classes (src/main/runtime/rpc/rpc-method-permission.ts). Generating a lazily loaded MCP catalog per namespace, with readOnly, destructive and idempotent hints derived from CommandSpec.destructive and the permission classes, lets any MCP host call Orca without prose or shell parsing.",
+   "value": 4,
+   "reach": 4,
+   "confidence": "derived",
+   "horizon_fit": 1.3,
+   "effort": 3,
+   "action": "re-cut-interface",
+   "evidence": [
+    "src/shared/rpc-contract/rpc-params-catalog.generated.ts:658",
+    "src/main/runtime/rpc/rpc-method-permission.ts",
+    "src/cli/command-spec.ts:6-7",
+    "src/cli/agent-context.ts:9-22"
+   ]
+  },
+  {
+   "lens": "O13",
+   "criterion": "OPP-7",
+   "title": "Produce CRA evidence from the existing release pipeline",
+   "description": "release-cut.yml already builds, signs (SignPath with signature checks, macOS notarization) and publishes every platform in CI. Adding a CycloneDX SBOM, SLSA provenance, a checksum manifest, VEX statements and a SECURITY and support-period statement turns existing steps into the evidence the CRA expects from 2027-12-11; the bundled ripgrep notices show the pattern for shipping license data.",
+   "value": 4,
+   "reach": 3,
+   "confidence": "observed",
+   "horizon_fit": 1.5,
+   "effort": 2,
+   "action": "harden",
+   "evidence": [
+    ".github/workflows/release-cut.yml:1714-1906",
+    "config/electron-builder.config.cjs:652-660",
+    "resources/licenses/ripgrep/README.md"
+   ]
+  },
+  {
+   "lens": "O2",
+   "criterion": "OPP-2",
+   "title": "One shared agent-CLI registry across harnesses and installers",
+   "description": "Orca maintains per-agent permission flags (src/shared/tui-agent-permissions.ts:13-43), folder-trust marker formats (src/main/agent-trust-presets.ts), skill install paths (src/shared/skill-install-providers.ts) and resume commands (src/shared/agent-session-resume.ts). t3code (apps/server/src/orchestration-v2/Adapters), pandacode (src-tauri/src/slash_commands/{claude,codex,kimi}.rs) and caveman (agents/agents.json, agents/probe-installed.mjs) keep their own tables for the same CLIs. A versioned data package with contract tests against pinned CLI versions replaces four drifting copies.",
+   "value": 3,
+   "reach": 4,
+   "confidence": "derived",
+   "horizon_fit": 1.1,
+   "effort": 3,
+   "action": "consolidate",
+   "evidence": [
+    "src/shared/tui-agent-permissions.ts:13-43",
+    "src/shared/skill-install-providers.ts",
+    "src/shared/agent-session-resume.ts",
+    "JuliusBrussee/caveman agents/agents.json"
+   ]
+  },
+  {
+   "lens": "O12",
+   "criterion": "OPP-1",
+   "title": "Reliability-gate manifest and ratchets as a reusable evidence ledger",
+   "description": "config/reliability-gates.jsonc records 149 gates with invariant, oracle, commands, dated evidence runs, runtime budgets, flake history, known gaps and promotion and demotion rules, validated in PR CI by config/scripts/check-reliability-gates.mjs, and 14 shrink-only ratchet baselines enforce debt reduction. Packaged as a schema plus checker, it gives other reviewed repositories (rea, strix, absurd) a machine-checkable ledger that maps onto RQS COR, REL and MNT-5 evidence.",
+   "value": 3,
+   "reach": 3,
+   "confidence": "observed",
+   "horizon_fit": 1.1,
+   "effort": 3,
+   "action": "extract",
+   "evidence": [
+    "config/reliability-gates.jsonc:1-12",
+    "config/scripts/check-reliability-gates.mjs:1-40",
+    "config/max-lines-baseline.txt"
+   ]
+  }
+ ],
+ "reengineering": [
+  {
+   "action": "harden",
+   "component": "Agent launch defaults and the repo-script trust gate (src/shared/tui-agent-launch-defaults.ts, src/main/agent-trust-presets.ts, src/main/effective-hook-config.ts)",
+   "gain": "No agent starts with approvals off and no committed setup script runs without a trusted content hash unless the user opts in.",
+   "measure": "Tests over every create path (desktop, CLI, automation, mobile) that assert refusal without a trusted hash; share of agent_started events with bypass arguments on new installs (target 0% without opt-in)."
+  },
+  {
+   "action": "harden",
+   "component": "CI and release supply chain (.github/workflows/*, release-cut.yml, pullfrog.yml)",
+   "gain": "All third-party actions SHA-pinned, scoped credentials for the review agent, dependency and repository-wide secret scanning, SBOM and provenance on every release.",
+   "measure": "SHA-pinned ratio from 15/570 to 570/570 (rqs probe ci.pinned_actions); OpenSSF Scorecard Pinned-Dependencies and Token-Permissions scores; SBOM and attestation attached to each GitHub release."
+  },
+  {
+   "action": "extract",
+   "component": "@orca/process-host (src/packages/process-host)",
+   "gain": "A public package with provenance that other harnesses and installers reuse instead of reimplementing Windows quoting and process-tree termination.",
+   "measure": "Package published with npm provenance; package tests green on Node 18, 20, 22 and 24 across Linux, macOS and Windows; count of external dependents after two releases."
+  },
+  {
+   "action": "re-cut-interface",
+   "component": "agent-context and the CLI error contract (src/cli/agent-context.ts, src/cli/index.ts)",
+   "gain": "Agents select and validate commands from data: effect hints, argument schemas, documented exit codes, and the same contract over MCP.",
+   "measure": "284 of 284 commands carry readOnly, destructive and idempotent fields and a JSON Schema; agent-context --json bytes per namespace; success rate of a scripted agent task suite before and after."
+  },
+  {
+   "action": "refactor",
+   "component": "Flat source directories src/shared, src/renderer/src/lib and src/main/runtime",
+   "gain": "Navigable domain modules with enforced import boundaries.",
+   "measure": "Maximum entries per directory from 2,903 to 200 or fewer; boundary violations reported by a CI rule; median files touched per PR."
+  }
+ ],
+ "questions": [
+  "Is Orca safe by default for running agents on untrusted repositories? No: agents launch with permission-bypass flags, third-party folder trust is pre-written and committed setup scripts run by default; isolation is opt-in through per-workspace recipes, and one docs page wrongly calls the worktree a sandbox (AGT-2, OPS-3, EPI-5).",
+  "Can an agent drive Orca without reading prose, and are retries safe? Mostly: a versioned JSON envelope, a generated command catalog, typed error codes with next steps and idempotent retry keys exist; effect annotations, argument schemas, distinct exit codes and an MCP endpoint are missing (INT-1, INT-2, INT-4, INT-5).",
+  "Are the security process, release and supply chain ready for the EU CRA dates (reporting from 2026-09-11, main obligations from 2027-12-11)? No: signed CI-built releases exist, but there is no SECURITY.md, SBOM, provenance, dependency scanning, support period or regulatory position, and 555 of 570 action references use mutable tags (SEC-1 to SEC-5, EVO-4, PRV-4)."
+ ],
+ "not_examined": [
+  "Runtime behaviour: nothing was built, installed or run, so oracle step 4 (independent answer key run against the product) was not performed and the actual agent-context --json size is an estimate",
+  "Git history and contributor concentration (shallow clone, one commit)",
+  "GitHub repository settings: branch protection, required reviewers, Actions default token permissions, release notes on GitHub Releases",
+  "mobile/ (Expo app) and cloud/ (relay, Terraform, 40+ cloud workflows) beyond the CI files cited",
+  "Native code: native/computer-use-macos (Swift), Rust Windows launcher and hook, C/C++ addons, Python and PowerShell computer-use runtimes",
+  "Packaged artifact contents (asar license files, Electron fuse state) and electron-updater signature checks at runtime",
+  "WCAG conformance of the UI and keyboard and screen-reader behaviour",
+  "Full call graph of every worktree-create entry point for the setup-script trust gap (the finding rests on the main-process gate and the CLI default)",
+  "PostHog project configuration and server-side redaction at ingest"
+ ],
+ "time_minutes": 31,
+ "scope_notes": "Profile agent-harness: an Electron desktop IDE plus CLI, headless orcad server, mobile companion and cloud relay that launches and orchestrates third-party coding-agent CLIs on the user's machine; flags all set except heavy_compute, because it runs agents, executes commands, listens on loopback/LAN sockets, parses agent terminal output, repo files and web pages, uses NaCl/Ed25519/AES-GCM, and ships signed installers, while model inference runs in the user's own agents and providers. Static review of commit 997d34b0 (shallow clone); nothing was built or run.",
+ "red_line_decisions": {
+  "RL-1 (PRV-3)": "Not confirmed: MIT LICENSE present (LICENSE:1-3); level 2 because notices for bundled JavaScript dependencies are missing.",
+  "RL-2 (SEC-6)": "Not confirmed (automatic suspicion reviewed): the 5 flagged strings are a Firebase Android client identifier, a test-only localhost TLS identity, a synthetic fixture, a PEM header constant and a dispatcher label; no live secret found; level 3.",
+  "RL-3 (PRV-1)": "Not confirmed: telemetry is opt-out without an in-product notice for new installs, but it is disclosed in README.md:250 and docs/site/content/docs/telemetry.mdx, honours DO_NOT_TRACK and collects no user content; level 2.",
+  "RL-4 (SEC-7)": "Not confirmed: no eval, unsafe deserialization or TLS bypass on production paths; shell execution limited to user- or repo-configured commands; level 3. The repo-script trust gap is scored under AGT-2 and OPS-3.",
+  "RL-5 (EPI-5)": "Not confirmed: superlatives and two doc statements contradict the code, but no headline claim is contradicted by a measurement; level 1."
+ }
+}
