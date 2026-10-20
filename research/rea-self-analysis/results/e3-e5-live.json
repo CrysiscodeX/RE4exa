@@ -1,0 +1,241 @@
+{
+ "timings": {
+  "analyze_new": {
+   "ok": true,
+   "ms": 1000949
+  },
+  "analyze_old": {
+   "ok": true,
+   "ms": 924235
+  },
+  "refs:scripts/rea.mjs": {
+   "ok": true,
+   "ms": 152
+  },
+  "refs:dist/javascript/analysis/JavaScriptAnalysisWorker.js": {
+   "ok": true,
+   "ms": 139
+  },
+  "refs:dist/windows/WindowsNativeLoader.js": {
+   "ok": true,
+   "ms": 115
+  },
+  "refs:dist/hopper/HopperProvider.js": {
+   "ok": true,
+   "ms": 120
+  },
+  "refs:dist/evm/EvmoleInterfaceWorker.js": {
+   "ok": true,
+   "ms": 121
+  },
+  "refs:dist/android/JadxProvider.js": {
+   "ok": true,
+   "ms": 123
+  },
+  "facts:package.json": {
+   "ok": true,
+   "ms": 139
+  },
+  "trace:worker_incoming": {
+   "ok": true,
+   "ms": 883
+  },
+  "trace:bin_outgoing": {
+   "ok": true,
+   "ms": 833
+  },
+  "trace:hopper_bridge_string": {
+   "ok": true,
+   "ms": 808
+  },
+  "trace:windows_addon_string": {
+   "ok": false,
+   "ms": 86594,
+   "error": "trace_application_feature failed: resource_constraint: The operation completed, but its complete MCP response exceeds the stdio response budget. The analysis result was not truncated. Export retained evidence to consume the complete analysis, or use complete CLI JSON output.",
+   "diagnostic": {
+    "code": "resource_constraint",
+    "category": "resource_constraint",
+    "message": "The operation completed, but its complete MCP response exceeds the stdio response budget. The analysis result was not truncated. Export retained evidence to consume the complete analysis, or use complete CLI JSON output.",
+    "retryable": false,
+    "remediation": {
+     "action": "Discover retained records with get_evidence_bundle and detail: summary, then inspect compatible records through inspect_analysis_view using an exact Evidence reference. Export complete retained session evidence through export_evidence_bundle to a caller-selected path, or use complete CLI JSON output. The connection remains usable."
+    },
+    "details": {
+     "operation": "trace_application_feature",
+     "resource": "transport",
+     "reason": "The operation completed, but its complete MCP response exceeds the stdio response budget. The analysis result was not truncated. Export retained evidence to consume the complete analysis, or use complete CLI JSON output.",
+     "reported_limits": {
+      "boundary": "mcp-response",
+      "default_receive_buffer_bytes": 10485760,
+      "result_budget_bytes": 67107840,
+      "max_string_code_units": 536869864,
+      "response_bytes_at_least": 67175503,
+      "response_code_units_at_least": 67175503,
+      "constraint": "receive-buffer",
+      "evidence_id": "ev_7101aff4e099178511163d087984fb9789f87b43c568e7d510673c1c42c29d17",
+      "evidence_reference": {
+       "kind": "retained-evidence",
+       "evidence_id": "ev_7101aff4e099178511163d087984fb9789f87b43c568e7d510673c1c42c29d17"
+      }
+     }
+    }
+   }
+  },
+  "compare_application_versions": {
+   "ok": false,
+   "ms": 153198,
+   "error": "compare_application_versions failed: resource_constraint: The operation completed, but its complete MCP response exceeds the stdio response budget. The analysis result was not truncated. Export retained evidence to consume the complete analysis, or use complete CLI JSON output.",
+   "diagnostic": {
+    "code": "resource_constraint",
+    "category": "resource_constraint",
+    "message": "The operation completed, but its complete MCP response exceeds the stdio response budget. The analysis result was not truncated. Export retained evidence to consume the complete analysis, or use complete CLI JSON output.",
+    "retryable": false,
+    "remediation": {
+     "action": "Discover retained records with get_evidence_bundle and detail: summary, then inspect compatible records through inspect_analysis_view using an exact Evidence reference. Export complete retained session evidence through export_evidence_bundle to a caller-selected path, or use complete CLI JSON output. The connection remains usable."
+    },
+    "details": {
+     "operation": "compare_application_versions",
+     "resource": "transport",
+     "reason": "The operation completed, but its complete MCP response exceeds the stdio response budget. The analysis result was not truncated. Export retained evidence to consume the complete analysis, or use complete CLI JSON output.",
+     "reported_limits": {
+      "boundary": "mcp-response",
+      "default_receive_buffer_bytes": 10485760,
+      "result_budget_bytes": 67107840,
+      "max_string_code_units": 536869864,
+      "response_bytes_at_least": 67162305,
+      "response_code_units_at_least": 67162305,
+      "constraint": "receive-buffer",
+      "evidence_id": "ev_a16530ad2f00c0a1479443468531130fa548866b2970ec903dd049c69acb23e2",
+      "evidence_reference": {
+       "kind": "retained-evidence",
+       "evidence_id": "ev_a16530ad2f00c0a1479443468531130fa548866b2970ec903dd049c69acb23e2"
+      }
+     }
+    }
+   }
+  }
+ },
+ "module_pages": 142,
+ "module_rows": 36196,
+ "module_kinds": {
+  "javascript-module": 27547,
+  "source-module": 3119,
+  "javascript-asset": 5530
+ },
+ "peak_rss": 4137717760,
+ "traces": {
+  "bin_outgoing": {
+   "bytes": 1424753,
+   "summary": {
+    "matched_seeds": 1,
+    "traced_nodes": 3,
+    "traced_edges": 2,
+    "terminal_paths": 2,
+    "native_handoffs": 0,
+    "observed_facts": 4,
+    "inferred_facts": 0,
+    "unknown_facts": 0,
+    "unavailable_facts": 2
+   },
+   "coverage": {
+    "status": "partial",
+    "source_graph_status": "partial",
+    "total_seed_matches": 1
+   },
+   "seed": {
+    "kind": "module",
+    "value": "scripts/rea.mjs",
+    "match": "exact",
+    "case_sensitive": false
+   },
+   "graph_limitation_bytes": 1410718,
+   "edges": [
+    {
+     "relation": "contains",
+     "properties": {
+      "scope": "unavailable-static-analysis"
+     }
+    },
+    {
+     "relation": "contains",
+     "properties": {
+      "scope": "unavailable-static-analysis"
+     }
+    }
+   ]
+  },
+  "worker_incoming": {
+   "bytes": 1420815,
+   "summary": {
+    "matched_seeds": 2,
+    "traced_nodes": 4,
+    "traced_edges": 3,
+    "terminal_paths": 0,
+    "native_handoffs": 0,
+    "observed_facts": 6,
+    "inferred_facts": 1,
+    "unknown_facts": 0,
+    "unavailable_facts": 0
+   },
+   "coverage": {
+    "status": "partial",
+    "source_graph_status": "partial",
+    "total_seed_matches": 2
+   },
+   "seed": {
+    "kind": "module",
+    "value": "dist/composition/javascriptAnalysisWorkerProcess.js",
+    "match": "exact",
+    "case_sensitive": false
+   },
+   "graph_limitation_bytes": 1410718,
+   "edges": [
+    {
+     "relation": "contains",
+     "properties": {
+      "logical_module_key": "dist/composition/javascriptAnalysisWorkerProcess.js"
+     }
+    },
+    {
+     "relation": "contains",
+     "properties": {
+      "basis": "package-metadata-within-artifact"
+     }
+    },
+    {
+     "relation": "contains",
+     "properties": {
+      "path": "dist/composition/javascriptAnalysisWorkerProcess.js"
+     }
+    }
+   ]
+  },
+  "hopper_bridge_string": {
+   "bytes": 2083,
+   "summary": {
+    "matched_seeds": 0,
+    "traced_nodes": 0,
+    "traced_edges": 0,
+    "terminal_paths": 0,
+    "native_handoffs": 0,
+    "observed_facts": 0,
+    "inferred_facts": 0,
+    "unknown_facts": 0,
+    "unavailable_facts": 0
+   },
+   "coverage": {
+    "status": "no-match",
+    "source_graph_status": "partial",
+    "total_seed_matches": 0
+   },
+   "seed": {
+    "kind": "string",
+    "value": "hopper_bridge.py",
+    "match": "contains",
+    "case_sensitive": false
+   },
+   "graph_limitation_bytes": 2,
+   "edges": []
+  }
+ }
+}

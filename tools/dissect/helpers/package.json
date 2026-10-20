@@ -1,0 +1,7 @@
+{
+  "name": "dissect-js-helper",
+  "private": true,
+  "type": "module",
+  "description": "Babel-based JS/TS extractor used by dissect",
+  "dependencies": { "@babel/parser": "7.28.5" }
+}

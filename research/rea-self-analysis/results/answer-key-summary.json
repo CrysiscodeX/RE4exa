@@ -1,0 +1,634 @@
+{
+ "package": {
+  "name": "rea-agents",
+  "version": "6.7.0",
+  "main": null,
+  "bin": {
+   "rea": "scripts/rea.mjs",
+   "rea-agents": "scripts/rea.mjs"
+  },
+  "imports": {
+   "#javascript-analysis-worker": "./dist/composition/javascriptAnalysisWorkerProcess.js"
+  },
+  "exports": null
+ },
+ "inventory": {
+  "file_count": 1775,
+  "by_kind": {
+   "text": 37,
+   "bridge-source": 27,
+   "javascript": 1706,
+   "sh": 1,
+   "json": 3,
+   "native-addon": 1
+  },
+  "total_bytes": 28575703
+ },
+ "javascript": {
+  "file_count": 1706,
+  "parse_failures": [],
+  "edge_counts": {
+   "static": 7771,
+   "dynamic": 117,
+   "import-meta-resolve-subpath": 3,
+   "require": 1,
+   "url-module": 74
+  },
+  "unresolved_relative_edges": [],
+  "bin_entries": [
+   "scripts/rea.mjs"
+  ],
+  "bin_entry_edges": [
+   {
+    "from": "scripts/rea.mjs",
+    "to": "package.json",
+    "spec": "../package.json",
+    "kind": "dynamic",
+    "line": 10
+   },
+   {
+    "from": "scripts/rea.mjs",
+    "to": "dist/mcp/main.js",
+    "spec": "../dist/mcp/main.js",
+    "kind": "dynamic",
+    "line": 59
+   },
+   {
+    "from": "scripts/rea.mjs",
+    "to": "dist/cli-runtime/mcpDoctor.js",
+    "spec": "../dist/cli-runtime/mcpDoctor.js",
+    "kind": "dynamic",
+    "line": 64
+   },
+   {
+    "from": "scripts/rea.mjs",
+    "to": "dist/cli-runtime/cli.js",
+    "spec": "../dist/cli-runtime/cli.js",
+    "kind": "dynamic",
+    "line": 73
+   },
+   {
+    "from": "scripts/rea.mjs",
+    "to": "dist/cli-runtime/cliResultOutput.js",
+    "spec": "../dist/cli-runtime/cliResultOutput.js",
+    "kind": "dynamic",
+    "line": 75
+   },
+   {
+    "from": "scripts/rea.mjs",
+    "to": "dist/cli-runtime/cliOutput.js",
+    "spec": "../dist/cli-runtime/cliOutput.js",
+    "kind": "dynamic",
+    "line": 81
+   }
+  ],
+  "subpath_edges": [
+   {
+    "from": "dist/cli-runtime/application__javascript__JavaScriptApplicationService-o0uEsjEc.js",
+    "to": "dist/composition/javascriptAnalysisWorkerProcess.js",
+    "spec": "#javascript-analysis-worker",
+    "kind": "import-meta-resolve-subpath",
+    "line": 5558
+   },
+   {
+    "from": "dist/javascript/analysis/JavaScriptAnalysisWorker.js",
+    "to": "dist/composition/javascriptAnalysisWorkerProcess.js",
+    "spec": "#javascript-analysis-worker",
+    "kind": "import-meta-resolve-subpath",
+    "line": 345
+   },
+   {
+    "from": "dist/mcp/main-Cx-Z7m_n.js",
+    "to": "dist/composition/javascriptAnalysisWorkerProcess.js",
+    "spec": "#javascript-analysis-worker",
+    "kind": "import-meta-resolve-subpath",
+    "line": 50471
+   }
+  ],
+  "reachable_from_bin_via_imports": 197,
+  "reachable_from_bin_incl_subpath_and_url_modules": 1541,
+  "url_module_edges": [
+   {
+    "from": "dist/android/JadxWorkspaceRoot.js",
+    "to": "scripts/rea-android-workspace-guardian.mjs",
+    "line": 10
+   },
+   {
+    "from": "dist/browser/PlaywrightElectronActiveProvider.js",
+    "to": "scripts/electron-active-hook.cjs",
+    "line": 23
+   },
+   {
+    "from": "dist/browser/history/NodeCaptureAdapter.js",
+    "to": "dist/browser/history/NodeCaptureProcess.js",
+    "line": 39
+   },
+   {
+    "from": "dist/cli-runtime/ClientConfigurationDocument-C9T8MNGc.js",
+    "to": "dist/application/SetupSkill.js",
+    "line": 139
+   },
+   {
+    "from": "dist/cli-runtime/ProcessOwnershipObservation-C006iCtZ.js",
+    "to": "dist/process/DarwinProcessRunTokenReader.js",
+    "line": 141
+   },
+   {
+    "from": "dist/cli-runtime/ProcessOwnershipObservation-C006iCtZ.js",
+    "to": "dist/process/DarwinProcessRunTokenReader.js",
+    "line": 141
+   },
+   {
+    "from": "dist/cli-runtime/WindowsNativeLoader-BqyZO0ZD.js",
+    "to": "dist/windows/WindowsNativeLoader.js",
+    "line": 121
+   },
+   {
+    "from": "dist/cli-runtime/WindowsNativeLoader-BqyZO0ZD.js",
+    "to": "dist/windows/WindowsNativeLoader.js",
+    "line": 125
+   },
+   "…(74)"
+  ],
+  "dist_js_unreachable_from_bin": {
+   "count": 163,
+   "bytes": 694169,
+   "sample": [
+    "dist/application/BrowserObservationPort.js",
+    "dist/application/BrowserScenarioCapturePort.js",
+    "dist/application/ClientConfigPath.js",
+    "dist/application/ClientConfigurationCleanup.js",
+    "dist/application/ClientConfigurationPublication.js",
+    "dist/application/DirectAnalysisDependencies.js",
+    "dist/application/DoctorProviderIds.js",
+    "dist/application/EvidenceBundleCommands.js",
+    "…(15)"
+   ]
+  },
+  "external_packages": {
+   "zod": 437,
+   "@babel/types": 70,
+   "incur": 51,
+   "canonicalize": 48,
+   "semver": 17,
+   "@modelcontextprotocol/client": 16,
+   "plist": 13,
+   "stream-json": 12,
+   "jsonc-parser": 9,
+   "stream-chain": 9,
+   "playwright-core": 9,
+   "yaml": 7,
+   "write-file-atomic": 7,
+   "@jridgewell/trace-mapping": 7,
+   "@modelcontextprotocol/server": 7,
+   "@lydell/node-pty": 6,
+   "@electron/asar": 4,
+   "lossless-json": 4,
+   "@xmldom/xmldom": 4,
+   "@babel/parser": 4,
+   "@zip.js/zip.js": 3,
+   "ws": 3,
+   "openpgp": 3,
+   "parse5": 3,
+   "frida": 3,
+   "@xterm/headless": 3,
+   "@xterm/addon-serialize": 3,
+   "pino": 3,
+   "diff": 3,
+   "saxes": 3,
+   "smol-toml": 2,
+   "ignore": 2,
+   "isomorphic-git": 2,
+   "cross-spawn": 2,
+   "ajv": 2,
+   "@clack/prompts": 2,
+   "tokenx": 2,
+   "har-schema": 1,
+   "ajv-formats": 1,
+   "evmole": 1,
+   "cborg": 1,
+   "electron": 1,
+   "husky": 1
+  },
+  "declared_dependencies": [
+   "@babel/parser",
+   "@babel/types",
+   "@clack/prompts",
+   "@electron/asar",
+   "@jridgewell/trace-mapping",
+   "@lydell/node-pty",
+   "@modelcontextprotocol/client",
+   "@modelcontextprotocol/server",
+   "…(40)"
+  ],
+  "import_meta_resolve_sites": [
+   {
+    "file": "dist/cli-runtime/application__javascript__JavaScriptApplicationService-o0uEsjEc.js",
+    "spec": "#javascript-analysis-worker",
+    "line": 5558
+   },
+   {
+    "file": "dist/evm/EvmoleInterfaceWorker.js",
+    "spec": "evmole/no_tla",
+    "line": 26
+   },
+   {
+    "file": "dist/evm/EvmoleInterfaceWorker.js",
+    "spec": "evmole/evmole_bg.wasm",
+    "line": 32
+   },
+   {
+    "file": "dist/javascript/analysis/JavaScriptAnalysisWorker.js",
+    "spec": "#javascript-analysis-worker",
+    "line": 345
+   },
+   {
+    "file": "dist/mcp/main-Cx-Z7m_n.js",
+    "spec": "#javascript-analysis-worker",
+    "line": 50471
+   }
+  ],
+  "child_process_call_sites": {
+   "count": 18,
+   "literal_command": 0,
+   "sites": [
+    {
+     "file": "dist/android/JadxWorkspaceRoot.js",
+     "fn": "spawn",
+     "line": 59,
+     "literal_command": null
+    },
+    {
+     "file": "dist/cli-runtime/ExecFileOutput-D6KLYTve.js",
+     "fn": "execFile",
+     "line": 68,
+     "literal_command": null
+    },
+    {
+     "file": "dist/cli-runtime/ProviderProcess-D87A7ctp.js",
+     "fn": "spawn",
+     "line": 316,
+     "literal_command": null
+    },
+    {
+     "file": "dist/cli-runtime/SharedStartupAttempt-BxKyf3Uv.js",
+     "fn": "spawn",
+     "line": 29,
+     "literal_command": null
+    },
+    {
+     "file": "dist/cli-runtime/cli.js",
+     "fn": "spawn",
+     "line": 16024,
+     "literal_command": null
+    },
+    {
+     "file": "dist/cli-runtime/cli.js",
+     "fn": "spawn",
+     "line": 27484,
+     "literal_command": null
+    },
+    {
+     "file": "dist/cli-runtime/cli.js",
+     "fn": "spawn",
+     "line": 27683,
+     "literal_command": null
+    },
+    {
+     "file": "dist/mcp/ArtifactFileOperation-64cQKI7B.js",
+     "fn": "execFile",
+     "line": 95,
+     "literal_command": null
+    },
+    "…(18)"
+   ]
+  },
+  "url_refs_to_bridges": [
+   {
+    "from": "dist/android/JadxProvider.js",
+    "target": "bridge/android/ReaJadxBridge.java",
+    "exists": true,
+    "line": 21,
+    "logical_base": "dist/android/JadxProvider.js"
+   },
+   {
+    "from": "dist/browser/history/MitmproxyCaptureAdapter.js",
+    "target": "bridge/mitmproxy/capture.py",
+    "exists": true,
+    "line": 42,
+    "logical_base": "dist/browser/history/MitmproxyCaptureAdapter.js"
+   },
+   {
+    "from": "dist/cli-runtime/ProcessOwnershipObservation-C006iCtZ.js",
+    "target": "bridge/process/ProcessRunTokenReader.swift",
+    "exists": true,
+    "line": 141,
+    "logical_base": "dist/process/DarwinProcessRunTokenReader.js"
+   },
+   {
+    "from": "dist/cli-runtime/ProcessOwnershipObservation-C006iCtZ.js",
+    "target": "bridge/process/ProcessRunTokenReaderMain.swift",
+    "exists": true,
+    "line": 141,
+    "logical_base": "dist/process/DarwinProcessRunTokenReader.js"
+   },
+   {
+    "from": "dist/cli-runtime/binary-CWVNJhAC.js",
+    "target": "bridge/hopper_bridge.py",
+    "exists": true,
+    "line": 2801,
+    "logical_base": "dist/hopper/HopperProvider.js"
+   },
+   {
+    "from": "dist/cli-runtime/cli.js",
+    "target": "bridge/pwndbg/launch.py",
+    "exists": true,
+    "line": 7877,
+    "logical_base": "dist/native/pwndbg/PwndbgCoreContext.js"
+   },
+   {
+    "from": "dist/cli-runtime/cli.js",
+    "target": "bridge/pwntools/recorded_crash.py",
+    "exists": true,
+    "line": 7971,
+    "logical_base": "dist/native/pwntools/PwntoolsRecordedCrashProvider.js"
+   },
+   {
+    "from": "dist/cli-runtime/cli.js",
+    "target": "bridge/pwntools/layout.py",
+    "exists": true,
+    "line": 8122,
+    "logical_base": "dist/native/pwntools/PwntoolsLayoutProvider.js"
+   },
+   "…(36)"
+  ],
+  "url_refs_to_native_addon": [
+   {
+    "from": "dist/cli-runtime/WindowsNativeLoader-BqyZO0ZD.js",
+    "target": "native/windows/build/manifest.json",
+    "exists": true,
+    "line": 121,
+    "logical_base": "dist/windows/WindowsNativeLoader.js"
+   },
+   {
+    "from": "dist/cli-runtime/WindowsNativeLoader-BqyZO0ZD.js",
+    "target": "native/windows/build/rea-windows-x64.node",
+    "exists": true,
+    "line": 125,
+    "logical_base": "dist/windows/WindowsNativeLoader.js"
+   },
+   {
+    "from": "dist/cli-runtime/WindowsNativeLoader-BqyZO0ZD.js",
+    "target": "native/windows/build/rea-windows-x64.node",
+    "exists": true,
+    "line": 127,
+    "logical_base": "dist/windows/WindowsNativeLoader.js"
+   },
+   {
+    "from": "dist/mcp/OwnedCommand-BW1jBSt9.js",
+    "target": "native/windows/build/manifest.json",
+    "exists": true,
+    "line": 142,
+    "logical_base": "dist/windows/WindowsNativeLoader.js"
+   },
+   {
+    "from": "dist/mcp/OwnedCommand-BW1jBSt9.js",
+    "target": "native/windows/build/rea-windows-x64.node",
+    "exists": true,
+    "line": 146,
+    "logical_base": "dist/windows/WindowsNativeLoader.js"
+   },
+   {
+    "from": "dist/mcp/OwnedCommand-BW1jBSt9.js",
+    "target": "native/windows/build/rea-windows-x64.node",
+    "exists": true,
+    "line": 148,
+    "logical_base": "dist/windows/WindowsNativeLoader.js"
+   },
+   {
+    "from": "dist/windows/WindowsNativeLoader.js",
+    "target": "native/windows/build/manifest.json",
+    "exists": true,
+    "line": 135,
+    "logical_base": "dist/windows/WindowsNativeLoader.js"
+   },
+   {
+    "from": "dist/windows/WindowsNativeLoader.js",
+    "target": "native/windows/build/rea-windows-x64.node",
+    "exists": true,
+    "line": 139,
+    "logical_base": "dist/windows/WindowsNativeLoader.js"
+   },
+   "…(9)"
+  ],
+  "bridge_files_shipped": [
+   "bridge/android/ReaJadxBridge.java",
+   "bridge/cutter/rea_bridge.py",
+   "bridge/ghidra/ReaGhidraAnalysisOptions.java",
+   "bridge/ghidra/ReaGhidraApplySeeds.java",
+   "bridge/ghidra/ReaGhidraBridge.java",
+   "bridge/ghidra/ReaGhidraBundleActivator.java",
+   "bridge/ghidra/ReaGhidraExtensions.java",
+   "bridge/ghidra/ReaGhidraMipsSoftFloat.java",
+   "…(27)"
+  ],
+  "source_mapping_url_comments": [],
+  "source_map_files": [],
+  "vendor_substring_hits": {
+   "esbuild": {
+    "files": 192,
+    "sample": [
+     "dist/cli-runtime/AnalysisCleanupLease-CWfTGYKd.js",
+     "dist/cli-runtime/AnalysisProvider-BGrYaMVo.js",
+     "dist/cli-runtime/AnalysisSnapshotCache-BjRlXeUS.js",
+     "dist/cli-runtime/ArtifactFileOperation-Dg4BcoEM.js",
+     "dist/cli-runtime/ArtifactReader-DMwm42bk.js"
+    ]
+   },
+   "webpack": {
+    "files": 9,
+    "sample": [
+     "dist/cli-runtime/application__javascript__JavaScriptApplicationService-o0uEsjEc.js",
+     "dist/cli-runtime/cli.js",
+     "dist/cli-runtime/reconstructionObligationLedgerSchemas-Bi6sect1.js",
+     "dist/domain/javascript/electronStaticAnalysisNative.js",
+     "dist/domain/javascript/javascriptStaticAnalysisHelpers.js"
+    ]
+   },
+   "Vite": {
+    "files": 9,
+    "sample": [
+     "dist/cli-runtime/application__javascript__JavaScriptApplicationService-o0uEsjEc.js",
+     "dist/cli-runtime/cli.js",
+     "dist/cli-runtime/reconstructionObligationLedgerSchemas-Bi6sect1.js",
+     "dist/domain/javascript/javascriptStaticAnalysisCalls.js",
+     "dist/domain/javascript/javascriptStaticAnalysisHelpers.js"
+    ]
+   },
+   "React": {
+    "files": 6,
+    "sample": [
+     "dist/cli-runtime/cli.js",
+     "dist/cli-runtime/reconstructionObligationLedgerSchemas-Bi6sect1.js",
+     "dist/domain/javascript/javascriptStaticAnalysisHelpers.js",
+     "dist/domain/webBundleAnalyzerInspection.js",
+     "dist/mcp/browserObservation-DUraZs62.js"
+    ]
+   },
+   "Vue": {
+    "files": 6,
+    "sample": [
+     "dist/cli-runtime/cli.js",
+     "dist/cli-runtime/reconstructionObligationLedgerSchemas-Bi6sect1.js",
+     "dist/domain/javascript/javascriptStaticAnalysisHelpers.js",
+     "dist/domain/webBundleAnalyzerInspection.js",
+     "dist/mcp/browserObservation-DUraZs62.js"
+    ]
+   },
+   "Next.js": {
+    "files": 6,
+    "sample": [
+     "dist/cli-runtime/cli.js",
+     "dist/cli-runtime/reconstructionObligationLedgerSchemas-Bi6sect1.js",
+     "dist/domain/javascript/javascriptStaticAnalysisHelpers.js",
+     "dist/domain/webBundleAnalyzerInspection.js",
+     "dist/mcp/browserObservation-DUraZs62.js"
+    ]
+   },
+   "Angular": {
+    "files": 6,
+    "sample": [
+     "dist/cli-runtime/cli.js",
+     "dist/cli-runtime/reconstructionObligationLedgerSchemas-Bi6sect1.js",
+     "dist/domain/javascript/javascriptStaticAnalysisHelpers.js",
+     "dist/domain/webBundleAnalyzerInspection.js",
+     "dist/mcp/browserObservation-DUraZs62.js"
+    ]
+   },
+   "Svelte": {
+    "files": 6,
+    "sample": [
+     "dist/cli-runtime/cli.js",
+     "dist/cli-runtime/reconstructionObligationLedgerSchemas-Bi6sect1.js",
+     "dist/domain/javascript/javascriptStaticAnalysisHelpers.js",
+     "dist/domain/webBundleAnalyzerInspection.js",
+     "dist/mcp/browserObservation-DUraZs62.js"
+    ]
+   },
+   "Rspack": {
+    "files": 3,
+    "sample": [
+     "dist/cli-runtime/reconstructionObligationLedgerSchemas-Bi6sect1.js",
+     "dist/domain/javascript/javascriptStaticAnalysisHelpers.js",
+     "dist/mcp/webSourceLocation-DKIum0vJ.js"
+    ]
+   },
+   "Rollup": {
+    "files": 3,
+    "sample": [
+     "dist/cli-runtime/reconstructionObligationLedgerSchemas-Bi6sect1.js",
+     "dist/domain/javascript/javascriptStaticAnalysisHelpers.js",
+     "dist/mcp/webSourceLocation-DKIum0vJ.js"
+    ]
+   }
+  }
+ },
+ "native": {
+  "windows_addon": {
+   "path": "native/windows/build/rea-windows-x64.node",
+   "sha256": "28e0a01f74b30232db559bf98f574be82e5c71ad36a86e4c38fe7fb448029856",
+   "manifest": {
+    "packageVersion": "6.7.0",
+    "platform": "win32",
+    "architecture": "x64",
+    "abiVersion": 1,
+    "nodeApiVersion": 8,
+    "artifact": "rea-windows-x64.node",
+    "artifactSha256": "28e0a01f74b30232db559bf98f574be82e5c71ad36a86e4c38fe7fb448029856"
+   },
+   "objdump_file_format": [
+    "architecture: i386:x86-64, flags 0x0000013b:",
+    "HAS_RELOC, EXEC_P, HAS_DEBUG, HAS_SYMS, HAS_LOCALS, D_PAGED",
+    "start address 0x0000000335911340"
+   ],
+   "pe_exports": [
+    "[   0] napi_register_module_v1",
+    "[   1] node_api_module_get_api_version_v1"
+   ],
+   "pe_dll_imports": [
+    "ADVAPI32.dll",
+    "bcrypt.dll",
+    "KERNEL32.dll",
+    "msvcrt.dll",
+    "ntdll.dll"
+   ],
+   "has_resource_section": false
+  },
+  "node_pty_linux_x64": {
+   "path": "node_modules/@lydell/node-pty-linux-x64/pty.node",
+   "sha256": "ff8c140f142c13030d84193e5ba2ac556d320cf29d8efecc391174bfb8861cb0",
+   "elf_header": [
+    "Class:                             ELF64",
+    "Type:                              DYN (Shared object file)",
+    "Machine:                           Advanced Micro Devices X86-64"
+   ],
+   "dynamic_exports": [
+    "_Z10PtyGetProcRKN4Napi12CallbackInfoE",
+    "_Z17SetupExitCallbackN4Napi3EnvENS_8FunctionEi",
+    "_Z4initN4Napi3EnvENS_6ObjectE",
+    "_Z7PtyForkRKN4Napi12CallbackInfoE",
+    "_Z7PtyOpenRKN4Napi12CallbackInfoE",
+    "_Z9PtyResizeRKN4Napi12CallbackInfoE",
+    "_ZN4Napi11AsyncWorker14OnWorkCompleteENS_3EnvE11napi_status",
+    "_ZN4Napi11AsyncWorker4OnOKEv",
+    "…(49)"
+   ],
+   "needed": [
+    "libutil.so.1",
+    "libstdc++.so.6",
+    "libgcc_s.so.1",
+    "libpthread.so.0",
+    "libc.so.6"
+   ],
+   "has_go_buildinfo": false,
+   "has_rust_dep_v0": false
+  }
+ },
+ "version_diff_vs_older": {
+  "older_version": "6.5.0",
+  "counts": {
+   "added": 287,
+   "removed": 162,
+   "changed": 605,
+   "unchanged": 883
+  },
+  "javascript_counts": {
+   "added": 287,
+   "removed": 162,
+   "changed": 586,
+   "unchanged": 833
+  },
+  "added_sample": [
+   "dist/adb/AdbCommand.js",
+   "dist/adb/AdbInputSnapshot.js",
+   "dist/android/JadxFailure.js",
+   "dist/android/JadxInterruption.js",
+   "dist/android/JadxJavaProbe.js",
+   "dist/apktool/ApktoolCommandCleanup.js",
+   "dist/apktool/ApktoolCommandOutput.js",
+   "dist/apktool/ApktoolDecodedInventory.js",
+   "…(20)"
+  ],
+  "removed_sample": [
+   "dist/application/binary/AnalysisClientCleanup.js",
+   "dist/cli-runtime/AbortablePromise-BVBemxbD.js",
+   "dist/cli-runtime/AnalysisProvider-D0Us2OTk.js",
+   "dist/cli-runtime/AnalysisSnapshotCache-BXS0wRd2.js",
+   "dist/cli-runtime/ArtifactReader-BXkffc1D.js",
+   "dist/cli-runtime/ArtifactResourceScope-DQWTcUwE.js",
+   "dist/cli-runtime/AsarHeader-CnzOzYEH.js",
+   "dist/cli-runtime/BinarySessionStatus-DnMxMk-r.js",
+   "…(20)"
+  ]
+ }
+}

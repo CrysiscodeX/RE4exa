@@ -1,0 +1,154 @@
+{
+ "elapsed_seconds": 4.48,
+ "agent_visible_bytes": 25788,
+ "probes": 4,
+ "evidence_records": 5,
+ "adjudication": {
+  "ship": true,
+  "entry": true,
+  "workers": true,
+  "bridges": true,
+  "addon": true,
+  "pty_needed": true,
+  "sourcemaps": true
+ },
+ "coverage": {
+  "total": 9,
+  "answered": 7,
+  "partial": 0,
+  "unknown": 1,
+  "unaccounted": 1,
+  "complete": false,
+  "answered_share": 0.778,
+  "caveats": [
+   "1 declared question(s) were never addressed; this is not the same as 'checked, nothing found'."
+  ],
+  "questions": [
+   {
+    "id": "q_02d1fe8842cbad86",
+    "question": "Which files does the published package ship, with digests?",
+    "state": "answered",
+    "confidence": "observed",
+    "revision": 1,
+    "evidence": 1
+   },
+   {
+    "id": "q_2fd67de5f1bb67f5",
+    "question": "What are the declared entry points?",
+    "state": "answered",
+    "confidence": "observed",
+    "revision": 1,
+    "evidence": 1
+   },
+   {
+    "id": "q_4006d8a6046f5324",
+    "question": "Which worker entry points are reached through package.json imports?",
+    "state": "answered",
+    "confidence": "derived",
+    "revision": 1,
+    "evidence": 1
+   },
+   {
+    "id": "q_d379d8246827e55a",
+    "question": "Which bridge files can the JavaScript reach?",
+    "state": "answered",
+    "confidence": "inferred",
+    "revision": 1,
+    "evidence": 1
+   },
+   {
+    "id": "q_595f2122494200ce",
+    "question": "Does the package load a native Node addon, and what does it export?",
+    "state": "answered",
+    "confidence": "observed",
+    "revision": 1,
+    "evidence": 2
+   },
+   {
+    "id": "q_668f318d284fd670",
+    "question": "Which shared libraries does the bundled node-pty addon need?",
+    "state": "answered",
+    "confidence": "observed",
+    "revision": 1,
+    "evidence": 1
+   },
+   {
+    "id": "q_d2d829adee84dc80",
+    "question": "Does the package ship source maps?",
+    "state": "answered",
+    "confidence": "observed",
+    "revision": 1,
+    "evidence": 2
+   },
+   {
+    "id": "q_33840ec280785b14",
+    "question": "Which child processes does it start at runtime?",
+    "state": "unknown",
+    "confidence": null,
+    "revision": 1,
+    "evidence": 0
+   },
+   {
+    "id": "q_a7d8a3beb04661bd",
+    "question": "Which network endpoints does it contact at runtime?",
+    "state": "unaccounted",
+    "confidence": null,
+    "revision": 0,
+    "evidence": 0
+   }
+  ]
+ },
+ "calibration": {
+  "adjudicated": 7,
+  "target_error": 0.1,
+  "classes": {
+   "observed": {
+    "n": 5,
+    "correct": 5,
+    "precision": 1.0,
+    "wilson95": [
+     0.5655,
+     1.0
+    ],
+    "nominal": 0.95,
+    "gap": -0.05,
+    "status": "insufficient-data",
+    "abstain": null
+   },
+   "derived": {
+    "n": 1,
+    "correct": 1,
+    "precision": 1.0,
+    "wilson95": [
+     0.2065,
+     1.0
+    ],
+    "nominal": 0.85,
+    "gap": -0.15,
+    "status": "insufficient-data",
+    "abstain": null
+   },
+   "inferred": {
+    "n": 1,
+    "correct": 1,
+    "precision": 1.0,
+    "wilson95": [
+     0.2065,
+     1.0
+    ],
+    "nominal": 0.6,
+    "gap": -0.4,
+    "status": "insufficient-data",
+    "abstain": null
+   }
+  },
+  "ece_vs_nominal": 0.1143,
+  "ordering_holds": true,
+  "min_n": 10,
+  "advice": [
+   "'observed': only 5 adjudicated answer(s); need 10 before trusting or abstaining.",
+   "'derived': only 1 adjudicated answer(s); need 10 before trusting or abstaining.",
+   "'inferred': only 1 adjudicated answer(s); need 10 before trusting or abstaining."
+  ]
+ }
+}

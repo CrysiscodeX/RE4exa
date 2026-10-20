@@ -1,0 +1,48 @@
+{
+ "comparison": {
+  "status": "changed",
+  "terminal": "changed",
+  "interaction": "unchanged",
+  "exit": "changed",
+  "filesystem": "unknown",
+  "process": "unknown"
+ },
+ "first_divergence_dimension": "terminal",
+ "runs": [
+  {
+   "exit": {
+    "code": 0,
+    "signal": 0,
+    "reason": "exited"
+   },
+   "frame_at_ms": [
+    1480
+   ],
+   "process_samples": 1,
+   "settlement": {
+    "state": "quiesced",
+    "elapsed_ms": 72,
+    "cleanup_outcome": "not_required"
+   }
+  },
+  {
+   "exit": {
+    "code": 0,
+    "signal": 0,
+    "reason": "exited"
+   },
+   "frame_at_ms": [
+    1740
+   ],
+   "process_samples": 4,
+   "settlement": {
+    "state": "quiesced",
+    "elapsed_ms": 78,
+    "cleanup_outcome": "not_required"
+   }
+  }
+ ],
+ "frames_identical_ignoring_time": true,
+ "limitations_listed": 21,
+ "distinct_limitations": 9
+}

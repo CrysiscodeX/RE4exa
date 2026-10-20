@@ -1,0 +1,211 @@
+{
+ "catalog_full": {
+  "tool_count": 207,
+  "list_ms": 1621,
+  "total_bytes": 3158368,
+  "input_schema_bytes": 667642,
+  "output_schema_bytes": 2353893,
+  "description_bytes": 92270,
+  "tools_with_output_schema": 207,
+  "annotation_hints": {
+   "readOnlyHint": {
+    "true": 5,
+    "false": 202
+   },
+   "destructiveHint": {
+    "true": 31,
+    "false": 176
+   },
+   "idempotentHint": {
+    "true": 167,
+    "false": 40
+   },
+   "openWorldHint": {
+    "true": 100,
+    "false": 107
+   }
+  },
+  "largest_tools": [
+   {
+    "name": "compare_web_captures",
+    "bytes": 181042,
+    "output_schema_bytes": 14248
+   },
+   {
+    "name": "inspect_analysis_view",
+    "bytes": 170393,
+    "output_schema_bytes": 137985
+   },
+   {
+    "name": "compare_application_versions",
+    "bytes": 62206,
+    "output_schema_bytes": 31285
+   },
+   {
+    "name": "capture_browser_scenario",
+    "bytes": 58724,
+    "output_schema_bytes": 36152
+   },
+   {
+    "name": "reconcile_javascript_runtime",
+    "bytes": 46395,
+    "output_schema_bytes": 30167
+   }
+  ]
+ },
+ "binary_session": {
+  "top_level_keys": [
+   "open",
+   "cleanup_pending",
+   "capabilities",
+   "analysis_provider_binding",
+   "analysis_provider_candidates",
+   "analysis_run",
+   "analysis_activity",
+   "provider_operation_health",
+   "tool_availability",
+   "client_features",
+   "server_identity"
+  ],
+  "catalog_identity": {
+   "counts": {
+    "cli_commands": 153,
+    "mcp_tools": 207,
+    "mcp_prompts": 6
+   },
+   "digests": {
+    "tools_sha256": "af39310c9591bb981893ec0d2188b1bcf6e9cc8ba3ac513d5bbefc8ddcb85639",
+    "prompts_sha256": "7152916ab48bd2a9677a5ad9cdbde0a51dc53c113934952ad096e93f5f18aa7e",
+    "combined_sha256": "96d8f6e6ea1b1ba13557216624a3461c738729d53c79b4b0100d1f3a3a32441c"
+   }
+  },
+  "tool_availability_group_count": 76,
+  "analysis_provider_binding": null,
+  "provider_candidates": [
+   {
+    "status": "unavailable",
+    "reason": null
+   },
+   {
+    "status": "unavailable",
+    "reason": null
+   },
+   {
+    "status": "unavailable",
+    "reason": null
+   },
+   {
+    "status": "unavailable",
+    "reason": null
+   }
+  ]
+ },
+ "error_reply": {
+  "isError": true,
+  "has_structuredContent": false,
+  "content_types": [
+   "text"
+  ],
+  "diagnostic": {
+   "code": "invalid_request",
+   "category": "invalid_input",
+   "message": "Analysis input is invalid. Check the arguments and try again.",
+   "retryable": true,
+   "remediation": {
+    "action": "Correct the listed arguments and retry."
+   },
+   "details": {
+    "operation": "inspect_go_binary",
+    "issues": [
+     {
+      "path": [
+       "path"
+      ],
+      "reason": "invalid_format",
+      "message": "Expected an absolute filesystem path on this host."
+     }
+    ]
+   }
+  }
+ },
+ "error_reply_missing_file": {
+  "code": "invalid_request",
+  "category": "invalid_input",
+  "message": "Analysis input is invalid. Check the arguments and try again.",
+  "retryable": true,
+  "remediation": {
+   "action": "Correct the listed arguments and retry."
+  },
+  "details": {
+   "operation": "inspect_go_binary",
+   "issues": [
+    {
+     "path": [
+      "path"
+     ],
+     "reason": "invalid_value",
+     "message": "Selected artifact could not be read (ENOENT): /nonexistent/file."
+    }
+   ]
+  }
+ },
+ "catalog_compact_no_output_schema": {
+  "tool_count": 207,
+  "list_ms": 691,
+  "total_bytes": 219226,
+  "input_schema_bytes": 85705,
+  "output_schema_bytes": 0,
+  "description_bytes": 92270,
+  "tools_with_output_schema": 0,
+  "annotation_hints": {
+   "readOnlyHint": {
+    "true": 5,
+    "false": 202
+   },
+   "destructiveHint": {
+    "true": 31,
+    "false": 176
+   },
+   "idempotentHint": {
+    "true": 167,
+    "false": 40
+   },
+   "openWorldHint": {
+    "true": 100,
+    "false": 107
+   }
+  },
+  "largest_tools": [
+   {
+    "name": "inspect_analysis_view",
+    "bytes": 7443,
+    "output_schema_bytes": 0
+   },
+   {
+    "name": "capture_process_scenario",
+    "bytes": 4827,
+    "output_schema_bytes": 0
+   },
+   {
+    "name": "update_unknown",
+    "bytes": 3154,
+    "output_schema_bytes": 0
+   },
+   {
+    "name": "capture_electron_scenario",
+    "bytes": 3057,
+    "output_schema_bytes": 0
+   },
+   {
+    "name": "capture_browser_scenario",
+    "bytes": 2938,
+    "output_schema_bytes": 0
+   }
+  ]
+ },
+ "estimated_tokens_note": "tokens estimated as bytes/4 (rough; not a model tokenizer)",
+ "estimated_tokens": {
+  "full": 789592,
+  "compact": 54807
+ }
+}

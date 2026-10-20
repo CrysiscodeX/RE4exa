@@ -1,0 +1,9 @@
+node_modules/
+__pycache__/
+*.pyc
+.rex/
+.run/
+tools/dissect/.bin/
+research/dissection/dissection.db
+research/dissection/dissection.db-*
+research/dissection/scan.log

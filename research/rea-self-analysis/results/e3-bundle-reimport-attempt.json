@@ -1,0 +1,383 @@
+{
+ "timings": {
+  "import_bundle": {
+   "ok": false,
+   "ms": 107315,
+   "error": "import_evidence_bundle failed: evidence_integrity_mismatch: Evidence bundle validation failed: Invalid string length. Recreate or re-export the bundle, then try again.",
+   "diagnostic": {
+    "code": "evidence_integrity_mismatch",
+    "category": "integrity_mismatch",
+    "message": "Evidence bundle validation failed: Invalid string length. Recreate or re-export the bundle, then try again.",
+    "retryable": false,
+    "remediation": {
+     "action": "Evidence bundle validation failed: Invalid string length. Recreate or re-export the bundle, then try again."
+    },
+    "details": {
+     "reason": "Evidence bundle validation failed"
+    }
+   }
+  },
+  "modules_0": {
+   "ok": false,
+   "ms": 55,
+   "error": "inspect_analysis_view failed: evidence_integrity_mismatch: Evidence ev_0d5334042796efda8069ed65c9223a9d5ef6233d6155225003b2b49bfa0917d8 is not retained in this session. Supply complete inline Evidence, re-run its producer, or import its bundle before using this reference.",
+   "diagnostic": {
+    "code": "evidence_integrity_mismatch",
+    "category": "integrity_mismatch",
+    "message": "Evidence ev_0d5334042796efda8069ed65c9223a9d5ef6233d6155225003b2b49bfa0917d8 is not retained in this session. Supply complete inline Evidence, re-run its producer, or import its bundle before using this reference.",
+    "retryable": false,
+    "remediation": {
+     "action": "Use an exact Evidence reference retained by this session, supply the complete inline Evidence, re-run its producer, or import its Evidence bundle. close_binary clears retained records."
+    },
+    "details": {
+     "evidence_id": "ev_0d5334042796efda8069ed65c9223a9d5ef6233d6155225003b2b49bfa0917d8",
+     "reason": "missing",
+     "expected": "Evidence retained in this session",
+     "actual": null
+    }
+   }
+  },
+  "refs:scripts/rea.mjs": {
+   "ok": false,
+   "ms": 4,
+   "error": "inspect_analysis_view failed: evidence_integrity_mismatch: Evidence ev_0d5334042796efda8069ed65c9223a9d5ef6233d6155225003b2b49bfa0917d8 is not retained in this session. Supply complete inline Evidence, re-run its producer, or import its bundle before using this reference.",
+   "diagnostic": {
+    "code": "evidence_integrity_mismatch",
+    "category": "integrity_mismatch",
+    "message": "Evidence ev_0d5334042796efda8069ed65c9223a9d5ef6233d6155225003b2b49bfa0917d8 is not retained in this session. Supply complete inline Evidence, re-run its producer, or import its bundle before using this reference.",
+    "retryable": false,
+    "remediation": {
+     "action": "Use an exact Evidence reference retained by this session, supply the complete inline Evidence, re-run its producer, or import its Evidence bundle. close_binary clears retained records."
+    },
+    "details": {
+     "evidence_id": "ev_0d5334042796efda8069ed65c9223a9d5ef6233d6155225003b2b49bfa0917d8",
+     "reason": "missing",
+     "expected": "Evidence retained in this session",
+     "actual": null
+    }
+   }
+  },
+  "refs:dist/javascript/analysis/JavaScriptAnalysisWorker.js": {
+   "ok": false,
+   "ms": 3,
+   "error": "inspect_analysis_view failed: evidence_integrity_mismatch: Evidence ev_0d5334042796efda8069ed65c9223a9d5ef6233d6155225003b2b49bfa0917d8 is not retained in this session. Supply complete inline Evidence, re-run its producer, or import its bundle before using this reference.",
+   "diagnostic": {
+    "code": "evidence_integrity_mismatch",
+    "category": "integrity_mismatch",
+    "message": "Evidence ev_0d5334042796efda8069ed65c9223a9d5ef6233d6155225003b2b49bfa0917d8 is not retained in this session. Supply complete inline Evidence, re-run its producer, or import its bundle before using this reference.",
+    "retryable": false,
+    "remediation": {
+     "action": "Use an exact Evidence reference retained by this session, supply the complete inline Evidence, re-run its producer, or import its Evidence bundle. close_binary clears retained records."
+    },
+    "details": {
+     "evidence_id": "ev_0d5334042796efda8069ed65c9223a9d5ef6233d6155225003b2b49bfa0917d8",
+     "reason": "missing",
+     "expected": "Evidence retained in this session",
+     "actual": null
+    }
+   }
+  },
+  "refs:dist/windows/WindowsNativeLoader.js": {
+   "ok": false,
+   "ms": 3,
+   "error": "inspect_analysis_view failed: evidence_integrity_mismatch: Evidence ev_0d5334042796efda8069ed65c9223a9d5ef6233d6155225003b2b49bfa0917d8 is not retained in this session. Supply complete inline Evidence, re-run its producer, or import its bundle before using this reference.",
+   "diagnostic": {
+    "code": "evidence_integrity_mismatch",
+    "category": "integrity_mismatch",
+    "message": "Evidence ev_0d5334042796efda8069ed65c9223a9d5ef6233d6155225003b2b49bfa0917d8 is not retained in this session. Supply complete inline Evidence, re-run its producer, or import its bundle before using this reference.",
+    "retryable": false,
+    "remediation": {
+     "action": "Use an exact Evidence reference retained by this session, supply the complete inline Evidence, re-run its producer, or import its Evidence bundle. close_binary clears retained records."
+    },
+    "details": {
+     "evidence_id": "ev_0d5334042796efda8069ed65c9223a9d5ef6233d6155225003b2b49bfa0917d8",
+     "reason": "missing",
+     "expected": "Evidence retained in this session",
+     "actual": null
+    }
+   }
+  },
+  "refs:dist/hopper/HopperProvider.js": {
+   "ok": false,
+   "ms": 2,
+   "error": "inspect_analysis_view failed: evidence_integrity_mismatch: Evidence ev_0d5334042796efda8069ed65c9223a9d5ef6233d6155225003b2b49bfa0917d8 is not retained in this session. Supply complete inline Evidence, re-run its producer, or import its bundle before using this reference.",
+   "diagnostic": {
+    "code": "evidence_integrity_mismatch",
+    "category": "integrity_mismatch",
+    "message": "Evidence ev_0d5334042796efda8069ed65c9223a9d5ef6233d6155225003b2b49bfa0917d8 is not retained in this session. Supply complete inline Evidence, re-run its producer, or import its bundle before using this reference.",
+    "retryable": false,
+    "remediation": {
+     "action": "Use an exact Evidence reference retained by this session, supply the complete inline Evidence, re-run its producer, or import its Evidence bundle. close_binary clears retained records."
+    },
+    "details": {
+     "evidence_id": "ev_0d5334042796efda8069ed65c9223a9d5ef6233d6155225003b2b49bfa0917d8",
+     "reason": "missing",
+     "expected": "Evidence retained in this session",
+     "actual": null
+    }
+   }
+  },
+  "refs:dist/evm/EvmoleInterfaceWorker.js": {
+   "ok": false,
+   "ms": 2,
+   "error": "inspect_analysis_view failed: evidence_integrity_mismatch: Evidence ev_0d5334042796efda8069ed65c9223a9d5ef6233d6155225003b2b49bfa0917d8 is not retained in this session. Supply complete inline Evidence, re-run its producer, or import its bundle before using this reference.",
+   "diagnostic": {
+    "code": "evidence_integrity_mismatch",
+    "category": "integrity_mismatch",
+    "message": "Evidence ev_0d5334042796efda8069ed65c9223a9d5ef6233d6155225003b2b49bfa0917d8 is not retained in this session. Supply complete inline Evidence, re-run its producer, or import its bundle before using this reference.",
+    "retryable": false,
+    "remediation": {
+     "action": "Use an exact Evidence reference retained by this session, supply the complete inline Evidence, re-run its producer, or import its Evidence bundle. close_binary clears retained records."
+    },
+    "details": {
+     "evidence_id": "ev_0d5334042796efda8069ed65c9223a9d5ef6233d6155225003b2b49bfa0917d8",
+     "reason": "missing",
+     "expected": "Evidence retained in this session",
+     "actual": null
+    }
+   }
+  },
+  "refs:dist/android/JadxProvider.js": {
+   "ok": false,
+   "ms": 2,
+   "error": "inspect_analysis_view failed: evidence_integrity_mismatch: Evidence ev_0d5334042796efda8069ed65c9223a9d5ef6233d6155225003b2b49bfa0917d8 is not retained in this session. Supply complete inline Evidence, re-run its producer, or import its bundle before using this reference.",
+   "diagnostic": {
+    "code": "evidence_integrity_mismatch",
+    "category": "integrity_mismatch",
+    "message": "Evidence ev_0d5334042796efda8069ed65c9223a9d5ef6233d6155225003b2b49bfa0917d8 is not retained in this session. Supply complete inline Evidence, re-run its producer, or import its bundle before using this reference.",
+    "retryable": false,
+    "remediation": {
+     "action": "Use an exact Evidence reference retained by this session, supply the complete inline Evidence, re-run its producer, or import its Evidence bundle. close_binary clears retained records."
+    },
+    "details": {
+     "evidence_id": "ev_0d5334042796efda8069ed65c9223a9d5ef6233d6155225003b2b49bfa0917d8",
+     "reason": "missing",
+     "expected": "Evidence retained in this session",
+     "actual": null
+    }
+   }
+  },
+  "facts:package.json": {
+   "ok": false,
+   "ms": 4,
+   "error": "inspect_analysis_view failed: evidence_integrity_mismatch: Evidence ev_0d5334042796efda8069ed65c9223a9d5ef6233d6155225003b2b49bfa0917d8 is not retained in this session. Supply complete inline Evidence, re-run its producer, or import its bundle before using this reference.",
+   "diagnostic": {
+    "code": "evidence_integrity_mismatch",
+    "category": "integrity_mismatch",
+    "message": "Evidence ev_0d5334042796efda8069ed65c9223a9d5ef6233d6155225003b2b49bfa0917d8 is not retained in this session. Supply complete inline Evidence, re-run its producer, or import its bundle before using this reference.",
+    "retryable": false,
+    "remediation": {
+     "action": "Use an exact Evidence reference retained by this session, supply the complete inline Evidence, re-run its producer, or import its Evidence bundle. close_binary clears retained records."
+    },
+    "details": {
+     "evidence_id": "ev_0d5334042796efda8069ed65c9223a9d5ef6233d6155225003b2b49bfa0917d8",
+     "reason": "missing",
+     "expected": "Evidence retained in this session",
+     "actual": null
+    }
+   }
+  },
+  "trace:worker_incoming": {
+   "ok": false,
+   "ms": 10,
+   "error": "trace_application_feature failed: evidence_integrity_mismatch: Evidence ev_0d5334042796efda8069ed65c9223a9d5ef6233d6155225003b2b49bfa0917d8 is not retained in this session. Supply complete inline Evidence, re-run its producer, or import its bundle before using this reference.",
+   "diagnostic": {
+    "code": "evidence_integrity_mismatch",
+    "category": "integrity_mismatch",
+    "message": "Evidence ev_0d5334042796efda8069ed65c9223a9d5ef6233d6155225003b2b49bfa0917d8 is not retained in this session. Supply complete inline Evidence, re-run its producer, or import its bundle before using this reference.",
+    "retryable": false,
+    "remediation": {
+     "action": "Use an exact Evidence reference retained by this session, supply the complete inline Evidence, re-run its producer, or import its Evidence bundle. close_binary clears retained records."
+    },
+    "details": {
+     "evidence_id": "ev_0d5334042796efda8069ed65c9223a9d5ef6233d6155225003b2b49bfa0917d8",
+     "reason": "missing",
+     "expected": "Evidence retained in this session",
+     "actual": null
+    }
+   }
+  },
+  "trace:bin_outgoing": {
+   "ok": false,
+   "ms": 2,
+   "error": "trace_application_feature failed: evidence_integrity_mismatch: Evidence ev_0d5334042796efda8069ed65c9223a9d5ef6233d6155225003b2b49bfa0917d8 is not retained in this session. Supply complete inline Evidence, re-run its producer, or import its bundle before using this reference.",
+   "diagnostic": {
+    "code": "evidence_integrity_mismatch",
+    "category": "integrity_mismatch",
+    "message": "Evidence ev_0d5334042796efda8069ed65c9223a9d5ef6233d6155225003b2b49bfa0917d8 is not retained in this session. Supply complete inline Evidence, re-run its producer, or import its bundle before using this reference.",
+    "retryable": false,
+    "remediation": {
+     "action": "Use an exact Evidence reference retained by this session, supply the complete inline Evidence, re-run its producer, or import its Evidence bundle. close_binary clears retained records."
+    },
+    "details": {
+     "evidence_id": "ev_0d5334042796efda8069ed65c9223a9d5ef6233d6155225003b2b49bfa0917d8",
+     "reason": "missing",
+     "expected": "Evidence retained in this session",
+     "actual": null
+    }
+   }
+  },
+  "trace:hopper_bridge_string": {
+   "ok": false,
+   "ms": 2,
+   "error": "trace_application_feature failed: evidence_integrity_mismatch: Evidence ev_0d5334042796efda8069ed65c9223a9d5ef6233d6155225003b2b49bfa0917d8 is not retained in this session. Supply complete inline Evidence, re-run its producer, or import its bundle before using this reference.",
+   "diagnostic": {
+    "code": "evidence_integrity_mismatch",
+    "category": "integrity_mismatch",
+    "message": "Evidence ev_0d5334042796efda8069ed65c9223a9d5ef6233d6155225003b2b49bfa0917d8 is not retained in this session. Supply complete inline Evidence, re-run its producer, or import its bundle before using this reference.",
+    "retryable": false,
+    "remediation": {
+     "action": "Use an exact Evidence reference retained by this session, supply the complete inline Evidence, re-run its producer, or import its Evidence bundle. close_binary clears retained records."
+    },
+    "details": {
+     "evidence_id": "ev_0d5334042796efda8069ed65c9223a9d5ef6233d6155225003b2b49bfa0917d8",
+     "reason": "missing",
+     "expected": "Evidence retained in this session",
+     "actual": null
+    }
+   }
+  },
+  "trace:windows_addon_string": {
+   "ok": false,
+   "ms": 16,
+   "error": "trace_application_feature failed: evidence_integrity_mismatch: Evidence ev_0d5334042796efda8069ed65c9223a9d5ef6233d6155225003b2b49bfa0917d8 is not retained in this session. Supply complete inline Evidence, re-run its producer, or import its bundle before using this reference.",
+   "diagnostic": {
+    "code": "evidence_integrity_mismatch",
+    "category": "integrity_mismatch",
+    "message": "Evidence ev_0d5334042796efda8069ed65c9223a9d5ef6233d6155225003b2b49bfa0917d8 is not retained in this session. Supply complete inline Evidence, re-run its producer, or import its bundle before using this reference.",
+    "retryable": false,
+    "remediation": {
+     "action": "Use an exact Evidence reference retained by this session, supply the complete inline Evidence, re-run its producer, or import its Evidence bundle. close_binary clears retained records."
+    },
+    "details": {
+     "evidence_id": "ev_0d5334042796efda8069ed65c9223a9d5ef6233d6155225003b2b49bfa0917d8",
+     "reason": "missing",
+     "expected": "Evidence retained in this session",
+     "actual": null
+    }
+   }
+  },
+  "compare_application_versions": {
+   "ok": false,
+   "ms": 8,
+   "error": "compare_application_versions failed: evidence_integrity_mismatch: Evidence ev_cbe57e4a0b25c3777d51e5b2277094d18e46a0d81c6e59595172823ec62210ba is not retained in this session. Supply complete inline Evidence, re-run its producer, or import its bundle before using this reference.",
+   "diagnostic": {
+    "code": "evidence_integrity_mismatch",
+    "category": "integrity_mismatch",
+    "message": "Evidence ev_cbe57e4a0b25c3777d51e5b2277094d18e46a0d81c6e59595172823ec62210ba is not retained in this session. Supply complete inline Evidence, re-run its producer, or import its bundle before using this reference.",
+    "retryable": false,
+    "remediation": {
+     "action": "Use an exact Evidence reference retained by this session, supply the complete inline Evidence, re-run its producer, or import its Evidence bundle. close_binary clears retained records."
+    },
+    "details": {
+     "evidence_id": "ev_cbe57e4a0b25c3777d51e5b2277094d18e46a0d81c6e59595172823ec62210ba",
+     "reason": "missing",
+     "expected": "Evidence retained in this session",
+     "actual": null
+    }
+   }
+  }
+ },
+ "rea_peak_rss_after_import": 5564911616,
+ "rea_peak_rss_final": 5564911616,
+ "wire": [
+  {
+   "name": "import_evidence_bundle",
+   "ms": 107314,
+   "isError": true,
+   "textBytes": 410,
+   "structuredBytes": 0
+  },
+  {
+   "name": "inspect_analysis_view",
+   "ms": 55,
+   "isError": true,
+   "textBytes": 712,
+   "structuredBytes": 0
+  },
+  {
+   "name": "inspect_analysis_view",
+   "ms": 4,
+   "isError": true,
+   "textBytes": 712,
+   "structuredBytes": 0
+  },
+  {
+   "name": "inspect_analysis_view",
+   "ms": 3,
+   "isError": true,
+   "textBytes": 712,
+   "structuredBytes": 0
+  },
+  {
+   "name": "inspect_analysis_view",
+   "ms": 3,
+   "isError": true,
+   "textBytes": 712,
+   "structuredBytes": 0
+  },
+  {
+   "name": "inspect_analysis_view",
+   "ms": 2,
+   "isError": true,
+   "textBytes": 712,
+   "structuredBytes": 0
+  },
+  {
+   "name": "inspect_analysis_view",
+   "ms": 2,
+   "isError": true,
+   "textBytes": 712,
+   "structuredBytes": 0
+  },
+  {
+   "name": "inspect_analysis_view",
+   "ms": 2,
+   "isError": true,
+   "textBytes": 712,
+   "structuredBytes": 0
+  },
+  {
+   "name": "inspect_analysis_view",
+   "ms": 4,
+   "isError": true,
+   "textBytes": 712,
+   "structuredBytes": 0
+  },
+  {
+   "name": "trace_application_feature",
+   "ms": 10,
+   "isError": true,
+   "textBytes": 712,
+   "structuredBytes": 0
+  },
+  {
+   "name": "trace_application_feature",
+   "ms": 2,
+   "isError": true,
+   "textBytes": 712,
+   "structuredBytes": 0
+  },
+  {
+   "name": "trace_application_feature",
+   "ms": 2,
+   "isError": true,
+   "textBytes": 712,
+   "structuredBytes": 0
+  },
+  {
+   "name": "trace_application_feature",
+   "ms": 15,
+   "isError": true,
+   "textBytes": 712,
+   "structuredBytes": 0
+  },
+  {
+   "name": "compare_application_versions",
+   "ms": 7,
+   "isError": true,
+   "textBytes": 712,
+   "structuredBytes": 0
+  }
+ ]
+}

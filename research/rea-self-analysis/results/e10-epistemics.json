@@ -1,0 +1,267 @@
+{
+ "batch1": [
+  {
+   "id": "open670",
+   "tool": "open_binary",
+   "ok": true,
+   "ms": 209,
+   "bytes": 262
+  },
+  {
+   "id": "ia670",
+   "tool": "inspect_artifact",
+   "ok": true,
+   "ms": 4060,
+   "bytes": 3589
+  },
+  {
+   "id": "open650",
+   "tool": "open_binary",
+   "ok": true,
+   "ms": 177,
+   "bytes": 262
+  },
+  {
+   "id": "ia650",
+   "tool": "inspect_artifact",
+   "ok": true,
+   "ms": 3228,
+   "bytes": 3589
+  },
+  {
+   "id": "cmp",
+   "tool": "compare_artifacts",
+   "ok": false,
+   "ms": 5,
+   "error": "compare_artifacts failed: ?: Input validation error: Invalid arguments for tool compare_artifacts: left.subject: Invalid input: expected object, received undefined, left.provider: Invalid input: expected object, received undefined, left.analysis_profile: Invalid input: expected object, received undefined, left.predicate_type: I",
+   "diagnostic": {
+    "raw": "Input validation error: Invalid arguments for tool compare_artifacts: left.subject: Invalid input: expected object, received undefined, left.provider: Invalid input: expected object, received undefined, left.analysis_profile: Invalid input: expected object, received undefined, left.predicate_type: Invalid input: expected string, received undefined, left.operation: Invalid input: expected string, received undefined, left.parameters: Invalid input: expected nonoptional, received undefined, left.raw_result: Invalid input: expected nonoptional, received undefined, left.normalized_result: Invalid input: expected nonoptional, received undefined, left.confidence: Invalid option: expected one of \"observed\"|\"derived\"|\"inferred\", left.authority: Invalid option: expected one of \"shipped-artifact\"|\"controlled-replay\"|\"historical-reference\"|\"external-service\"|\"analyst-inference\", left.environment: Invalid input: expected object, received undefined, left.limitations: Invalid input: expected array, received undefined, left.relationship_coverage: Invalid input: expected object, received undefined, left.locations: Invalid input: expected array, received undefined, left.evidence_links: Invalid input: expected array, received undefined, left: Unrecognized key: \"kind\", right.subject: Invalid input: expected object, received undefined, right.provider: Invalid input: expected object, received undefined, right.analysis_profile: Invalid input: expected object, received undefined, right.predicate_type: Invalid input: expected string, received undefined, right.operation: Invalid input: expected string, received undefined, right.parameters: Invalid input: expected nonoptional, received undefined, right.raw_result: Invalid input: expected nonoptional, received undefined, right.normalized_result: Invalid input: expected nonoptional, received undefined, right.confidence: Invalid option: expected one of \"observed\"|\"derived\"|\"inferred\", right.authority: Invalid option: expected one of \"shipped-art"
+   }
+  },
+  {
+   "id": "unk",
+   "tool": "record_unknown",
+   "ok": true,
+   "ms": 8,
+   "bytes": 949
+  },
+  {
+   "id": "unks",
+   "tool": "list_unknowns",
+   "ok": true,
+   "ms": 4,
+   "bytes": 1001
+  },
+  {
+   "id": "bundle",
+   "tool": "get_evidence_bundle",
+   "ok": true,
+   "ms": 9,
+   "bytes": 5067
+  }
+ ],
+ "batch2": [
+  {
+   "id": "open650",
+   "tool": "open_binary",
+   "ok": true,
+   "ms": 238,
+   "bytes": 262
+  },
+  {
+   "id": "ia650",
+   "tool": "inspect_artifact",
+   "ok": true,
+   "ms": 4323,
+   "bytes": 1898193
+  },
+  {
+   "id": "open670",
+   "tool": "open_binary",
+   "ok": true,
+   "ms": 182,
+   "bytes": 262
+  },
+  {
+   "id": "ia670",
+   "tool": "inspect_artifact",
+   "ok": true,
+   "ms": 3355,
+   "bytes": 2042688
+  },
+  {
+   "id": "cmp",
+   "tool": "compare_artifacts",
+   "ok": true,
+   "ms": 1072,
+   "bytes": 635704
+  },
+  {
+   "id": "verify",
+   "tool": "verify_reconstruction",
+   "ok": true,
+   "ms": 682,
+   "bytes": 3025
+  },
+  {
+   "id": "unk",
+   "tool": "record_unknown",
+   "ok": true,
+   "ms": 6,
+   "bytes": 949
+  },
+  {
+   "id": "resolve_static",
+   "tool": "update_unknown",
+   "ok": false,
+   "ms": 9,
+   "error": "update_unknown failed: evidence_integrity_mismatch: Evidence state changed before the update completed. Refresh the current state and try again.",
+   "diagnostic": {
+    "code": "evidence_integrity_mismatch",
+    "category": "execution_failure",
+    "message": "Evidence state changed before the update completed. Refresh the current state and try again.",
+    "retryable": false,
+    "remediation": {
+     "action": "Evidence state changed before the update completed. Refresh the current state and try again."
+    },
+    "details": {
+     "reason": "integrity"
+    }
+   }
+  },
+  {
+   "id": "verify_unk",
+   "tool": "verify_unknown_resolution",
+   "ok": true,
+   "ms": 6,
+   "bytes": 997
+  },
+  {
+   "id": "unks",
+   "tool": "list_unknowns",
+   "ok": true,
+   "ms": 4,
+   "bytes": 1998
+  }
+ ],
+ "compare_artifacts_summary": {
+  "unchanged": 883,
+  "added": 287,
+  "removed": 162,
+  "changed": 606,
+  "unknown": 0,
+  "contradiction": 0
+ },
+ "verify_reconstruction": {
+  "status": "fail",
+  "summary": {
+   "total": 1,
+   "passed": 0,
+   "failed": 1,
+   "unknown": 0,
+   "behavioral": 0,
+   "structural": 1
+  }
+ },
+ "unknown_scope_digest": "376d52fb8feb833fc2bfa5a63ce2daa3a35b5fc33f13c76ca37ddc920d2b5691",
+ "zip_sha256": {
+  "670": "3e447ff8132dfe1ad19955810291425e6a17737dc027ade3a0c50b8b3c77aa45",
+  "650": "376d52fb8feb833fc2bfa5a63ce2daa3a35b5fc33f13c76ca37ddc920d2b5691"
+ },
+ "ledger_growth": {
+  "samples": [
+   {
+    "calls": 0,
+    "rss": 417914880,
+    "records": 3
+   },
+   {
+    "calls": 50,
+    "rss": 557682688,
+    "records": 53
+   },
+   {
+    "calls": 100,
+    "rss": 689762304,
+    "records": 103
+   },
+   {
+    "calls": 150,
+    "rss": 821760000,
+    "records": 153
+   },
+   {
+    "calls": 200,
+    "rss": 911572992,
+    "records": 203
+   },
+   {
+    "calls": 250,
+    "rss": 911974400,
+    "records": 253
+   },
+   {
+    "calls": 300,
+    "rss": 912572416,
+    "records": 303
+   },
+   {
+    "calls": 350,
+    "rss": 912793600,
+    "records": 353
+   },
+   {
+    "calls": 400,
+    "rss": 913055744,
+    "records": 403
+   },
+   {
+    "calls": 450,
+    "rss": 918925312,
+    "records": 453
+   },
+   {
+    "calls": 500,
+    "rss": 919248896,
+    "records": 503
+   },
+   {
+    "calls": 550,
+    "rss": 922632192,
+    "records": 553
+   },
+   {
+    "calls": 600,
+    "rss": 923131904,
+    "records": 603
+   },
+   {
+    "calls": 650,
+    "rss": 925937664,
+    "records": 653
+   },
+   {
+    "calls": 700,
+    "rss": 926404608,
+    "records": 703
+   },
+   {
+    "calls": 750,
+    "rss": 926953472,
+    "records": 753
+   },
+   {
+    "calls": 800,
+    "rss": 924643328,
+    "records": 803
+   },
+   {
+    "calls": 850,
+    "rss": 934064128,
+    "records": 853
+   }
+  ],
+  "errors": 0,
+  "bundle_bytes": 7482336
+ }
+}

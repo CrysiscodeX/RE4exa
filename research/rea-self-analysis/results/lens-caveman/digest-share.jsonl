@@ -1,0 +1,3 @@
+{"file": "inspect-zip.json", "bytes": 2042699, "hex_digest_count": 14129, "hex_digest_bytes": 955601, "hex_share": 0.468, "absolute_path_bytes": 228, "raw_result_bytes": 0, "normalized_result_bytes": 2140332}
+{"file": "e6-pty-objdump-symbols.json", "bytes": 45163, "hex_digest_count": 4, "hex_digest_bytes": 259, "hex_share": 0.006, "absolute_path_bytes": 620, "raw_result_bytes": 21710, "normalized_result_bytes": 21710}
+{"file": "e6-win-go.json", "bytes": 2802, "hex_digest_count": 3, "hex_digest_bytes": 195, "hex_share": 0.07, "absolute_path_bytes": 592, "raw_result_bytes": 0, "normalized_result_bytes": 1036}

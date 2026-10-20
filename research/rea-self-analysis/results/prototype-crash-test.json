@@ -1,0 +1,28 @@
+{
+ "baseline_without_prototype": {
+  "ledger_ids_before_kill": 3,
+  "ledger_ids_after_restart": 0
+ },
+ "worker_exit_on_crash": 137,
+ "checkpoints_at_crash": 3,
+ "task_state": "completed attempts=2",
+ "runs": [
+  "1:failed:$ClaimTimeout",
+  "2:completed:-"
+ ],
+ "checkpoints_final": 6,
+ "repeated_completed_calls": "0",
+ "started_but_not_completed_before_crash": "0",
+ "restore_log": "imported 3",
+ "same_evidence_ids_as_control": true,
+ "ledger_has_all_after_resume": true,
+ "evidence_ids": [
+  "ev_6426de481e2aa3454f27f5aaf42c9e22ddf839f027ede1a8eb3a7a29853dcc0e",
+  "ev_c4c96200bdf6cbbd52e8d32fde89dbe6a91bf1cdcd2faf2ee70facd0993d2f9d",
+  "ev_70c98c34f1e7dabe5ad64a9f54857d7f98b72c7bf274d8f742c16655759714d2",
+  "ev_43f25d0150dd21006794fd8a28b49b788772460c7b85b02934129455c5f0b550",
+  "ev_7fa59638d4060347b4611038ea2c0e3b6fb6b17f46a9059828b899aefc87e46f",
+  "ev_a20f2203536e53722ea53d4d437f2ee8a2f6258e01aec17929b1ac81b827dd67"
+ ],
+ "pass": true
+}

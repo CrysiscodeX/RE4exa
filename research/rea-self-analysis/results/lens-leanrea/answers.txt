@@ -1,0 +1,42 @@
+--- Q1 entry points (package.json bin/main/imports)
+{"main":null,"bin":{"rea":"scripts/rea.mjs","rea-agents":"scripts/rea.mjs"},"imports":{"#javascript-analysis-worker":"./dist/composition/javascriptAnalysisWorkerProcess.js"},"exports":null}
+--- Q2 #subpath worker resolution
+dist/mcp/main-Cx-Z7m_n.js:50471:import.meta.resolve("#javascript-analysis-worker")
+dist/cli-runtime/application__javascript__JavaScriptApplicationService-o0uEsjEc.js:5558:import.meta.resolve("#javascript-analysis-worker")
+dist/javascript/analysis/JavaScriptAnalysisWorker.js:345:import.meta.resolve("#javascript-analysis-worker")
+--- Q3 bridge files referenced from JS (distinct targets)
+bridge/android/ReaJadxBridge.java
+bridge/hopper_bridge.py
+bridge/mitmproxy/capture.py
+bridge/native/NativeUIChildren.swift
+bridge/native/ReaNativeUI.swift
+bridge/native/rea_lldb_tracer.py
+bridge/process/ProcessRunTokenReader.swift
+bridge/process/ProcessRunTokenReaderMain.swift
+bridge/pwndbg/launch.py
+bridge/pwntools/layout.py
+bridge/pwntools/recorded_crash.py
+bridge/pwntools/recorded_crash_impl.py
+--- Q4 native addon load sites
+dist/mcp/OwnedCommand-BW1jBSt9.js:50:			artifact: z.literal("rea-windows-x64.node"),
+dist/mcp/OwnedCommand-BW1jBSt9.js:67:native/windows/build/manifest.json and native/windows/build/rea-windows-x64.node from the rea-agents@${PACKAGE_METADATA.
+dist/mcp/OwnedCommand-BW1jBSt9.js:91:				const artifact = readPackagedWindowsNativeFile("rea-windows-x64.node", () => host.readArtifact());
+dist/mcp/OwnedCommand-BW1jBSt9.js:146:act: () => readFileSync(new URL("../../native/windows/build/rea-windows-x64.node", new URL("../windows/WindowsNativeLoad
+dist/mcp/OwnedCommand-BW1jBSt9.js:148:rl).href)(fileURLToPath(new URL("../../native/windows/build/rea-windows-x64.node", new URL("../windows/WindowsNativeLoad
+dist/windows/WindowsNativeLoader.js:26:    artifact: z.literal("rea-windows-x64.node"),
+dist/windows/WindowsNativeLoader.js:45:native/windows/build/manifest.json and native/windows/build/rea-windows-x64.node from the rea-agents@${PACKAGE_METADATA.
+dist/windows/WindowsNativeLoader.js:78:        const artifact = readPackagedWindowsNativeFile("rea-windows-x64.node", () => host.readArtifact());
+--- Q5 child_process call sites
+18 files, 26 call-like matches
+--- Q6 bundler/framework markers
+__webpack_require__: 9 files
+webpackChunk: 3 files
+__vite__: 9 files
+import.meta.hot: 6 files
+__commonJS: 8 files
+__esm: 192 files
+React.createElement: 6 files
+react/jsx-runtime: 3 files
+__NEXT_DATA__: 6 files
+--- Q7 source maps
+map files: 0, sourceMappingURL comments: 0

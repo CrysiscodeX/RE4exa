@@ -1,0 +1,1755 @@
+{
+ "curated": {
+  "capabilities": 30,
+  "relations": 18,
+  "principles": 8,
+  "components": 8,
+  "gaps": 7,
+  "findings": 36,
+  "unresolved_anchors": []
+ },
+ "totals": [
+  {
+   "nodes": 94731,
+   "edges": 271843,
+   "repos": 10
+  }
+ ],
+ "entrypoints_per_repo": [
+  {
+   "repo": "absurd",
+   "sub": "make-target",
+   "n": 18
+  },
+  {
+   "repo": "absurd",
+   "sub": "npm-script",
+   "n": 10
+  },
+  {
+   "repo": "absurd",
+   "sub": "go-main",
+   "n": 3
+  },
+  {
+   "repo": "absurd",
+   "sub": "ci-workflow",
+   "n": 3
+  },
+  {
+   "repo": "absurd",
+   "sub": "skill",
+   "n": 1
+  },
+  {
+   "repo": "caveman",
+   "sub": "npm-script",
+   "n": 53
+  },
+  {
+   "repo": "caveman",
+   "sub": "skill",
+   "n": 28
+  },
+  {
+   "repo": "caveman",
+   "sub": "ci-workflow",
+   "n": 16
+  },
+  {
+   "repo": "caveman",
+   "sub": "mcp-tool",
+   "n": 12
+  },
+  {
+   "repo": "caveman",
+   "sub": "go-main",
+   "n": 8
+  },
+  {
+   "repo": "caveman",
+   "sub": "bin",
+   "n": 8
+  },
+  {
+   "repo": "caveman",
+   "sub": "agent-plugin",
+   "n": 2
+  },
+  {
+   "repo": "caveman",
+   "sub": "hooks",
+   "n": 1
+  },
+  {
+   "repo": "laya",
+   "sub": "npm-script",
+   "n": 12
+  },
+  {
+   "repo": "laya",
+   "sub": "ci-workflow",
+   "n": 12
+  },
+  {
+   "repo": "laya",
+   "sub": "mcp-tool",
+   "n": 10
+  },
+  {
+   "repo": "laya",
+   "sub": "cli-command",
+   "n": 5
+  },
+  {
+   "repo": "laya",
+   "sub": "bin",
+   "n": 5
+  },
+  {
+   "repo": "laya",
+   "sub": "hooks",
+   "n": 1
+  },
+  {
+   "repo": "laya-coreml",
+   "sub": "mcp-tool",
+   "n": 10
+  },
+  {
+   "repo": "laya-coreml",
+   "sub": "cli-command",
+   "n": 8
+  },
+  {
+   "repo": "laya-coreml",
+   "sub": "bin",
+   "n": 6
+  },
+  {
+   "repo": "laya-coreml",
+   "sub": "ci-workflow",
+   "n": 2
+  },
+  {
+   "repo": "leanrea",
+   "sub": "skill",
+   "n": 1
+  },
+  {
+   "repo": "pi",
+   "sub": "npm-script",
+   "n": 129
+  },
+  {
+   "repo": "pi",
+   "sub": "mcp-tool",
+   "n": 97
+  },
+  {
+   "repo": "pi",
+   "sub": "skill",
+   "n": 17
+  },
+  {
+   "repo": "pi",
+   "sub": "ci-workflow",
+   "n": 13
+  },
+  {
+   "repo": "pi",
+   "sub": "bin",
+   "n": 2
+  },
+  {
+   "repo": "ponytail",
+   "sub": "skill",
+   "n": 7
+  },
+  {
+   "repo": "ponytail",
+   "sub": "agent-plugin",
+   "n": 6
+  },
+  {
+   "repo": "ponytail",
+   "sub": "npm-script",
+   "n": 2
+  },
+  {
+   "repo": "ponytail",
+   "sub": "ci-workflow",
+   "n": 2
+  },
+  {
+   "repo": "rea",
+   "sub": "mcp-tool",
+   "n": 234
+  },
+  {
+   "repo": "rea",
+   "sub": "npm-script",
+   "n": 211
+  },
+  {
+   "repo": "rea",
+   "sub": "ci-workflow",
+   "n": 30
+  },
+  {
+   "repo": "rea",
+   "sub": "cli-command",
+   "n": 16
+  },
+  {
+   "repo": "rea",
+   "sub": "skill",
+   "n": 5
+  },
+  {
+   "repo": "rea",
+   "sub": "bin",
+   "n": 3
+  },
+  {
+   "repo": "rea",
+   "sub": "mcp-registry",
+   "n": 1
+  },
+  {
+   "repo": "strix",
+   "sub": "skill",
+   "n": 84
+  },
+  {
+   "repo": "strix",
+   "sub": "make-target",
+   "n": 19
+  },
+  {
+   "repo": "strix",
+   "sub": "ci-workflow",
+   "n": 7
+  },
+  {
+   "repo": "strix",
+   "sub": "npm-script",
+   "n": 3
+  },
+  {
+   "repo": "strix",
+   "sub": "go-main",
+   "n": 1
+  },
+  {
+   "repo": "strix",
+   "sub": "bin",
+   "n": 1
+  }
+ ],
+ "triggers_per_repo": [
+  {
+   "repo": "absurd",
+   "sub": "env",
+   "n": 26
+  },
+  {
+   "repo": "absurd",
+   "sub": "event",
+   "n": 6
+  },
+  {
+   "repo": "absurd",
+   "sub": "timer",
+   "n": 1
+  },
+  {
+   "repo": "caveman",
+   "sub": "env",
+   "n": 259
+  },
+  {
+   "repo": "caveman",
+   "sub": "event",
+   "n": 39
+  },
+  {
+   "repo": "caveman",
+   "sub": "signal",
+   "n": 4
+  },
+  {
+   "repo": "caveman",
+   "sub": "timer",
+   "n": 1
+  },
+  {
+   "repo": "laya",
+   "sub": "env",
+   "n": 70
+  },
+  {
+   "repo": "laya",
+   "sub": "event",
+   "n": 6
+  },
+  {
+   "repo": "laya",
+   "sub": "timer",
+   "n": 1
+  },
+  {
+   "repo": "laya",
+   "sub": "signal",
+   "n": 1
+  },
+  {
+   "repo": "laya-coreml",
+   "sub": "env",
+   "n": 25
+  },
+  {
+   "repo": "laya-coreml",
+   "sub": "timer",
+   "n": 1
+  },
+  {
+   "repo": "leanrea",
+   "sub": "env",
+   "n": 5
+  },
+  {
+   "repo": "my-jev",
+   "sub": "env",
+   "n": 10
+  },
+  {
+   "repo": "my-jev",
+   "sub": "timer",
+   "n": 1
+  },
+  {
+   "repo": "pi",
+   "sub": "env",
+   "n": 198
+  },
+  {
+   "repo": "pi",
+   "sub": "event",
+   "n": 89
+  },
+  {
+   "repo": "pi",
+   "sub": "signal",
+   "n": 3
+  },
+  {
+   "repo": "pi",
+   "sub": "timer",
+   "n": 1
+  },
+  {
+   "repo": "ponytail",
+   "sub": "event",
+   "n": 30
+  },
+  {
+   "repo": "ponytail",
+   "sub": "env",
+   "n": 25
+  },
+  {
+   "repo": "ponytail",
+   "sub": "timer",
+   "n": 1
+  },
+  {
+   "repo": "rea",
+   "sub": "env",
+   "n": 231
+  },
+  {
+   "repo": "rea",
+   "sub": "event",
+   "n": 93
+  },
+  {
+   "repo": "rea",
+   "sub": "signal",
+   "n": 4
+  },
+  {
+   "repo": "rea",
+   "sub": "timer",
+   "n": 1
+  },
+  {
+   "repo": "strix",
+   "sub": "env",
+   "n": 67
+  },
+  {
+   "repo": "strix",
+   "sub": "event",
+   "n": 42
+  },
+  {
+   "repo": "strix",
+   "sub": "signal",
+   "n": 3
+  },
+  {
+   "repo": "strix",
+   "sub": "timer",
+   "n": 1
+  }
+ ],
+ "shared_lifecycle_phases": [
+  {
+   "phase": "run",
+   "repos": 9,
+   "which": "rea,caveman,strix,ponytail,my-jev,pi,absurd,laya-coreml,laya"
+  },
+  {
+   "phase": "start",
+   "repos": 8,
+   "which": "rea,caveman,strix,ponytail,pi,absurd,laya-coreml,laya"
+  },
+  {
+   "phase": "checkpoint",
+   "repos": 7,
+   "which": "rea,caveman,strix,pi,absurd,laya-coreml,laya"
+  },
+  {
+   "phase": "connect",
+   "repos": 7,
+   "which": "rea,caveman,strix,pi,absurd,laya-coreml,laya"
+  },
+  {
+   "phase": "init",
+   "repos": 7,
+   "which": "rea,caveman,strix,pi,absurd,laya-coreml,laya"
+  },
+  {
+   "phase": "open",
+   "repos": 7,
+   "which": "rea,caveman,strix,ponytail,pi,absurd,laya"
+  },
+  {
+   "phase": "restore",
+   "repos": 7,
+   "which": "rea,caveman,strix,ponytail,pi,absurd,laya"
+  },
+  {
+   "phase": "setup",
+   "repos": 7,
+   "which": "rea,caveman,strix,ponytail,pi,absurd,laya"
+  },
+  {
+   "phase": "spawn",
+   "repos": 7,
+   "which": "rea,caveman,strix,pi,absurd,laya-coreml,laya"
+  },
+  {
+   "phase": "stop",
+   "repos": 7,
+   "which": "rea,caveman,strix,pi,absurd,laya-coreml,laya"
+  },
+  {
+   "phase": "attach",
+   "repos": 6,
+   "which": "rea,caveman,strix,pi,laya-coreml,laya"
+  },
+  {
+   "phase": "close",
+   "repos": 6,
+   "which": "rea,caveman,strix,pi,absurd,laya"
+  },
+  {
+   "phase": "compact",
+   "repos": 6,
+   "which": "rea,caveman,strix,ponytail,pi,laya"
+  },
+  {
+   "phase": "flush",
+   "repos": 6,
+   "which": "rea,caveman,strix,pi,absurd,laya"
+  },
+  {
+   "phase": "schedule",
+   "repos": 6,
+   "which": "rea,caveman,strix,pi,absurd,laya"
+  },
+  {
+   "phase": "cancel",
+   "repos": 5,
+   "which": "rea,caveman,strix,pi,absurd"
+  },
+  {
+   "phase": "claim",
+   "repos": 5,
+   "which": "rea,caveman,strix,pi,absurd"
+  },
+  {
+   "phase": "cleanup",
+   "repos": 5,
+   "which": "rea,caveman,strix,pi,absurd"
+  },
+  {
+   "phase": "drain",
+   "repos": 5,
+   "which": "rea,strix,pi,absurd,laya"
+  },
+  {
+   "phase": "release",
+   "repos": 5,
+   "which": "rea,caveman,strix,pi,laya"
+  },
+  {
+   "phase": "retry",
+   "repos": 5,
+   "which": "rea,caveman,strix,pi,absurd"
+  },
+  {
+   "phase": "serve",
+   "repos": 5,
+   "which": "rea,caveman,strix,pi,laya"
+  },
+  {
+   "phase": "teardown",
+   "repos": 5,
+   "which": "rea,caveman,strix,pi,laya"
+  },
+  {
+   "phase": "abort",
+   "repos": 4,
+   "which": "rea,caveman,pi,laya"
+  },
+  {
+   "phase": "acquire",
+   "repos": 4,
+   "which": "rea,caveman,pi,laya"
+  },
+  {
+   "phase": "detach",
+   "repos": 4,
+   "which": "rea,strix,pi,laya"
+  },
+  {
+   "phase": "dispose",
+   "repos": 4,
+   "which": "rea,caveman,pi,laya"
+  },
+  {
+   "phase": "evict",
+   "repos": 4,
+   "which": "rea,caveman,laya-coreml,laya"
+  },
+  {
+   "phase": "expire",
+   "repos": 4,
+   "which": "rea,caveman,strix,pi"
+  },
+  {
+   "phase": "poll",
+   "repos": 4,
+   "which": "rea,strix,pi,laya"
+  },
+  {
+   "phase": "resume",
+   "repos": 4,
+   "which": "rea,strix,ponytail,pi"
+  },
+  {
+   "phase": "shutdown",
+   "repos": 4,
+   "which": "rea,caveman,strix,pi"
+  },
+  {
+   "phase": "terminate",
+   "repos": 4,
+   "which": "rea,caveman,strix,pi"
+  },
+  {
+   "phase": "tick",
+   "repos": 4,
+   "which": "rea,caveman,strix,pi"
+  },
+  {
+   "phase": "commit",
+   "repos": 3,
+   "which": "rea,caveman,pi"
+  },
+  {
+   "phase": "kill",
+   "repos": 3,
+   "which": "rea,caveman,pi"
+  },
+  {
+   "phase": "listen",
+   "repos": 3,
+   "which": "rea,caveman,pi"
+  },
+  {
+   "phase": "reconnect",
+   "repos": 3,
+   "which": "rea,strix,pi"
+  },
+  {
+   "phase": "recover",
+   "repos": 3,
+   "which": "rea,caveman,pi"
+  },
+  {
+   "phase": "restart",
+   "repos": 3,
+   "which": "caveman,strix,pi"
+  },
+  {
+   "phase": "disconnect",
+   "repos": 2,
+   "which": "rea,pi"
+  },
+  {
+   "phase": "heartbeat",
+   "repos": 2,
+   "which": "caveman,absurd"
+  },
+  {
+   "phase": "migrate",
+   "repos": 2,
+   "which": "caveman,pi"
+  },
+  {
+   "phase": "rollback",
+   "repos": 2,
+   "which": "rea,pi"
+  },
+  {
+   "phase": "watch",
+   "repos": 2,
+   "which": "caveman,pi"
+  }
+ ],
+ "shared_states": [
+  {
+   "state": "active",
+   "repos": 7,
+   "which": "rea,caveman,strix,pi,absurd,laya-coreml,laya"
+  },
+  {
+   "state": "failed",
+   "repos": 7,
+   "which": "rea,caveman,strix,ponytail,pi,absurd,laya"
+  },
+  {
+   "state": "timeout",
+   "repos": 7,
+   "which": "rea,caveman,strix,pi,absurd,laya-coreml,laya"
+  },
+  {
+   "state": "blocked",
+   "repos": 6,
+   "which": "rea,caveman,strix,ponytail,pi,laya"
+  },
+  {
+   "state": "open",
+   "repos": 6,
+   "which": "rea,caveman,strix,ponytail,pi,laya"
+  },
+  {
+   "state": "busy",
+   "repos": 5,
+   "which": "rea,caveman,pi,laya-coreml,laya"
+  },
+  {
+   "state": "cancelled",
+   "repos": 5,
+   "which": "rea,caveman,strix,pi,absurd"
+  },
+  {
+   "state": "closed",
+   "repos": 5,
+   "which": "rea,caveman,strix,pi,laya"
+  },
+  {
+   "state": "completed",
+   "repos": 5,
+   "which": "rea,caveman,strix,pi,absurd"
+  },
+  {
+   "state": "idle",
+   "repos": 5,
+   "which": "rea,caveman,strix,pi,laya"
+  },
+  {
+   "state": "ready",
+   "repos": 5,
+   "which": "rea,caveman,strix,pi,laya"
+  },
+  {
+   "state": "running",
+   "repos": 5,
+   "which": "rea,caveman,strix,pi,absurd"
+  },
+  {
+   "state": "expired",
+   "repos": 4,
+   "which": "rea,caveman,strix,pi"
+  },
+  {
+   "state": "pending",
+   "repos": 4,
+   "which": "rea,strix,pi,absurd"
+  },
+  {
+   "state": "resolved",
+   "repos": 4,
+   "which": "rea,caveman,pi,laya"
+  },
+  {
+   "state": "stopped",
+   "repos": 4,
+   "which": "rea,caveman,strix,pi"
+  },
+  {
+   "state": "aborted",
+   "repos": 3,
+   "which": "rea,pi,laya"
+  },
+  {
+   "state": "queued",
+   "repos": 3,
+   "which": "rea,strix,pi"
+  },
+  {
+   "state": "starting",
+   "repos": 3,
+   "which": "rea,strix,pi"
+  },
+  {
+   "state": "stopping",
+   "repos": 3,
+   "which": "rea,strix,pi"
+  },
+  {
+   "state": "parked",
+   "repos": 2,
+   "which": "strix,pi"
+  },
+  {
+   "state": "retrying",
+   "repos": 2,
+   "which": "caveman,pi"
+  },
+  {
+   "state": "sleeping",
+   "repos": 2,
+   "which": "pi,absurd"
+  },
+  {
+   "state": "succeeded",
+   "repos": 2,
+   "which": "caveman,strix"
+  },
+  {
+   "state": "canceled",
+   "repos": 1,
+   "which": "strix"
+  },
+  {
+   "state": "contradicted",
+   "repos": 1,
+   "which": "rea"
+  },
+  {
+   "state": "exited",
+   "repos": 1,
+   "which": "rea"
+  },
+  {
+   "state": "faulted",
+   "repos": 1,
+   "which": "pi"
+  },
+  {
+   "state": "investigating",
+   "repos": 1,
+   "which": "rea"
+  },
+  {
+   "state": "suspended",
+   "repos": 1,
+   "which": "caveman"
+  },
+  {
+   "state": "timed_out",
+   "repos": 1,
+   "which": "rea"
+  }
+ ],
+ "signals": [
+  {
+   "repo": "caveman",
+   "signal": "SIGHUP",
+   "files": 1
+  },
+  {
+   "repo": "caveman",
+   "signal": "SIGINT",
+   "files": 1
+  },
+  {
+   "repo": "caveman",
+   "signal": "SIGTERM",
+   "files": 3
+  },
+  {
+   "repo": "caveman",
+   "signal": "syscall.SIGHUP",
+   "files": 1
+  },
+  {
+   "repo": "laya",
+   "signal": "SIGINT",
+   "files": 1
+  },
+  {
+   "repo": "pi",
+   "signal": "SIGCONT",
+   "files": 1
+  },
+  {
+   "repo": "pi",
+   "signal": "SIGINT",
+   "files": 3
+  },
+  {
+   "repo": "pi",
+   "signal": "SIGTERM",
+   "files": 1
+  },
+  {
+   "repo": "rea",
+   "signal": "SIGHUP",
+   "files": 1
+  },
+  {
+   "repo": "rea",
+   "signal": "SIGINT",
+   "files": 6
+  },
+  {
+   "repo": "rea",
+   "signal": "SIGTERM",
+   "files": 12
+  },
+  {
+   "repo": "rea",
+   "signal": "SIGWINCH",
+   "files": 1
+  },
+  {
+   "repo": "strix",
+   "signal": "SIGHUP",
+   "files": 1
+  },
+  {
+   "repo": "strix",
+   "signal": "SIGINT",
+   "files": 1
+  },
+  {
+   "repo": "strix",
+   "signal": "SIGTERM",
+   "files": 1
+  }
+ ],
+ "duplicate_contents": [
+  {
+   "repo": "laya",
+   "files": 158,
+   "bytes": 2736485
+  },
+  {
+   "repo": "caveman",
+   "files": 86,
+   "bytes": 569798
+  },
+  {
+   "repo": "laya-coreml",
+   "files": 3,
+   "bytes": 524627
+  },
+  {
+   "repo": "absurd",
+   "files": 2,
+   "bytes": 21694
+  },
+  {
+   "repo": "strix",
+   "files": 5,
+   "bytes": 19005
+  },
+  {
+   "repo": "rea",
+   "files": 1,
+   "bytes": 11358
+  },
+  {
+   "repo": "ponytail",
+   "files": 2,
+   "bytes": 5246
+  },
+  {
+   "repo": "pi",
+   "files": 5,
+   "bytes": 1223
+  }
+ ],
+ "cross_repo_identical_files": [
+  {
+   "sha": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+   "repos": 2,
+   "where_": "rea:licenses/Apache-2.0.txt,caveman:LICENSE,caveman:browse/LICENSE,caveman:engine/LICENSE,caveman:extension/LICENSE,caveman:mcp/LICENSE,caveman:mcp/LICENSE.launcher,caveman:mem/LICENSE,caveman:mem/js/LICENSE,caveman:mem/py/LICENSE,caveman:packages/cli/LICENSE,caveman:packages/device-auth/LICENSE,caveman:packages/middleware/python/LICENSE,caveman:packages/middleware/typescript/LICENSE,caveman:packages/pi-extension/LICENSE,caveman:packages/sdk/python/LICENSE,caveman:packages/sdk/typescript/LICENSE,caveman:packages/shared/binary-installer/LICENSE,caveman:packages/shared/contracts/LICENSE,caveman:packages/subagent-tax/LICENSE,caveman:proxy/LICENSE,caveman:shared/platform/LICENSE,caveman:shared/provider-catalog/LICENSE,caveman:shrink/LICENSE,caveman:shrink/LICENSE.launcher,caveman:src/mcp-servers/caveman-shrink/LICENSE"
+  },
+  {
+   "sha": "a6cba85bc92e0cff7a450b1d873c0eaa2e9fc96bf472df0247a26bec77bf3ff9",
+   "repos": 2,
+   "where_": "laya-coreml:LICENSE,laya:LICENSE,laya:laya-ts/LICENSE,laya:sdk/python/LICENSE,laya:sdk/typescript/LICENSE"
+  }
+ ],
+ "claims_per_repo": [
+  {
+   "repo": "laya",
+   "claims": 194
+  },
+  {
+   "repo": "rea",
+   "claims": 101
+  },
+  {
+   "repo": "laya-coreml",
+   "claims": 98
+  },
+  {
+   "repo": "caveman",
+   "claims": 88
+  },
+  {
+   "repo": "ponytail",
+   "claims": 49
+  },
+  {
+   "repo": "pi",
+   "claims": 44
+  },
+  {
+   "repo": "my-jev",
+   "claims": 16
+  },
+  {
+   "repo": "strix",
+   "claims": 8
+  },
+  {
+   "repo": "leanrea",
+   "claims": 5
+  }
+ ],
+ "most_called_symbols": [
+  {
+   "repo": "caveman",
+   "qualname": "parseWire.string",
+   "path": "packages/middleware/typescript/src/wire.ts",
+   "callers": 651
+  },
+  {
+   "repo": "rea",
+   "qualname": "err",
+   "path": "src/domain/result.ts",
+   "callers": 550
+  },
+  {
+   "repo": "rea",
+   "qualname": "createTestTempDirectory",
+   "path": "tests/fixtures/temporaryDirectory.ts",
+   "callers": 204
+  },
+  {
+   "repo": "rea",
+   "qualname": "createEvidence",
+   "path": "src/domain/evidence.ts",
+   "callers": 186
+  },
+  {
+   "repo": "caveman",
+   "qualname": "Path",
+   "path": "proxy/internal/runstate/runstate.go",
+   "callers": 146
+  },
+  {
+   "repo": "rea",
+   "qualname": "parseEvidence",
+   "path": "src/domain/evidence.ts",
+   "callers": 135
+  },
+  {
+   "repo": "rea",
+   "qualname": "compareUnicodeCodePoints",
+   "path": "src/domain/unicodeCodePointOrder.ts",
+   "callers": 133
+  },
+  {
+   "repo": "rea",
+   "qualname": "assertEqual",
+   "path": "scripts/ci/verified-package.mjs",
+   "callers": 120
+  },
+  {
+   "repo": "strix",
+   "qualname": "FakeResponse",
+   "path": "tests/test_cloud_cli.py",
+   "callers": 117
+  },
+  {
+   "repo": "rea",
+   "qualname": "unwrapJavaScriptExpression",
+   "path": "src/domain/javascript/javascriptAstValues.ts",
+   "callers": 115
+  },
+  {
+   "repo": "strix",
+   "qualname": "AgentCoordinator",
+   "path": "strix/core/agents.py",
+   "callers": 105
+  },
+  {
+   "repo": "caveman",
+   "qualname": "MiddlewareDeleted.Add",
+   "path": "proxy/internal/store/middleware.go",
+   "callers": 98
+  },
+  {
+   "repo": "rea",
+   "qualname": "semanticStaticPropertyKey",
+   "path": "src/domain/javascript/javascriptAstValues.ts",
+   "callers": 93
+  },
+  {
+   "repo": "absurd",
+   "qualname": "queue_name",
+   "path": "sdks/python/tests/conftest.py",
+   "callers": 92
+  },
+  {
+   "repo": "rea",
+   "qualname": "digestCanonicalValue",
+   "path": "src/domain/canonicalDigest.ts",
+   "callers": 92
+  },
+  {
+   "repo": "rea",
+   "qualname": "projectAnalysisError",
+   "path": "src/domain/analysisErrorProjection.ts",
+   "callers": 90
+  },
+  {
+   "repo": "rea",
+   "qualname": "resolveSemanticBindingState",
+   "path": "src/domain/javascript/javascriptSemanticState.ts",
+   "callers": 88
+  },
+  {
+   "repo": "rea",
+   "qualname": "toolContract",
+   "path": "src/contracts/toolContracts.ts",
+   "callers": 87
+  },
+  {
+   "repo": "laya",
+   "qualname": "string",
+   "path": "laya-java/laya-java/src/main/java/com/convaiinnovations/laya/json/Json.java",
+   "callers": 84
+  },
+  {
+   "repo": "laya",
+   "qualname": "all",
+   "path": "laya-java/laya-java/src/main/java/com/convaiinnovations/laya/Presets.java",
+   "callers": 80
+  },
+  {
+   "repo": "rea",
+   "qualname": "logCliCommand",
+   "path": "src/cliLogging.ts",
+   "callers": 80
+  },
+  {
+   "repo": "rea",
+   "qualname": "analysisErrorWithCleanupFailure",
+   "path": "src/domain/analysisErrorCleanup.ts",
+   "callers": 76
+  },
+  {
+   "repo": "rea",
+   "qualname": "toolRegistrationOptions",
+   "path": "src/server/toolRegistrationOptions.ts",
+   "callers": 74
+  },
+  {
+   "repo": "pi",
+   "qualname": "fauxAssistantMessage",
+   "path": "packages/ai/src/providers/faux.ts",
+   "callers": 71
+  },
+  {
+   "repo": "caveman",
+   "qualname": "serveBody",
+   "path": "proxy/internal/gateway/live_zone_test.go",
+   "callers": 69
+  }
+ ],
+ "test_to_source_ratio": [
+  {
+   "repo": "laya",
+   "tests": 519,
+   "sources": 339,
+   "ratio": 1.53
+  },
+  {
+   "repo": "caveman",
+   "tests": 782,
+   "sources": 592,
+   "ratio": 1.32
+  },
+  {
+   "repo": "pi",
+   "tests": 807,
+   "sources": 830,
+   "ratio": 0.97
+  },
+  {
+   "repo": "rea",
+   "tests": 2041,
+   "sources": 2118,
+   "ratio": 0.96
+  },
+  {
+   "repo": "absurd",
+   "tests": 59,
+   "sources": 73,
+   "ratio": 0.81
+  },
+  {
+   "repo": "ponytail",
+   "tests": 24,
+   "sources": 33,
+   "ratio": 0.73
+  },
+  {
+   "repo": "strix",
+   "tests": 130,
+   "sources": 260,
+   "ratio": 0.5
+  },
+  {
+   "repo": "laya-coreml",
+   "tests": 25,
+   "sources": 75,
+   "ratio": 0.33
+  },
+  {
+   "repo": "my-jev",
+   "tests": 0,
+   "sources": 22,
+   "ratio": 0.0
+  },
+  {
+   "repo": "leanrea",
+   "tests": 0,
+   "sources": 1,
+   "ratio": 0.0
+  }
+ ],
+ "mcp_tool_counts": [
+  {
+   "repo": "rea",
+   "tools": 234,
+   "exact": 207
+  },
+  {
+   "repo": "pi",
+   "tools": 97,
+   "exact": 0
+  },
+  {
+   "repo": "caveman",
+   "tools": 12,
+   "exact": 0
+  },
+  {
+   "repo": "laya-coreml",
+   "tools": 10,
+   "exact": 0
+  },
+  {
+   "repo": "laya",
+   "tools": 10,
+   "exact": 0
+  }
+ ],
+ "env_vars_per_repo": [
+  {
+   "repo": "caveman",
+   "env_vars": 259
+  },
+  {
+   "repo": "rea",
+   "env_vars": 231
+  },
+  {
+   "repo": "pi",
+   "env_vars": 198
+  },
+  {
+   "repo": "laya",
+   "env_vars": 70
+  },
+  {
+   "repo": "strix",
+   "env_vars": 67
+  },
+  {
+   "repo": "absurd",
+   "env_vars": 26
+  },
+  {
+   "repo": "ponytail",
+   "env_vars": 25
+  },
+  {
+   "repo": "laya-coreml",
+   "env_vars": 25
+  },
+  {
+   "repo": "my-jev",
+   "env_vars": 10
+  },
+  {
+   "repo": "leanrea",
+   "env_vars": 5
+  }
+ ],
+ "capability_ranking": [
+  {
+   "qualname": "capability:necessity-ladder",
+   "repo": "ponytail",
+   "value": 5,
+   "maturity": 4,
+   "portability": 5,
+   "score": 19
+  },
+  {
+   "qualname": "capability:durable-steps",
+   "repo": "absurd",
+   "value": 5,
+   "maturity": 4,
+   "portability": 4,
+   "score": 18
+  },
+  {
+   "qualname": "capability:ccr-store",
+   "repo": "caveman",
+   "value": 5,
+   "maturity": 4,
+   "portability": 4,
+   "score": 18
+  },
+  {
+   "qualname": "capability:abstention",
+   "repo": "laya",
+   "value": 5,
+   "maturity": 4,
+   "portability": 4,
+   "score": 18
+  },
+  {
+   "qualname": "capability:cheap-router",
+   "repo": "leanrea",
+   "value": 5,
+   "maturity": 3,
+   "portability": 5,
+   "score": 18
+  },
+  {
+   "qualname": "capability:evidence-record",
+   "repo": "rea",
+   "value": 5,
+   "maturity": 5,
+   "portability": 3,
+   "score": 18
+  },
+  {
+   "qualname": "capability:coverage-ledger",
+   "repo": "strix",
+   "value": 5,
+   "maturity": 4,
+   "portability": 4,
+   "score": 18
+  },
+  {
+   "qualname": "capability:token-accounting",
+   "repo": "caveman",
+   "value": 4,
+   "maturity": 4,
+   "portability": 5,
+   "score": 17
+  },
+  {
+   "qualname": "capability:audit-format",
+   "repo": "ponytail",
+   "value": 4,
+   "maturity": 4,
+   "portability": 5,
+   "score": 17
+  },
+  {
+   "qualname": "capability:bench-hygiene",
+   "repo": "ponytail",
+   "value": 4,
+   "maturity": 4,
+   "portability": 5,
+   "score": 17
+  },
+  {
+   "qualname": "capability:residual-unknowns",
+   "repo": "rea",
+   "value": 5,
+   "maturity": 4,
+   "portability": 3,
+   "score": 17
+  },
+  {
+   "qualname": "capability:artifact-parsers",
+   "repo": "rea",
+   "value": 4,
+   "maturity": 5,
+   "portability": 4,
+   "score": 17
+  },
+  {
+   "qualname": "capability:format-compressors",
+   "repo": "caveman",
+   "value": 4,
+   "maturity": 4,
+   "portability": 4,
+   "score": 16
+  },
+  {
+   "qualname": "capability:temperature-calibration",
+   "repo": "laya",
+   "value": 4,
+   "maturity": 4,
+   "portability": 4,
+   "score": 16
+  },
+  {
+   "qualname": "capability:port-fidelity",
+   "repo": "laya-coreml",
+   "value": 4,
+   "maturity": 4,
+   "portability": 4,
+   "score": 16
+  },
+  {
+   "qualname": "capability:probe-rules",
+   "repo": "leanrea",
+   "value": 4,
+   "maturity": 3,
+   "portability": 5,
+   "score": 16
+  },
+  {
+   "qualname": "capability:typed-decisions",
+   "repo": "laya",
+   "value": 4,
+   "maturity": 4,
+   "portability": 3,
+   "score": 15
+  },
+  {
+   "qualname": "capability:compaction",
+   "repo": "pi",
+   "value": 4,
+   "maturity": 4,
+   "portability": 3,
+   "score": 15
+  },
+  {
+   "qualname": "capability:event-await",
+   "repo": "absurd",
+   "value": 3,
+   "maturity": 4,
+   "portability": 4,
+   "score": 14
+  },
+  {
+   "qualname": "capability:calibration-metrics",
+   "repo": "my-jev",
+   "value": 3,
+   "maturity": 3,
+   "portability": 5,
+   "score": 14
+  },
+  {
+   "qualname": "capability:js-app-graph",
+   "repo": "rea",
+   "value": 4,
+   "maturity": 4,
+   "portability": 2,
+   "score": 14
+  },
+  {
+   "qualname": "capability:engine-bridges",
+   "repo": "rea",
+   "value": 4,
+   "maturity": 4,
+   "portability": 2,
+   "score": 14
+  },
+  {
+   "qualname": "capability:proper-scoring",
+   "repo": "laya",
+   "value": 3,
+   "maturity": 3,
+   "portability": 4,
+   "score": 13
+  },
+  {
+   "qualname": "capability:answer-key-bench",
+   "repo": "leanrea",
+   "value": 3,
+   "maturity": 2,
+   "portability": 5,
+   "score": 13
+  },
+  {
+   "qualname": "capability:durable-harness",
+   "repo": "pi",
+   "value": 4,
+   "maturity": 3,
+   "portability": 2,
+   "score": 13
+  },
+  {
+   "qualname": "capability:code-mode",
+   "repo": "pi",
+   "value": 4,
+   "maturity": 3,
+   "portability": 2,
+   "score": 13
+  },
+  {
+   "qualname": "capability:process-capture",
+   "repo": "rea",
+   "value": 3,
+   "maturity": 4,
+   "portability": 3,
+   "score": 13
+  },
+  {
+   "qualname": "capability:finding-dedupe",
+   "repo": "strix",
+   "value": 3,
+   "maturity": 3,
+   "portability": 3,
+   "score": 12
+  },
+  {
+   "qualname": "capability:sandboxed-agents",
+   "repo": "strix",
+   "value": 3,
+   "maturity": 4,
+   "portability": 2,
+   "score": 12
+  },
+  {
+   "qualname": "capability:mcp-catalog",
+   "repo": "rea",
+   "value": 2,
+   "maturity": 4,
+   "portability": 1,
+   "score": 9
+  }
+ ],
+ "capability_relations": [
+  {
+   "src": "capability:durable-steps",
+   "kind": "fixes",
+   "dst": "capability:evidence-record",
+   "why": "REA's ledger dies with its process (3 -> 0 records after SIGKILL) and its 889 MB bundle cannot be re-imported; durable steps keep records outside the process."
+  },
+  {
+   "src": "capability:format-compressors",
+   "kind": "fixes",
+   "dst": "capability:mcp-catalog",
+   "why": "Removing output schemas cuts REA's catalog by 72.7%; caveman's schema shrinker alone saves 1.2% because it skips outputSchema."
+  },
+  {
+   "src": "capability:token-accounting",
+   "kind": "measures",
+   "dst": "capability:mcp-catalog",
+   "why": "o200k counting puts the default catalog at ~833k tokens."
+  },
+  {
+   "src": "capability:port-fidelity",
+   "kind": "complements",
+   "dst": "capability:evidence-record",
+   "why": "Golden-output and determinism checks are how evidence producers themselves get verified."
+  },
+  {
+   "src": "capability:cheap-router",
+   "kind": "complements",
+   "dst": "capability:artifact-parsers",
+   "why": "Plain tools answer most first questions in milliseconds; REA's parsers add exact ranges and unknown semantics where they matter."
+  },
+  {
+   "src": "capability:cheap-router",
+   "kind": "overlaps",
+   "dst": "capability:js-app-graph",
+   "why": "Both answer JS/Electron questions; measured 219 ms/2.5 KB vs 1,070.7 s for the same seven questions, with the graph adding typed relations."
+  },
+  {
+   "src": "capability:calibration-metrics",
+   "kind": "overlaps",
+   "dst": "capability:temperature-calibration",
+   "why": "Same metrics (Brier, ECE); laya adds fitting and clamps."
+  },
+  {
+   "src": "capability:durable-harness",
+   "kind": "overlaps",
+   "dst": "capability:durable-steps",
+   "why": "Both checkpoint work; Absurd is a generic step engine, pi-durable an agent-conversation harness."
+  },
+  {
+   "src": "capability:compaction",
+   "kind": "complements",
+   "dst": "capability:format-compressors",
+   "why": "Compaction shrinks history; compressors shrink each new tool result."
+  },
+  {
+   "src": "capability:code-mode",
+   "kind": "complements",
+   "dst": "capability:cheap-router",
+   "why": "A sandboxed script can batch many cheap probes in one call, the 2-4 call budget leanrea recommends."
+  },
+  {
+   "src": "capability:necessity-ladder",
+   "kind": "fixes",
+   "dst": "capability:mcp-catalog",
+   "why": "A necessity gate on tools would ask whether each of 207 tools needs its own schema."
+  },
+  {
+   "src": "capability:bench-hygiene",
+   "kind": "fixes",
+   "dst": "capability:answer-key-bench",
+   "why": "Interleaved arms, 5 reps, geomean with CI and self-tested graders fix leanrea's n=3 parallel-arm design."
+  },
+  {
+   "src": "capability:evidence-record",
+   "kind": "complements",
+   "dst": "capability:ccr-store",
+   "why": "Both are content-addressed: an evidence_id can serve as the retrieval handle for a compressed view, so summaries never lose the original."
+  },
+  {
+   "src": "capability:evidence-record",
+   "kind": "complements",
+   "dst": "capability:temperature-calibration",
+   "why": "Categorical confidence classes become measurable once claims are adjudicated against outcomes."
+  },
+  {
+   "src": "capability:evidence-record",
+   "kind": "complements",
+   "dst": "capability:durable-steps",
+   "why": "Content-addressed results make durable steps idempotent by construction: a replayed step converges on the same evidence_id (measured: prototype crash test)."
+  },
+  {
+   "src": "capability:residual-unknowns",
+   "kind": "complements",
+   "dst": "capability:coverage-ledger",
+   "why": "Unknowns record what is open; the coverage ledger records what was never accounted for. Together they bound an investigation."
+  },
+  {
+   "src": "capability:residual-unknowns",
+   "kind": "complements",
+   "dst": "capability:abstention",
+   "why": "An unknown is an abstention; fitted thresholds decide when a claim must stay unknown."
+  },
+  {
+   "src": "capability:coverage-ledger",
+   "kind": "complements",
+   "dst": "capability:finding-dedupe",
+   "why": "Count once, then account for coverage."
+  }
+ ],
+ "component_composition": [
+  {
+   "component": "component:C1-probe",
+   "capabilities": "capability:cheap-router, capability:probe-rules, capability:code-mode, capability:artifact-parsers, capability:engine-bridges"
+  },
+  {
+   "component": "component:C2-evidence",
+   "capabilities": "capability:port-fidelity, capability:evidence-record"
+  },
+  {
+   "component": "component:C3-store",
+   "capabilities": "capability:durable-steps, capability:ccr-store, capability:durable-harness"
+  },
+  {
+   "component": "component:C4-budget",
+   "capabilities": "capability:ccr-store, capability:format-compressors, capability:token-accounting, capability:compaction"
+  },
+  {
+   "component": "component:C5-epistemics",
+   "capabilities": "capability:temperature-calibration, capability:abstention, capability:proper-scoring, capability:calibration-metrics, capability:residual-unknowns"
+  },
+  {
+   "component": "component:C6-coverage",
+   "capabilities": "capability:coverage-ledger, capability:finding-dedupe"
+  },
+  {
+   "component": "component:C7-quality-gate",
+   "capabilities": "capability:answer-key-bench, capability:necessity-ladder, capability:audit-format, capability:bench-hygiene"
+  },
+  {
+   "component": "component:C8-interface",
+   "capabilities": "capability:typed-decisions, capability:mcp-catalog"
+  }
+ ],
+ "principle_coverage": [
+  {
+   "principle": "principle:P1-traceable-truth",
+   "components": 1
+  },
+  {
+   "principle": "principle:P2-honest-uncertainty",
+   "components": 1
+  },
+  {
+   "principle": "principle:P3-attention-economy",
+   "components": 2
+  },
+  {
+   "principle": "principle:P4-durability",
+   "components": 1
+  },
+  {
+   "principle": "principle:P5-accounted-completeness",
+   "components": 1
+  },
+  {
+   "principle": "principle:P6-minimal-surface",
+   "components": 3
+  },
+  {
+   "principle": "principle:P7-inert-by-default",
+   "components": 1
+  },
+  {
+   "principle": "principle:P8-self-verification",
+   "components": 2
+  }
+ ],
+ "findings_motivating_components": [
+  {
+   "finding": "E2-1",
+   "verdict": "gap",
+   "component": "component:C1-probe"
+  },
+  {
+   "finding": "E6-3",
+   "verdict": "measured",
+   "component": "component:C1-probe"
+  },
+  {
+   "finding": "L-leanrea-1",
+   "verdict": "measured",
+   "component": "component:C1-probe"
+  },
+  {
+   "finding": "E3-6",
+   "verdict": "gap (predicted #1 confirmed)",
+   "component": "component:C1-probe"
+  },
+  {
+   "finding": "E4-1",
+   "verdict": "gap (predicted #3 confirmed)",
+   "component": "component:C1-probe"
+  },
+  {
+   "finding": "E4-2",
+   "verdict": "gap (predicted #4 confirmed)",
+   "component": "component:C1-probe"
+  },
+  {
+   "finding": "E8-1",
+   "verdict": "false-positive",
+   "component": "component:C2-evidence"
+  },
+  {
+   "finding": "D-1",
+   "verdict": "confirmed",
+   "component": "component:C3-store"
+  },
+  {
+   "finding": "E3-2",
+   "verdict": "gap",
+   "component": "component:C3-store"
+  },
+  {
+   "finding": "E4-4",
+   "verdict": "gap",
+   "component": "component:C3-store"
+  },
+  {
+   "finding": "L-caveman-1",
+   "verdict": "measured",
+   "component": "component:C4-budget"
+  },
+  {
+   "finding": "E4-3",
+   "verdict": "gap",
+   "component": "component:C4-budget"
+  },
+  {
+   "finding": "E10-3",
+   "verdict": "gap",
+   "component": "component:C5-epistemics"
+  },
+  {
+   "finding": "E10-4",
+   "verdict": "confirmed+gap",
+   "component": "component:C5-epistemics"
+  },
+  {
+   "finding": "L-strix-1",
+   "verdict": "design",
+   "component": "component:C6-coverage"
+  },
+  {
+   "finding": "L-ponytail-1",
+   "verdict": "candidate",
+   "component": "component:C7-quality-gate"
+  },
+  {
+   "finding": "E1-1",
+   "verdict": "gap",
+   "component": "component:C8-interface"
+  },
+  {
+   "finding": "P-1",
+   "verdict": "measured",
+   "component": "component:C8-interface"
+  }
+ ]
+}
