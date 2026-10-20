@@ -32,15 +32,27 @@ def main() -> None:
     std = STD.load()
     results = json.loads(Path(os.environ.get("RQS_RESULTS") or HERE.parent / "results.json").read_text())
     notes = json.loads((HERE / "notes.json").read_text())
-    page_results = {**{k: results[k] for k in ("targets", "lens_counts", "top_opportunities", "agreement")}, **notes}
+    targets = []
+    for t in results["targets"]:
+        rev = json.loads((HERE.parent / "reviews" / f"{t['name']}.review.json").read_text())
+        scores = {cid: {"level": e.get("level"), "confidence": e.get("confidence"), "evidence": (e.get("evidence") or [])[:3], "note": (e.get("note") or "")[:300], "source": "review"}
+                  for cid, e in (rev.get("scores") or {}).items()}
+        targets.append({**t, "review": {"rqs_review": 1, "target": {"name": t["name"], "repo": t["repo"]}, "profile": t["profile"], "flags": t["flags"],
+                                        "reviewer": t["reviewer"], "date": t["date"], "scores": scores}})
+    page_results = {"targets": targets, **{k: results[k] for k in ("lens_counts", "top_opportunities", "agreement")}, **notes}
     page = (HERE / "bench.template.html").read_text()
     page = page.replace("/*__STD__*/null", js(std), 1).replace("/*__RESULTS__*/null", js(page_results), 1)
     out.write_text(page, encoding="utf-8")
     print(f"wrote {out} ({len(page.encode()) // 1024} KB)")
-    check(page, std, results)
+    check(page, std, targets)
+    for t in targets:  # the page's numbers must equal the published results
+        card = S.score(std, None, t["review"])
+        if card["summary"]["quality_index"] != t["summary"]["quality_index"] or card["summary"]["grade"] != t["summary"]["grade"]:
+            raise SystemExit(f"{t['name']}: page review scores {card['summary']['grade']} {card['summary']['quality_index']}, results say "
+                             f"{t['summary']['grade']} {t['summary']['quality_index']}")
 
 
-def check(page: str, std: dict, results: dict) -> None:
+def check(page: str, std: dict, targets: list) -> None:
     """Run the page's score() in node on each bundled review and compare with tools/rqs."""
     node = shutil.which("node")
     if not node:
@@ -49,7 +61,7 @@ def check(page: str, std: dict, results: dict) -> None:
     start = page.index("// Python-compatible round(x, nd)")
     end = page.index("/* ---------------- state ---------------- */")
     consts = page[page.index('const CRIT = STD.dimensions'):page.index("// Python-compatible round(x, nd)")]
-    reviews = [t["review"] for t in results["targets"]]
+    reviews = [t["review"] for t in targets]
     prog = ("const STD = " + js(std) + ";\n" + consts + page[start:end] +
             "\nconst R = " + js(reviews) + ";\nprocess.stdout.write(JSON.stringify(R.map(r => { const s = score(r); return [s.grade, s.qi, s.hri, s.cov, s.dims.map(d => d.score)]; })));")
     p = subprocess.run([node, "-"], input=prog, capture_output=True, text=True, timeout=60)

@@ -1,8 +1,15 @@
 {
- "example": "absurd",
- "scope": "placeholder",
- "method": "placeholder",
- "headlines": ["placeholder"],
- "agreement_note": "",
- "footer": ""
+ "example": "rea",
+ "scope": "the fourteen repositories in the task (rea, caveman, leanrea, strix, ponytail, my-jev, pi durable, absurd, laya-coreml, laya, orca, t3code, pandacode, agent-sandbox-lockdown) and RE4exa itself, at their commits of 20 October 2026.",
+ "method": "Inert rqs probes collected evidence. Ten independent reviewer agents scored every applicable criterion with file:line evidence, recorded gaps and opportunities, and decided each red line. A blind second reviewer re-scored 16 criteria on three targets, and RE4exa got an adversarial review. Static review only: nothing in the targets was built or run.",
+ "headlines": [
+  "No target reaches grade B. The mean Quality Index is 48.4 and the mean Horizon Readiness 5.6; 4 of 886 criterion levels are at the 2030-35 horizon.",
+  "The widest gaps are dated obligations: regulatory readiness averages 0.69 of 5 and support commitments 1.08, while EU CRA reporting applies since 11 Sep 2026 and its main obligations from 11 Dec 2027.",
+  "All four agent harnesses (orca, t3code, pandacode, pi durable) start agents with broad powers by default; least agency averages 1.86.",
+  "Of 148 gaps, the most frequent are claims without evidence (24) and supply chain and CI (24).",
+  "Only RE4exa had confirmed red lines: no licence, and SQL names taken from imported files. The second is fixed; the licence is the owner's decision.",
+  "Reviewers agree with each other closely (weighted kappa 0.80 on 47 pairs). Automatic suggestions match reviewers exactly 49% of the time and within one level 91%."
+ ],
+ "agreement_note": "Pairs are criteria both reviewers scored 0-5. Kappa is quadratic-weighted; with 15-16 pairs per target it is a rough figure.",
+ "footer": "RQS-2030 v1.1.0. Reviews dated 2026-10-20. Source data: research/rqs-review in the RE4exa repository."
 }

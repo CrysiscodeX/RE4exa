@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """Score every review, compare the targets, and write the cross-repository synthesis.
 
-usage: synthesize.py [--probes-dir DIR]   (default: read probes.jsonl.gz next to this file)
+usage: synthesize.py [--probes-dir DIR] [--rerun-dir DIR]
+  --probes-dir   rqs probe documents the reviewers used (written to probes.jsonl.gz; default: read it)
+  --rerun-dir    probe documents from a later rqs version, to measure how its suggestions compare
 
 Reads   reviews/*.review.json (primary reviews), second/*.review.json (second reviewer),
         probes.jsonl.gz or DIR/*.json (rqs probe documents)
-Writes  probes.jsonl.gz (when --probes-dir is given), reports/<name>.md, results.json
+Writes  probes.jsonl.gz (when --probes-dir is given), reports/<name>.md, results.json, tables.md
 """
 
 from __future__ import annotations
@@ -57,6 +59,7 @@ def mentions(text: str, self_name: str) -> list[str]:
 
 def main() -> None:
     probes_dir = sys.argv[sys.argv.index("--probes-dir") + 1] if "--probes-dir" in sys.argv else None
+    rerun_dir = sys.argv[sys.argv.index("--rerun-dir") + 1] if "--rerun-dir" in sys.argv else None
     std = STD.load()
     probes = load_probes(probes_dir)
     crit = STD.criteria(std)
@@ -93,10 +96,7 @@ def main() -> None:
             "gaps": [{k: g.get(k) for k in ("lens", "title", "case", "impact", "fix", "severity")} for g in gaps],
             "opps": [{k: o.get(k) for k in ("lens", "criterion", "title", "description", "value", "reach", "confidence", "horizon_fit", "effort", "action", "priority")} for o in opps],
             "reeng": [{k: r.get(k) for k in ("action", "component", "gain", "measure")} for r in card["reengineering"]],
-            "review": {"rqs_review": 1, "target": {"name": name, "repo": REPOS.get(name, "")}, "profile": card["profile"], "flags": card["flags"],
-                       "reviewer": card["reviewer"], "date": card["date"],
-                       "scores": {r["id"]: {"level": r["level"], "confidence": r["confidence"], "evidence": r["evidence"][:4], "note": (r["note"] or "")[:400], "source": "review"}
-                                  for r in card["criteria"] if r["applicable"] or r["level"] == "NA"}},
+            "flags": card["flags"], "reviewer": card["reviewer"], "date": card["date"],
         })
     targets.sort(key=lambda t: -(t["summary"]["quality_index"] or 0))
 
@@ -142,25 +142,53 @@ def main() -> None:
                 pa["scores"][f"{n}:{cid}"] = prim[cid]
                 pb["scores"][f"{n}:{cid}"] = sec[cid]
         pooled = _pooled_agreement(pa, pb)
-    auto = None
-    if auto_cmp:
-        diffs = [b - a for _, _, a, b in auto_cmp]
-        by_c = {}
-        for _, cid, a, b in auto_cmp:
-            by_c.setdefault(cid, []).append(b - a)
-        worst = sorted(((cid, round(statistics.mean(d), 2), sum(abs(x) >= 2 for x in d), len(d)) for cid, d in by_c.items()), key=lambda x: -abs(x[1]))[:10]
-        auto = {"pairs": len(diffs), "exact": round(sum(d == 0 for d in diffs) / len(diffs), 3), "within_1": round(sum(abs(d) <= 1 for d in diffs) / len(diffs), 3),
-                "mean_reviewer_minus_auto": round(statistics.mean(diffs), 2), "most_biased": [{"id": c, "mean_diff": m, "off_by_2_or_more": k, "pairs": n} for c, m, k, n in worst]}
+    auto = _auto_stats(auto_cmp)
+    if rerun_dir:
+        rer = []
+        for path in sorted((HERE / "reviews").glob("*.review.json")):
+            name = path.name.split(".")[0]
+            sug = (json.loads((Path(rerun_dir) / f"{name}.json").read_text()).get("suggestions") or {}) if (Path(rerun_dir) / f"{name}.json").exists() else {}
+            scores = json.loads(path.read_text()).get("scores") or {}
+            for cid, sv in sug.items():
+                a, b = S._level(sv.get("level")), S._level((scores.get(cid) or {}).get("level"))
+                if isinstance(a, int) and isinstance(b, int):
+                    rer.append((name, cid, a, b))
+        rerun = {"all": _auto_stats(rer), "excluding_re4exa": _auto_stats([x for x in rer if x[0] != "re4exa"]),
+                 "note": "re4exa was changed after its review (fixes from that review), so its rerun is not like-for-like"}
+    else:
+        rerun = None
     res = {"rqs_results": 1, "standard": {"id": std["standard"]["id"], "version": std["standard"]["version"], "sha256": std["meta"]["source_sha256"]},
-           "date": max((t["review"]["date"] or "") for t in targets) if targets else None,
+           "date": max((t["date"] or "") for t in targets) if targets else None,
            "targets": targets, "dimension_means": dims_mean, "criteria": per_crit, "lens_counts": sorted(
                [{"lens": k, "name": lens_names.get(k, ""), "count": v} for k, v in lens_counts.items()], key=lambda x: -x["count"]),
            "severity_counts": sev, "top_opportunities": [{k: o.get(k) for k in ("target", "title", "description", "priority", "action", "lens")} for o in all_opps[:15]],
-           "cross_references": references, "agreement": agreement, "agreement_pooled": pooled, "auto_vs_reviewer": auto}
+           "cross_references": references, "agreement": agreement, "agreement_pooled": pooled, "auto_vs_reviewer": auto,
+           "auto_vs_reviewer_excluding_re4exa": _auto_stats([x for x in auto_cmp if x[0] != "re4exa"]), "auto_vs_reviewer_rerun": rerun}
     (HERE / "results.json").write_text(json.dumps(res, indent=1, ensure_ascii=False, default=str) + "\n", encoding="utf-8")
+    cmp = R.compare(list(cards.values()))
+    (HERE / "tables.md").write_text("# RQS-2030 scores of the fifteen reviewed targets\n\nGenerated by `synthesize.py` from `reviews/`; "
+                                    "levels per criterion below the dimension table (NA = not applicable, U = not established).\n\n"
+                                    + R.compare_md(cmp) + "\n", encoding="utf-8")
     print(json.dumps({"targets": len(targets), "gaps": sum(len(t["gaps"]) for t in targets), "opportunities": len(all_opps), "agreement": agreement and [
-        {k: a[k] for k in ("target", "pairs", "exact", "within_1", "quadratic_weighted_kappa")} for a in agreement], "pooled": pooled, "auto_vs_reviewer": auto and {
-        k: auto[k] for k in ("pairs", "exact", "within_1", "mean_reviewer_minus_auto")}}, indent=1))
+        {k: a[k] for k in ("target", "pairs", "exact", "within_1", "quadratic_weighted_kappa")} for a in agreement], "pooled": pooled,
+        "auto_vs_reviewer": auto and {k: auto[k] for k in ("pairs", "exact", "within_1", "mean_reviewer_minus_auto")},
+        "rerun": rerun and {k: rerun[k] and {kk: rerun[k][kk] for kk in ("pairs", "exact", "within_1")} for k in ("all", "excluding_re4exa")}}, indent=1))
+
+
+def _auto_stats(rows: list) -> dict | None:
+    """How well probe-based suggestions predicted the reviewers' levels."""
+    if not rows:
+        return None
+    diffs = [b - a for _, _, a, b in rows]
+    by_c = {}
+    for _, cid, a, b in rows:
+        by_c.setdefault(cid, []).append(b - a)
+    worst = sorted(((cid, round(statistics.mean(d), 2), sum(abs(x) >= 2 for x in d), len(d)) for cid, d in by_c.items() if len(d) >= 5), key=lambda x: -abs(x[1]))[:10]
+    best = sorted(((cid, round(sum(x == 0 for x in d) / len(d), 2), len(d)) for cid, d in by_c.items() if len(d) >= 8), key=lambda x: -x[1])[:8]
+    return {"pairs": len(diffs), "exact": round(sum(d == 0 for d in diffs) / len(diffs), 3), "within_1": round(sum(abs(d) <= 1 for d in diffs) / len(diffs), 3),
+            "mean_reviewer_minus_auto": round(statistics.mean(diffs), 2),
+            "most_biased": [{"id": c, "mean_diff": m, "off_by_2_or_more": k, "pairs": n} for c, m, k, n in worst],
+            "most_reliable": [{"id": c, "exact": e, "pairs": n} for c, e, n in best]}
 
 
 def _pooled_agreement(a: dict, b: dict) -> dict:
