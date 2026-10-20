@@ -1,0 +1,1183 @@
+# RQS-2030: RE4exa Quality Standard for software that humans and AI agents rely on, 2030-2035.
+# Source of truth. `python3 standard/build.py` renders rqs-2030.json (for tools and agents)
+# and RQS-2030.md (for people). Edit this file, never the generated ones.
+
+standard:
+  id: RQS-2030
+  title: RE4exa Quality Standard 2030
+  version: 1.0.0
+  date: 2026-10-20
+  horizon: 2030-2035
+  status: Release for use. Review annually; the next review is due by 2027-10.
+  scope: >-
+    Software repositories and the products built from them: libraries, CLIs, MCP servers, agent harnesses,
+    agent skills and prompt packs, workflow engines, security tools, ML models and runtimes, and applications.
+    It judges a product as shipped and as maintained, and it looks for gaps and for opportunities to re-engineer.
+  audience: >-
+    Reviewers (human or agent), maintainers preparing a release, and teams deciding what to adopt, extract,
+    merge or rebuild.
+  principles:
+    - id: evidence
+      text: No case, no finding. Every score cites evidence (a file, a command and its output, a measurement); opinions are labelled as inferences.
+    - id: unknown
+      text: Unknown is neither pass nor fail. Unevidenced criteria score U, lower evidence coverage, and can cap a grade. They never count as a pass.
+    - id: oracle
+      text: Prefer independent oracles (answer keys, golden outputs, reference implementations) over a project's description of itself.
+    - id: profile
+      text: Judge against the product's profile (what it is for), not against an ideal product.
+    - id: horizon
+      text: Level 3 is good practice today (2025-26 standards). Level 5 is what users, agents and regulators will expect in 2030-35. Both are stated explicitly for every criterion.
+    - id: agents-are-users
+      text: AI agents are first-class users. Interfaces, errors, costs and guarantees must work for a non-human caller with a finite context window.
+    - id: honest-numbers
+      text: Report measured numbers with method and date, including net-negative cases. Never round toward the desired conclusion.
+    - id: proportionality
+      text: Effort, risk and rigour scale with impact. A 10-file skill and a code-executing agent harness are not held to the same weights.
+    - id: opportunity
+      text: A review is incomplete until it has also looked for what could be extracted, merged, deleted, re-platformed or standardized.
+
+levels:
+  "0":
+    name: Absent or harmful
+    text: The capability is missing, or is present in a way that creates risk or misleads.
+  "1":
+    name: Ad hoc
+    text: Something exists but is informal, undocumented or untested.
+  "2":
+    name: Partial
+    text: Implemented or documented for some paths. Known gaps remain.
+  "3":
+    name: Meets
+    text: Meets the 'meets' anchor, which is current good practice.
+  "4":
+    name: Enforced and measured
+    text: Meets, and is enforced by automation (CI gates, metrics, regression checks).
+  "5":
+    name: Horizon-ready
+    text: Meets the 'horizon' anchor, which is what 2030-35 users, agents and regulators will expect.
+  U:
+    name: Unknown
+    text: Not enough evidence to score. Counts against evidence coverage; never a pass.
+  NA:
+    name: Not applicable
+    text: Excluded with a stated reason (for example, no UI or no cryptography).
+
+confidence:
+  observed:
+    weight: 1.0
+    text: Read directly from the repository, a run, or tool output.
+  derived:
+    weight: 0.9
+    text: Computed from observed evidence by a stated rule.
+  inferred:
+    weight: 0.6
+    text: Reviewer judgement from indirect signals.
+
+applicability_flags:
+  uses_llm: The product calls LLMs, runs agents, or is executed by agents (MCP server, skill, harness).
+  has_ui: The product has a graphical, web or terminal UI for people.
+  executes_code: The product runs code, commands or browsers on behalf of a user or agent.
+  parses_untrusted: The product parses input it does not control (binaries, archives, web content, repositories, model files).
+  uses_crypto: The product signs, encrypts, authenticates or verifies with cryptography.
+  heavy_compute: Training, inference, large builds or analyses with material energy use.
+  network_service: The product listens on a network port or exposes an API.
+  distributed: The product is published for others to install (package registry, binaries, app store).
+
+profiles:
+  agent-tool:
+    text: CLIs, libraries and MCP servers that agents call to do work (REA, rex, dissect, caveman engine).
+    weights: {PUR: 1.5, COR: 2.5, REL: 2, PERF: 2, SEC: 2.5, AGT: 2, INT: 3, EPI: 3, MNT: 1.5, EVO: 1.5, OPS: 1, PRV: 1.5, SUS: 1}
+  agent-harness:
+    text: Products that run agents or LLMs and act on a user's machine or accounts (coding-agent GUIs, orchestrators, durable agent runtimes).
+    weights: {PUR: 1, COR: 2, REL: 2.5, PERF: 1.5, SEC: 3, AGT: 3, INT: 2, EPI: 1.5, MNT: 1.5, EVO: 1.5, OPS: 2, PRV: 2, SUS: 1}
+  skill-pack:
+    text: Instructions, skills, rules files and prompt packs whose product is agent behaviour.
+    weights: {PUR: 3, COR: 2, REL: 0.5, PERF: 2, SEC: 1, AGT: 1.5, INT: 2, EPI: 2.5, MNT: 1, EVO: 1, OPS: 0.5, PRV: 1, SUS: 1}
+  workflow-engine:
+    text: Infrastructure libraries and engines other software builds on (durable execution, queues, storage).
+    weights: {PUR: 1, COR: 3, REL: 3, PERF: 2, SEC: 2.5, AGT: 0.5, INT: 1.5, EPI: 1, MNT: 2, EVO: 2, OPS: 2, PRV: 1, SUS: 1.5}
+  security-tool:
+    text: Offensive or defensive security tools, sandboxes and scanners.
+    weights: {PUR: 1.5, COR: 2.5, REL: 1.5, PERF: 1, SEC: 3, AGT: 3, INT: 1.5, EPI: 2.5, MNT: 1, EVO: 1, OPS: 1.5, PRV: 2, SUS: 1}
+  ml-system:
+    text: Models, training pipelines and inference runtimes.
+    weights: {PUR: 1.5, COR: 3, REL: 1.5, PERF: 2.5, SEC: 1.5, AGT: 2, INT: 1.5, EPI: 3, MNT: 1.5, EVO: 1.5, OPS: 1, PRV: 2, SUS: 1}
+  application:
+    text: End-user applications (desktop, web, mobile, terminal).
+    weights: {PUR: 1, COR: 2, REL: 2, PERF: 2, SEC: 2.5, AGT: 1.5, INT: 2.5, EPI: 1, MNT: 1.5, EVO: 1.5, OPS: 1.5, PRV: 2.5, SUS: 1}
+
+references:
+  - id: ISO25010
+    name: ISO/IEC 25010:2023 product quality model (SQuaRE)
+    note: 'Nine characteristics: functional suitability, performance efficiency, compatibility, interaction capability, reliability, security, maintainability, flexibility, safety.'
+  - id: ISO25059
+    name: ISO/IEC 25059:2023 quality model for AI systems
+    note: Adds AI-specific sub-characteristics such as user controllability, transparency, robustness and intervenability.
+  - id: ISO5055
+    name: ISO/IEC 5055:2021 automated source code quality measures (CISQ)
+    note: Weakness-based measures for reliability, security, performance efficiency and maintainability.
+  - id: ISO42001
+    name: ISO/IEC 42001:2023 AI management system
+    note: Organisational controls for responsible AI.
+  - id: ISO23894
+    name: ISO/IEC 23894:2023 AI risk management guidance
+  - id: ISO21031
+    name: ISO/IEC 21031:2024 Software Carbon Intensity (SCI)
+    note: Carbon per functional unit.
+  - id: NIST-SSDF
+    name: NIST SP 800-218 Secure Software Development Framework v1.1
+  - id: NIST-AIRMF
+    name: NIST AI RMF 1.0 (AI 100-1) and Generative AI Profile (AI 600-1)
+  - id: NIST-PQC
+    name: NIST FIPS 203 (ML-KEM), 204 (ML-DSA), 205 (SLH-DSA), 2024; NIST IR 8547 (draft) transition
+    note: The draft transition plan deprecates quantum-vulnerable public-key algorithms after 2030 and disallows them after 2035.
+  - id: CNSA2
+    name: NSA CNSA 2.0
+    note: Software and firmware signing to use CNSA 2.0 algorithms exclusively by 2030; broad transition targeted for 2035.
+  - id: CISA-SBD
+    name: CISA Secure by Design principles and Product Security Bad Practices
+    note: Includes publishing memory-safety roadmaps and eliminating default-insecure behaviour.
+  - id: OWASP-ASVS
+    name: OWASP Application Security Verification Standard 5.0 (2025)
+  - id: OWASP-LLM
+    name: OWASP Top 10 for LLM Applications 2025
+    note: LLM01 prompt injection, LLM02 sensitive information disclosure, LLM03 supply chain, LLM04 data and model poisoning, LLM05 improper output handling, LLM06 excessive agency, LLM07 system prompt leakage, LLM08 vector and embedding weaknesses, LLM09 misinformation, LLM10 unbounded consumption.
+  - id: OWASP-AGENTIC
+    name: OWASP Agentic Security Initiative guidance (agentic threats and mitigations, 2025)
+    note: Tool misuse, memory poisoning, privilege compromise, intent breaking, cascading failures.
+  - id: MITRE-ATLAS
+    name: MITRE ATLAS adversarial threat landscape for AI systems
+  - id: SLSA
+    name: SLSA v1.x supply-chain levels (Build track L1-L3)
+  - id: OPENSSF
+    name: OpenSSF Scorecard and Open Source Project Security (OSPS) Baseline
+  - id: SBOM
+    name: SPDX 3.0 / CycloneDX 1.6 (ECMA-424) SBOMs; OpenVEX / CSAF 2.0 VEX
+  - id: SIGSTORE
+    name: Sigstore signing; npm provenance; PyPI attestations (PEP 740)
+  - id: SEMVER
+    name: Semantic Versioning 2.0.0
+  - id: REUSE
+    name: REUSE specification and SPDX license identifiers
+  - id: EU-CRA
+    name: EU Cyber Resilience Act, Regulation (EU) 2024/2847
+    note: Vulnerability and incident reporting from 11 Sep 2026; main obligations (secure by default, vulnerability handling, SBOM, declared support period) from 11 Dec 2027. Lighter regime for open-source stewards.
+  - id: EU-AIA
+    name: EU AI Act, Regulation (EU) 2024/1689
+    note: Prohibitions from 2 Feb 2025; general-purpose AI obligations from 2 Aug 2025; most remaining obligations from 2 Aug 2026, and product-embedded high-risk systems from 2 Aug 2027. The Commission's November 2025 Digital Omnibus proposal would postpone the high-risk dates; check the text in force before relying on them.
+  - id: EU-EAA
+    name: European Accessibility Act, Directive (EU) 2019/882
+    note: Applies to covered products and services from 28 Jun 2025.
+  - id: EU-DATA
+    name: EU Data Act, Regulation (EU) 2023/2854
+    note: Applies from 12 Sep 2025; data access, portability and cloud switching.
+  - id: GDPR
+    name: General Data Protection Regulation (EU) 2016/679
+  - id: WCAG
+    name: W3C WCAG 2.2 (2023)
+    note: Level AA is the common legal reference; WCAG 3 is in draft.
+  - id: MCP
+    name: Model Context Protocol specification (2025-06-18, 2025-11-25)
+    note: Tools, resources, prompts, annotations, OAuth-based authorization, structured output.
+  - id: A2A
+    name: Agent2Agent (A2A) protocol
+    note: Agent cards and task exchange between agents.
+  - id: OTEL
+    name: OpenTelemetry
+    note: Includes semantic conventions for generative AI (still evolving).
+  - id: AGENTS-MD
+    name: AGENTS.md and SKILL.md conventions
+    note: Repository instructions and packaged skills for coding agents.
+  - id: C2PA
+    name: C2PA content credentials
+    note: Provenance for generated media.
+
+dimensions:
+  - id: PUR
+    name: Purpose and value
+    intent: The product knows whom it serves, proves its value with measurements, and carries no surface it does not need.
+    iso25010: [functional suitability]
+    criteria:
+      - id: PUR-1
+        title: Problem, users and limits are explicit
+        question: Can a new human or agent user tell in under two minutes what this is for, who it is for, and where it stops?
+        why: Agents choose tools from descriptions. Vague scope causes misuse, and misuse is the main source of wrong agent output.
+        fail: No README, or marketing language with no stated scope, non-goals or limitations.
+        meets: README states the problem, the intended users (including agents), how to start, and its known limitations and non-goals.
+        horizon: A machine-readable capability statement (inputs, outputs, effects, limits, costs) is published next to the prose and kept in sync by CI.
+        evidence: [README, docs index, describe/--help output]
+        probes: [meta.readme_sections, agent.describe]
+        refs: [ISO25010]
+      - id: PUR-2
+        title: Value claims are measured and reproducible
+        question: Is every headline number backed by a harness someone else can rerun, with baseline, sample size, uncertainty and date?
+        why: In 2030 buyers, agents and auditors will discount unmeasured claims. Reproducible evaluation is the currency of trust.
+        fail: Headline numbers without method, baseline or harness, or numbers contradicted by a rerun.
+        meets: Benchmarks are in the repo with method, baseline, sample size and date. Net-negative cases are reported.
+        horizon: Benchmarks run in CI with confidence intervals; results are versioned per release and independently reproduced.
+        evidence: [benchmark harness, results files, claim-to-harness mapping]
+        probes: [claims.count, claims.harness, test.bench]
+        refs: [ISO25010]
+        core: true
+      - id: PUR-3
+        title: Necessity and scope discipline
+        question: Does each component, dependency and tool earn its place, or does an existing one already do it?
+        why: Every unneeded tool, dependency and line costs agent context, attack surface and maintenance for the life of the product.
+        fail: Large surfaces with no measured use; reimplementations of standard-library or dependency features; duplicated subsystems.
+        meets: There is a documented reason for each major component. Duplicates and reimplementations are justified or removed.
+        horizon: A necessity gate (does it exist already? can stdlib or a dependency do it?) runs before additions, and surface size is tracked per release.
+        evidence: [dependency list, tool/command counts, duplication report, dead-code report]
+        probes: [size.duplicates, deps.counts, agent.mcp, static.deadcode_tools]
+        refs: [ISO5055]
+
+  - id: COR
+    name: Correctness and verification
+    intent: The product does what it says, and proves it against oracles that are independent of the product.
+    iso25010: [functional suitability, reliability]
+    criteria:
+      - id: COR-1
+        title: Automated tests cover behaviour and gate changes
+        question: Do tests exercise the behaviour users depend on, and does CI block merges that break them?
+        why: Agent-written code will be the bulk of new code by 2030. Tests are the contract that keeps fast change safe.
+        fail: No tests, or tests that are not run in CI.
+        meets: Unit and integration tests cover the main paths and run on every change. The test-to-source ratio is reported.
+        horizon: Coverage of critical paths is measured and enforced; flaky tests are tracked and quarantined with owners; tests run on every supported platform.
+        evidence: [test files, CI workflow, coverage config]
+        probes: [test.ratio, test.frameworks, ci.tests_in_ci, ci.os_matrix]
+        refs: [ISO25010, NIST-SSDF]
+        core: true
+      - id: COR-2
+        title: Independent oracles
+        question: Is output checked against something the product did not produce itself (answer keys, golden files, reference implementations, differential tests)?
+        why: Self-consistent but wrong output passes ordinary tests. Oracles catch what the product cannot see about itself.
+        fail: Only self-referential tests (snapshots of current output with no external truth).
+        meets: Golden outputs or answer keys derived independently exist for the main capabilities.
+        horizon: Differential tests against reference tools or prior versions run in CI. Parity tolerances are explicit. Oracles are refreshed when inputs change.
+        evidence: [fixtures with provenance, parity tests, answer keys]
+        probes: [test.golden, test.e2e]
+        refs: [ISO25010]
+      - id: COR-3
+        title: Test strength is measured
+        question: Are the tests themselves tested (mutation testing, property-based tests, fuzzing for untrusted-input parsers)?
+        why: High coverage with weak assertions is false comfort. Parsers of untrusted input need fuzzing to be trustworthy.
+        fail: No mutation, property or fuzz testing anywhere.
+        meets: Property tests or fuzzers cover parsers and core algorithms; mutation testing runs at least periodically.
+        horizon: Mutation score and fuzz coverage are tracked per release with thresholds; crashes found by fuzzing become regression tests.
+        evidence: [mutation config and reports, property tests, fuzz targets]
+        probes: [test.mutation, test.property, test.fuzz]
+        refs: [ISO5055, OPENSSF]
+      - id: COR-4
+        title: Self-application and dogfooding
+        question: Has the product been run on itself, its own artifacts, or realistic third-party inputs, with the results recorded?
+        why: A tool that cannot handle its own shipped form usually fails on real users' inputs too (REA could not inventory its own npm package).
+        fail: Only synthetic toy inputs.
+        meets: Realistic inputs are used in tests or documented trials, including the product's own artifacts where meaningful.
+        horizon: Self-application runs in CI on every release, and its findings are tracked to closure.
+        evidence: [real-input test lanes, self-analysis reports]
+        probes: [test.e2e, ci.workflows]
+        refs: [ISO25010]
+      - id: COR-5
+        title: Determinism and reproducibility of results
+        question: Does the same input give the same output and identifiers, and are sources of nondeterminism controlled?
+        why: Agents cache, compare and share results. Nondeterminism breaks caching, diffing and audit.
+        fail: Output varies between identical runs without explanation, for example timing treated as behaviour.
+        meets: Core outputs are deterministic, or nondeterminism is documented and isolated (seeds, timestamps, ordering).
+        horizon: Outputs carry content-addressed identifiers. Reproducibility is tested by running twice and comparing in CI.
+        evidence: [double-run comparisons, id scheme]
+        probes: [epi.evidence]
+        refs: [ISO25010]
+
+  - id: REL
+    name: Reliability, durability and resource safety
+    intent: Work survives crashes and large inputs. Failures are bounded, labelled and recoverable.
+    iso25010: [reliability]
+    criteria:
+      - id: REL-1
+        title: Crash safety and resumability
+        question: If the process is killed mid-task, is completed work kept and resumed without repeating side effects?
+        why: Agents run long, multi-step tasks. Losing state on a crash wastes compute and can repeat side effects such as payments, writes or messages.
+        fail: State lives only in memory; a crash loses everything; retries repeat side effects.
+        meets: Long tasks checkpoint to durable storage; replays are idempotent; a kill-and-resume test exists.
+        horizon: Durable execution with idempotency keys and leases; crash-loop protection; resume is verified by automated fault injection.
+        evidence: [kill/resume test, checkpoint storage, idempotency keys]
+        probes: [dur.checkpoint, dur.storage, dur.retry]
+        refs: [ISO25010]
+        core: true
+      - id: REL-2
+        title: Bounded resources and no size cliffs
+        question: Are memory, time and output size bounded and documented, and do large inputs degrade gracefully instead of failing?
+        why: Inputs grow faster than machines. Single-object limits (strings, frames, buffers) become outages (REA could not re-import its own 889 MB export).
+        fail: Unbounded memory or output; failures on large inputs with no limit stated.
+        meets: Limits exist for memory, time and output, and are documented; large results stream or page.
+        horizon: Streaming everywhere for unbounded data; limits are configurable and tested at 10x the expected maximum; resource use is reported per operation.
+        evidence: [limit configs, streaming paths, large-input tests]
+        probes: [risk.patterns, agent.budget]
+        refs: [ISO5055, OWASP-LLM]
+      - id: REL-3
+        title: Graceful degradation and honest partial results
+        question: When something fails or is skipped, is the result labelled partial, and do retries back off instead of crash-looping?
+        why: Silent partial results are worse than errors; they become false facts downstream.
+        fail: Failures swallowed; partial output presented as complete.
+        meets: Partial results are labelled with what is missing. Retries use backoff with limits.
+        horizon: Each failure mode is enumerated, tested and documented, with fail-closed defaults where safety matters.
+        evidence: [error handling, partial-result labels, retry policy]
+        probes: [dur.retry, agent.structured_errors]
+        refs: [ISO25010]
+      - id: REL-4
+        title: Lifecycle hygiene
+        question: Are child processes, temporary files, locks, ports and sessions always cleaned up, including after errors and signals?
+        why: Leaked processes and files accumulate on agent hosts and become security and stability problems.
+        fail: Orphans or leftovers are common, and no signal handling exists.
+        meets: Cleanup on success, error and SIGINT/SIGTERM; owned processes are tracked.
+        horizon: Cleanup is verified by tests that check for leftovers; ownership is proven (process groups, job objects, run tokens).
+        evidence: [signal handlers, cleanup tests]
+        probes: [obs.signals]
+        refs: [ISO25010]
+
+  - id: PERF
+    name: Efficiency and sustainability
+    intent: Time, attention (tokens) and energy are spent deliberately and measured.
+    iso25010: [performance efficiency]
+    criteria:
+      - id: PERF-1
+        title: Latency and throughput are measured
+        question: Are the main operations timed (p50/p99) with documented budgets?
+        why: An agent workflow is a chain of calls; slow steps multiply.
+        fail: No performance numbers; obvious hot-path waste.
+        meets: Benchmarks for the main operations, with budgets.
+        horizon: Performance regressions are gated in CI; budgets are declared to callers (expected latency per operation).
+        evidence: [benchmarks, CI perf jobs]
+        probes: [test.bench]
+        refs: [ISO25010]
+      - id: PERF-2
+        title: Attention economy (tokens and bytes an agent must read)
+        question: How many bytes or tokens does an agent pay per useful answer, including tool catalogs and repeated payloads?
+        why: Context is the agent's scarcest resource. Catalogs and verbose outputs are paid for on every turn (REA's default catalog is about 833k tokens).
+        fail: Megabyte catalogs or outputs by default; duplicated payloads; no summaries.
+        meets: Outputs are summary-first with detail on request; catalog size is measured and reasonable for the scope.
+        horizon: Every output states its cost; schemas are lazy or compact by default; one payload copy; detail is retrieved by stable handle.
+        evidence: [tools/list size, output size per operation]
+        probes: [agent.mcp, agent.json_output]
+        refs: [MCP, OWASP-LLM]
+        core: true
+      - id: PERF-3
+        title: Energy and carbon awareness
+        question: For compute-heavy work, is energy or carbon measured, and are efficient paths (on-device, smaller models, caching) offered?
+        why: AI workloads drive energy demand, and carbon reporting is spreading through procurement and regulation.
+        fail: Heavy compute with no measurement and no efficient option.
+        meets: Energy or time per unit of work is measured for heavy paths; caching or reuse avoids repeated compute.
+        horizon: SCI (ISO/IEC 21031) or equivalent is reported per functional unit; the product can choose low-energy paths automatically.
+        evidence: [energy benchmarks, caching]
+        probes: [test.bench, perf.energy]
+        refs: [ISO21031]
+        applies_if: heavy_compute
+
+  - id: SEC
+    name: Security and supply chain
+    intent: Built, shipped and run securely, with verifiable provenance and a path to post-quantum cryptography.
+    iso25010: [security]
+    criteria:
+      - id: SEC-1
+        title: Security policy and threat model
+        question: Is there a way to report vulnerabilities, and a written threat model for what the product protects and does not?
+        why: The EU CRA requires coordinated vulnerability handling for products with digital elements; agents need to know trust boundaries.
+        fail: No SECURITY.md or contact; no statement of what is trusted.
+        meets: SECURITY.md with contact and response expectations; a threat model or trust-boundary section.
+        horizon: Security advisories are published (GHSA/CVE/CSAF); the threat model is reviewed each release; disclosure timelines are met and measured.
+        evidence: [SECURITY.md, threat model doc, advisories]
+        probes: [meta.security_policy]
+        refs: [NIST-SSDF, EU-CRA, OPENSSF]
+        core: true
+      - id: SEC-2
+        title: Dependency hygiene
+        question: Are dependencies locked, minimal, updated and scanned for known vulnerabilities?
+        why: Most compromises arrive through dependencies (OWASP LLM03 supply chain).
+        fail: No lockfiles; unpinned ranges for runtime dependencies; no update or scan process.
+        meets: Lockfiles committed; automated update PRs; known-vulnerability scanning in CI.
+        horizon: Dependencies minimal and justified; install scripts disabled or audited; new dependencies reviewed by policy.
+        evidence: [lockfiles, dependabot/renovate config, scan jobs]
+        probes: [deps.lockfiles, deps.update_bot, deps.pinning, ci.security_scans]
+        refs: [OPENSSF, OWASP-LLM, NIST-SSDF]
+      - id: SEC-3
+        title: Build provenance and signed releases
+        question: Can a user verify who built a release, from which source and how?
+        why: Provenance attestations are becoming standard expectations for distributed software.
+        fail: Releases built on developer machines; nothing signed.
+        meets: Releases built in CI with provenance (npm provenance, PyPI attestations, Sigstore, or the SLSA generator).
+        horizon: SLSA Build L3, reproducible builds, verification instructions for users, and signatures planned for post-quantum algorithms.
+        evidence: [release workflow, attestations]
+        probes: [ci.provenance, ci.release_automation]
+        refs: [SLSA, SIGSTORE, CNSA2]
+        applies_if: distributed
+      - id: SEC-4
+        title: SBOM and VEX
+        question: Does each release ship a machine-readable SBOM, and are known vulnerabilities triaged (VEX)?
+        why: SBOMs are required for products with digital elements under the EU CRA from Dec 2027, and buyers already request them.
+        fail: No SBOM; no record of third-party components.
+        meets: SBOM (SPDX or CycloneDX) generated per release; third-party notices complete.
+        horizon: SBOM and AI-BOM (models, datasets) per release, VEX statements for known CVEs, and SBOMs signed together with the release.
+        evidence: [SBOM files, notices]
+        probes: [ci.sbom, meta.notices]
+        refs: [SBOM, EU-CRA]
+        applies_if: distributed
+      - id: SEC-5
+        title: CI and automation hardening
+        question: Are workflows least-privilege, actions pinned by digest, and untrusted triggers handled safely?
+        why: CI is a supply-chain entry point. Unpinned actions and broad tokens have caused real compromises.
+        fail: Actions pinned by tag only; write-all tokens; pull_request_target running untrusted code.
+        meets: Actions pinned by full SHA; explicit minimal permissions; untrusted triggers isolated.
+        horizon: OpenSSF Scorecard (or equivalent) gating; signed commits or tags for releases; workflow changes require review.
+        evidence: [workflow files]
+        probes: [ci.pinned_actions, ci.permissions, ci.pull_request_target]
+        refs: [OPENSSF, SLSA]
+      - id: SEC-6
+        title: Secrets and sensitive data
+        question: Are there no secrets in the repository, and are secrets kept out of logs, outputs and telemetry?
+        why: Leaked credentials are the most common cause of breaches; agents amplify leaks by copying outputs.
+        fail: Live secrets committed, or secrets printed in logs or outputs.
+        meets: No secrets in the repository; a secret scanner runs; secrets are redacted in logs and outputs.
+        horizon: Short-lived, scoped credentials (OIDC, workload identity); secret redaction is tested; agent-visible outputs are scrubbed by design.
+        evidence: [secret scan results, redaction code]
+        probes: [risk.secrets, ci.security_scans]
+        refs: [OWASP-ASVS, OWASP-LLM]
+        red_line: true
+      - id: SEC-7
+        title: Dangerous operations
+        question: Is the code free of injection-prone patterns (shell strings, eval, unsafe deserialization, disabled TLS verification, path traversal)?
+        why: These patterns turn untrusted input, including prompt-injected agent input, into code execution.
+        fail: Injection-prone patterns on paths reachable from untrusted input.
+        meets: No such patterns in production code, or each one is justified and constrained.
+        horizon: Static analysis gates these classes in CI; untrusted inputs are typed and validated at every boundary.
+        evidence: [pattern scan, SAST results]
+        probes: [risk.patterns, risk.tls_off, risk.unsafe_deser]
+        refs: [OWASP-ASVS, ISO5055, CISA-SBD]
+        red_line: true
+      - id: SEC-8
+        title: Safe parsing of untrusted input
+        question: Are parsers of untrusted data memory-safe or sandboxed, size-limited and fuzzed?
+        why: Parsing attacker-controlled bytes is the classic exploit path. CISA asks vendors to publish memory-safety roadmaps.
+        fail: Native-code parsers of untrusted input with no limits or fuzzing.
+        meets: Memory-safe language or sandboxed parser process; size and recursion limits; malformed-input tests.
+        horizon: Parsers are fuzzed continuously, run with least privilege in isolation, and the memory-safety roadmap is published.
+        evidence: [parser code, limits, fuzz targets]
+        probes: [test.fuzz, agent.sandbox]
+        refs: [CISA-SBD, ISO5055]
+        applies_if: parses_untrusted
+      - id: SEC-9
+        title: Crypto-agility and post-quantum readiness
+        question: Is cryptography used through a replaceable layer with an inventory of algorithms, and is there a plan for ML-KEM/ML-DSA?
+        why: NIST's draft transition deprecates quantum-vulnerable public-key algorithms after 2030 and disallows them after 2035; CNSA 2.0 requires post-quantum signing for software by 2030.
+        fail: Hard-coded classical algorithms scattered through the code, no inventory.
+        meets: The algorithm inventory is documented; cryptography sits behind an abstraction; no deprecated algorithms are used for security.
+        horizon: Hybrid or post-quantum algorithms (ML-KEM, ML-DSA, SLH-DSA) supported for key exchange and signatures, with a dated migration plan.
+        evidence: [crypto usage inventory, abstraction layer]
+        probes: [crypto.classical, crypto.pqc]
+        refs: [NIST-PQC, CNSA2]
+        applies_if: uses_crypto
+
+  - id: AGT
+    name: AI and agent safety
+    intent: Where LLMs or agents are involved, the product resists manipulation, limits agency, isolates execution and keeps people in control.
+    iso25010: [safety, security]
+    criteria:
+      - id: AGT-1
+        title: Prompt-injection resilience
+        question: Is untrusted content (web pages, files, repositories, tool output) marked and separated from instructions, and tested against injection?
+        why: Prompt injection is OWASP LLM01; agents read untrusted content constantly.
+        fail: Untrusted content flows into prompts or tool arguments unmarked and untested.
+        meets: Untrusted content is labelled (for example untrusted_content flags); instruction and data channels are separated; injection cases are tested.
+        horizon: An adversarial corpus runs in CI per model version; actions caused by injected content are blocked by policy, not by prompt wording.
+        evidence: [untrusted markers, injection tests]
+        probes: [agent.prompt_injection]
+        refs: [OWASP-LLM, OWASP-AGENTIC, MITRE-ATLAS]
+        applies_if: uses_llm
+        core: true
+      - id: AGT-2
+        title: Least agency and honest effect declarations
+        question: Do tools and actions have the minimum permissions they need, do destructive actions require approval or dry-run, and are effect hints accurate?
+        why: Excessive agency is OWASP LLM06. Hosts auto-approve on declared hints, so wrong hints are either unsafe or useless.
+        fail: Broad default permissions; destructive actions without confirmation; hints that are wrong.
+        meets: Scoped permissions, approval or dry-run for destructive actions, accurate readOnly/destructive/idempotent hints.
+        horizon: Capabilities are declared as machine-checkable policy; permissions are granted per task and expire.
+        evidence: [permission model, annotations, dry-run modes]
+        probes: [agent.approval, agent.mcp]
+        refs: [OWASP-LLM, MCP, OWASP-AGENTIC]
+        applies_if: uses_llm
+      - id: AGT-3
+        title: Human oversight and reversibility
+        question: Can a person see, approve, pause and undo what the product or its agents do?
+        why: Oversight is a core expectation of the EU AI Act and of every AI risk framework; it is also what makes people willing to delegate.
+        fail: Consequential actions happen without a record, and cannot be stopped or undone.
+        meets: A readable action log exists, consequential actions need approval, and the product has a stop control and documented rollback.
+        horizon: Oversight is designed per risk level with tested rollback, and the audit trail can be exported in an open format.
+        evidence: [action log, approval flow, rollback docs]
+        probes: [agent.approval]
+        refs: [EU-AIA, ISO42001, NIST-AIRMF, ISO25059]
+        applies_if: uses_llm
+      - id: AGT-4
+        title: Evaluation of model-dependent behaviour
+        question: Is there an evaluation suite for the behaviour that depends on models or prompts, run when models, prompts or providers change?
+        why: Model updates silently change behaviour. Without regression evaluation, quality drifts unnoticed.
+        fail: No evaluation; prompt or model changes are shipped on intuition.
+        meets: An evaluation set with expected outcomes exists and is run before releases; results are recorded.
+        horizon: Evaluations run in CI per model and provider version with confidence intervals; regressions block release; results are published.
+        evidence: [eval harness, results history]
+        probes: [test.bench, claims.harness]
+        refs: [NIST-AIRMF, ISO25059]
+        applies_if: uses_llm
+        core: true
+      - id: AGT-5
+        title: AI transparency and disclosure
+        question: Are models, datasets, providers and data flows documented, and is AI-generated output disclosed where it matters?
+        why: Transparency duties in the EU AI Act, procurement rules and user trust all depend on knowing what model did what with which data.
+        fail: Unknown providers or models; user data sent to third parties without disclosure.
+        meets: The providers, models and data flows in use are documented; model or data cards for any shipped models; AI-generated artefacts are marked.
+        horizon: AI-BOM (models, datasets, prompts) per release, and content credentials for generated media where relevant.
+        evidence: [model cards, provider docs, AI-BOM]
+        probes: [agent.llm_usage, ci.sbom]
+        refs: [EU-AIA, SBOM, C2PA, ISO42001]
+        applies_if: uses_llm
+      - id: AGT-6
+        title: Consumption limits and cost visibility
+        question: Are tokens, time, money and calls bounded per task, and reported to the user?
+        why: Unbounded consumption is OWASP LLM10. Agents in loops can spend without limit.
+        fail: No budgets or limits; costs are invisible.
+        meets: Per-task limits on tokens, time and calls; cost or usage is reported after each run.
+        horizon: Budgets are declared before work starts and enforced, and cost is attributed per step and per outcome.
+        evidence: [budget settings, usage reports]
+        probes: [agent.budget]
+        refs: [OWASP-LLM]
+        applies_if: uses_llm
+
+  - id: INT
+    name: Interfaces and interoperability
+    intent: Humans and agents can use the product through open, versioned, self-describing interfaces with actionable errors.
+    iso25010: [compatibility, interaction capability]
+    criteria:
+      - id: INT-1
+        title: Open, versioned interfaces
+        question: Is the product usable through open protocols or documented APIs (MCP, a CLI with JSON, HTTP/OpenAPI, A2A), with version negotiation and a compatibility policy?
+        why: Agents compose tools across vendors. Proprietary or unversioned interfaces break every client when they change.
+        fail: Only an undocumented or GUI-only interface.
+        meets: A documented CLI with JSON output and/or a standard protocol (MCP, OpenAPI); interface versions are stated.
+        horizon: Several standard protocols are supported; capabilities are negotiated; old clients keep working for a declared window.
+        evidence: [protocol implementation, API docs, version policy]
+        probes: [agent.mcp, agent.a2a, agent.openapi, agent.json_output]
+        refs: [MCP, A2A]
+        core: true
+      - id: INT-2
+        title: Machine-readable contract and self-description
+        question: Can an agent discover the commands, inputs, outputs, effects and limits from the product itself?
+        why: Agents should not need to read prose to call a tool correctly; contracts in data prevent misuse.
+        fail: Behaviour discoverable only from prose or source.
+        meets: Schemas for inputs and outputs, a describe or --help --json command, and stable field names.
+        horizon: The contract is versioned, diffable and published with each release, and drift between the contract and the code fails CI.
+        evidence: [schemas, describe output]
+        probes: [agent.describe, agent.json_output]
+        refs: [MCP]
+      - id: INT-3
+        title: Small, composable surface
+        question: Is the number of tools, commands and options proportionate, with composable primitives rather than one tool per case?
+        why: Every tool definition is paid for in context, and large menus degrade tool selection.
+        fail: Hundreds of narrowly different tools or commands with overlapping effects.
+        meets: Surface size is measured and justified; related operations share one parameterised tool.
+        horizon: Core tools are a small set (tens, not hundreds) with optional lazy-loaded extensions, and tool-selection accuracy is measured.
+        evidence: [tool/command counts, catalog bytes]
+        probes: [agent.mcp]
+        refs: [MCP]
+      - id: INT-4
+        title: Actionable, consistent errors
+        question: Do errors carry a stable code, the real cause, a fix, and a correct retryable flag, and does the same mistake always give the same code?
+        why: An agent can only repair a call it understands. Misleading errors cause loops (REA reported a missing qualification as 'state changed, retry').
+        fail: Free-text errors, swallowed causes, or misleading retry advice.
+        meets: Typed error codes with cause and remediation; retryable flags are correct; the error schema is documented.
+        horizon: Error codes are part of the versioned contract; errors include a machine-applicable fix where possible; consistency is tested.
+        evidence: [error schema, error tests]
+        probes: [agent.structured_errors]
+        refs: [MCP, ISO25010]
+      - id: INT-5
+        title: Idempotency and stable identifiers
+        question: Can calls be retried safely, and are results, pages and records addressed by stable identifiers?
+        why: Agents retry after timeouts and crashes. Stable ids enable caching, citation and deduplication across agents.
+        fail: Retries duplicate effects; identifiers change between runs.
+        meets: Safe retries for read operations and idempotency keys for writes; stable ids; cursor-based paging.
+        horizon: Content-addressed results that are shareable across machines, with identical ids for identical observations.
+        evidence: [id scheme, retry semantics]
+        probes: [epi.evidence, dur.checkpoint]
+        refs: [MCP]
+      - id: INT-6
+        title: Human usability and accessibility
+        question: Does the quickstart work as written, are CLIs ergonomic, and do UIs meet WCAG 2.2 AA and support internationalisation?
+        why: The European Accessibility Act applies from 2025; accessible software serves more people and is easier to automate.
+        fail: The quickstart fails; a UI is inaccessible to keyboard or screen-reader users.
+        meets: The quickstart is tested; help output is complete; UIs follow WCAG 2.2 AA with semantic markup; text can be translated.
+        horizon: Accessibility is tested automatically in CI; documentation and UI are localised; agent and human interfaces stay equivalent.
+        evidence: [quickstart test, a11y checks, locales]
+        probes: [ui.a11y, ui.i18n, meta.translations]
+        refs: [WCAG, EU-EAA, ISO25010]
+      - id: INT-7
+        title: Open formats and exit
+        question: Can users export their data and results in open formats and leave without loss?
+        why: The EU Data Act and procurement policies favour portability. Lock-in is a long-term liability for users.
+        fail: Proprietary formats only; no export.
+        meets: Export and import in documented open formats (JSON, JSONL, SQLite, SPDX/CycloneDX and so on).
+        horizon: Formats are specified and versioned, and third-party tools can read them.
+        evidence: [export commands, format specs]
+        probes: [agent.json_output, dur.storage]
+        refs: [EU-DATA]
+
+  - id: EPI
+    name: Epistemic integrity
+    intent: What the product asserts is traceable, calibrated and honest about what it does not know.
+    iso25010: [functional suitability]
+    criteria:
+      - id: EPI-1
+        title: Evidence and provenance of outputs
+        question: Does each result record what it was derived from (input digests, tool and version, parameters) so that it can be reproduced?
+        why: Agent outputs flow into decisions. Without provenance they cannot be audited, cached or trusted.
+        fail: Bare conclusions with no traceable source.
+        meets: Results carry input identity, tool version and parameters.
+        horizon: Results are content-addressed, linked to their sources, and signed for exchange between parties.
+        evidence: [result records]
+        probes: [epi.evidence]
+        refs: [ISO25059, SBOM]
+        core: true
+      - id: EPI-2
+        title: Calibrated uncertainty and abstention
+        question: Are confidence levels attached to claims and checked against outcomes, and does the product abstain when evidence is weak?
+        why: Overconfident output is the main failure of AI-assisted analysis (OWASP LLM09 misinformation).
+        fail: Everything is stated with equal certainty.
+        meets: Claims carry a confidence class or probability; weak claims are flagged or withheld.
+        horizon: Calibration is measured on adjudicated outcomes (per-class precision with intervals, ECE), and abstention thresholds are fitted to a target error.
+        evidence: [confidence fields, calibration reports]
+        probes: [epi.uncertainty]
+        refs: [ISO25059, NIST-AIRMF, OWASP-LLM]
+      - id: EPI-3
+        title: Absence is not a negative
+        question: When nothing is found, does the product say 'not found within this coverage' rather than 'does not exist'?
+        why: Absence of evidence read as evidence of absence is the most common silent error in analysis tools.
+        fail: Empty results are reported as negatives.
+        meets: Missing results are labelled unknown, with the coverage that was examined.
+        horizon: Every negative claim carries its search boundary, and complete-versus-partial coverage is machine-readable.
+        evidence: [limitations fields, coverage fields]
+        probes: [epi.coverage]
+        refs: [ISO25059]
+      - id: EPI-4
+        title: Coverage accounting
+        question: Does the product (or its report) separate what was examined, what was skipped, and what was never addressed?
+        why: An investigation that does not know its blind spots reports false completeness.
+        fail: No notion of scope or coverage.
+        meets: Reports state scope, what was examined and what was skipped.
+        horizon: Declared questions or targets are reconciled with recorded outcomes automatically, and unaccounted items are surfaced.
+        evidence: [coverage reports]
+        probes: [epi.coverage]
+        refs: [ISO25059]
+      - id: EPI-5
+        title: Claims hygiene
+        question: Do the README and docs claim only what measurements support, with dates and sources?
+        why: Inflated claims mislead people and agents that select tools from descriptions.
+        fail: Claims contradicted by measurement, or superlatives without evidence.
+        meets: Numeric claims link to their measurements and dates; limitations sit next to the claims.
+        horizon: Claims are generated from benchmark results and cannot drift from them.
+        evidence: [claims vs harness mapping]
+        probes: [claims.count, claims.harness]
+        refs: [ISO25010]
+        red_line: true
+
+  - id: MNT
+    name: Maintainability and architecture
+    intent: The code can be understood, changed and extended safely by people and agents.
+    iso25010: [maintainability, flexibility]
+    criteria:
+      - id: MNT-1
+        title: Modularity and enforced boundaries
+        question: Are layers and module boundaries explicit and checked automatically?
+        why: Agents change code quickly. Enforced boundaries keep fast change from eroding the architecture.
+        fail: Everything imports everything; no stated architecture.
+        meets: The architecture is documented and boundaries are respected.
+        horizon: Boundary rules run in CI (architecture tests, dependency rules) and violations block merges.
+        evidence: [architecture docs, boundary checks]
+        probes: [static.arch_guards]
+        refs: [ISO5055, ISO25010]
+      - id: MNT-2
+        title: Size, complexity and duplication hygiene
+        question: Are file and function sizes reasonable, duplication low, and dead or unreachable shipped code absent?
+        why: Duplication and dead code multiply maintenance and attack surface, and they confuse agents reading the code.
+        fail: Large duplicated subtrees; shipped code nobody can reach.
+        meets: Duplication and dead-code checks exist; outliers are justified.
+        horizon: Size, duplication and reachability budgets are enforced per release.
+        evidence: [duplication report, dead-code report, size outliers]
+        probes: [size.duplicates, size.largest, static.dupe_tools, static.deadcode_tools]
+        refs: [ISO5055]
+      - id: MNT-3
+        title: Static analysis and type safety
+        question: Are linting, formatting and type checking configured strictly and enforced in CI?
+        why: Static checks are the cheapest defect filter and give agents fast feedback.
+        fail: No linters or type checks.
+        meets: Linters, a formatter and type checking are configured and run in CI.
+        horizon: Strict mode everywhere, with no unexplained suppressions, and checks run before every commit.
+        evidence: [lint/type configs, CI jobs]
+        probes: [static.lint, static.format, static.types]
+        refs: [ISO5055]
+      - id: MNT-4
+        title: Documentation for maintainers and agents
+        question: Are architecture, decisions, contribution rules and agent instructions (AGENTS.md) written down and current?
+        why: Coding agents are now routine contributors. Their instructions are part of the codebase.
+        fail: No contributor or architecture documentation.
+        meets: CONTRIBUTING, an architecture overview and agent instructions exist.
+        horizon: Decision records are kept; docs are checked for drift in CI; agent instructions are tested by running agents on tasks.
+        evidence: [CONTRIBUTING, AGENTS.md, ADRs]
+        probes: [meta.contributing, meta.agents_md, meta.docs]
+        refs: [AGENTS-MD]
+      - id: MNT-5
+        title: Debt is visible
+        question: Are known shortcuts and debts recorded with the condition that triggers their repayment?
+        why: Untracked debt surfaces later as outages.
+        fail: Debt is hidden in prose ('for now', 'temporary') or not recorded at all.
+        meets: Debt markers or an issue list with owners and triggers.
+        horizon: A debt ledger is generated from code markers and reviewed every release.
+        evidence: [debt markers, ledger]
+        probes: [static.debt_markers]
+        refs: [ISO5055]
+
+  - id: EVO
+    name: Evolution, compatibility and release
+    intent: Users can upgrade predictably, on the platforms they run, for a declared period.
+    iso25010: [compatibility, flexibility]
+    criteria:
+      - id: EVO-1
+        title: Versioning honesty
+        question: Do version numbers mean what they say (breaking changes as majors, or a clearly documented policy), with migration guides?
+        why: Agents and pipelines pin versions on semantic assumptions. Breaking changes in minor releases break them silently.
+        fail: Breaking changes without a version signal or notes.
+        meets: SemVer, or an explicit policy, plus breaking-change notes and migration guides.
+        horizon: The public contract is diffed automatically between releases, and breaking changes are detected and labelled by tooling.
+        evidence: [CHANGELOG, version policy, migration guides]
+        probes: [meta.changelog, evo.semver]
+        refs: [SEMVER]
+      - id: EVO-2
+        title: Release integrity and sustainable cadence
+        question: Are releases qualified (tests, install rehearsal) and documented, at a cadence users can absorb?
+        why: Release churn is a cost for every downstream user.
+        fail: Ad hoc releases with no notes or qualification.
+        meets: Automated releases with changelog and qualification steps.
+        horizon: Release channels (stable/LTS/next), staged rollouts and rollback paths.
+        evidence: [release workflow, changelog cadence]
+        probes: [ci.release_automation, meta.changelog]
+        refs: [NIST-SSDF]
+      - id: EVO-3
+        title: Platform and runtime compatibility
+        question: Are the supported operating systems, architectures and runtime versions stated and tested?
+        why: Agents run on heterogeneous hosts, including ARM, containers and edge devices.
+        fail: Untested platforms are claimed, or platforms are not stated.
+        meets: A support matrix is stated, and CI covers the main platforms.
+        horizon: The full declared matrix is tested, including containers and ARM, with graceful messages on unsupported hosts.
+        evidence: [support matrix, CI matrix]
+        probes: [ci.os_matrix, evo.platforms]
+        refs: [ISO25010]
+      - id: EVO-4
+        title: Support commitments
+        question: Is a support period or end-of-life policy declared?
+        why: The EU CRA requires manufacturers to declare and honour a support period for security updates.
+        fail: No statement of support.
+        meets: Supported versions and the support period are stated.
+        horizon: LTS lines with security-fix guarantees for the declared period, and end-of-life dates published in advance.
+        evidence: [support policy]
+        probes: [evo.support]
+        refs: [EU-CRA]
+        applies_if: distributed
+
+  - id: OPS
+    name: Operability and observability
+    intent: The product is easy to install, configure, diagnose and observe, and is secure by default.
+    iso25010: [reliability, interaction capability]
+    criteria:
+      - id: OPS-1
+        title: Diagnostics
+        question: Is there a doctor, health or self-check command that explains what is wrong and how to fix it?
+        why: Setup failures are the most common support issue, and agents can repair setups if told what is wrong.
+        fail: Failures surface as stack traces.
+        meets: A diagnostic command checks prerequisites and configuration and prints fixes.
+        horizon: Diagnostics are machine-readable and can propose a reviewable repair plan (dry-run first).
+        evidence: [doctor command]
+        probes: [obs.doctor]
+        refs: [ISO25010]
+      - id: OPS-2
+        title: Logs, metrics and traces
+        question: Are logs structured, levels configurable, and is tracing (for example OpenTelemetry) available for long or distributed work?
+        why: Long agent runs need traces to explain what happened and what it cost.
+        fail: Ad hoc prints only.
+        meets: Structured logs with levels; key metrics exposed.
+        horizon: OpenTelemetry traces, including generative-AI conventions where relevant, with privacy-safe defaults.
+        evidence: [logging setup, tracing]
+        probes: [obs.logging, obs.otel]
+        refs: [OTEL]
+      - id: OPS-3
+        title: Configuration clarity and secure defaults
+        question: Are all settings documented and validated, and are the defaults the safe choice?
+        why: The EU CRA and CISA Secure by Design require secure-by-default products.
+        fail: Hidden environment variables; insecure defaults.
+        meets: Settings are documented and validated at start-up; defaults are safe.
+        horizon: The configuration schema is published, unknown settings fail loudly, and secure defaults are tested.
+        evidence: [config docs, validation]
+        probes: [obs.env_vars]
+        refs: [CISA-SBD, EU-CRA]
+      - id: OPS-4
+        title: Installation integrity
+        question: Do installation paths verify what they install, and is there an offline or pinned path?
+        why: Unverified installers are a supply-chain risk; regulated and offline environments need pinned installs.
+        fail: The only install path runs an unverified remote script.
+        meets: A package-manager install with pinned versions; any scripts verify checksums or signatures.
+        horizon: Signed artefacts are verified by default, and there is a reproducible offline install.
+        evidence: [install docs, install scripts]
+        probes: [risk.remote_script]
+        refs: [SLSA, SIGSTORE]
+
+  - id: PRV
+    name: Privacy, licensing and compliance
+    intent: Users' data and rights are respected, and the product is ready for the regulations that apply to it.
+    iso25010: [security]
+    criteria:
+      - id: PRV-1
+        title: Telemetry consent
+        question: Is telemetry off by default or explicitly opted into, disclosed field by field, honouring DO_NOT_TRACK, and free of user content?
+        why: GDPR consent rules and user trust; agents run in sensitive environments.
+        fail: Telemetry on by default without clear disclosure, or collection of user content.
+        meets: Telemetry is opt-in, or opt-out with prominent disclosure and DO_NOT_TRACK support; fields are documented; no content.
+        horizon: Opt-in only; local inspection of what would be sent; per-field minimisation and retention limits.
+        evidence: [telemetry code, docs]
+        probes: [priv.telemetry, priv.dnt]
+        refs: [GDPR]
+        red_line: true
+      - id: PRV-2
+        title: Data minimisation and locality
+        question: Does the product keep data local by default, minimise what it collects, and support export and deletion?
+        why: Data protection law and enterprise policy favour local-first processing.
+        fail: Sends user data to services without need or notice.
+        meets: Local by default, with documented data flows and deletion and export.
+        horizon: A fully offline mode, data residency options and verifiable deletion.
+        evidence: [data flow docs]
+        probes: [priv.offline]
+        refs: [GDPR, EU-DATA]
+      - id: PRV-3
+        title: License clarity
+        question: Is there a license, are third-party notices complete, and are licenses compatible with how the code is shipped?
+        why: Without a license nobody may legally reuse the code; missing notices create compliance debt.
+        fail: No license file.
+        meets: LICENSE present with an SPDX identifier; third-party notices complete; copyleft components kept separate.
+        horizon: REUSE-compliant per-file licensing, and license data included in the SBOM.
+        evidence: [LICENSE, NOTICE, SBOM]
+        probes: [meta.license, meta.notices]
+        refs: [REUSE, SBOM]
+        red_line: true
+        core: true
+      - id: PRV-4
+        title: Regulatory readiness
+        question: Has the project stated its position under the regulations that apply to it (EU CRA, EU AI Act, accessibility, sector rules)?
+        why: CRA reporting starts in Sep 2026 and main obligations in Dec 2027; AI Act obligations phase in from 2025 to 2027.
+        fail: No awareness of applicable regulation for a distributed product.
+        meets: The applicable regulations are identified, with a documented position (scope, role, obligations, gaps).
+        horizon: Compliance evidence (SBOM, vulnerability handling, technical documentation, conformity notes) is produced by the release pipeline.
+        evidence: [compliance notes]
+        probes: [meta.compliance]
+        refs: [EU-CRA, EU-AIA, EU-EAA]
+        applies_if: distributed
+
+  - id: SUS
+    name: Project sustainability
+    intent: The project will still be maintained, reviewed and trustworthy in five years.
+    iso25010: [maintainability]
+    criteria:
+      - id: SUS-1
+        title: Maintainer resilience and governance
+        question: Is there more than one active maintainer, written governance, and code ownership?
+        why: Single-maintainer projects are a supply-chain and continuity risk.
+        fail: One maintainer, no governance.
+        meets: Several maintainers, CODEOWNERS, and a governance or decision process.
+        horizon: Neutral governance or a foundation, a succession plan and funded maintenance.
+        evidence: [CODEOWNERS, governance doc, contributor history]
+        probes: [meta.codeowners, meta.governance]
+        refs: [OPENSSF]
+      - id: SUS-2
+        title: Contribution and review pipeline
+        question: Are there issue and PR templates, required checks, and review before merge?
+        why: Review is the main defence against defects and malicious contributions.
+        fail: Direct pushes, with no review or checks.
+        meets: Templates, required CI checks and required review.
+        horizon: Branch protection with signed commits, review by code owners, and measured response times.
+        evidence: [templates, branch rules (inferred from CI and docs)]
+        probes: [meta.issue_templates, ci.workflows]
+        refs: [OPENSSF]
+      - id: SUS-3
+        title: Transparency about AI-assisted development
+        question: Does the project disclose how AI agents contribute and how their changes are reviewed?
+        why: By 2030 most code will be AI-assisted. Users need to know the review standard, not merely whether AI was used.
+        fail: Heavy undisclosed agent authorship and no review policy.
+        meets: An agent policy (AGENTS.md or CONTRIBUTING) states how agent changes are made and reviewed; attribution trailers are kept.
+        horizon: Agent contributions are attributed, reviewed under a documented standard and evaluated over time.
+        evidence: [AGENTS.md, commit trailers]
+        probes: [ai.disclosure, meta.agents_md]
+        refs: [AGENTS-MD]
+
+opportunity_dimension:
+  id: OPP
+  name: Opportunity and re-engineering potential
+  intent: >-
+    Scored separately from quality. 0 means no opportunity found; 5 means a large, well-evidenced opportunity.
+    A high-quality repository can still hold large opportunities, and a low-quality one can hold extractable gems.
+  criteria:
+    - id: OPP-1
+      title: Extractable foundations
+      question: Is there a self-contained, high-value component that would be more useful as its own package or service?
+      signals: [High in-degree hub with few outward dependencies, clean interface, value independent of the host product]
+    - id: OPP-2
+      title: Consolidation
+      question: Is the same capability implemented more than once, in this repository or across the reviewed set?
+      signals: [Identical or near-identical files, same concept led by several repos, parallel implementations in several languages]
+    - id: OPP-3
+      title: Composition multipliers
+      question: Does pairing this capability with one from another repository produce more than the sum (shared ids, shared formats)?
+      signals: [Complementary capabilities in the dissection graph, matching data shapes, shared identifiers]
+    - id: OPP-4
+      title: Substitution and deletion dividends
+      question: Could code, dependencies or surface be removed or replaced with something simpler that already exists?
+      signals: [Reimplemented standard-library features, unreachable shipped code, unused tools, heavy dependencies for small tasks]
+    - id: OPP-5
+      title: Re-platforming
+      question: Would moving a component to another execution model fix structural limits (in-memory to durable, whole-object to streaming, cloud to on-device, heuristic to trained model)?
+      signals: [Size cliffs, crash data loss, latency floors, repeated heuristics that a small calibrated model could replace]
+    - id: OPP-6
+      title: Interface re-cut and standardization
+      question: Would a smaller, composable interface or a published format let more people and agents use the capability?
+      signals: [Large catalogs, duplicated payloads, internal formats other projects need, evidence records, coverage documents]
+    - id: OPP-7
+      title: Horizon shifts
+      question: Which 2030-35 shifts (agents as primary users, post-quantum cryptography, regulation, on-device inference, energy pricing, data sovereignty) turn a latent capability into a requirement?
+      signals: [Capability that maps onto a dated obligation or standard, edge-deployable models, offline operation]
+
+red_lines:
+  effect: A red line caps the overall grade at D until fixed, regardless of other scores.
+  rules:
+    - id: RL-1
+      criterion: PRV-3
+      condition: level 0
+      text: No license, so the code cannot legally be reused.
+    - id: RL-2
+      criterion: SEC-6
+      condition: level 0
+      text: Live secrets committed, or secrets exposed in outputs or logs.
+    - id: RL-3
+      criterion: PRV-1
+      condition: level 1 or below
+      text: Telemetry on by default without clear disclosure, or telemetry that collects user content.
+    - id: RL-4
+      criterion: SEC-7
+      condition: level 0
+      text: Injection-prone operation on a path reachable from untrusted input.
+    - id: RL-5
+      criterion: EPI-5
+      condition: level 0
+      text: Headline claims contradicted by measurement.
+
+scoring:
+  criterion: 'Each applicable criterion gets a level 0-5, U or NA, a confidence (observed, derived, inferred) and at least one evidence reference. Core criteria weigh 2, others 1.'
+  dimension: 'D = sum(w_c * c_conf * s_c) / sum(w_c * c_conf) over applicable criteria with a known level. U and NA are excluded from the mean.'
+  evidence_coverage: 'E = known / applicable criteria, per dimension and overall.'
+  quality_index: 'QI = 20 * sum(W_d * D_d) / sum(W_d), with profile weights W_d. Range 0-100.'
+  horizon_index: 'HRI = 100 * mean over applicable known criteria of h(s), where h(5) = 1, h(4) = 0.5 and h(s<4) = 0. It shows how much of the 2030-35 bar is already met.'
+  grade_bands: {A: 80, B: 65, C: 50, D: 35, E: 0}
+  gates:
+    - Any red line caps the grade at D.
+    - 'Evidence coverage below 60 percent marks the grade provisional (suffix "?") and caps it at C.'
+    - 'A dimension with weight >= 2.5 in the profile and score below 2 is listed as a blocking weakness.'
+  opportunity_priority: 'Priority = Value (1-5) x Reach (1-5) x Confidence (0.5 inferred, 0.8 derived, 1.0 observed) x Horizon fit (1.0-1.5) / Effort (1-5).'
+
+lenses:
+  gaps:
+    - id: G1
+      name: Claims versus evidence
+      ask: Which documented claims have no harness, or fail when rerun?
+      how: dissect list claim; rqs probe claims.*; rerun the benchmark
+    - id: G2
+      name: Boundary refusals
+      ask: Which realistic inputs (including the product's own artefacts) does it refuse or mishandle?
+      how: Run it on its own release artefact and on the formats its users ship.
+    - id: G3
+      name: Scale cliffs
+      ask: Where do single-object limits, unbounded memory or unpaged outputs turn large inputs into failures?
+      how: Feed inputs at 10x the documented size; check exports and imports round-trip.
+    - id: G4
+      name: Crash and restart
+      ask: What is lost or repeated if the process is killed mid-task?
+      how: Kill -9 during a long task; resume; compare with an uninterrupted run.
+    - id: G5
+      name: Silent absence
+      ask: Where is 'nothing found' reported as 'does not exist'?
+      how: Query for things known to exist in forms the tool cannot see.
+    - id: G6
+      name: Interface cost
+      ask: How many bytes and tokens does an agent pay for the catalog and for each answer?
+      how: Measure tools/list and typical outputs; count duplicated payloads.
+    - id: G7
+      name: Contract inconsistency
+      ask: Do the same mistakes produce the same errors, codes and retry advice everywhere?
+      how: Send equivalent invalid inputs to sibling commands.
+    - id: G8
+      name: Static and dynamic blind spots
+      ask: Which code paths (dynamic imports, computed paths, reflection) does analysis or testing miss?
+      how: Compare static findings with runtime observation or an independent parser.
+    - id: G9
+      name: Supply chain and CI
+      ask: Where are provenance, pinning, SBOM or least privilege missing?
+      how: rqs probe ci.* deps.*; OpenSSF Scorecard.
+    - id: G10
+      name: Compliance horizon
+      ask: Which dated obligations (CRA 2026/2027, AI Act 2025-2027, accessibility, PQC 2030/2035) apply and are unprepared?
+      how: Map product features to obligations and dates.
+    - id: G11
+      name: Agent-user gaps
+      ask: Can an agent use it without reading prose (JSON, describe, stable ids, budgets, actionable errors)?
+      how: Drive it through MCP or the CLI with an agent and record failures.
+    - id: G12
+      name: Human gaps
+      ask: Does the quickstart work; is the UI accessible; are docs current and localised?
+      how: Fresh-machine quickstart; accessibility audit; doc drift check.
+    - id: G13
+      name: Sustainability gaps
+      ask: What happens if the main maintainer stops; does release churn outpace users?
+      how: Contributor concentration; release cadence and breaking-change rate.
+    - id: G14
+      name: Self-application
+      ask: What does the product find when pointed at itself, and are those findings fixed?
+      how: Run the product on its own repository and release.
+  opportunities:
+    - id: O1
+      name: Extraction
+      heuristic: A hub with high in-degree and few outward dependencies, valuable without its host.
+      query: dissect most-called symbols; capability portability >= 4
+    - id: O2
+      name: Consolidation
+      heuristic: The same capability in two or more places.
+      query: identical sha256 across or within repos; concept matrix rows with several strong repos
+    - id: O3
+      name: Composition
+      heuristic: Two capabilities sharing an identifier or format multiply each other.
+      query: dissect edges complements / fixes
+    - id: O4
+      name: Substitution
+      heuristic: A reimplementation of something stdlib or an installed dependency already does.
+      query: rex gate "<capability>"
+    - id: O5
+      name: Deletion
+      heuristic: Shipped code no entry point reaches; tools nobody calls.
+      query: reachability from declared entry points
+    - id: O6
+      name: Re-platforming
+      heuristic: In-memory state lost on crash, whole-object I/O, cloud-only inference.
+      query: G3/G4 findings
+    - id: O7
+      name: Interface re-cut
+      heuristic: Large catalogs or duplicated payloads.
+      query: G6 findings
+    - id: O8
+      name: Measurement
+      heuristic: Claims without a harness become a benchmark or an answer key.
+      query: G1 findings
+    - id: O9
+      name: Standardization
+      heuristic: An internal format that other projects need (evidence record, retrieval handle, coverage document).
+      query: shared shapes across repos
+    - id: O10
+      name: Agent-first inversion
+      heuristic: A human-first tool exposed to agents, or agent output exposed to humans.
+      query: has_ui without agent interface, or the reverse
+    - id: O11
+      name: Verification as a product
+      heuristic: Golden outputs and parity harnesses offered as a service to others.
+      query: COR-2 strengths
+    - id: O12
+      name: Policy as code
+      heuristic: Prose rules (skills, ladders, approval rules) turned into machine-checkable policy.
+      query: skill files with rule lists
+    - id: O13
+      name: Compliance as a feature
+      heuristic: SBOM, VEX, support-period and AI-transparency outputs that customers will need by 2027.
+      query: G10 findings
+    - id: O14
+      name: Horizon shift
+      heuristic: A latent capability that becomes a requirement in 2030-35.
+      query: OPP-7
+
+reengineering:
+  actions:
+    - id: keep
+      when: High value and quality; no structural issues.
+    - id: harden
+      when: Sound design with missing gates (tests, provenance, limits, errors).
+    - id: refactor
+      when: Right behaviour, wrong structure (duplication, boundaries, size).
+    - id: extract
+      when: Value >= 4 and portability >= 4, and the component is held back by its host (size, churn, coupling).
+    - id: consolidate
+      when: Two or more implementations of the same capability; keep the best and retire the others.
+    - id: re-platform
+      when: A structural limit (in-memory state, whole-object I/O, execution model) that patches cannot fix.
+    - id: re-cut-interface
+      when: The capability is good but the interface is too large, too costly or inconsistent.
+    - id: rewrite
+      when: Core component whose defects are structural, and whose contract can be kept stable during the rewrite.
+    - id: replace
+      when: An existing component of equal or better quality does the same job (the necessity ladder says reuse).
+    - id: retire
+      when: Unreachable, unused, or its cost (context, maintenance, risk) exceeds its value.
+  rule: Pick the least disruptive action that fixes the root cause. Record the evidence, the expected gain and how the gain will be measured.
+
+procedure:
+  - step: 1
+    name: Scope and profile
+    do: Record target, version or commit, profile and applicability flags. Declare the questions the review must answer.
+  - step: 2
+    name: Inventory
+    do: Dissect the repository (dissect scan) and collect automated evidence (rqs probe).
+  - step: 3
+    name: Claims
+    do: List headline claims and mark each as measured, unmeasured or contradicted.
+  - step: 4
+    name: Oracle
+    do: For tools, build an independent answer key for at least five questions and run the product against it. Otherwise record U.
+  - step: 5
+    name: Score
+    do: Score each applicable criterion with level, confidence and evidence. Use U when the evidence is not there.
+  - step: 6
+    name: Gap sweep
+    do: Apply lenses G1-G14. No case, no finding.
+  - step: 7
+    name: Opportunity sweep
+    do: Apply lenses O1-O14 and score OPP-1..7 with priority.
+  - step: 8
+    name: Re-engineering
+    do: Choose actions from the matrix with expected gains and how they will be measured.
+  - step: 9
+    name: Integrity
+    do: A second reviewer independently scores at least 20 percent of the criteria. Report agreement and adjudicate differences. Disclose conflicts of interest; own projects get an adversarial reviewer.
+  - step: 10
+    name: Report
+    do: Publish the JSON scorecard and the Markdown report with date, standard version and commit. Re-review on every major release or yearly.
+
+reviewer_integrity:
+  - Cite evidence for every score; prefer observed over inferred.
+  - Score what is shipped and maintained, not intentions or roadmaps.
+  - U is honest; do not guess a level to avoid it.
+  - No style taste and no 'consider' findings. Each finding states a case, an impact and a fix.
+  - Disclose conflicts of interest. Reviews of one's own work need an adversarial second reviewer.
+  - Compare against the profile and the anchors, not against other repositories.
+  - Record time spent and what was not examined.
+
+report_template:
+  - Summary (grade, QI, HRI, evidence coverage, red lines, three biggest gaps, three biggest opportunities)
+  - Scope (target, commit, profile, flags, questions)
+  - Scorecard (dimension scores and coverage; criterion table with level, confidence, evidence)
+  - Gaps (lens, case, impact, fix, severity)
+  - Opportunities (lens, description, priority inputs, action)
+  - Re-engineering plan (action, component, expected gain, measurement)
+  - Integrity (second reviewer agreement, conflicts, time, not examined)
