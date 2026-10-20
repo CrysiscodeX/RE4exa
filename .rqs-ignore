@@ -1,0 +1,11 @@
+# Files that would match rqs's own patterns without being practice (see tools/rqs/README.md):
+# rule tables, concept vocabularies and curated descriptions of other repositories.
+# The scan still lists them, under ignored_by_rqs_ignore.
+tools/rqs/rqs/scan.py
+tools/rqs/rqs/probes.py
+tools/rqs/rqs/suggest.py
+tools/rqs/tests/
+tools/dissect/dissect/concepts.py
+research/dissection/explore.py
+standard/
+research/rqs-review/

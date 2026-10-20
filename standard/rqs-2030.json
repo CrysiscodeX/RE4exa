@@ -1,13 +1,13 @@
 {
  "meta": {
   "source": "rqs-2030.yaml",
-  "source_sha256": "b0804c106b370147ee2eb8941af1df6ea8072af8ce8fb052a33aeb2ac7fc2652",
+  "source_sha256": "e3a9982369d16dcd554d55228b9a2b88a2aaaf20f5a2c8f6c5cf1e54ca3a8f82",
   "generated_by": "standard/build.py"
  },
  "standard": {
   "id": "RQS-2030",
   "title": "RE4exa Quality Standard 2030",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "date": "2026-10-20",
   "horizon": "2030-2035",
   "status": "Release for use. Review annually; the next review is due by 2027-10.",
@@ -1936,30 +1936,35 @@
     "id": "RL-1",
     "criterion": "PRV-3",
     "condition": "level 0",
+    "max_level": 0,
     "text": "No license, so the code cannot legally be reused."
    },
    {
     "id": "RL-2",
     "criterion": "SEC-6",
     "condition": "level 0",
+    "max_level": 0,
     "text": "Live secrets committed, or secrets exposed in outputs or logs."
    },
    {
     "id": "RL-3",
     "criterion": "PRV-1",
     "condition": "level 1 or below",
+    "max_level": 1,
     "text": "Telemetry on by default without clear disclosure, or telemetry that collects user content."
    },
    {
     "id": "RL-4",
     "criterion": "SEC-7",
     "condition": "level 0",
+    "max_level": 0,
     "text": "Injection-prone operation on a path reachable from untrusted input."
    },
    {
     "id": "RL-5",
     "criterion": "EPI-5",
     "condition": "level 0",
+    "max_level": 0,
     "text": "Headline claims contradicted by measurement."
    }
   ]
@@ -1982,7 +1987,28 @@
    "Evidence coverage below 60 percent marks the grade provisional (suffix \"?\") and caps it at C.",
    "A dimension with weight >= 2.5 in the profile and score below 2 is listed as a blocking weakness."
   ],
-  "opportunity_priority": "Priority = Value (1-5) x Reach (1-5) x Confidence (0.5 inferred, 0.8 derived, 1.0 observed) x Horizon fit (1.0-1.5) / Effort (1-5)."
+  "opportunity_priority": "Priority = Value (1-5) x Reach (1-5) x Confidence (0.5 inferred, 0.8 derived, 1.0 observed) x Horizon fit (1.0-1.5) / Effort (1-5).",
+  "parameters": {
+   "core_weight": 2,
+   "other_weight": 1,
+   "qi_scale": 20,
+   "hri_scale": 100,
+   "horizon_credit": {
+    "5": 1.0,
+    "4": 0.5
+   },
+   "red_line_cap": "D",
+   "coverage_gate": 0.6,
+   "coverage_cap": "C",
+   "blocking_min_weight": 2.5,
+   "blocking_below": 2,
+   "opportunity_confidence": {
+    "observed": 1.0,
+    "derived": 0.8,
+    "inferred": 0.5
+   },
+   "opportunity_min_effort": 1
+  }
  },
  "lenses": {
   "gaps": [

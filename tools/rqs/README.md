@@ -18,7 +18,7 @@ standard's formulas, red lines and gates; `rqs report` and `rqs compare` render 
 ./rqs.sh criteria --dimension SEC --brief              # the standard, queryable
 ./rqs.sh lenses --kind opportunities
 ./rqs.sh mcp                                           # MCP stdio server, 8 tools
-python3 -m unittest discover -s tests                  # 19 tests
+python3 -m unittest discover -s tests                  # 23 tests
 ```
 
 Standard-library Python 3.11+. No dependencies, no network, no telemetry. The standard is read
@@ -45,3 +45,13 @@ scan reports what it skipped (vendored trees, binaries, files over 1 MB, generat
 Known blind spots: CI that runs tests through wrapper scripts, tests inlined in Rust sources
 (counted separately), shallow clones (no history), and any behaviour that only shows at runtime.
 Automatic red-line suspicions are reported but do not cap a grade until a reviewer confirms them.
+
+Practice probes (fuzzing, mutation testing, isolation, accessibility tooling) count code, config
+and CI only; mentions in prose are reported separately as `in_docs`. A repository whose own files
+would match rqs's patterns without being practice (rule tables of analysis tools, vocabularies)
+can list them in `.rqs-ignore` (fnmatch patterns or directory prefixes). Ignored files are still
+inventoried and are listed in the probe output under `ignored_by_rqs_ignore`, so a reviewer can
+see what was left out.
+
+On the fifteen reviewed targets (research/rqs-review), suggested levels matched the reviewers'
+levels exactly on 49% of criteria and within one level on 91%. Treat them as a starting point.

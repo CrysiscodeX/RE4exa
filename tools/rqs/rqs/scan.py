@@ -7,6 +7,7 @@ so that absence can be weighed rather than read as a negative.
 
 from __future__ import annotations
 
+import fnmatch
 import hashlib
 import json
 import os
@@ -52,6 +53,9 @@ SIGNALS: dict[str, tuple[set, list, str, int]] = {
     "os_system": ({"code"}, ["os.system", "os.popen"], r"\bos\.(?:system|popen)\s*\(", 0),
     "exec_template": ({"code"}, ["exec"], r"\bexec(?:Sync)?\s*\(\s*`", 0),
     "sh_c": ({"code"}, ['"-c"', "'-c'"], r"""["'](?:ba|z)?sh["']\s*,\s*["']-c["']""", 0),
+    "sql_concat": ({"code"}, ["execute", "query", "raw(", "prepare", "exec("],
+                   r"""\.(?:execute|executemany|executescript)\s*\(\s*f["']|\.(?:execute|query|raw|prepare|exec)\s*\(\s*`[^`]*\$\{|"""
+                   r"""\.(?:execute|query|raw|prepare)\s*\(\s*["'][^"'\n]*\b(?:select|insert|update|delete|create|drop|alter)\b[^"'\n]*["']\s*(?:\+|%\s|\.format\()""", re.I),
     "inner_html": ({"code"}, ["innerhtml", "v-html", "{@html"], r"\.innerHTML\s*=|dangerouslySetInnerHTML|\bv-html\b|\{@html", 0),
     "rust_unsafe": ({"rust"}, ["unsafe"], r"\bunsafe\s*\{", 0),
     "tls_off": ({"code", "config", "ci", "script"}, ["rejectunauthorized", "node_tls_reject_unauthorized", "verify", "_create_unverified_context",
@@ -63,8 +67,8 @@ SIGNALS: dict[str, tuple[set, list, str, int]] = {
                      r"\btorch\.load\s*\((?![^)\n]*weights_only\s*=\s*True)|\bjoblib\.load\s*\(|\bObjectInputStream\b|\bunserialize\s*\(|node-serialize|\bdill\.loads?\s*\(", 0),
     "remote_pipe": ({"doc", "script", "ci", "code"}, ["curl", "wget", "iwr", "irm", "invoke-webrequest", "invoke-restmethod"],
                     r"(?:curl|wget)\b[^\n|]*\|\s*(?:sudo\s+)?(?:ba|z)?sh\b|(?:iwr|irm|Invoke-WebRequest|Invoke-RestMethod)\b[^\n|]*\|\s*(?:iex|Invoke-Expression)", re.I),
-    "checksum_verify": ({"script", "ci", "doc"}, ["sha256sum", "shasum", "get-filehash", "cosign", "minisign", "gpg", "openssl", "slsa-verifier"],
-                        r"sha256sum|shasum\s+-a\s*256|Get-FileHash|cosign\s+verify|minisign|gpg\s+--verify|openssl\s+dgst|slsa-verifier", re.I),
+    "checksum_verify": ({"script", "ci", "doc"}, ["sha256sum", "shasum", "cosign", "minisign", "gpg", "slsa-verifier", "attestation verify"],
+                        r"sha(?:256|512)sum\s+(?:-c|--check)\b|shasum\s+(?:-a\s*\d+\s+)?(?:-c|--check)\b|cosign\s+verify|minisign\s+-V|gpg\s+--verify|slsa-verifier\s+verify|gh\s+attestation\s+verify", re.I),
     # agents and LLMs
     "llm_sdk": ({"code"}, ["openai", "anthropic", "claude_agent_sdk", "genai", "ollama", "litellm", "langchain", "llama_index", "transformers", "vllm",
                  "mlx", "coremltools", "onnxruntime", "ai-sdk", "@openai/agents", "llama_cpp", "llama-cpp"],
@@ -83,7 +87,8 @@ SIGNALS: dict[str, tuple[set, list, str, int]] = {
     "json_flag": ({"code", "doc"}, ["--json", "--format", "--output", "-o json", "--jsonl", "ndjson"],
                   r"--json\b|--format[= ]json\b|--output[= ]json\b|-o json\b|--jsonl\b|\bndjson\b", 0),
     "describe_cmd": ({"code", "doc"}, ["describe", "schema", "capabilities", "help-json", "llms.txt", "llms-full", ".well-known"],
-                     r"""add_parser\(\s*['"](?:describe|schema|capabilities)['"]|\.command\(\s*['"](?:describe|schema|capabilities)\b|--help[- ]json|llms(?:-full)?\.txt|\.well-known/(?:mcp|agent|ai-plugin)""", 0),
+                     r"""(?:add_parser|\bsub|\badd)\(\s*['"](?:describe|schema|capabilities)['"]|\.command\(\s*['"](?:describe|schema|capabilities)\b|\bdef (?:cmd_)?describe\s*\(|"""
+                     r"""--help[- ]json|llms(?:-full)?\.txt|\.well-known/(?:mcp|agent|ai-plugin)""", 0),
     "error_codes": ({"code"}, ["code", "error", "exception"], r"""["']?\bcode["']?\s*:\s*["'][A-Za-z][A-Za-z0-9_.]{3,}["']|\bclass\s+\w+(?:Error|Exception)\b|\bTaggedError\b|\bErrorCode\b""", 0),
     "mcp_is_error": ({"code"}, ["iserror"], r"\bisError\b", 0),
     "approval": ({"code", "doc"}, ["approv", "permission", "confirm(", "ask_user", "human", "dry-run", "dry_run", "dryrun", "readonlyhint", "destructivehint"],
@@ -226,7 +231,7 @@ SIGNALS: dict[str, tuple[set, list, str, int]] = {
     "claims_numeric": ({"doc"}, list("0123456789"),
                        r"(?:\b\d+(?:\.\d+)?\s?(?:%|x\b|×|times\b)|\b\d+(?:\.\d+)?\s?(?:ms|s|sec|seconds|minutes|MB|GB|KB|tokens|k tokens)\b)[^.\n]{0,60}?\b(?:faster|slower|fewer|less|more|smaller|"
                        r"reduction|reduces?|reduced|saves?|saving|cheaper|improve\w*|better|accuracy|accurate|lower|higher|speedup|compression|compressed)\b|"
-                       r"\b(?:faster|fewer|less|reduc\w+|saves?|cut|cheaper|smaller|lower)\b[^.\n]{0,40}?\b\d+(?:\.\d+)?\s?(?:%|x\b|×|times)", re.I),
+                       r"\b(?:faster|fewer|less|reduc\w+|saves?|cuts?|cheaper|smaller|lower|beats?|outperforms?|drops?|shrinks?|trims?)\b[^.\n]{0,40}?\b\d+(?:\.\d+)?\s?(?:%|x\b|×|times)", re.I),
     "claims_superlative": ({"doc"}, ["fastest", "best", "world", "blazing", "revolutionary", "state-of-the-art", "state of the art", "unmatched", "unparalleled", "lightning", "zero-cost", "10x", "100x",
                            "game-chang", "game chang", "industry-leading", "industry leading", "most powerful", "most advanced"],
                            r"\b(?:fastest|best[- ]in[- ]class|world'?s (?:first|best|fastest)|blazing(?:ly)?[- ]fast|revolutionary|state[- ]of[- ]the[- ]art|unmatched|unparalleled|lightning[- ]fast|"
@@ -287,7 +292,8 @@ class Scan:
         self.root = root
         self.files: list[dict] = []
         self.skipped_dirs: dict[str, int] = {}
-        self.signals = {n: {"count": 0, "files": 0, "nontest": 0, "locs": []} for n in SIGNALS}
+        self.signals = {n: {"count": 0, "files": 0, "nontest": 0, "doc": 0, "locs": []} for n in SIGNALS}
+        self.ignored: list[str] = []
         self.env_names: set[str] = set()
         self.secrets: list[dict] = []
         self.env_files: list[str] = []
@@ -308,7 +314,7 @@ class Scan:
         return [f["path"] for f in self.files if rx.search(f["path"])]
 
     def to_json(self) -> dict:
-        return {"root": str(self.root), "stats": self.stats, "skipped_dirs": self.skipped_dirs}
+        return {"root": str(self.root), "stats": self.stats, "skipped_dirs": self.skipped_dirs, "ignored_by_rqs_ignore": self.ignored[:200]}
 
 
 def _matches(text: str, low: str, anchors: list, rx: re.Pattern, aligned: bool):
@@ -331,9 +337,11 @@ def _matches(text: str, low: str, anchors: list, rx: re.Pattern, aligned: bool):
         yield from rx.finditer(text, st, len(text) if e == -1 else e)
 
 
-def _record(scan: Scan, name: str, rel: str, text: str, m: re.Match, is_test: bool, first_in_file: bool):
+def _record(scan: Scan, name: str, rel: str, text: str, m: re.Match, is_test: bool, first_in_file: bool, is_doc: bool = False):
     s = scan.signals[name]
     s["count"] += 1
+    if is_doc:
+        s["doc"] += 1  # a mention in prose, not a practice in code, config or CI
     if first_in_file:
         s["files"] += 1
     if not is_test:
@@ -443,6 +451,16 @@ def _iter_files(root: Path, sc: "Scan"):
                 yield rel_dir + fn, full
 
 
+def _ignore_patterns(root: Path) -> list[str]:
+    """Patterns from <root>/.rqs-ignore (one per line, fnmatch or a directory prefix, # comments).
+    Meant for files that would match rqs's own patterns without being practice, such as rule
+    tables of analysis tools. What was ignored is reported in the scan."""
+    p = root / ".rqs-ignore"
+    if not p.is_file():
+        return []
+    return [ln.strip() for ln in p.read_text(encoding="utf-8", errors="replace").splitlines() if ln.strip() and not ln.lstrip().startswith("#")]
+
+
 def _inside_git(root: Path) -> bool:
     return any((q / ".git").exists() for q in [root, *root.parents])
 
@@ -454,8 +472,13 @@ def scan(root: str | Path, max_total: int = MAX_TOTAL) -> Scan:
     for name, (kinds, anchors, rx, flags) in SIGNALS.items():
         for k in kinds:
             by_kind.setdefault(k, []).append((name, anchors, re.compile(rx, flags)))
+    ignore = _ignore_patterns(root)
     for rel, full in _iter_files(root, sc):
         fn = rel.rsplit("/", 1)[-1]
+        if ignore and any(fnmatch.fnmatchcase(rel, pat) or rel.startswith(pat.rstrip("/") + "/") for pat in ignore):
+            sc.ignored.append(rel)  # inventoried as ignored, never read for signals
+            sc.stats["ignored"] = len(sc.ignored)
+            continue
         try:
             size = os.path.getsize(full)
         except OSError:
@@ -524,6 +547,7 @@ def scan(root: str | Path, max_total: int = MAX_TOTAL) -> Scan:
         sc.stats["scanned_bytes"] += size
         low = text.lower()
         aligned = len(low) == len(text)  # lower() changes the length of a few code points
+        is_doc = "doc" in kinds and not kinds & {"code", "config", "ci", "script"}
         seen = set()
         for k in kinds:
             for name, anchors, rx in by_kind.get(k, []):
@@ -532,9 +556,9 @@ def scan(root: str | Path, max_total: int = MAX_TOTAL) -> Scan:
                 seen.add(name)
                 first = True
                 for m in _matches(text, low, anchors, rx, aligned):
-                    if name == "env_read":
+                    if name == "env_read" and not aux:
                         sc.env_names.add(next(g for g in m.groups() if g))
-                    _record(sc, name, rel, text, m, aux, first)
+                    _record(sc, name, rel, text, m, aux, first, is_doc)
                     first = False
         if fn == ".env" or fn.startswith(".env.") and not fn.endswith((".example", ".sample", ".template", ".dist", ".defaults")):
             sc.env_files.append(rel)

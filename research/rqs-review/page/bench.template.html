@@ -216,7 +216,7 @@ const CRIT = STD.dimensions.flatMap((d) => d.criteria.map((c) => ({ ...c, dimens
 const DIMS = STD.dimensions.map((d) => d.id);
 const FLAGS = Object.keys(STD.applicability_flags);
 const LEVELS = [0, 1, 2, 3, 4, 5, "U", "NA"];
-const OPP_CONF = { observed: 1.0, derived: 0.8, inferred: 0.5 };
+const P = STD.scoring.parameters;  // every scoring constant comes from the standard
 const DRAFT_KEY = "rqs-bench-draft-v1";
 
 // Python-compatible round(x, nd): exact decimal expansion, ties to even.
@@ -264,39 +264,39 @@ function score(rev) {
   const dims = STD.dimensions.map((d) => {
     const rs = crit.filter((r) => r.dimension === d.id && r.applicable);
     const known = rs.filter((r) => typeof r.level === "number");
-    const num = nsum(known.map((r) => (r.core ? 2 : 1) * cw[r.confidence] * r.level));
-    const den = nsum(known.map((r) => (r.core ? 2 : 1) * cw[r.confidence]));
+    const wt = (r) => (r.core ? P.core_weight : P.other_weight) * cw[r.confidence];
+    const num = nsum(known.map((r) => wt(r) * r.level));
+    const den = nsum(known.map(wt));
     return { id: d.id, name: d.name, weight: W[d.id], score: den ? pyRound(num / den, 2) : null, known: known.length, applicable: rs.length, coverage: rs.length ? pyRound(known.length / rs.length, 2) : null };
   });
   const scored = dims.filter((d) => d.score !== null);
-  const qi = scored.length ? pyRound(20 * nsum(scored.map((d) => d.weight * d.score)) / nsum(scored.map((d) => d.weight)), 1) : null;
+  const qi = scored.length ? pyRound(P.qi_scale * nsum(scored.map((d) => d.weight * d.score)) / nsum(scored.map((d) => d.weight)), 1) : null;
   const known = crit.filter((r) => r.applicable && typeof r.level === "number");
   const appl = crit.filter((r) => r.applicable);
-  const hri = known.length ? pyRound(100 * nsum(known.map((r) => (r.level === 5 ? 1 : r.level === 4 ? 0.5 : 0))) / known.length, 1) : null;
+  const hri = known.length ? pyRound(P.hri_scale * nsum(known.map((r) => P.horizon_credit[String(r.level)] ?? 0)) / known.length, 1) : null;
   const cov = appl.length ? pyRound(known.length / appl.length, 2) : null;
   const byId = Object.fromEntries(crit.map((r) => [r.id, r]));
   const red = [];
   for (const rule of STD.red_lines.rules) {
     const r = byId[rule.criterion];
-    const m = /level (\d)( or below)?/.exec(rule.condition);
-    const lim = +m[1], below = !!m[2];
-    if (typeof r.level === "number" && (below ? r.level <= lim : r.level === lim)) red.push({ id: rule.id, criterion: r.id, text: rule.text });
+    if (typeof r.level === "number" && r.level <= rule.max_level) red.push({ id: rule.id, criterion: r.id, text: rule.text });
   }
   const bands = Object.entries(STD.scoring.grade_bands).sort((a, b) => b[1] - a[1]);
   const order = bands.map((b) => b[0]);
   let band = order[order.length - 1];
   for (const [g, v] of bands) { if (qi !== null && qi >= v) { band = g; break; } }
   let grade = band; const gates = [];
-  if (red.length && order.indexOf(grade) < order.indexOf("D")) { grade = "D"; gates.push("Red line: grade capped at D"); }
-  const provisional = cov !== null && cov < 0.6;
-  if (provisional && order.indexOf(grade) < order.indexOf("C")) grade = "C";
-  if (provisional) gates.push("Evidence coverage below 60%: provisional, capped at C");
-  const blocking = dims.filter((d) => d.weight >= 2.5 && d.score !== null && d.score < 2);
+  if (red.length && order.indexOf(grade) < order.indexOf(P.red_line_cap)) { grade = P.red_line_cap; gates.push(`Red line: grade capped at ${grade}`); }
+  const provisional = cov !== null && cov < P.coverage_gate;
+  if (provisional && order.indexOf(grade) < order.indexOf(P.coverage_cap)) grade = P.coverage_cap;
+  if (provisional) gates.push(`Evidence coverage below ${Math.round(100 * P.coverage_gate)}%: provisional, capped at ${P.coverage_cap}`);
+  const blocking = dims.filter((d) => d.weight >= P.blocking_min_weight && d.score !== null && d.score < P.blocking_below);
   return { grade: grade + (provisional ? "?" : ""), band, qi, hri, cov, red, gates, blocking, dims, known: known.length, applicable: appl.length };
 }
 
 function priority(o) {
-  try { return pyRound(o.value * o.reach * (OPP_CONF[o.confidence] ?? 0.5) * (o.horizon_fit ?? 1.0) / Math.max(1, o.effort), 2); } catch (e) { return null; }
+  const oc = P.opportunity_confidence;
+  try { return pyRound(o.value * o.reach * (oc[o.confidence] ?? oc.inferred) * (o.horizon_fit ?? 1.0) / Math.max(P.opportunity_min_effort, o.effort), 2); } catch (e) { return null; }
 }
 
 /* ---------------- state ---------------- */

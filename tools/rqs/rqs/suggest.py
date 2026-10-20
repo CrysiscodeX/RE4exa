@@ -161,9 +161,14 @@ def levels(p: dict, fl: dict) -> dict:
         S["SEC-6"] = _lvl(3 if _v(p, "ci.security_scans", "secret_scanners", default=[]) else 2, "derived",
                           f"no secret patterns outside tests; secret scanner in CI: {bool(_v(p, 'ci.security_scans', 'secret_scanners', default=[]))}", [])
     risky = _v(p, "risk.tls_off", "nontest") + _v(p, "risk.unsafe_deser", "nontest")
-    S["SEC-7"] = _lvl(1 if risky else 3, "inferred" if risky else "derived",
-                      f"TLS-bypass or unsafe-deserialization sites outside tests: {risky} (reachability from untrusted input decides 0 vs 1-2)" if risky else "no TLS bypass or unsafe deserialization outside tests",
-                      ev("risk.tls_off", "risk.unsafe_deser"))
+    built = sum(_v(p, "risk.patterns", n, "nontest") for n in ("dyn_eval", "shell_true", "os_system", "exec_template", "sh_c", "sql_concat"))
+    if risky:
+        S["SEC-7"] = _lvl(1, "inferred", f"TLS-bypass or unsafe-deserialization sites outside tests: {risky}; eval/shell/SQL-from-strings sites: {built} "
+                          "(reachability from untrusted input decides 0 vs 1-2)", ev("risk.tls_off", "risk.unsafe_deser", "risk.patterns"))
+    elif built:
+        S["SEC-7"] = _lvl(2, "inferred", f"{built} eval, shell-string or SQL-from-strings sites outside tests; check whether untrusted input reaches them", ev("risk.patterns"))
+    else:
+        S["SEC-7"] = _lvl(3, "derived", "no TLS bypass, unsafe deserialization, eval, shell strings or SQL built from strings outside tests", [])
     if on.get("parses_untrusted"):
         S["SEC-8"] = _lvl(3 if found("test.fuzz") else 1, "inferred", _f(p, "test.fuzz")["summary"], ev("test.fuzz"))
     if on.get("uses_crypto"):

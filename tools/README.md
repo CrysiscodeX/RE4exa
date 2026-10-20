@@ -8,7 +8,7 @@ command, and serve the same functions over MCP stdio.
 | Tool | What it answers | Interfaces | Tests |
 |---|---|---|---|
 | [`rex`](rex) | "What does this shipped artifact contain, load, export or reference, and how sure are we?" Evidence-first probes for binaries, npm packages, archives, ASAR and JS trees, with durable steps, coverage, calibration and a necessity gate | `rex.sh <cmd>`, `rex.sh mcp` (10 tools, 4.3 KB catalog) | `python3 -m unittest discover -s rex/tests` (15) |
-| [`rqs`](rqs) | "How good is this repository against the 2030-35 bar, where are its gaps, and what should be extracted, merged or rebuilt?" 85 inert probes, suggested levels, scoring with the [RQS-2030](../standard/RQS-2030.md) formulas, red lines and gates, reports, comparisons and inter-rater agreement | `rqs.sh <cmd>`, `rqs.sh mcp` (8 tools) | `python3 -m unittest discover -s rqs/tests` (19) |
+| [`rqs`](rqs) | "How good is this repository against the 2030-35 bar, where are its gaps, and what should be extracted, merged or rebuilt?" 85 inert probes, suggested levels, scoring with the [RQS-2030](../standard/RQS-2030.md) formulas, red lines and gates, reports, comparisons and inter-rater agreement | `rqs.sh <cmd>`, `rqs.sh mcp` (8 tools) | `python3 -m unittest discover -s rqs/tests` (23) |
 | [`dissect`](dissect) | "How is this codebase (or these ten) built, and where does a capability already exist?" Repositories as a knowledge graph of symbols, entrypoints, triggers, lifecycles, states, schemas, dependencies, claims and concepts | `dissect.sh <cmd>`, `dissect.sh mcp` (8 read-only tools) | `python3 -m unittest discover -s dissect/tests` (8) |
 
 They work together:

@@ -7,12 +7,17 @@ or by observed evidence; an automatic suspicion is reported but does not cap the
 
 from __future__ import annotations
 
-import re
 
 from . import standard as stdmod
 
 SEVERITY = {"critical": 0, "high": 1, "medium": 2, "low": 3}
-OPP_CONF = {"observed": 1.0, "derived": 0.8, "inferred": 0.5}  # standard: scoring.opportunity_priority
+
+
+def params(std: dict) -> dict:
+    p = std["scoring"].get("parameters")
+    if not p:
+        raise stdmod.RqsError("standard_too_old", "the standard has no scoring.parameters", "Use RQS-2030 v1.1.0 or later (standard/build.py).")
+    return p
 
 
 def nsum(xs) -> float:
@@ -81,49 +86,52 @@ def score(std: dict, probes_doc: dict | None, review: dict | None) -> dict:
     review = review or {}
     res = resolve(std, probes_doc, review)
     crit = res["criteria"]
+    P = params(std)
     W = std["profiles"][res["profile"]]["weights"]
     cw = {k: v["weight"] for k, v in std["confidence"].items()}
+    cwt = lambda r: P["core_weight"] if r["core"] else P["other_weight"]  # noqa: E731
     dims = []
     for d in std["dimensions"]:
         rs = [r for r in crit if r["dimension"] == d["id"] and r["applicable"]]
         known = [r for r in rs if isinstance(r["level"], int)]
-        num = nsum((2 if r["core"] else 1) * cw[r["confidence"]] * r["level"] for r in known)
-        den = nsum((2 if r["core"] else 1) * cw[r["confidence"]] for r in known)
+        num = nsum(cwt(r) * cw[r["confidence"]] * r["level"] for r in known)
+        den = nsum(cwt(r) * cw[r["confidence"]] for r in known)
         dims.append({"id": d["id"], "name": d["name"], "weight": W[d["id"]], "score": round(num / den, 2) if den else None,
                      "known": len(known), "applicable": len(rs), "coverage": round(len(known) / len(rs), 2) if rs else None,
                      "auto": sum(r["source"] == "auto" for r in known)})
     scored = [d for d in dims if d["score"] is not None]
-    qi = round(20 * nsum(d["weight"] * d["score"] for d in scored) / nsum(d["weight"] for d in scored), 1) if scored else None
+    qi = round(P["qi_scale"] * nsum(d["weight"] * d["score"] for d in scored) / nsum(d["weight"] for d in scored), 1) if scored else None
     known = [r for r in crit if r["applicable"] and isinstance(r["level"], int)]
     appl = [r for r in crit if r["applicable"]]
-    hri = round(100 * nsum(1.0 if r["level"] == 5 else 0.5 if r["level"] == 4 else 0.0 for r in known) / len(known), 1) if known else None
+    credit = {int(k): v for k, v in P["horizon_credit"].items()}
+    hri = round(P["hri_scale"] * nsum(credit.get(r["level"], 0.0) for r in known) / len(known), 1) if known else None
     cov = round(len(known) / len(appl), 2) if appl else None
     red, suspected = [], []
     by_id = {r["id"]: r for r in crit}
     for rule in std["red_lines"]["rules"]:
         r = by_id[rule["criterion"]]
-        m = re.match(r"level (\d)( or below)?", rule["condition"])
-        lim, below = int(m.group(1)), bool(m.group(2))
-        if isinstance(r["level"], int) and (r["level"] <= lim if below else r["level"] == lim):
+        if isinstance(r["level"], int) and r["level"] <= rule["max_level"]:
             item = {"id": rule["id"], "criterion": r["id"], "text": rule["text"], "level": r["level"], "source": r["source"]}
             (red if r["source"] == "review" or r["confidence"] == "observed" else suspected).append(item)
     bands = sorted(std["scoring"]["grade_bands"].items(), key=lambda x: -x[1])
     order = [g for g, _ in bands]
     band = next((g for g, v in bands if qi is not None and qi >= v), order[-1])
     grade, gates = band, []
-    if red and order.index(grade) < order.index("D"):
-        grade = "D"
-        gates.append("red line: grade capped at D")
-    provisional = cov is not None and cov < 0.6
-    if provisional and order.index(grade) < order.index("C"):
-        grade = "C"
+    if red and order.index(grade) < order.index(P["red_line_cap"]):
+        grade = P["red_line_cap"]
+        gates.append(f"red line: grade capped at {grade}")
+    provisional = cov is not None and cov < P["coverage_gate"]
+    if provisional and order.index(grade) < order.index(P["coverage_cap"]):
+        grade = P["coverage_cap"]
     if provisional:
-        gates.append("evidence coverage below 60%: provisional, capped at C")
-    blocking = [{"dimension": d["id"], "weight": d["weight"], "score": d["score"]} for d in dims if d["weight"] >= 2.5 and d["score"] is not None and d["score"] < 2]
+        gates.append(f"evidence coverage below {round(100 * P['coverage_gate'])}%: provisional, capped at {P['coverage_cap']}")
+    blocking = [{"dimension": d["id"], "weight": d["weight"], "score": d["score"]} for d in dims
+                if d["weight"] >= P["blocking_min_weight"] and d["score"] is not None and d["score"] < P["blocking_below"]]
     opps = []
     for o in review.get("opportunities") or []:
         try:
-            pr = o["value"] * o["reach"] * OPP_CONF.get(o.get("confidence", "inferred"), 0.5) * o.get("horizon_fit", 1.0) / max(1, o["effort"])
+            oc = P["opportunity_confidence"]
+            pr = o["value"] * o["reach"] * oc.get(o.get("confidence", "inferred"), oc["inferred"]) * o.get("horizon_fit", 1.0) / max(P["opportunity_min_effort"], o["effort"])
         except (KeyError, TypeError):
             pr = None
         opps.append({**o, "priority": round(pr, 2) if pr is not None else None})

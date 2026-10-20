@@ -30,7 +30,7 @@ def out(pid, found, summary, value=None, evidence=None, confidence="derived"):
 
 def sig(sc: Scan, name: str) -> dict:
     s = sc.signals[name]
-    return {"count": s["count"], "files": s["files"], "nontest": s["nontest"]}
+    return {"count": s["count"], "files": s["files"], "nontest": s["nontest"], "in_docs": s["doc"], "practice": s["count"] - s["doc"]}
 
 
 def locs(sc: Scan, *names: str, nontest: bool = False) -> list[str]:
@@ -505,7 +505,7 @@ def e2e(sc):
 
 @probe("test.golden")
 def golden(sc):
-    f = paths(sc, r"(^|/)(__snapshots__|golden|goldens|testdata|fixtures?|__fixtures__|expected|answer[-_]?keys?|replays?)/|\.(snap|golden)$")
+    f = paths(sc, r"(^|/)(__snapshots__|golden|goldens|testdata|fixtures?|__fixtures__|expected|answer[-_]?keys?|replays?)/|\.(snap|golden)$|(^|/)[^/]*answer[-_]?key[^/]*\.(json|jsonl|mjs|js|py|md)$")
     s = sig(sc, "golden")
     return out("test.golden", f or s["count"], f"{len(f)} golden/fixture/snapshot files; {s['count']} references", {"files": len(f), "sample": f[:8], "references": s},
                f + locs(sc, "golden"), "derived")
@@ -516,7 +516,7 @@ def mutation(sc):
     f = paths(sc, r"(^|/)(stryker\.conf\w*\.\w+|\.?stryker\.\w+|mutants\.toml|\.mutmut\w*|setup\.cfg)$")
     f = [p for p in f if "setup.cfg" not in p or "mutmut" in sc.config_text.get(p, "")]
     s = sig(sc, "mutation")
-    return out("test.mutation", f or s["count"], f"mutation testing: {len(f)} configs, {s['count']} mentions" if f or s["count"] else "no mutation testing found",
+    return out("test.mutation", f or s["practice"], f"mutation testing: {len(f)} configs, {s['practice']} references in code/config/CI, {s['in_docs']} in docs" if f or s["count"] else "no mutation testing found",
                {"configs": f, "mentions": s}, f + locs(sc, "mutation"), "derived")
 
 
@@ -530,14 +530,16 @@ def prop(sc):
 def fuzz(sc):
     f = paths(sc, r"(^|/)(fuzz|fuzzing|fuzz_targets|fuzzers)/|_fuzz(er)?\.\w+$|(^|/)\.clusterfuzzlite/|(^|/)project\.yaml$")
     s = sig(sc, "fuzz")
-    return out("test.fuzz", f or s["count"], f"fuzzing: {len(f)} files, {s['count']} references" if f or s["count"] else "no fuzzing found", {"files": f[:8], "references": s},
+    return out("test.fuzz", f or s["practice"], f"fuzzing: {len(f)} files, {s['practice']} references in code/config/CI, {s['in_docs']} in docs" if f or s["count"] else "no fuzzing found",
+               {"files": f[:8], "references": s},
                f + locs(sc, "fuzz"), "derived")
 
 
 @probe("test.bench")
 def bench(sc):
-    f = paths(sc, r"(^|/)(bench|benches|benchmarks?|perf|evals?|evaluation)/|\.(bench|perf)\.\w+$|_bench(mark)?\.\w+$")
+    f = paths(sc, r"(^|/)(bench|benches|benchmarks?|perf|evals?|evaluation)/|\.(bench|perf)\.\w+$|_bench(mark)?\.\w+$|(^|/)scripts?/[^/]*(bench|measure|eval|score|crash[-_]test|answer[-_]key)[^/]*$")
     results = [p for p in f if re.search(r"\.(json|jsonl|csv|tsv|md|txt)$", p) and re.search(r"result|report|summary|score|\d{4}", p, re.I)]
+    results += [p for p in paths(sc, r"(^|/)results?/[^/]+\.(json|jsonl|csv|tsv)$") if p not in results]
     s = sig(sc, "bench")
     return out("test.bench", f, f"{len(f)} benchmark/eval files, {len(results)} result files" if f else f"no benchmark directory; {s['count']} mentions",
                {"files": len(f), "result_files": results[:10], "sample": f[:8], "mentions": s}, results + f, "derived")
@@ -657,7 +659,7 @@ def secrets(sc):
 
 @probe("risk.patterns")
 def patterns(sc):
-    names = ["dyn_eval", "shell_true", "os_system", "exec_template", "sh_c", "inner_html", "rust_unsafe"]
+    names = ["dyn_eval", "shell_true", "os_system", "exec_template", "sh_c", "sql_concat", "inner_html", "rust_unsafe"]
     v = {n: sig(sc, n) for n in names}
     total = sum(x["nontest"] for x in v.values())
     return out("risk.patterns", total, f"{total} risky-construct sites outside tests: " + ", ".join(f"{n}={x['nontest']}" for n, x in v.items() if x["nontest"]), v,
@@ -682,8 +684,9 @@ def unsafe_deser(sc):
 def remote_script(sc):
     s = sig(sc, "remote_pipe")
     v = sig(sc, "checksum_verify")
-    return out("risk.remote_script", s["count"], f"{s['count']} pipe-to-shell install lines; checksum/signature verification references {v['count']}" if s["count"] else "no pipe-to-shell installs",
-               {"pipe_to_shell": s, "verification": v}, locs(sc, "remote_pipe") + locs(sc, "checksum_verify"), "derived")
+    return out("risk.remote_script", s["nontest"], f"{s['nontest']} pipe-to-shell install lines outside tests; verification steps (checksum check, signature verify) {v['nontest']}"
+               if s["nontest"] else "no pipe-to-shell installs outside tests", {"pipe_to_shell": s, "verification": v},
+               locs(sc, "remote_pipe", nontest=True) + locs(sc, "checksum_verify", nontest=True), "derived")
 
 
 # ---------------------------------------------------------------- agents
@@ -766,7 +769,8 @@ def prompt_injection(sc):
 @probe("agent.sandbox")
 def sandbox(sc):
     s = sig(sc, "isolation")
-    return out("agent.sandbox", s["count"], f"{s['count']} isolation/containment references" if s["count"] else "no isolation mechanism referenced", s, locs(sc, "isolation"), "inferred")
+    return out("agent.sandbox", s["practice"], f"{s['practice']} isolation/containment references in code/config/CI, {s['in_docs']} in docs" if s["count"] else "no isolation mechanism referenced",
+               s, locs(sc, "isolation"), "inferred")
 
 
 @probe("ai.disclosure")
@@ -905,7 +909,7 @@ def pqc(sc):
 def a11y(sc):
     a, t = sig(sc, "a11y_attr"), sig(sc, "a11y_tool")
     ui_files = sum(1 for f in sc.files if "ui" in f["kinds"])
-    return out("ui.a11y", t["count"] or a["count"], f"{ui_files} UI files; accessibility attributes {a['count']}; accessibility tooling references {t['count']}",
+    return out("ui.a11y", t["practice"] or a["count"], f"{ui_files} UI files; accessibility attributes {a['count']}; accessibility tooling references {t['practice']} (plus {t['in_docs']} in docs)",
                {"ui_files": ui_files, "attributes": a, "tooling": t}, locs(sc, "a11y_tool") + locs(sc, "a11y_attr"), "derived")
 
 

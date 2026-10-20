@@ -58,6 +58,16 @@ def validate(d):
     for rl in d["red_lines"]["rules"]:
         if rl["criterion"] not in seen:
             errs.append(f"red line {rl['id']} names unknown criterion {rl['criterion']}")
+        if not isinstance(rl.get("max_level"), int):
+            errs.append(f"red line {rl['id']} needs an integer max_level")
+    params = d["scoring"].get("parameters") or {}
+    for k in ("core_weight", "other_weight", "qi_scale", "hri_scale", "horizon_credit", "red_line_cap", "coverage_gate", "coverage_cap",
+              "blocking_min_weight", "blocking_below", "opportunity_confidence", "opportunity_min_effort"):
+        if k not in params:
+            errs.append(f"scoring.parameters lacks {k}")
+    for k in ("red_line_cap", "coverage_cap"):
+        if params.get(k) not in d["scoring"]["grade_bands"]:
+            errs.append(f"scoring.parameters.{k} is not a grade band")
     marked = {c["id"] for dim in d["dimensions"] for c in dim["criteria"] if c.get("red_line")}
     listed = {rl["criterion"] for rl in d["red_lines"]["rules"]}
     if marked != listed:
@@ -202,10 +212,10 @@ def render_md(d, digest):
     w("")
     w(d["red_lines"]["effect"])
     w("")
-    w("| ID | Criterion | Condition | Meaning |")
-    w("| --- | --- | --- | --- |")
+    w("| ID | Criterion | Condition | Max level | Meaning |")
+    w("| --- | --- | --- | ---: | --- |")
     for r in d["red_lines"]["rules"]:
-        w(f"| {r['id']} | {r['criterion']} | {md_escape(r['condition'])} | {md_escape(r['text'])} |")
+        w(f"| {r['id']} | {r['criterion']} | {md_escape(r['condition'])} | {r['max_level']} | {md_escape(r['text'])} |")
     w("")
 
     sc = d["scoring"]
@@ -217,6 +227,7 @@ def render_md(d, digest):
     for g in sc["gates"]:
         w(f"- **Gate.** {g}")
     w(f"- **Opportunity priority.** {sc['opportunity_priority']}")
+    w("- **Parameters** (what tools read): " + "; ".join(f"`{k}` = {json.dumps(v)}" for k, v in sc["parameters"].items()) + ".")
     w("")
 
     w("## 10. Gap lenses")

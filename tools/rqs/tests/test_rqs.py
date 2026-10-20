@@ -17,10 +17,10 @@ STD = standard.load()
 
 # One string per signal that the signal must match; keeps anchors and regexes consistent.
 EXAMPLES = {
-    "dyn_eval": "const r = eval(code)", "shell_true": "subprocess.run(cmd, shell=True)", "os_system": "os.system('ls')",
+    "sql_concat": 'cur.execute(f"select * from {table}")', "dyn_eval": "const r = eval(code)", "shell_true": "subprocess.run(cmd, shell=True)", "os_system": "os.system('ls')",
     "exec_template": "execSync(`git ${args}`)", "sh_c": 'exec.Command("sh", "-c", script)', "inner_html": "el.innerHTML = html",
     "rust_unsafe": "unsafe { ptr.read() }", "tls_off": "https.request({ rejectUnauthorized: false })", "unsafe_deser": "data = pickle.loads(blob)",
-    "remote_pipe": "curl -fsSL https://example.com/install.sh | sh", "checksum_verify": "sha256sum -c SHA256SUMS",
+    "remote_pipe": "curl -fsSL https://example.com/install.sh | sh", "checksum_verify": "sha256sum --check SHA256SUMS",
     "llm_sdk": "from anthropic import Anthropic", "model_names": 'model = "claude-sonnet-4-5"',
     "mcp_server": 'import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"', "mcp_tool_def": 'server.tool("search", schema, handler)',
     "a2a": "const card: AgentCard = {}", "openapi": "app = FastAPI()", "json_flag": "run with --json for machine output",
@@ -148,6 +148,48 @@ class Probes(unittest.TestCase):
         md = report.report(card)
         self.assertIn("## Summary", md)
         self.assertIn("| ID | Criterion |", md)
+
+
+class Accuracy(unittest.TestCase):
+    """Fixes from the adversarial review of RE4exa: prose is not practice, rule tables can be ignored."""
+
+    def probe(self, files: dict) -> dict:
+        with tempfile.TemporaryDirectory() as t:
+            root = Path(t) / "r"
+            for rel, text in files.items():
+                write(root, rel, text)
+            return cli.probe_doc(str(root), "r", std=STD)
+
+    def test_prose_mentions_are_not_practice(self):
+        d = self.probe({"README.md": "We plan fuzzing and mutation testing, inside a seccomp sandbox.\n", "src/a.py": "x = 1\n" * 400})
+        self.assertFalse(d["probes"]["test.fuzz"]["found"])
+        self.assertFalse(d["probes"]["test.mutation"]["found"])
+        self.assertFalse(d["probes"]["agent.sandbox"]["found"])
+        self.assertEqual(d["probes"]["test.fuzz"]["value"]["references"]["in_docs"], 1)
+
+    def test_rqs_ignore_excludes_rule_tables_and_reports_them(self):
+        files = {"rules/patterns.py": 'RULES = ["eval(", "pickle.loads(", "rejectUnauthorized: false"]\nx = eval(code)\n', "src/a.py": "x = 1\n" * 400}
+        self.assertEqual(self.probe(files)["suggestions"]["SEC-7"]["level"], 1)  # the table's own strings look like TLS bypass and pickle
+        d = self.probe({**files, ".rqs-ignore": "# rule tables\nrules/\n"})
+        self.assertEqual(d["suggestions"]["SEC-7"]["level"], 3)
+        self.assertEqual(d["scan"]["ignored_by_rqs_ignore"], ["rules/patterns.py"])
+
+    def test_sql_from_strings_and_results_dirs(self):
+        d = self.probe({"src/store.py": 'def load(cur, table):\n    return cur.execute(f"select * from {table}")\n' + "x = 1\n" * 400,
+                        "research/results/run-1.json": "{}", "research/scripts/measure.py": "print(1)\n", "answer-key.mjs": "export default {}\n"})
+        self.assertEqual(d["probes"]["risk.patterns"]["value"]["sql_concat"]["nontest"], 1)
+        self.assertEqual(d["suggestions"]["SEC-7"]["level"], 2)
+        self.assertIn("research/results/run-1.json", d["probes"]["test.bench"]["value"]["result_files"])
+        self.assertTrue(d["probes"]["test.golden"]["found"])
+
+    def test_scoring_constants_come_from_the_standard(self):
+        std = json.loads(json.dumps(STD))
+        std["scoring"]["parameters"]["coverage_gate"] = 0.99
+        r = {"profile": "agent-tool", "flags": {}, "scores": {"PUR-1": {"level": 5, "confidence": "observed", "source": "review"}}}
+        self.assertTrue(score.score(std, None, r)["summary"]["provisional"])
+        del std["scoring"]["parameters"]
+        with self.assertRaises(standard.RqsError):
+            score.score(std, None, r)
 
 
 class Scoring(unittest.TestCase):
