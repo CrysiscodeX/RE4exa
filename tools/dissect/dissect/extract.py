@@ -12,13 +12,17 @@ import hashlib
 import json
 import os
 import re
+import shutil
 import subprocess
 import tomllib
 from collections import Counter, defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 
-import yaml
+try:  # optional: without PyYAML a small reader handles front matter and workflow triggers
+    import yaml
+except ImportError:  # pragma: no cover - exercised by the fallback test
+    yaml = None
 
 from .concepts import CONCEPTS, tag
 from .db import Writer
@@ -67,6 +71,93 @@ def _git(root: Path, *args: str) -> str | None:
     try:
         return subprocess.run(["git", "-C", str(root), *args], capture_output=True, text=True, timeout=30).stdout.strip() or None
     except Exception:
+        return None
+
+
+
+def load_yaml(text: str):
+    """PyYAML when installed, else mini_yaml. None when the text does not parse."""
+    if yaml is not None:
+        try:
+            return yaml.safe_load(text)
+        except yaml.YAMLError:
+            return None
+    return mini_yaml(text)
+
+
+BLOCK_SCALAR = ("|", ">", "|-", ">-", "|+", ">+")
+
+
+def mini_yaml(text: str):
+    """Block-style YAML subset: nested mappings and lists, quoted and flow-list scalars, block
+    scalars. Enough for SKILL.md front matter and CI workflow names, triggers and crons."""
+    lines = [(len(r) - len(r.lstrip(" ")), r.strip()) for r in text.splitlines()
+             if r.strip() and not r.lstrip().startswith("#") and r.strip() not in ("---", "...")]
+
+    def scalar(v: str):
+        v = v.split(" #", 1)[0].strip()
+        if len(v) >= 2 and v[0] == v[-1] and v[0] in "'\"":
+            return v[1:-1]
+        if v.startswith("[") and v.endswith("]"):
+            return [scalar(x) for x in v[1:-1].split(",") if x.strip()]
+        return {"true": True, "false": False, "null": None, "~": None}.get(v, v)
+
+    def block(i: int, ind: int):
+        if lines[i][1].startswith("-"):
+            out = []
+            while i < len(lines) and lines[i][0] == ind and lines[i][1].startswith("-"):
+                item = lines[i][1][1:].strip()
+                i += 1
+                if re.match(r"[\w.-]+:(\s|$)", item):
+                    k, _, v = item.partition(":")
+                    k, v, col = k.strip(), v.strip(), ind + 2  # col: where this item's keys start
+                    if v.startswith("&"):
+                        v = v.split(None, 1)[1] if " " in v else ""
+                    if v in BLOCK_SCALAR:
+                        parts = []
+                        while i < len(lines) and lines[i][0] > col:
+                            parts.append(lines[i][1])
+                            i += 1
+                        d = {k: ("\n" if v[0] == "|" else " ").join(parts)}
+                    elif v:
+                        d = {k: scalar(v)}
+                    elif i < len(lines) and lines[i][0] > col:
+                        sub, i = block(i, lines[i][0])
+                        d = {k: sub}
+                    else:
+                        d = {k: None}
+                    if i < len(lines) and lines[i][0] > ind:  # the item's other keys
+                        sub, i = block(i, lines[i][0])
+                        if isinstance(sub, dict):
+                            d.update(sub)
+                    out.append(d)
+                else:
+                    out.append(scalar(item))
+            return out, i
+        out = {}
+        while i < len(lines) and lines[i][0] == ind:
+            key, _, val = lines[i][1].partition(":")
+            key, val = key.strip().strip("'\""), val.strip()
+            if val.startswith("&"):  # an anchor: the value follows on the next lines
+                val = val.split(None, 1)[1] if " " in val else ""
+            i += 1
+            if val in BLOCK_SCALAR:
+                parts = []
+                while i < len(lines) and lines[i][0] > ind:
+                    parts.append(lines[i][1])
+                    i += 1
+                out[key] = ("\n" if val[0] == "|" else " ").join(parts)
+            elif val:
+                out[key] = scalar(val)
+            elif i < len(lines) and (lines[i][0] > ind or lines[i][0] == ind and lines[i][1].startswith("- ")):
+                out[key], i = block(i, lines[i][0])  # nested block, or a list written at the key's own indentation
+            else:
+                out[key] = None
+        return out, i
+
+    try:
+        return block(0, lines[0][0])[0] if lines else None
+    except (IndexError, ValueError):
         return None
 
 
@@ -285,10 +376,7 @@ class Scanner:
         if text.startswith("---\n"):
             end = text.find("\n---", 4)
             if end > 0:
-                try:
-                    fm = yaml.safe_load(text[4:end]) or None
-                except yaml.YAMLError:
-                    fm = None
+                fm = load_yaml(text[4:end]) or None
         if (rel.lower().endswith("skill.md") or role == "skill") and isinstance(fm, dict) and fm.get("name"):
             eid = self.w.node("entrypoint", str(fm["name"]), sub="skill", qualname=f"skill:{fm['name']}", path=rel, doc=str(fm.get("description", ""))[:1000],
                               attrs={k: fm[k] for k in fm if k not in ("name", "description")} or None)
@@ -311,10 +399,7 @@ class Scanner:
                     self.stats["claims"] += 1
 
     def workflow_file(self, rel: str, text: str) -> None:
-        try:
-            doc = yaml.safe_load(text)
-        except yaml.YAMLError:
-            return
+        doc = load_yaml(text)
         if not isinstance(doc, dict):
             return
         triggers = doc.get(True, doc.get("on"))  # PyYAML parses bare `on` as True
@@ -369,7 +454,7 @@ class Scanner:
                 for k, v in (d.get("dependencies") or {}).items():
                     deps[k] = (v if isinstance(v, str) else str(v.get("version", "")), "runtime")
             elif name in ("plugin.json", "gemini-extension.json", "plugin.yaml", "server.json", "hooks.json", "mcp.json", ".mcp.json"):
-                d = json.loads(text) if name.endswith(".json") else yaml.safe_load(text)
+                d = json.loads(text) if name.endswith(".json") else load_yaml(text)
                 if isinstance(d, dict):
                     sub = "mcp-registry" if name == "server.json" else "hooks" if name == "hooks.json" else "mcp-config" if "mcp" in name else "agent-plugin"
                     entry.append((sub, str(d.get("name") or rel), rel))
@@ -450,10 +535,15 @@ class Scanner:
                     for m in re.finditer(r"^([a-zA-Z][\w.-]*):(?!=)", text, re.M):
                         eid = self.w.node("entrypoint", m.group(1), sub="make-target", qualname=f"make-target:{m.group(1)}", path=rel)
                         self.w.edge(eid, self.files[rel], "implemented_by")
-        self.run_helper(["node", "js_extract.mjs"], by_lang["js"], "js")
+        if shutil.which("node") and (HERE / "helpers" / "node_modules" / "@babel" / "parser").exists():
+            self.run_helper(["node", "js_extract.mjs"], by_lang["js"], "js")
+        elif by_lang["js"]:
+            self.stats["js_files_without_parser"] = len(by_lang["js"])  # file-level facts only; see README
         go_bin = HERE / ".bin" / "go_extract"
         if go_bin.exists():
             self.run_helper([str(go_bin)], by_lang["go"], "go")
+        elif by_lang["go"]:
+            self.stats["go_files_without_parser"] = len(by_lang["go"])
         self.resolve()
         self.con.execute("update repo set file_count = ?, languages = ? where id = ?", (self.stats["files"], json.dumps(dict(langs.most_common())), self.w.repo_id))
         self.con.commit()

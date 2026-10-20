@@ -82,7 +82,7 @@ Edge kinds: `calls`, `defines`, `tagged`, `imports`, `contains`, `documents`,
 - REA: 207 exact tools.
 - pi: 97 pattern-detected tools.
 - caveman, laya and laya-coreml: about 10–12 each.
-- `rex`: 10 tools in 4,607 bytes.
+- `rex`: 10 tools in 4,302 bytes (compact JSON of the `tools/list` result, [`results/rex-measurements.json`](results/rex-measurements.json)).
 
 ## 3. The valuable parts
 
@@ -107,11 +107,11 @@ Lowest is REA's 207-tool catalog (score 9). It has value, but it costs about 833
 **How the parts fit**: 18 relations, with the reasons stored on the edges.
 - **Content addressing ties three of them together.** An REA `evidence_id` can be caveman's retrieval handle. It also makes Absurd's steps idempotent by construction, and the crash test measured this: the same 6 IDs came back after the crash.
 - **Unknowns plus the coverage ledger plus abstention bound what an investigation knows.**
-- **Measured fixes:**
-  - Durable steps fix REA's ledger, which went from 3 records to 0 after a SIGKILL.
-  - Durable steps also fix REA's bundle that couldn't be re-imported (889 MB).
-  - Removing output schemas cuts REA's catalog by 72.7%.
-  - Bench hygiene (interleaved arms, geomean with CI) fixes leanrea's n=3 parallel-arm benchmark.
+- **Fixes, measured and proposed:**
+  - Measured: durable steps restore REA's ledger, which went from 3 records to 0 after a SIGKILL; the Absurd prototype brought back the same 6 evidence IDs ([`prototype-crash-test.json`](../rea-self-analysis/results/prototype-crash-test.json)).
+  - Measured: removing output schemas cuts REA's catalog by 72.7% (lens-caveman results).
+  - Proposed, not measured: streamed bundles for REA's 889 MB bundle that could not be re-imported.
+  - Proposed, not measured: bench hygiene (interleaved arms, geomean with CI) for leanrea's n=3 parallel-arm benchmark.
 
 ## 4. First principles for an agent investigating software (2030–35)
 
@@ -137,23 +137,23 @@ Lowest is REA's 207-tool catalog (score 9). It has value, but it costs about 833
 | C5 Epistemics | REA unknowns, laya abstention and calibration, my-jev metrics | Answers must cite evidence and can't claim more than it supports; refusals name the cause and the fix; Wilson intervals, ECE, abstention advice |
 | C6 Coverage | strix coverage ledger | Declared questions; answered, partial, unknown and unaccounted kept separate; caveats for failed probes |
 | C7 Quality gate | ponytail ladder, audit and bench hygiene; leanrea answer keys | `rex gate` checks the dissect index for existing capabilities and code before anything is built |
-| C8 Interface | lessons from REA's catalog; typed-decision idea from laya | A CLI plus a 10-tool MCP server (4.6 KB catalog, input schemas only, honest read-only hints); SKILL.md files in `skills/` |
+| C8 Interface | lessons from REA's catalog; typed-decision idea from laya | A CLI plus a 10-tool MCP server (4.3 KB catalog, input schemas only, honest read-only hints); SKILL.md files in `skills/` |
 
 ## 6. The product evaluated again on REA's own answer key
 
-Full results are in [`../rea-self-analysis/results/product-eval.json`](../rea-self-analysis/results/product-eval.json).
+Full results are in [`../rea-self-analysis/results/product-eval.json`](../rea-self-analysis/results/product-eval.json); the rex timings and catalog size were re-measured with [`measure_rex.py`](measure_rex.py) (median of 5 fresh CLI processes, so Python start-up is included) and are in [`results/rex-measurements.json`](results/rex-measurements.json). REA's timings are from the earlier study.
 
 | | REA 6.7.0 | rex 0.1.0 |
 |---|---|---|
-| Inventory of the published npm `.tgz` | refused (unsupported format) | 1,775/1,775 files, 0 digest mismatches, 0.42 s |
+| Inventory of the published npm `.tgz` | refused (unsupported format) | 1,775/1,775 files, 0 digest mismatches, 0.61 s |
 | Package directory | refused by `open_binary` | inventoried and swept |
-| Windows addon exports/imports, node-pty NEEDED | correct (1.3–2.3 s per CLI call) | correct (52–70 ms) |
+| Windows addon headers, exports and imports | correct (1.3–2.3 s per CLI call) | correct, 0.10 s (2 exports, 5 imported DLLs) |
 | `#subpath` workers, bridge files via `new URL`, `.node` loads | missed by the application graph (gaps 3–5) | found by the reference sweep (labelled seen strings) |
-| Seven answer-key questions, end to end | JS analysis alone took 1,070.7 s | 7/7 correct, 4.0 s, 25.8 KB read by the agent |
+| Seven answer-key questions, end to end | JS analysis alone took 1,070.7 s | 7/7 correct, 4.48 s, 25.8 KB read by the agent |
 | Runtime-only question (spawned processes) | — | recorded as **unknown**, not guessed |
 | Question never addressed | not tracked | reported as **unaccounted** |
 | Crash in the middle of work | ledger lost (3 → 0) | resumed: 2 steps reused, 2 executed |
-| MCP catalog | 3,158,368 bytes, 207 tools | 4,607 bytes, 10 tools |
+| MCP catalog | 3,158,368 bytes, 207 tools | 4,302 bytes, 10 tools |
 
 `rex` doesn't replace REA's depth. Decompilation, the typed JS application graph and
 runtime capture stay REA's; `rex ext rea …` runs REA as an engine and keeps REA's

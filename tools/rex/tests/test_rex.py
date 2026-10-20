@@ -164,6 +164,24 @@ class Durability(Fixture):
         self.assertEqual(fresh.get(ev["id"])["result"], ev["result"])
         self.assertEqual(Store(self.tmp / "fresh2.db").import_(self.tmp / "t.jsonl")["rejected"], 1)
 
+    def test_import_never_takes_sql_names_or_unchecked_answers_from_the_file(self):
+        ev = probes.inventory(self.store, self.tgz)["evidence"]
+        q = epistemics.add_question(self.store, "Does it ship a lockfile?", "inferred")
+        epistemics.answer(self.store, q["id"], status="answered", text="no", confidence="inferred", evidence_ids=[ev["id"]])
+        bundle = self.tmp / "b.jsonl"
+        self.store.export(bundle)
+        good = bundle.read_text().splitlines()
+        ans = json.loads(next(l for l in good if l.startswith('{"answer"')))["answer"]
+        forged = dict(ans, confidence="observed")  # claims more than the cited evidence, with a stale digest
+        hostile = good + [json.dumps({"evidence; drop table evidence; --": {"x": 1}}), json.dumps({"question": {"id": "q_x", "text": "t", "bogus) values (1); --": 1}}),
+                          json.dumps({"answer": forged}), json.dumps({"adjudication": {"question_id": "q_missing", "revision": 1, "outcome": "correct", "created_at": 0}})]
+        (self.tmp / "h.jsonl").write_text("\n".join(hostile) + "\n")
+        fresh = Store(self.tmp / "fresh3.db")
+        counts = fresh.import_(self.tmp / "h.jsonl")
+        self.assertEqual((counts["evidence"], counts["question"], counts["answer"], counts["rejected"]), (1, 1, 1, 4))
+        self.assertEqual(fresh.con.execute("select count(*) from evidence").fetchone()[0], 1)
+        self.assertEqual(fresh.con.execute("select confidence from answer").fetchone()[0], "inferred")
+
     def test_plan_resumes_after_crash_without_repeating_steps(self):
         plan = self.tmp / "plan.json"
         plan.write_text(json.dumps({"steps": [{"op": "identify", "path": str(self.tgz)}, {"op": "inventory", "path": str(self.tgz)},

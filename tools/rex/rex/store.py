@@ -197,20 +197,33 @@ class Store:
         os.replace(tmp, path)
         return {"path": str(path), "evidence": n, "bytes": Path(path).stat().st_size}
 
+    BUNDLE_TABLES = ("question", "answer", "adjudication")
+
     def import_(self, path: str | Path) -> dict:
+        """Import a bundle. Every record is checked before it is written: evidence ids must match
+        their content, table and column names must exist in this schema (they are never taken from
+        the file on trust), and answers must keep their hash chain and the confidence guard."""
         counts = {"evidence": 0, "rejected": 0, "question": 0, "answer": 0, "adjudication": 0}
+        columns = {t: {r[1] for r in self.con.execute(f"pragma table_info({t})")} for t in self.BUNDLE_TABLES}
         with Path(path).open() as f, self.con:
             header = json.loads(f.readline())
             if header.get("rex_bundle") != 1:
                 raise RexError("not_a_bundle", "File is not a rex bundle (missing header).", "Export with `rex export`.")
             for line in f:
                 rec = json.loads(line)
+                if not isinstance(rec, dict) or len(rec) != 1:
+                    counts["rejected"] += 1
+                    continue
                 if "evidence" in rec:
                     e = rec["evidence"]
-                    identity = canonical({"operation": e["operation"], "subject": e["subject_sha256"], "tool": e["tool"], "tool_version": e["tool_version"],
-                                          "params": e["params"], "result": e["result"], "confidence": e["confidence"], "authority": e["authority"],
-                                          "limitations": sorted(e["limitations"]), "links": sorted(e["links"])})
-                    if "ev_" + digest(identity) != e["id"]:
+                    try:
+                        identity = canonical({"operation": e["operation"], "subject": e["subject_sha256"], "tool": e["tool"], "tool_version": e["tool_version"],
+                                              "params": e["params"], "result": e["result"], "confidence": e["confidence"], "authority": e["authority"],
+                                              "limitations": sorted(e["limitations"]), "links": sorted(e["links"])})
+                        ok = "ev_" + digest(identity) == e["id"] and e["confidence"] in CONFIDENCE_RANK
+                    except (KeyError, TypeError):
+                        ok = False
+                    if not ok:
                         counts["rejected"] += 1  # tampered or corrupted record: refuse it, keep going
                         continue
                     self.con.execute("insert or ignore into evidence(id, operation, subject_path, subject_sha256, tool, tool_version, params, result, confidence,"
@@ -218,9 +231,41 @@ class Store:
                                      (e["id"], e["operation"], e["subject_path"], e["subject_sha256"], e["tool"], e["tool_version"], canonical(e["params"]),
                                       canonical(e["result"]), e["confidence"], e["authority"], canonical(e["limitations"]), canonical(e["links"]), e["bytes"], e["created_at"]))
                     counts["evidence"] += 1
-                else:
-                    (table, row), = rec.items()
-                    cols = ",".join(row)
-                    self.con.execute(f"insert or ignore into {table}({cols}) values ({','.join('?' * len(row))})", tuple(row.values()))
-                    counts[table] += 1
+                    continue
+                (table, row), = rec.items()
+                if table not in columns or not isinstance(row, dict) or not row or not set(row) <= columns[table] or not self._valid_row(table, row):
+                    counts["rejected"] += 1  # unknown table or column, or a row that breaks an invariant
+                    continue
+                names = list(row)  # every name is a column of `table`, checked above
+                self.con.execute(f"insert or ignore into {table}({','.join(names)}) values ({','.join('?' * len(names))})", tuple(row[c] for c in names))
+                counts[table] += 1
         return counts
+
+    def _valid_row(self, table: str, row: dict) -> bool:
+        try:
+            if table == "question":
+                return row["id"] == "q_" + digest(str(row["text"]).strip().lower())[:16] and row.get("required_confidence", "observed") in CONFIDENCE_RANK
+            if table == "answer":
+                ids = json.loads(row["evidence_ids"])
+                body = {"question_id": row["question_id"], "revision": row["revision"], "status": row["status"], "text": row.get("text"),
+                        "confidence": row.get("confidence"), "evidence_ids": sorted(ids), "rationale": row.get("rationale"), "previous_digest": row.get("previous_digest")}
+                if digest(canonical(body)) != row["digest"] or row["status"] not in ("answered", "partial", "unknown"):
+                    return False
+                if self.con.execute("select 1 from question where id = ?", (row["question_id"],)).fetchone() is None:
+                    return False
+                prev = self.con.execute("select digest from answer where question_id = ? and revision = ?", (row["question_id"], row["revision"] - 1)).fetchone()
+                if (prev[0] if prev else None) != row.get("previous_digest"):
+                    return False
+                if row["status"] != "unknown":
+                    found = [self.con.execute("select confidence from evidence where id = ?", (i,)).fetchone() for i in ids]
+                    if not ids or None in found or row.get("confidence") not in CONFIDENCE_RANK:
+                        return False
+                    if CONFIDENCE_RANK[row["confidence"]] > max(CONFIDENCE_RANK[c[0]] for c in found):
+                        return False
+                return True
+            if table == "adjudication":
+                return row["outcome"] in ("correct", "incorrect") and self.con.execute(
+                    "select 1 from answer where question_id = ? and revision = ?", (row["question_id"], row["revision"])).fetchone() is not None
+        except (KeyError, TypeError, ValueError):
+            return False
+        return False

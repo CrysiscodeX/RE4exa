@@ -1,0 +1,27 @@
+{
+ "rex_measurements": 1,
+ "package": "rea-agents-6.7.0.tgz",
+ "package_sha256": "20958a66dba1a011e50a486beb9463a343128ed368c984f94065362c13f51f90",
+ "python": "3.13.16",
+ "platform": "Linux-6.18.44-fc-v139-x86_64-with-glibc2.39",
+ "runs_per_timing": 5,
+ "inventory_tgz": {
+  "median_seconds": 0.61,
+  "entries": 1775,
+  "integrity_mismatches": 0,
+  "evidence_id": "ev_fd63370ac13f246e6fcde6e41879ef6d74b3f20571df194d230bdaf5f03324b9"
+ },
+ "native_windows_addon": {
+  "median_seconds": 0.102,
+  "sha256": "28e0a01f74b30232db559bf98f574be82e5c71ad36a86e4c38fe7fb448029856",
+  "evidence_id": "ev_469cbbd8e71be80ef218798ede11d2c10ee40cce0389fa035bca895a3729cf6f",
+  "format": "pe32+",
+  "exports": 2,
+  "imports": 5
+ },
+ "mcp_catalog": {
+  "tools": 10,
+  "bytes": 4302,
+  "method": "length of the tools/list result serialized as compact JSON"
+ }
+}

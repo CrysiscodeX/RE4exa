@@ -13,6 +13,11 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from dissect.cli import main  # noqa: E402
+from dissect.extract import mini_yaml  # noqa: E402
+
+# TypeScript/JavaScript facts need the Babel helper (npm ci --prefix tools/dissect/helpers);
+# without it those files fall back to file-level facts and the JS assertions are skipped.
+JS = bool(shutil.which("node")) and (ROOT / "helpers" / "node_modules" / "@babel" / "parser").exists()
 
 FILES = {
     "package.json": json.dumps({"name": "fx", "bin": {"fx": "src/cli.ts"}, "scripts": {"test": "node --test"}, "dependencies": {"zod": "4.0.0"}}),
@@ -96,7 +101,9 @@ class DissectTest(unittest.TestCase):
 
     def test_symbols_from_every_language(self):
         names = {r["qualname"] for r in self.q("select qualname from node where kind='symbol'")}
-        self.assertTrue({"startWorker", "shutdown", "helper", "Job", "checkpoint", "retry"} <= names)
+        self.assertTrue({"Job", "checkpoint", "retry"} <= names)
+        if JS:
+            self.assertTrue({"startWorker", "shutdown", "helper"} <= names)
         if (ROOT / ".bin" / "go_extract").exists():
             self.assertIn("Run", names)
 
@@ -104,17 +111,22 @@ class DissectTest(unittest.TestCase):
         ep = {(r["sub"], r["name"]) for r in self.q("select sub, name from node where kind='entrypoint'")}
         self.assertTrue({("bin", "fx"), ("npm-script", "test"), ("skill", "fx"), ("ci-workflow", "ci")} <= ep)
         trig = {(r["sub"], r["name"]) for r in self.q("select sub, name from node where kind='trigger'")}
-        self.assertTrue({("env", "FX_TOKEN"), ("env", "APP_DB"), ("signal", "SIGTERM"), ("signal", "SIGINT"), ("ci-event", "push"), ("cron", "0 3 * * *")} <= trig)
+        self.assertTrue({("env", "APP_DB"), ("signal", "SIGINT"), ("ci-event", "push"), ("cron", "0 3 * * *")} <= trig)
+        if JS:
+            self.assertTrue({("env", "FX_TOKEN"), ("signal", "SIGTERM")} <= trig)
 
     def test_calls_imports_states_lifecycles_schemas_claims(self):
         calls = self.q("select a.name src, b.name dst from edge e join node a on a.id=e.src join node b on b.id=e.dst where e.kind='calls'")
         self.assertIn({"src": "retry", "dst": "checkpoint"}, calls)
-        self.assertIn({"src": "startWorker", "dst": "helper"}, calls)
-        imports = self.q("select b.path from edge e join node a on a.id=e.src join node b on b.id=e.dst where e.kind='imports' and a.path='src/cli.ts' and b.kind='file'")
-        self.assertEqual(imports, [{"path": "src/util.ts"}])
-        self.assertEqual({r["name"] for r in self.q("select name from node where kind='state'")} >= {"running", "pending"}, True)
-        self.assertTrue({"checkpoint", "retry", "start", "shutdown"} <= {r["name"] for r in self.q("select name from node where kind='lifecycle'")})
-        self.assertTrue({"Config", "Job"} <= {r["name"] for r in self.q("select name from node where kind='schema'")})
+        states = {r["name"] for r in self.q("select name from node where kind='state'")}
+        phases = {r["name"] for r in self.q("select name from node where kind='lifecycle'")}
+        schemas = {r["name"] for r in self.q("select name from node where kind='schema'")}
+        self.assertTrue("pending" in states and {"checkpoint", "retry"} <= phases and "Job" in schemas)
+        if JS:
+            self.assertIn({"src": "startWorker", "dst": "helper"}, calls)
+            imports = self.q("select b.path from edge e join node a on a.id=e.src join node b on b.id=e.dst where e.kind='imports' and a.path='src/cli.ts' and b.kind='file'")
+            self.assertEqual(imports, [{"path": "src/util.ts"}])
+            self.assertTrue("running" in states and {"start", "shutdown"} <= phases and "Config" in schemas)
         self.assertEqual(len(self.q("select id from node where kind='claim'")), 1)
 
     def test_search_node_path_matrix(self):
@@ -122,19 +134,28 @@ class DissectTest(unittest.TestCase):
         self.assertEqual(rows[0]["name"], "checkpoint")
         node = self.dx(["node", "phase:checkpoint"])[1]
         self.assertTrue(node["in"])
-        self.assertEqual(self.dx(["node", "fx:startWorker"])[1]["node"]["path"], "src/cli.ts")  # repo:qualname
+        if JS:
+            self.assertEqual(self.dx(["node", "fx:startWorker"])[1]["node"]["path"], "src/cli.ts")  # repo:qualname
         self.assertEqual(self.dx(["node", "skill:fx"])[1]["node"]["sub"], "skill")              # qualname containing ':' 
         path = self.dx(["path", "retry", "APP_DB"])[1]
         self.assertTrue(path["found"])
         matrix = self.dx(["matrix"])[1]
         self.assertIn("durable-execution", {r["concept"] for r in matrix["rows"]})
 
+    def test_yaml_fallback_reads_front_matter_and_workflows(self):
+        wf = mini_yaml(FILES[".github/workflows/ci.yml"])
+        self.assertEqual(wf["name"], "ci")
+        self.assertEqual(wf["on"]["schedule"], [{"cron": "0 3 * * *"}])
+        self.assertEqual(list(wf["jobs"]), ["test"])
+        fm = mini_yaml("name: fx\ndescription: >\n  Use fx to\n  checkpoint jobs.\ntags: [a, 'b']\n")
+        self.assertEqual(fm, {"name": "fx", "description": "Use fx to checkpoint jobs.", "tags": ["a", "b"]})
+
     def test_query_is_read_only(self):
         code, out = self.dx(["query", "delete from node"])
         self.assertEqual((code, out["error"]), (1, "read_only"))
 
     def test_output_budget_truncates_with_next_offset(self):
-        code, out = self.dx(["--max-bytes", "600", "list", "symbol", "--limit", "50"])
+        code, out = self.dx(["--max-bytes", "400", "list", "file", "--limit", "50"])  # files exist with or without the parser helpers
         self.assertTrue(out.get("truncated"))
         self.assertIsNotNone(out.get("next_offset"))
 

@@ -152,7 +152,7 @@ Other measured problems:
 
 | Artifact | Purpose | Verified by |
 |---|---|---|
-| `tools/rex` | The merged product: evidence-first probes, durable steps, coverage, calibration, necessity gate, CLI and 10-tool MCP | 14 unit/integration tests; product evaluation 7/7 on the REA answer key in 4.0 s |
+| `tools/rex` | The merged product: evidence-first probes, durable steps, coverage, calibration, necessity gate, CLI and 10-tool MCP | 14 unit/integration tests; product evaluation 7/7 on the REA answer key in 4.48 s (`results/product-eval.json`) |
 | `tools/dissect` | Repos into a knowledge graph (SQLite and FTS5), CLI and 8-tool MCP | 7 tests; 10 repos dissected in about 50 s |
 | `prototypes/rea-durable-evidence` | REA tool calls as Absurd durable steps | crash test (`results/prototype-crash-test.json`) |
 | `skills/rex`, `skills/dissect` | Agent instructions | — |

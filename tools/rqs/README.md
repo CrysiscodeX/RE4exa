@@ -1,7 +1,7 @@
 # rqs
 
 Evidence-first quality reviews against [RQS-2030](../../standard/RQS-2030.md), for agents and
-people. `rqs probe` collects automated evidence from a checkout (84 probes, inert); `rqs template`
+people. `rqs probe` collects automated evidence from a checkout (85 probes, inert); `rqs template`
 turns it into a review file with suggested levels; a reviewer confirms or changes each level
 with evidence and adds gaps, opportunities and re-engineering actions; `rqs score` applies the
 standard's formulas, red lines and gates; `rqs report` and `rqs compare` render the results.
