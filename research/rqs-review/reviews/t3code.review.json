@@ -1,0 +1,1174 @@
+{
+ "rqs_review": 1,
+ "target": {
+  "path": "/home/user/GitHub_Repos_Dump/pingdotgg__t3code",
+  "name": "t3code",
+  "head": "7e289ae1f77b9137580688aaccf00d48906984ad",
+  "shallow": true
+ },
+ "profile": "agent-harness",
+ "flags": {
+  "uses_llm": true,
+  "has_ui": true,
+  "executes_code": true,
+  "network_service": true,
+  "parses_untrusted": true,
+  "uses_crypto": true,
+  "heavy_compute": false,
+  "distributed": true
+ },
+ "reviewer": {
+  "id": "reviewer-t3code",
+  "kind": "agent",
+  "conflicts": "none"
+ },
+ "date": "2026-10-20",
+ "scores": {
+  "PUR-1": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "README.md:3-5 (problem, providers, surfaces)",
+    "README.md:17-37 (install and first run)",
+    "README.md:89-91 ('very very early', contributions mostly not accepted)",
+    "README.md:95-109 (docs index incl. outside agents over MCP)",
+    "probe meta.readme_sections: limits=False"
+   ],
+   "note": "Problem, users and start are clear, and agents are pointed to the MCP guide. Limits and non-goals are thin: the README does not say that new threads default to Full access with no T3 sandbox, that telemetry is on, or where the product stops. No machine-readable capability statement.",
+   "source": "review"
+  },
+  "PUR-2": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": [
+    "AGENTS.md:9 'over 500,000 users' (no method or date)",
+    "apps/marketing/src/lib/site.ts:9-12 hard-coded users '500,000', githubStars '24k+'",
+    "README.md:11 'performant' (no linked measurement)",
+    "apps/server/integration/TransferBudgetReport.integration.ts:40-46 (wire budgets: 7,000 B total, 8 messages per measured turn)",
+    ".github/workflows/ci.yml:368-405 (transfer-budget run, report and artifact)",
+    "apps/web/src/performance.bench.ts; packages/client-runtime/src/remotePerformance.bench.ts (micro-benchmarks, not in CI; probe test.bench result files 0)"
+   ],
+   "note": "One reproducible harness runs in CI: wire-transfer budgets with a stated method, reported on PRs. The headline claims (user count, 'performant', 'best-in-class') have no harness, baseline, sample size or date, and no results are versioned.",
+   "source": "review"
+  },
+  "PUR-3": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": [
+    ".github/workflows/ci.yml:89-91 (knip:check gates unused files, dependencies and exports)",
+    "measurement: 900,181 non-test source lines in 3,626 files (git ls-files; excludes tests, generated code, fixtures, vendor)",
+    "probe deps.counts: 270 declared dependencies across 39 manifests",
+    "measurement: 21,835 of 28,433 tracked files are under .repos/ (git ls-files)",
+    "AGENTS.md:3 ('minimal GUI for coding agents')",
+    "docs/internals/adding-a-provider.md:107-108 (drivers not moved yet still live in apps/server)"
+   ],
+   "note": "knip gates unused files, dependencies and exports, which is a partial necessity gate. The surface is large and not tracked per release: about 900k lines, web, desktop and mobile apps, a cloud relay, 8+ providers, 7 source-control integrations, devices and a headless browser. The 'minimal GUI' self-description does not match that size. Vendored reference trees are 77% of tracked files.",
+   "source": "review"
+  },
+  "COR-1": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    ".github/workflows/ci.yml:3-7 (every PR and every push to main)",
+    ".github/workflows/ci.yml:183-251 (package tests), 255-300 (web browser tests), 310-373 (server tests in 8 shards)",
+    ".github/workflows/ci.yml:494-530 ('Check' job required by branch protection; a skip must be justified by the change detector)",
+    "measurement: 1,933 test files (git ls-files *.test.*/*.spec.*, excluding .repos); probe test.ratio 0.816 test/source lines",
+    ".github/workflows/windows-tests.yml:3-12 (Windows tests only on workflow_dispatch)",
+    "rg 'coverage' in vite/vitest configs: no coverage configuration"
+   ],
+   "note": "Tests run on every change, scoped to affected packages, and fall back to running everything when the change set cannot be resolved. One required 'Check' job gates merges. Not at horizon: coverage is not measured, flaky tests are not tracked, and per-change tests run on Linux only, with Windows on manual dispatch.",
+   "source": "review"
+  },
+  "COR-2": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "apps/server/src/orchestration-v2/testkit/fixtures/ (91 scenario directories, 149 NDJSON transcripts, 8.0 MB)",
+    "apps/server/scripts/record-{claude-agent-sdk,codex-app-server,cursor-agent-sdk,grok-acp,muse-msp,pi-rpc}-replay-fixture.ts",
+    "docs/orchestration-v2/testing-strategy.md:23-25,135 (raw provider frames are fixture input; expected events are assertions)",
+    "packages/contracts/src/orchestrationV2.ts:3630-3637 (transcripts carry provider, protocol and version)",
+    "apps/server/src/orchestration-v2/CursorOrchestratorV2.live.test.ts:149 (live tests gated by env, not in CI)"
+   ],
+   "note": "Adapters are tested against transcripts recorded from the real provider runtimes, with provider, protocol and version metadata, and expected results are hand-written assertions, not snapshots. Live differential runs exist but are env-gated and do not run in CI.",
+   "source": "review"
+  },
+  "COR-3": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": [
+    "probe test.mutation, test.property, test.fuzz: not found",
+    "rg 'fast-check|stryker|cargo-fuzz|proptest|quickcheck' (excluding .repos): no matches",
+    "apps/server/src/orchestration-v2/testkit/fixtures/malformed_session_update (isolated malformed-input case)"
+   ],
+   "note": "No property, mutation or fuzz testing, including for parsers of untrusted input (webhook bodies, provider NDJSON, terminal output). Only isolated malformed-input fixtures exist.",
+   "source": "review"
+  },
+  "COR-4": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": [
+    "AGENTS.md:41 (most contributions come from T3 Code itself)",
+    "AGENTS.md 'Test data' section (vp run migrate-dev-db seeds from a read-only snapshot of the developer's real database)",
+    ".agents/skills/test-t3-app/SKILL.md (real-client verification pass)",
+    "docs/operations/release.md:49 (each CLI archive is extracted and executed on its build runner; scripts/smoke-cli-archive.ts)"
+   ],
+   "note": "The product is used to build itself, and tests use real recorded provider traffic and copies of real local data. Self-application findings are not recorded or tracked per release.",
+   "source": "review"
+  },
+  "COR-5": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": [
+    "docs/orchestration-v2/testing-strategy.md:52-60 (time and ids through Effect Clock/Random; TestClock in tests)",
+    "tsconfig.base.json:49-56 (globalDate, globalRandom, globalTimers diagnostics set to error)",
+    "AGENTS.md:154 (orchestrator decides events without I/O)",
+    "AGENTS.md 'Verifying' (drain the effect worker; no sleeps or polling)"
+   ],
+   "note": "Nondeterminism (clock, random ids, timers) is isolated behind Effect services and flagged by language-service rules. Whether tsc-rs enforces these rules in CI was not verified. Agent output is inherently nondeterministic, and there is no double-run comparison.",
+   "source": "review"
+  },
+  "REL-1": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    "apps/server/src/orchestration-v2/EffectOutbox.ts:123-142 (replay-safe vs process-bound effect classes)",
+    "apps/server/src/orchestration-v2/EffectOutbox.ts:496-530 (reconcileAfterProcessLoss: requeue replay-safe, cancel process-bound)",
+    "apps/server/src/orchestration-v2/EffectOutbox.ts:532-561 (leased claims: lease_owner, lease_expires_at)",
+    "docs/orchestration-v2/README.md:108 (duplicate command ids return the same receipt without re-running side effects)",
+    "apps/server/src/orchestration-v2/RestartContinuation.ts:33 (MAX_CONTINUATION_CHAIN = 3)",
+    "apps/server/src/orchestration-v2/ProviderRuntimeRecoveryService.test.ts:29 and following (recovery tests)",
+    "apps/server/src/persistence/Sqlite.ts:26-32 (WAL + synchronous=NORMAL; power loss can roll back recent commits, documented)"
+   ],
+   "note": "Commands, events, receipts and outbox rows commit in one SQLite transaction. Effects are leased. After process loss, replay-safe effects are requeued and process-bound ones cancelled, and auto-resume stops after 3 restarts in a row. Restart is tested by rebuilding layers against durable storage, not by abrupt-kill fault injection, and synchronous=NORMAL leaves a documented power-loss window.",
+   "source": "review"
+  },
+  "REL-2": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": [
+    "docs/internals/performance-regressions.md:15-43 (75-row and ~1 MiB cold-open target, 128 events and 1 MiB catch-up, bounded command-output tail)",
+    "apps/server/integration/TransferBudgetReport.integration.ts:40-46; .github/workflows/ci.yml:368-373 (wire budgets fail CI)",
+    "apps/server/src/scheduledTasks/webhookRoute.ts:18,45-63 (1 MiB webhook body limit, HTTP 413)",
+    "apps/server/src/process/agentScope.ts:182-183 (per-agent MemoryHigh/MemoryMax via systemd-run, Linux only)",
+    "apps/server/src/telemetry/AnalyticsService.ts:84-87 (at most 1,000 buffered events)"
+   ],
+   "note": "Output and stream limits exist, history pages through bounded HTTP pages, and wire budgets fail CI. Memory caps are Linux/systemd only and not documented for users. No test at 10x expected size.",
+   "source": "review"
+  },
+  "REL-3": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    "apps/server/src/telemetry/AnalyticsService.ts:46-72 (jittered exponential backoff, 5 attempts, rejected batches dropped)",
+    "docs/internals/performance-regressions.md:113-116 (relay publication retries up to five times, then waits)",
+    "packages/contracts/src/usage.ts:95-117 (per-source status ok/missing/partial/failed with skipped and malformed counts)",
+    "packages/contracts/src/orchestrationV2.ts:1257-1270 (provider failure class, code, retryable, resetAt; retry attempt/maxAttempts)",
+    "docs/user/activity-log.md:16-19 (failed calls not counted as success; no guessing)",
+    "docs/internals/server-updates.md:20-24 (invalid service state stops startup rather than guessing)"
+   ],
+   "note": "Partial results are labelled, and retries back off with limits. Failure classes are typed, and several paths fail closed (DPoP proof failure, invalid service state). Failure modes are not collected in one enumerated, tested catalogue.",
+   "source": "review"
+  },
+  "REL-4": {
+   "level": 4,
+   "confidence": "derived",
+   "evidence": [
+    "apps/server/src/processRunner.test.ts:407 (kills a helper that ignores SIGTERM when its run times out)",
+    "apps/server/src/textGeneration/ClaudeTextGeneration.test.ts:202 (kills a stalled CLI on timeout)",
+    "packages/shared/src/AgentScope.ts:4-31; apps/server/src/process/agentScope.ts:155-183 (systemd scopes give process ownership on Linux)",
+    "apps/server/src/orchestration-v2/EffectOutbox.ts:98-107 (terminal, preview and attachment cleanup effects)",
+    "scripts/install.sh:186-188 (cleanup traps on EXIT/INT/TERM); scripts/npm-launcher/t3.mjs:162-164 (signal forwarding)"
+   ],
+   "note": "Cleanup runs on success, error and signals, owned processes are tracked through scopes and ledgers, and kill-on-timeout is tested. No suite-wide leftover-process check.",
+   "source": "review"
+  },
+  "PERF-1": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": [
+    "apps/web/src/performance.bench.ts; packages/client-runtime/src/remotePerformance.bench.ts (micro-benchmarks without budgets, not run in CI)",
+    "apps/server/integration/TransferBudgetReport.integration.ts:40-46 (byte and message budgets, not latency)",
+    "apps/server/src/cli/trace.ts:111 ('t3 trace' p50/p90/max per span)",
+    "infra/relay/src/monitoring.ts:238-341 (relay p50/p90 dashboards)"
+   ],
+   "note": "Latency is observable (trace CLI, relay dashboards), but no main operation (turn start, snapshot load, reconnect) has a declared latency budget or a CI latency gate. CI gates only bytes and message counts.",
+   "source": "review"
+  },
+  "PERF-2": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": [
+    "measurement: 83 MCP tool definitions (rg 'Tool.make(\"' apps/server/src/mcp, non-test)",
+    "measurement: >=38,362 characters of description text (33,550 in apps/server/src/mcp/toolkits/*/tools.ts across 109 literals; 4,812 in packages/contracts/src/orchestratorMcp.ts and threadMetadataMcp.ts), before JSON-schema structure",
+    "docs/orchestration-v2/orchestrator-mcp-server.md:36-37 (preview and orchestration toolkits on one endpoint)",
+    "packages/shared/src/composerContextReferences.ts:272 (paged thread reads with afterPosition/nextPosition)",
+    "docs/user/portable-handoffs.md:5-18 (budgeted handoffs with references to omitted history)",
+    "apps/server/src/mcp/McpHttpServer.ts:199 (MAX_SNAPSHOT_TEXT_BYTES = 20_000)"
+   ],
+   "note": "Outputs are bounded and paged, with detail by handle. The catalog cost is not measured: at about 4 characters per token, the description text alone is over 9.5k tokens per provider session, before schema structure.",
+   "source": "review"
+  },
+  "SEC-1": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    ".github/SECURITY.md:3-8 (security@ping.gg; link to full policy)",
+    "apps/marketing/src/pages/security-policy.astro (acknowledgement within one business day, safe harbor, coordinated disclosure)",
+    "docs/internals/environment-auth.md:1-30,107-125 (trust boundaries, scope semantics, signed-URL revocation limits)",
+    "docs/internals/t3-connect.md (relay trust boundary)"
+   ],
+   "note": "Policy, contact and response expectation are stated, and trust boundaries are documented with their known limits. No published advisories or per-release threat-model review are visible, and no supported versions are listed.",
+   "source": "review"
+  },
+  "SEC-2": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "pnpm-lock.yaml; native/{resource-monitor,kde-snap-shot,hyprland-snap-shot}/Cargo.lock (4 lockfiles committed)",
+    "pnpm-workspace.yaml:8-27 (allowBuilds allowlist: install scripts only for 7 approved packages)",
+    "pnpm-workspace.yaml:92-110 (minimumReleaseAgeExclude, implying an active release-age gate; inferred)",
+    "probe deps.update_bot: no Dependabot or Renovate configuration",
+    "probe ci.security_scans: no vulnerability scanner in CI",
+    "patches/ (29 dependency patches)"
+   ],
+   "note": "Lockfiles are committed, install scripts are allowlisted, and a release-age gate appears active, all good controls. Automated update PRs and known-vulnerability scanning are both missing, so the 'meets' anchor is not reached.",
+   "source": "review"
+  },
+  "SEC-3": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    ".github/workflows/release.yml:893-931 (npm launcher published via OIDC trusted publishing with --provenance)",
+    ".github/workflows/release.yml:752-765 (SHA256SUMS written in CI, unsigned)",
+    "scripts/install.sh:194-206; scripts/install.ps1:171-186; scripts/npm-launcher/t3.mjs:75-91 (archives checked only against SHA256SUMS from the same release)",
+    ".github/workflows/release-desktop.yml:446-486 (macOS/Windows signing skipped with a log line when secrets are missing; Linux unsigned)",
+    "docs/operations/release.md:58 ('Signing is optional and auto-detected per platform from secrets')",
+    "rg 'attest|cosign|sigstore|slsa' .github/workflows: no attestation step"
+   ],
+   "note": "Releases are built in CI, but provenance covers only the npm launcher, which downloads the real executables. Those archives and the desktop installers have no provenance attestation, the checksum file is unsigned, and a stable build can ship unsigned if signing secrets are missing.",
+   "source": "review"
+  },
+  "SEC-4": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "probe ci.sbom: no SBOM generation in CI",
+    "docs/internals/open-source-licenses.md:3-31 (third-party-licenses.json emitted per web build; build fails without license data)",
+    "third-party-licenses.config.json (custom notices and package overrides)",
+    "apps/mobile/modules/t3-terminal/THIRD_PARTY_NOTICES.md"
+   ],
+   "note": "A machine-readable third-party license manifest ships with each client build, and builds fail without license data. No SPDX/CycloneDX SBOM, VEX or AI-BOM per release.",
+   "source": "review"
+  },
+  "SEC-5": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "probe ci.pinned_actions: 20 of 116 third-party action references pinned to a full SHA; 94 by tag",
+    ".github/workflows/mobile-eas-preview.yml:100-102 (expo/expo-github-action/continuous-deploy-fingerprint@main with EXPO_TOKEN)",
+    ".github/workflows/ci.yml:426 (dtolnay/rust-toolchain@stable)",
+    ".github/workflows/release.yml:705,860,876 (softprops/action-gh-release@v3 in the contents:write job)",
+    ".github/workflows/ci.yml:9-10 (contents: read default); probe ci.permissions: 15/19 top-level, 0 write-all",
+    ".github/workflows/pr-size.yml:127-133; desktop-macos-preview-publish.yml:3-15; cursor-hygiene-webhook.yml:6-7 (privileged triggers never execute PR code)"
+   ],
+   "note": "Permissions are minimal, and privileged triggers are carefully isolated. The probe's pr-size.yml flag is a false positive: it fetches PR commits only as git data for diff --numstat. Most actions are pinned by mutable tag or branch, including in jobs that hold secrets or write tokens. No Scorecard gating.",
+   "source": "review"
+  },
+  "SEC-6": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": [
+    "command: rg for AKIA/ghp_/github_pat_/sk-/sk-ant-/xox*/PRIVATE KEY/AIza patterns outside .repos -> only test fixtures (packages/provider-acp/src/server/stderr.test.ts:44; apps/server/src/outboundHttp.test.ts:23-30 self-signed test key)",
+    "probe risk.secrets: 0 secret patterns outside tests",
+    ".env.example:1-11 (public identifiers only, stated as not secrets)",
+    "packages/provider-core/src/server/failure.ts:176-190 (provider failure redaction); packages/provider-acp/src/server/stderr.test.ts:39-60 (redaction tests)",
+    "apps/server/src/serverRuntimeStartup.ts:348-357 (one-time pairing URL kept out of logger, trace file and OTLP)",
+    "apps/server/src/secrets/SecretRequests.ts:1-6,35 (one-use SecretRef; values never reach transcript or model context)",
+    "probe ci.security_scans: no secret scanner in CI"
+   ],
+   "note": "Red line decision: not triggered. No live secrets were found; the hard-coded PostHog 'phc_' key (apps/server/src/telemetry/AnalyticsService.ts:76) is a public ingest key. Redaction is designed in and tested. The missing 'meets' element is an automated secret scanner in CI.",
+   "source": "review"
+  },
+  "SEC-7": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": [
+    "probe risk.patterns: 24 sites; reviewed packages/shared/src/shell.ts:50-63,820-835 (shell:true only for Windows .cmd/.bat shims, quote/caret escaping; tested at shell.test.ts:880)",
+    "apps/desktop/src/wsl/DesktopWslEnvironment.ts:1001 (constant 'sh -c hostname -I'); packages/shared/src/nodeSqliteClient.ts:678 (constant PRAGMA)",
+    "apps/web/src/components/chat/MermaidDiagram.tsx:97-123,145-160 (DOMPurify, securityLevel strict, htmlLabels false); MathTypeset.tsx:22,38 (KaTeX trust:false)",
+    "apps/web/src/components/chat/McpAppFrame.tsx:503; apps/web/src/components/files/BrowserDocumentFrame.tsx:107,300 (agent HTML in sandboxed iframes without allow-same-origin)",
+    "apps/server/src/workspace/KnownWorkspaces.ts:38-44; apps/server/src/http.ts:598-620 (path containment with realpath)",
+    "probe risk.tls_off, risk.unsafe_deser: none outside tests",
+    "apps/desktop/src/preview/WebviewPreferences.ts:1-9 (preview guests contextIsolation=false with sandbox=true, documented)",
+    "vite.config.ts:149 (typescript/no-implied-eval off); no SAST step in workflows"
+   ],
+   "note": "Red line decision: not triggered. Every flagged construct is constrained or justified, and paths are contained. Not level 4: there is no SAST, no lint rule gates dangerouslySetInnerHTML, and preview webviews deliberately run without context isolation.",
+   "source": "review"
+  },
+  "SEC-8": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": [
+    "packages/contracts (Effect Schema decoding at every RPC/MCP boundary)",
+    "apps/server/src/scheduledTasks/webhookRoute.ts:18,45-63 (1 MiB body limit)",
+    "apps/server/src/project/AgentSessionJson.ts:156 (JSON depth limit 128)",
+    "apps/server/src/mcp/McpHttpServer.ts:199 (snapshot text cap)",
+    ".github/scripts/stage-preview-bundle.py + stage-preview-bundle.test.py (ZIP entry validation before signing)",
+    "probe test.fuzz: none",
+    "apps/web/src/terminal/ghostty/vendor; apps/mobile/modules/t3-terminal/Vendor (prebuilt libghostty-vt terminal parser)"
+   ],
+   "note": "Parsers are memory-safe TypeScript with size and depth limits and some malformed-input tests. Nothing is fuzzed. Terminal escape parsing uses vendored native libghostty-vt (Zig), whose fuzzing is not visible here.",
+   "source": "review"
+  },
+  "SEC-9": {
+   "level": 1,
+   "confidence": "derived",
+   "evidence": [
+    "packages/shared/src/dpop.ts:13,108 (ES256/P-256)",
+    "packages/shared/src/relayJwt.ts:61-83 (EdDSA)",
+    "infra/relay/src/agentActivity/apnsJwt.ts:48-70 (ES256); infra/relay/src/agentActivity/FcmAssertionSigner.ts:44 (RS256)",
+    "apps/web/src/cloud/dpop.ts:135,175 (ES256)",
+    "probe crypto.pqc: none; no algorithm inventory document found"
+   ],
+   "note": "Algorithms are classical and only partly centralised in packages/shared; some are hard-coded in web and relay modules. No algorithm inventory and no post-quantum plan. Several choices are set by external protocols (APNs, FCM, DPoP).",
+   "source": "review"
+  },
+  "AGT-1": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "apps/server/src/scheduledTasks/webhookTemplate.ts:1-11,164 (webhook values in per-request random-ID tags, mentions broken, marked untrusted); webhookTemplate.test.ts:19",
+    "packages/provider-core/src/server/attachmentPrompt.ts:198-210 (captured-window data JSON-encoded in an untrusted frame); attachmentPrompt.test.ts:53-66 (frame-escape attempt tested)",
+    "packages/shared/src/threadTranscript.ts:14; packages/shared/src/composerContextReferences.ts:272 ('reference material, not instructions')",
+    "packages/provider-core/src/server/textGenerationPrompts.ts:115,439 ('reference data, not instructions')",
+    "docs/orchestration-v2/orchestrator-mcp-server.md:422-424 (agent-to-agent sends cannot exceed the caller's modes)"
+   ],
+   "note": "Content T3 injects is labelled untrusted, with random-ID tags for webhooks and JSON encoding for captured windows, and break-out attempts are tested. A mode ceiling stops injected agent messages from escalating. Framing differs between channels, there is no adversarial corpus per model in CI, and under the Full access default, injected content can still drive commands without approval.",
+   "source": "review"
+  },
+  "AGT-2": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "packages/contracts/src/providerPolicy.ts:32 (DEFAULT_RUNTIME_MODE = 'full-access')",
+    "apps/server/src/orchestration-v2/Adapters/CodexAdapterV2.ts:709-716 (approvalPolicy 'never', sandbox dangerFullAccess)",
+    "apps/server/src/orchestration-v2/Adapters/ClaudeAdapterV2.ts:2006-2039 (bypassPermissions)",
+    "docs/user/permission-modes.md:8 ('The initial default is Full access')",
+    "docs/user/outside-agents.md:46-50 (outside MCP agents default to Read only, with a mode ceiling)",
+    "apps/server/src/mcp/McpToolAccess.ts:75-120 (each tool declares reads/writes/actsAsCaller; read-only clients refused; enforced by t3code/no-raw-mcp-registration)",
+    "apps/server/src/mcp/toolkits/project/tools.ts:85-90; toolkits/device/tools.ts:45-99 (readOnly/destructive/idempotent/openWorld hints)"
+   ],
+   "note": "The MCP surface is least-agency: read-only by default, per-tool access classes, accurate hints, short-lived scoped credentials. Agents in threads default to Full access, which turns off provider sandboxes and approvals, and T3 adds no OS boundary. That broad default is the fail anchor for the main use case.",
+   "source": "review"
+  },
+  "AGT-3": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "docs/user/activity-log.md:3-19 (readable action log: commands, inputs, exit codes, output, diffs)",
+    "docs/user/composer.md:149-163 (rewind with 'Revert files too'; refused when other sessions share the directory; does not undo external actions)",
+    "apps/server/src/vcs/GitVcsDriver.ts:1135-1164 (per-turn checkpoint commits in hidden refs)",
+    "apps/server/src/orchestration-v2/CheckpointRestoreSafety.ts:10",
+    "docs/orchestration-v2/orchestrator-mcp-server.md:432-438 (t3_thread_interrupt)",
+    "docs/user/permission-modes.md:11-16 (Supervised mode approvals)"
+   ],
+   "note": "Actions are visible, interruptible and undoable per turn through git checkpoints, with honest limits. Approval for consequential actions exists but is off by default under Full access. No exportable audit trail in an open format.",
+   "source": "review"
+  },
+  "AGT-4": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": [
+    "apps/server/src/orchestration-v2/testkit/fixtures (91 scenarios recorded against real provider and model versions)",
+    "apps/server/scripts/record-*-replay-fixture.ts (re-recorders for provider updates)",
+    "apps/server/src/orchestration-v2/CursorOrchestratorV2.live.test.ts:149 (live tests gated by env)",
+    "packages/provider-core/src/server/textGenerationPrompts.ts:29,358,386 (commit, title prompts) with no eval set found"
+   ],
+   "note": "Provider protocol behaviour is regression-tested against recorded real traffic and can be re-recorded. App-owned model behaviour (titles, commit and PR text, auto-mode review, triage) has no evaluation set with expected outcomes, and live tests are not run before releases.",
+   "source": "review"
+  },
+  "AGT-5": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": [
+    "README.md:5-28 (providers and how they authenticate)",
+    "docs/user/providers-*.md; docs/internals/model-manifest.md",
+    "docs/user/providers-acp.md:132-134 (app-owned text generation uses a configured provider)",
+    "apps/marketing/src/pages/privacy-policy.astro:79-81 (notification payloads incl. project and thread titles disclosed)",
+    "packages/provider-core/src/server/textGenerationPrompts.ts:29 (generated commit messages carry no AI attribution)"
+   ],
+   "note": "Providers, models and data flows are documented across user docs and the privacy policy. Generated commit messages, PR descriptions and branch names are not marked as AI-generated, and there is no AI-BOM.",
+   "source": "review"
+  },
+  "AGT-6": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "docs/user/usage.md:7-14 (token use, cache savings, model breakdown, estimated API-equivalent cost)",
+    "docs/user/usage.md:79-112 (subscription limit tracking; /usage-limits)",
+    "rg 'maxTurns|tokenBudget|costLimit|turnTimeout' in apps/server/src and packages/contracts/src: only the Codex goal tokenBudget passthrough (CodexAdapterV2.ts:940)",
+    "apps/server/src/orchestration-v2/RestartContinuation.ts:33 (restart chain capped at 3)"
+   ],
+   "note": "Usage and estimated cost are reported in detail after the fact. T3 enforces no per-task token, time or call budget for threads, delegated tasks or schedules; it relies on provider subscription limits.",
+   "source": "review"
+  },
+  "INT-1": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "apps/server/src/mcp/McpHttpServer.ts (MCP over HTTP at /mcp); apps/server/src/auth/McpOAuth.ts (OAuth with PKCE)",
+    "docs/user/outside-agents.md:9-70 (documented setup for Claude Code, Codex, ChatGPT)",
+    "packages/contracts/src/environment.ts:12-15 (orchestration protocol version 2 header)",
+    "docs/internals/overview.md:22-35 (capability-flag negotiation; legacy fields kept for older clients)",
+    "apps/server/src/cli/auth.ts:55; apps/server/src/cli/connect.ts:56 (--json flags)"
+   ],
+   "note": "Uses a standard protocol (MCP with OAuth), states its protocol version, and negotiates capabilities so older clients keep working. No declared compatibility window, and the client WebSocket RPC is Effect-specific with no language-neutral spec.",
+   "source": "review"
+  },
+  "INT-2": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": [
+    "packages/contracts/src/orchestratorMcp.ts (Effect Schema inputs and outputs with descriptions)",
+    "apps/server/src/mcp/McpHttpServer.ts:403-418 (schemas advertised through their JSON codec)",
+    "docs/orchestration-v2/orchestrator-mcp-server.md:197-245 (orchestrator_capabilities discovery)",
+    "probe agent.describe: no manifest or describe command"
+   ],
+   "note": "Agents discover tools, schemas, providers, models and modes through MCP and orchestrator_capabilities. No versioned, published contract artifact and no contract-drift check.",
+   "source": "review"
+  },
+  "INT-3": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": [
+    "measurement: 83 MCP tools in 11 toolkits (apps/server/src/mcp/toolkits)",
+    "apps/server/src/mcp/toolkits/preview/tools.ts:311-354 (19 browser primitives)",
+    "docs/orchestration-v2/orchestrator-mcp-server.md:411-424 (t3_thread_send parameterised modes auto/queue/steer/restart)"
+   ],
+   "note": "Some operations share one parameterised tool, but the surface is large, every provider session gets all toolkits, and neither size nor tool-selection accuracy is measured or justified.",
+   "source": "review"
+  },
+  "INT-4": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": [
+    "packages/contracts/src/orchestratorMcp.ts:671-692 (OrchestratorMcpFailure, 16 stable codes)",
+    "apps/server/src/mcp/threadAccess.ts:135-148 (actionable messages, e.g. 'Pass projectId: ...')",
+    "packages/contracts/src/orchestrationV2.ts:1257-1270 (provider failure class, code, retryable, resetAt)",
+    "packages/contracts/src/vcs.ts:110-160 (failureKind and retryable)",
+    "docs/orchestration-v2/orchestrator-mcp-server.md:509-524 (lists 14 codes; thread_credential_required and target_required missing)"
+   ],
+   "note": "Errors are typed with stable codes and actionable messages, and provider and VCS errors carry retryable flags. The agent-facing MCP failure has no retryable flag, and its documented code list has drifted from the schema.",
+   "source": "review"
+  },
+  "INT-5": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    "packages/client-runtime/src/operations/commands.ts:253-259 (client-allocated UUID CommandIds)",
+    "docs/orchestration-v2/README.md:108 (duplicate command ids return the same receipt)",
+    "docs/orchestration-v2/orchestrator-mcp-server.md:502-505 (clientRequestId derives stable ids; retries return the same durable work)",
+    "docs/orchestration-v2/orchestrator-mcp-server.md:546-565 (integration coverage includes idempotent retries)",
+    "packages/shared/src/composerContextReferences.ts:272 (cursor paging)",
+    "apps/server/src/telemetry/AnalyticsService.ts:1-4 (event uuids dedupe retried sends)"
+   ],
+   "note": "Writes carry idempotency keys, receipts deduplicate retries, ids are stable, and paging uses cursors, all covered by integration tests. Results are not content-addressed.",
+   "source": "review"
+  },
+  "INT-6": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": [
+    "scripts/install.test.ts:11-57 (install.sh exercised end to end on Linux)",
+    "measurement: 1,917 aria-*/role= attributes in apps/web/src *.tsx (non-test)",
+    "docs/user/keybindings.md; docs/user/keyboard-focus.md (keyboard operation)",
+    "docs/user/appearance.md:47 (reduced motion respected)",
+    "probe ui.i18n: no i18n library, no translation files",
+    "rg 'axe-core|pa11y|lighthouse' (excluding .repos): no accessibility tooling"
+   ],
+   "note": "The installer is tested, keyboard use and reduced motion are supported, and markup is semantic (browser tests query by role). WCAG 2.2 AA is neither claimed nor tested, and the UI cannot be translated.",
+   "source": "review"
+  },
+  "INT-7": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": [
+    "apps/server/src/config.ts:124 (local SQLite statev2.sqlite)",
+    "packages/shared/src/threadTranscript.ts:14 (JSONL transcript for cross-environment transfer)",
+    "apps/web/src/components/ChatMarkdown.tsx:733 ('Copy as Markdown' per message)",
+    "rg for a thread or project export feature in apps/web, client-runtime and server: none found"
+   ],
+   "note": "Data sits in an open-format SQLite file, and transcripts move between environments as JSONL. There is no documented export or import for users, and the storage schema is not specified as a format.",
+   "source": "review"
+  },
+  "EPI-1": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": [
+    "packages/contracts/src/orchestrationV2.ts:377-379 (runs record providerInstanceId, modelSelection, runtimeMode)",
+    "apps/server/src/vcs/GitVcsDriver.ts:1135-1164 (per-turn checkpoint commits under refs/t3/checkpoints)",
+    "packages/contracts/src/server.ts:262 (provider installedVersion in server config, not per run)",
+    "packages/contracts/src/orchestrationV2.ts:3630-3637 (replay transcripts carry provider, protocol and version)"
+   ],
+   "note": "Turn records keep parameters (provider instance, model, mode) and a content-addressed workspace checkpoint, but not the provider CLI/SDK version that produced the turn. Results are not signed or exportable with provenance.",
+   "source": "review"
+  },
+  "EPI-2": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": [
+    "docs/user/usage.md:9-11 (costs are estimates, 'not your subscription bill')",
+    "docs/user/usage.md:24-26 (no estimate of missing tokens from conversation text)",
+    "docs/user/usage.md:102 (stale reset times get no refill estimate)",
+    "docs/internals/product-analytics.md:65-67 (unknown counts stay absent; partial usage cannot establish totals)"
+   ],
+   "note": "The product holds back estimates when evidence is weak (usage, refill times, token totals), but claims carry no confidence classes and nothing is calibrated. For a harness this mainly concerns derived reporting.",
+   "source": "review"
+  },
+  "EPI-3": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "packages/contracts/src/usage.ts:95-117 (UsageSourceStatus ok/missing/partial/failed with scannedFiles, skippedFiles, malformedRecords)",
+    "packages/client-runtime/src/connection/diagnosis.ts:15 (hop result ok/failed/unchecked)",
+    "docs/user/activity-log.md:16-19 (waiting does not mean finished; no guessing when details are missing)",
+    "docs/user/usage.md:15-17,24-26 (missing Grok turns and missing Cursor login shown as notices, not zeros)"
+   ],
+   "note": "Missing data is labelled missing, partial or unchecked, not reported as zero or absent, and usage coverage is machine-readable per source. This does not extend to every negative claim (e.g. search results).",
+   "source": "review"
+  },
+  "EPI-4": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "packages/contracts/src/usage.ts:98-117 (scanned, skipped and malformed counts per source)",
+    "docs/user/usage.md:44-47 (per-environment scanning status)",
+    "docs/operations/release.md:179-182 (relay sweep counters: scanned, wouldDelete, skippedLegacy, skippedOrphan, failed, truncated)",
+    "docs/user/portable-handoffs.md:15-18 (handoffs list references to omitted history)"
+   ],
+   "note": "Reports separate what was examined, skipped and malformed. No automatic reconciliation of declared targets against outcomes.",
+   "source": "review"
+  },
+  "EPI-5": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": [
+    "README.md:3 ('best-in-class mobile app', no evidence)",
+    "README.md:11 ('performant', no linked measurement)",
+    "AGENTS.md:9 ('over 500,000 users', no source or date)",
+    "apps/marketing/src/lib/site.ts:9-12 (hard-coded users '500,000' and githubStars '24k+')",
+    "apps/marketing/src/pages/index.astro:119 ('Tolerated by over {MARKETING_STATS.users} devs')"
+   ],
+   "note": "Red line decision: not triggered. RL-5 needs claims contradicted by measurement, and none could be shown statically. The level is 1 because the headline superlative and user count have no evidence, method or date.",
+   "source": "review"
+  },
+  "MNT-1": {
+   "level": 4,
+   "confidence": "derived",
+   "evidence": [
+    "docs/internals/overview.md:1-45 (ownership, RPC contract and adapter boundaries)",
+    "AGENTS.md:152-170 ('How it works', 'Where code lives')",
+    "vite.config.ts:7-18,160-161 (no-restricted-imports: no root import of client-runtime)",
+    "vite.config.ts:166,169 (t3code/no-raw-mcp-registration and t3code/no-rpc-permission-bypass as errors)",
+    "package.json:31 (knip --exports per workspace in CI)",
+    "docs/internals/adding-a-provider.md:107-108 (acknowledged exception: some drivers still in apps/server)"
+   ],
+   "note": "The architecture is documented, and several boundary rules (RPC client access, MCP registration, subpath-only imports, unused exports) fail CI. No full layer-dependency test, and known exceptions remain.",
+   "source": "review"
+  },
+  "MNT-2": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": [
+    "measurement: 26 non-test source files over 3,000 lines; largest apps/server/src/orchestration-v2/Orchestrator.ts 12,143, Adapters/ClaudeAdapterV2.ts 10,417, apps/web/src/components/ChatView.tsx 8,994, packages/provider-acp/src/server/adapter.ts 8,514 (wc -l)",
+    "probe size.duplicates: 39,970 duplicated bytes (0.05%), mostly a vendored ghostty.h",
+    ".github/workflows/ci.yml:89-91 (knip dead-code gate)",
+    "probe static.dupe_tools: no duplication detection"
+   ],
+   "note": "Dead-code checks gate CI and measured duplication is negligible. No size or duplication budget, and very large files have no stated justification.",
+   "source": "review"
+  },
+  "MNT-3": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    "tsconfig.base.json:11-14 (strict, noUncheckedIndexedAccess, exactOptionalPropertyTypes); the other 32 tsconfig.json files extend it or a strict preset",
+    "tsconfig.base.json:21-60 (Effect language-service rules as errors)",
+    "vite.config.ts:110-170 (oxlint with custom t3code rules); oxlint-plugin-t3code/rules/require-suppression-reason.ts",
+    ".github/workflows/ci.yml:99-100 (vp check), 141-175 (typecheck)",
+    ".vite-hooks/pre-commit ('vp staged' runs the formatter only)"
+   ],
+   "note": "Strict typing everywhere, lint and format enforced in CI, and every suppression must state a reason. Not at horizon: the pre-commit hook only formats, and 138 suppression lines remain (rg count). The probe's 'strict 2/33' is a false negative caused by tsconfig extends.",
+   "source": "review"
+  },
+  "MNT-4": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "CONTRIBUTING.md (contribution and verification policy)",
+    "AGENTS.md:1-187 (agent instructions)",
+    "docs/internals/ (30 pages incl. overview.md and glossary.md, decisions and reasons)",
+    ".agents/skills/{contribution-triage,test-t3-app,test-t3-mobile}/SKILL.md",
+    "docs/orchestration-v2/README.md:110-166 (drift: shipped outbox described as future work)",
+    "docs/orchestration-v2/orchestrator-mcp-server.md:509-524 (drift: 2 of 16 failure codes missing)"
+   ],
+   "note": "Contributor, architecture and agent documentation is extensive. No formal ADRs and no docs-drift check, and drift was found.",
+   "source": "review"
+  },
+  "MNT-5": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": [
+    "oxlint-plugin-t3code/rules/no-low-value-comments.ts:8-9,87-88 (TODO/FIXME/XXX/HACK must link an issue; error per vite.config.ts:162)",
+    "probe static.debt_markers: 7 markers outside tests (0.01 per 1k lines), mostly in patches/",
+    "AGENTS.md 'Plans and work artifacts' (active work tracked in its GitHub issue or project item)",
+    ".github/workflows/mobile-eas-preview.yml:69-72 (pin with an explicit unpin trigger and issue link)"
+   ],
+   "note": "Debt markers must link a tracking issue (enforced by lint), and some workarounds name their removal trigger. The issue ledger lives outside the repo, so owners and triggers could not be checked, and there is no generated debt ledger.",
+   "source": "review"
+  },
+  "EVO-1": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": [
+    "apps/server/package.json (version 0.1.0, pre-1.0)",
+    "probe meta.changelog: none; .github/workflows/release.yml:860-874 (generated release notes per channel)",
+    "docs/user/thread-migration.md (V1 to V2 migration guide)",
+    "docs/internals/overview.md:22-35 (capability negotiation keeps legacy fields for older clients)"
+   ],
+   "note": "Compatibility is negotiated, and the V1 to V2 move has a migration guide. No stated versioning policy, curated changelog or breaking-change notes, and the version is pre-1.0 while the product ships through app stores and package managers.",
+   "source": "review"
+  },
+  "EVO-2": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    "docs/operations/release.md:12-58 (stable, nightly and preview trains; stable promotes the verified nightly)",
+    ".github/workflows/release.yml:686-701 (publish waits for quality, tests and all six desktop builds)",
+    "docs/operations/release.md:45-49 (each CLI archive built, signed and smoke-tested on its own architecture)",
+    ".github/scripts/check-nightly-release.cjs:1 (minimum 6 hours between nightlies)",
+    "docs/internals/server-updates.md:17-31 (trial/commit service updates with rollback); docs/user/updating.md:45"
+   ],
+   "note": "Releases are automated, qualified and staged through channels with rollback paths. Release notes are generated from commit titles rather than a curated changelog, and there is no LTS line.",
+   "source": "review"
+  },
+  "EVO-3": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "docs/operations/release.md:34-45 (artifact matrix: macOS arm64/x64, Linux x64/arm64, Windows x64/arm64; no macOS x64 CLI archive, with reason)",
+    "scripts/npm-launcher/t3.mjs:18; scripts/install.sh:126-135 (supported targets; clear errors on unsupported hosts)",
+    "docs/user/background-service.md (background service on macOS and Linux only)",
+    ".github/workflows/ci.yml (per-change tests on Linux x64); .github/workflows/windows-tests.yml:3-12 (manual)",
+    "package.json:63-65 (engines node ^24.13.1)"
+   ],
+   "note": "Supported platforms are stated across maintainer and user docs, unsupported hosts get clear messages, and release builds and smoke tests cover every target. Full tests run per change only on Linux x64.",
+   "source": "review"
+  },
+  "EVO-4": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": [
+    ".github/SECURITY.md:1-8 (no supported versions)",
+    "probe evo.support: no support period or EOL policy",
+    "scripts/install.sh:163-171 (preview builds 'receive no fixes': the only support statement)"
+   ],
+   "note": "No support period, supported-versions list or end-of-life policy for stable releases.",
+   "source": "review"
+  },
+  "OPS-1": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "apps/server/src/cli/doctor.ts:19-150 ('t3 doctor': database inspection, listed repairs, --dry-run and --fix)",
+    "packages/client-runtime/src/connection/diagnosis.ts:15-45 (hop-by-hop connection diagnosis with steps and troubleshooting URL)",
+    "apps/server/src/cli/triage.ts (t3 triage launches claude or codex with diagnostic context)",
+    "docs/user/t3-connect-troubleshooting.md"
+   ],
+   "note": "Diagnostics say what failed and how to fix it, and the doctor runs dry first. Doctor covers database health only, not prerequisites such as provider CLIs and auth, and its output is not machine-readable.",
+   "source": "review"
+  },
+  "OPS-2": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    "docs/operations/observability.md:1-95 (NDJSON trace file, metrics, OTLP export of traces, metrics and logs)",
+    "apps/server/src/cli/config.ts:96-97 (T3CODE_LOG_LEVEL, T3CODE_TRACE_MIN_LEVEL)",
+    "AGENTS.md 'Taste' (named Effect.fn spans with stable names)",
+    "docs/user/telemetry.md:24-39 (user-configurable OTLP receivers with a test button)",
+    "apps/server/src/cli/trace.ts (span summaries)"
+   ],
+   "note": "Structured logs with levels, metrics and OpenTelemetry traces, with local inspection tools. GenAI semantic conventions are not used (rg 'gen_ai.' finds nothing).",
+   "source": "review"
+  },
+  "OPS-3": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": [
+    "probe obs.env_vars: 291 environment variables read, 42 appear in docs",
+    "apps/server/src/telemetry/AnalyticsService.ts:74-88 (typed Effect Config, validated at start)",
+    "apps/server/src/server.ts:301 (default bind 127.0.0.1; pairing required)",
+    "docs/user/outside-agents.md:46 (outside agents read-only by default)",
+    "packages/contracts/src/providerPolicy.ts:32; apps/server/src/telemetry/AnalyticsService.ts:81 (Full access and telemetry on by default)"
+   ],
+   "note": "Config is typed and validated, and network defaults are safe. Most environment variables are undocumented, and two consequential defaults (Full access agents, telemetry on) are not the safe choice. No published config schema.",
+   "source": "review"
+  },
+  "OPS-4": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "README.md:50-84 (winget, scoop, brew cask, .deb, AUR, npx t3@version)",
+    "scripts/install.sh:145-161,194-206; scripts/install.ps1:171-186 (pinned version via T3CODE_VERSION; checksum checked before extraction)",
+    "scripts/npm-launcher/t3.mjs:75-91 (sha256 computed while streaming and compared)",
+    "packages/shared/src/relayClient.ts:87-102,449-462 (third-party relay client checked against sha256 pinned in source)",
+    "scripts/install.test.ts (installer tested)"
+   ],
+   "note": "Every install path pins versions and verifies checksums, and third-party binaries are checked against hashes pinned in source. The checksums come from the same release as the archive, so they prove integrity, not authenticity. No signature is verified by default.",
+   "source": "review"
+  },
+  "PRV-1": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "apps/server/src/telemetry/AnalyticsService.ts:81 (T3CODE_TELEMETRY_ENABLED defaults to true)",
+    "docs/user/telemetry.md:3-22 (fields and exclusions disclosed; opt-out only through an environment variable)",
+    "apps/web/src/components/onboarding/WelcomeWizard.tsx:435 (first-run notice: 'anonymous usage data')",
+    "apps/server/src/telemetry/Identify.ts:181-189,255-268 (reads ~/.codex/auth.json id_token and ~/.claude.json to derive owner ids)",
+    "packages/shared/src/telemetryId.ts:8-9 (unsalted SHA-256 of raw ids)",
+    "probe priv.dnt: no DO_NOT_TRACK; rg: no in-app telemetry toggle",
+    "docs/internals/product-analytics.md:69-83,97-100 (allowlisted closed-enum properties; no prompts, paths or ids)"
+   ],
+   "note": "Red line decision: not triggered. Use is disclosed (docs page, first-run notice, privacy policy) and no user content is collected. It stays at 2 because telemetry is on by default, opt-out is env-var only, DO_NOT_TRACK is ignored, and 'anonymous' understates the linkable hashed provider-account ids that are sent.",
+   "source": "review"
+  },
+  "PRV-2": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": [
+    "apps/server/src/server.ts:301; apps/server/src/config.ts:124 (local server, local SQLite)",
+    "apps/marketing/src/pages/privacy-policy.astro (data flows incl. notifications; diagnostic traces expire after 30 days)",
+    "docs/user/remote-access.md (direct and Tailscale paths that avoid the T3 relay)",
+    "apps/server/src/cli/uninstall.ts; apps/server/src/cli/doctor.ts; docs/user/html-renders.md:7 (deletion paths)"
+   ],
+   "note": "Local by default, with documented data flows and deletion paths. Minimisation is weakened by default-on telemetry that derives identifiers from provider credential files (scored under PRV-1), and export is limited (INT-7).",
+   "source": "review"
+  },
+  "PRV-3": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    "LICENSE:1-21 (MIT, (c) 2026 T3 Tools Inc.)",
+    "apps/server/package.json (license MIT on the published package 't3')",
+    "docs/internals/open-source-licenses.md:28-31 (build fails without a distributable license identifier or notice text; SPDX templates)",
+    "third-party-licenses.config.json (custom notices for assets)"
+   ],
+   "note": "Red line decision: not triggered. The license is clear and notice generation is enforced by the build. No per-file REUSE licensing, and license data is not in an SBOM.",
+   "source": "review"
+  },
+  "PRV-4": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": [
+    "probe meta.compliance: 0 compliance documents, 0 regulation mentions",
+    "rg 'GDPR|Cyber Resilience|AI Act|Accessibility Act' in docs and apps/marketing: no matches",
+    "apps/marketing/src/pages/privacy-policy.astro; security-policy.astro (only compliance-adjacent documents)"
+   ],
+   "note": "No stated position on the EU CRA (reporting from 11 Sep 2026, main obligations from 11 Dec 2027), the AI Act or the EAA, for a product distributed through app stores and package managers.",
+   "source": "review"
+  },
+  "SUS-1": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": [
+    ".github/TRIAGE_EXEMPTIONS.td:4-9 (six maintainer logins)",
+    "AGENTS.md:48 ('Theo, Julius and the people building T3 Code')",
+    "LICENSE:3 (T3 Tools Inc., company-backed)",
+    "probe meta.codeowners, meta.governance: none",
+    "shallow clone: contributor concentration not measurable"
+   ],
+   "note": "Several named maintainers and a company sponsor. No CODEOWNERS and no governance or succession document. History could not be measured in a shallow clone.",
+   "source": "review"
+  },
+  "SUS-2": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": [
+    ".github/ISSUE_TEMPLATE/bug_report.yml, via-triage.yml; config.yml:1 (blank issues disabled)",
+    ".github/pull_request_template.md:1-39 (problem, scope and approval, verification)",
+    ".github/workflows/ci.yml:494-496 (branch protection requires the 'Check' job)",
+    ".github/workflows/pr-vouch.yml; pr-size.yml (contributor and size labels)",
+    ".agents/skills/contribution-triage/SKILL.md; CONTRIBUTING.md:114-142 (automated triage, then Macroscope review)",
+    ".coderabbit.config.ts:12-14 (automatic AI review)"
+   ],
+   "note": "Templates, a required CI check and an automated triage and review pipeline are in place. Whether human approval is required before merge is set outside the repo and could not be verified. No code-owner review or signed-commit requirement.",
+   "source": "review"
+  },
+  "SUS-3": {
+   "level": 4,
+   "confidence": "derived",
+   "evidence": [
+    "AGENTS.md:1-187 (agent instructions; PR bodies end with the model and harness)",
+    ".github/pull_request_template.md:39 (agent attribution requested)",
+    "CONTRIBUTING.md:102-110,116-117 (model acceptance policy, checked during triage)",
+    "command: git log -1 -> HEAD 7e289ae1 carries 'Co-authored-by: Claude Opus 5.5'",
+    "AGENTS.md:41 (most contributions come from T3 Code itself)",
+    ".coderabbit.config.ts; .macroscope/ (AI reviewers disclosed)"
+   ],
+   "note": "How agents contribute and how their work is triaged and reviewed is disclosed, and attribution is requested and checked by automated triage. Agent contributions are not evaluated over time (e.g. defect rate by model).",
+   "source": "review"
+  }
+ },
+ "gaps": [
+  {
+   "lens": "G11",
+   "title": "Agents run unsandboxed with approvals off by default",
+   "case": "packages/contracts/src/providerPolicy.ts:32 sets DEFAULT_RUNTIME_MODE = 'full-access'. CodexAdapterV2.ts:709-716 maps it to approvalPolicy 'never' with sandbox dangerFullAccess, and ClaudeAdapterV2.ts:2006-2039 maps it to bypassPermissions. docs/user/permission-modes.md:8 confirms Full access is the initial default. T3 adds no OS boundary of its own; AgentScope only sets memory limits, and only on Linux.",
+   "impact": "Excessive agency (OWASP LLM06): instructions injected through repository files, web pages or tool output can run commands and change files with no human checkpoint. Remote control from phones and the relay widens who can start such runs.",
+   "fix": "Default new installs and new projects to Supervised or Auto (provider review). Require an explicit per-project opt-in to Full access, with a visible warning. Offer an OS-level boundary (container or egress allowlist) through the existing AgentScope.wrap hook.",
+   "severity": "high",
+   "evidence": [
+    "packages/contracts/src/providerPolicy.ts:32",
+    "apps/server/src/orchestration-v2/Adapters/CodexAdapterV2.ts:709-716",
+    "apps/server/src/orchestration-v2/Adapters/ClaudeAdapterV2.ts:2006-2039",
+    "docs/user/permission-modes.md:8",
+    "packages/shared/src/AgentScope.ts:4-31"
+   ]
+  },
+  {
+   "lens": "G10",
+   "title": "Telemetry is on by default, opt-out is env-var only, and the UI calls linkable ids 'anonymous'",
+   "case": "apps/server/src/telemetry/AnalyticsService.ts:81 defaults T3CODE_TELEMETRY_ENABLED to true. docs/user/telemetry.md:16-22 offers only an environment variable to opt out. WelcomeWizard.tsx:435 says 'anonymous usage data', while Identify.ts:181-189,255-268 reads ~/.codex/auth.json (id_token) and ~/.claude.json to derive owner ids, hashed with unsalted SHA-256 (telemetryId.ts:8-9). There is no DO_NOT_TRACK support and no settings toggle (rg).",
+   "impact": "GDPR consent and transparency risk: pseudonymous, linkable account identifiers leave the machine by default, and the in-app wording understates this. Desktop users on Windows must set a user environment variable to opt out.",
+   "fix": "Offer a first-run choice and a Settings toggle, honour DO_NOT_TRACK, and call the data pseudonymous. Replace unsalted hashes of provider account ids with a keyed hash or a random per-install id, and stop reading provider credential files for analytics identity.",
+   "severity": "high",
+   "evidence": [
+    "apps/server/src/telemetry/AnalyticsService.ts:81",
+    "docs/user/telemetry.md:16-22",
+    "apps/web/src/components/onboarding/WelcomeWizard.tsx:435",
+    "apps/server/src/telemetry/Identify.ts:181-189",
+    "apps/server/src/telemetry/Identify.ts:255-268",
+    "packages/shared/src/telemetryId.ts:8-9"
+   ]
+  },
+  {
+   "lens": "G9",
+   "title": "Mutable action references in credentialed jobs; no dependency update or vulnerability scanning",
+   "case": "Only 20 of 116 third-party action references are SHA-pinned (probe ci.pinned_actions). mobile-eas-preview.yml:100-102 runs expo/expo-github-action/continuous-deploy-fingerprint@main with EXPO_TOKEN. release.yml:705,860,876 uses softprops/action-gh-release@v3 in the contents:write release job, and ci.yml:426 uses dtolnay/rust-toolchain@stable. There is no Dependabot or Renovate configuration and no audit or OSV step in any workflow.",
+   "impact": "Supply-chain compromise: a moved upstream tag or branch executes in jobs that hold release, store or signing credentials, and known-vulnerable dependencies are never flagged.",
+   "fix": "Pin every third-party action to a full commit SHA and let a bot update the pins. Add Renovate or Dependabot for npm, cargo and actions, a vulnerability gate (OSV-Scanner or pnpm audit), and OpenSSF Scorecard.",
+   "severity": "high",
+   "evidence": [
+    ".github/workflows/mobile-eas-preview.yml:100-102",
+    ".github/workflows/release.yml:705",
+    ".github/workflows/release.yml:860",
+    ".github/workflows/ci.yml:426",
+    "probe ci.pinned_actions: 20/116",
+    "probe deps.update_bot: not found",
+    "probe ci.security_scans: none"
+   ]
+  },
+  {
+   "lens": "G9",
+   "title": "Release binaries have no provenance or signed checksums, and signing is silently optional",
+   "case": "release.yml:752-765 writes SHA256SUMS unsigned. scripts/install.sh:194-206, scripts/install.ps1:171-186 and scripts/npm-launcher/t3.mjs:75-91 check archives only against SHA256SUMS from the same release. release-desktop.yml:446-486 logs 'signing disabled' and continues when secrets are missing, and docs/operations/release.md:58 calls signing optional. npm --provenance (release.yml:927) covers only the launcher, not the executables it downloads.",
+   "impact": "All install and self-update paths (curl|sh, npx t3, t3 update, boot service, SSH environments) prove integrity but not authenticity. A tampered release asset or account would pass, and a misconfigured secret can ship an unsigned stable build.",
+   "fix": "Attest the archives and installers (GitHub artifact attestations or Sigstore) and sign SHA256SUMS. Verify the signature in install.sh, install.ps1, the npm launcher and t3 update. Fail stable and nightly releases when signing secrets are absent.",
+   "severity": "high",
+   "evidence": [
+    ".github/workflows/release.yml:752-765",
+    "scripts/install.sh:194-206",
+    "scripts/npm-launcher/t3.mjs:75-91",
+    ".github/workflows/release-desktop.yml:446-486",
+    "docs/operations/release.md:58",
+    ".github/workflows/release.yml:927"
+   ]
+  },
+  {
+   "lens": "G6",
+   "title": "MCP tool catalog is large and unmeasured",
+   "case": "There are 83 Tool.make definitions under apps/server/src/mcp (non-test), with at least 38,362 characters of description text before JSON-schema structure (33,550 in toolkits/*/tools.ts, 4,812 in packages/contracts MCP schemas). All toolkits are registered on one endpoint for every provider session (docs/orchestration-v2/orchestrator-mcp-server.md:36-37), and no test measures tools/list size.",
+   "impact": "Each provider session pays an estimated 9.6k+ tokens of catalog per turn (at 4 characters per token), large menus degrade tool selection, and catalog regressions go unseen.",
+   "fix": "Measure tools/list bytes in CI with a budget, next to the existing transfer budgets. Register the preview, device and pull-request toolkits only when the session can use them, and shorten descriptions.",
+   "severity": "medium",
+   "evidence": [
+    "apps/server/src/mcp/toolkits/preview/tools.ts:311-354",
+    "apps/server/src/mcp/McpHttpServer.ts:996-1056",
+    "docs/orchestration-v2/orchestrator-mcp-server.md:36-37"
+   ]
+  },
+  {
+   "lens": "G11",
+   "title": "No per-task budgets for agent runs, delegations or schedules",
+   "case": "Searching apps/server/src and packages/contracts/src for maxTurns, tokenBudget, costLimit or turnTimeout finds only the Codex goal tokenBudget passthrough (CodexAdapterV2.ts:940). delegate_task and scheduled tasks take no budget (docs/orchestration-v2/orchestrator-mcp-server.md:225-260), and usage is reported only after the fact (docs/user/usage.md:7-14).",
+   "impact": "Unbounded consumption (OWASP LLM10): delegated, scheduled or webhook-triggered agents can loop until provider subscription limits stop them, and cost becomes visible only afterwards.",
+   "fix": "Add token, wall-clock and call budgets to the runtime policy for runs, delegated tasks and schedules, enforce them in the orchestrator, and report spend against the budget per run.",
+   "severity": "medium",
+   "evidence": [
+    "apps/server/src/orchestration-v2/Adapters/CodexAdapterV2.ts:940",
+    "docs/orchestration-v2/orchestrator-mcp-server.md:225-260",
+    "docs/user/usage.md:7-14"
+   ]
+  },
+  {
+   "lens": "G1",
+   "title": "Headline claims have no source, method or date",
+   "case": "README.md:3 says 'best-in-class mobile app' and README.md:11 'performant'. AGENTS.md:9 says 'over 500,000 users'. apps/marketing/src/lib/site.ts:9-12 hard-codes users '500,000' and githubStars '24k+', which index.astro:119 renders.",
+   "impact": "People and agents choosing tools from descriptions get claims they cannot check, and the hard-coded counts drift silently.",
+   "fix": "Derive the user count from the analytics pipeline with method and date, or remove it. Link performance claims to the CI transfer-budget report, and drop unsupported superlatives.",
+   "severity": "medium",
+   "evidence": [
+    "README.md:3",
+    "README.md:11",
+    "AGENTS.md:9",
+    "apps/marketing/src/lib/site.ts:9-12",
+    "apps/marketing/src/pages/index.astro:119"
+   ]
+  },
+  {
+   "lens": "G10",
+   "title": "No SBOM, support period or CRA position for a widely distributed product",
+   "case": "Probe ci.sbom found no SBOM generation. .github/SECURITY.md:1-8 lists no supported versions, and probe evo.support found no support period. rg finds no mention of the Cyber Resilience Act, AI Act or Accessibility Act in docs or the marketing site. The product ships through the App Store, Google Play, npm, winget, scoop, brew and AUR.",
+   "impact": "CRA vulnerability reporting applies from 11 Sep 2026, and SBOM and support-period duties from 11 Dec 2027. Enterprise buyers and downstream packagers lack component and support data.",
+   "fix": "Emit CycloneDX or SPDX SBOMs per release from the existing license-manifest generator. State supported versions and a security-support period in SECURITY.md, and document the CRA role and obligations.",
+   "severity": "medium",
+   "evidence": [
+    "probe ci.sbom: not found",
+    ".github/SECURITY.md:1-8",
+    "probe evo.support: not found",
+    "probe meta.compliance: 0 documents",
+    "README.md:40-84"
+   ]
+  },
+  {
+   "lens": "G12",
+   "title": "Accessibility and localisation are untested in a UI shipped to app stores",
+   "case": "Probe ui.i18n found no i18n library or translation files. rg finds no axe, pa11y or lighthouse in the repo, although the web suite already runs Vitest browser tests in Chromium in CI (ci.yml:255-300).",
+   "impact": "Screen-reader and keyboard regressions go undetected, non-English users are unsupported, and consumer-facing distribution carries EAA exposure.",
+   "fix": "Add axe checks to the existing *.browser.test.tsx suites for key screens, move UI strings into a message catalogue, and state the accessibility conformance target.",
+   "severity": "medium",
+   "evidence": [
+    "probe ui.i18n: 0 libraries, 0 translation files",
+    ".github/workflows/ci.yml:255-300",
+    "rg 'axe-core|pa11y|lighthouse': no matches"
+   ]
+  },
+  {
+   "lens": "G13",
+   "title": "No CODEOWNERS or governance for a codebase mostly written by agents",
+   "case": "There is no .github/CODEOWNERS (probe meta.codeowners) and no governance file. AGENTS.md:41 says most contributions come from T3 Code itself. The only required check visible in the repo is the 'Check' job (ci.yml:494-496), and review requirements are not visible.",
+   "impact": "Security-critical paths (apps/server/src/auth, apps/server/src/mcp, .github/workflows, release scripts) have no enforced owner review, and continuity rests on a small named group.",
+   "fix": "Add CODEOWNERS for the auth, MCP, relay, release and workflow paths, require code-owner review there, and write a short governance and succession note.",
+   "severity": "medium",
+   "evidence": [
+    "probe meta.codeowners: not found",
+    "AGENTS.md:41",
+    ".github/workflows/ci.yml:494-496",
+    ".github/TRIAGE_EXEMPTIONS.td:4-9"
+   ]
+  },
+  {
+   "lens": "G7",
+   "title": "MCP error contract drifts from its docs and has no retry semantics",
+   "case": "packages/contracts/src/orchestratorMcp.ts:671-692 defines 16 failure codes. docs/orchestration-v2/orchestrator-mcp-server.md:509-524 lists 14, missing thread_credential_required and target_required. OrchestratorMcpFailure carries only code and message, while provider and VCS errors carry retryable (orchestrationV2.ts:1261, vcs.ts:122).",
+   "impact": "Agents cannot tell from the contract which MCP failures to retry, and documented error handling misses real codes.",
+   "fix": "Generate the code table from the schema, checked in CI, and add retryable plus an optional remediation field to OrchestratorMcpFailure.",
+   "severity": "low",
+   "evidence": [
+    "packages/contracts/src/orchestratorMcp.ts:671-692",
+    "docs/orchestration-v2/orchestrator-mcp-server.md:509-524",
+    "packages/contracts/src/orchestrationV2.ts:1261",
+    "packages/contracts/src/vcs.ts:122"
+   ]
+  },
+  {
+   "lens": "G12",
+   "title": "Design index presents the shipped durable outbox as future work",
+   "case": "docs/orchestration-v2/README.md:110-166 ('Tracked Follow-Up: Durable Effect Outbox') says the current pipeline uses reactors. apps/server/src/orchestration-v2/EffectOutbox.ts ships the outbox, and AGENTS.md:154 describes it as current.",
+   "impact": "Maintainers and coding agents reading the design index get the wrong side-effect and recovery architecture.",
+   "fix": "Rewrite or remove the section, as the project's own rule in AGENTS.md 'Documentation' requires ('rewrite or remove the affected text').",
+   "severity": "low",
+   "evidence": [
+    "docs/orchestration-v2/README.md:110-166",
+    "apps/server/src/orchestration-v2/EffectOutbox.ts:123-142",
+    "AGENTS.md:154"
+   ]
+  }
+ ],
+ "opportunities": [
+  {
+   "lens": "O9",
+   "criterion": "OPP-6",
+   "title": "One untrusted-content envelope for every injection channel",
+   "description": "T3 frames untrusted text in four ways: nonce-tagged blocks for webhooks, a JSON-encoded frame for captured windows, and prose preambles for transcripts and thread references. Standardising on the nonce-tagged envelope, with redaction and provenance fields, and publishing it with its tests would give one tested format and a shared injection corpus to pi, Orca and PandaCode, which also feed external content to agents.",
+   "value": 3,
+   "reach": 4,
+   "confidence": "observed",
+   "horizon_fit": 1.3,
+   "effort": 2,
+   "action": "consolidate",
+   "evidence": [
+    "apps/server/src/scheduledTasks/webhookTemplate.ts:1-11,164",
+    "packages/provider-core/src/server/attachmentPrompt.ts:198-210",
+    "packages/shared/src/threadTranscript.ts:14",
+    "packages/shared/src/composerContextReferences.ts:272",
+    "stablyai__orca/README.md:20",
+    "aicodeking__pandacode/README.md:4-5"
+   ]
+  },
+  {
+   "lens": "O7",
+   "criterion": "OPP-6",
+   "title": "Capability-scoped MCP toolkits with a catalog budget",
+   "description": "Advertise only the toolkits a session can use: preview and device tools when a browser or device is attached, pull-request tools when a source-control account is linked. Add a tools/list byte budget to CI next to the transfer budgets. Baseline: 83 tools and at least 38,362 characters of descriptions.",
+   "value": 3,
+   "reach": 4,
+   "confidence": "observed",
+   "horizon_fit": 1.2,
+   "effort": 2,
+   "action": "re-cut-interface",
+   "evidence": [
+    "apps/server/src/mcp/McpHttpServer.ts:996-1056",
+    "apps/server/src/mcp/toolkits/preview/tools.ts:311-354",
+    "apps/server/integration/TransferBudgetReport.integration.ts:40-46"
+   ]
+  },
+  {
+   "lens": "O13",
+   "criterion": "OPP-7",
+   "title": "Turn the license-manifest generator into per-release SBOMs",
+   "description": "The build already walks the production dependency closure for web, server, desktop and mobile, and fails when license data is missing. Emitting CycloneDX or SPDX from the same walk, attested with the release, covers the CRA SBOM duty (Dec 2027) and SEC-4 at low cost.",
+   "value": 3,
+   "reach": 3,
+   "confidence": "observed",
+   "horizon_fit": 1.5,
+   "effort": 2,
+   "action": "harden",
+   "evidence": [
+    "docs/internals/open-source-licenses.md:3-31",
+    "scripts/lib/third-party-licenses.ts",
+    "probe ci.sbom: not found"
+   ]
+  },
+  {
+   "lens": "O3",
+   "criterion": "OPP-3",
+   "title": "Run Full-access agents inside agent-sandbox-lockdown-style boundaries via AgentScope.wrap",
+   "description": "Every provider launch already goes through AgentScope.wrap, which today adds systemd memory scopes on Linux. agent-sandbox-lockdown ships the missing boundary: DNS and egress-proxy allowlists, least-privilege tools, a step cap, a JSONL tool log and a kill switch. Composing the two gives Full-access sessions an OS-level boundary without changing provider adapters, and closes the main AGT-2 gap.",
+   "value": 4,
+   "reach": 4,
+   "confidence": "derived",
+   "horizon_fit": 1.3,
+   "effort": 3,
+   "action": "harden",
+   "evidence": [
+    "packages/shared/src/AgentScope.ts:4-31",
+    "apps/server/src/process/agentScope.ts:155-183",
+    "packages/contracts/src/providerPolicy.ts:32",
+    "PromptEngineer48__agent-sandbox-lockdown/README.md:3"
+   ]
+  },
+  {
+   "lens": "O11",
+   "criterion": "OPP-2",
+   "title": "Shared adapter conformance kit for coding-agent GUIs",
+   "description": "T3, Orca and PandaCode all wrap the same CLIs (Claude Code, Codex, OpenCode, Pi). T3 has the strongest verification asset: a provider-neutral replay runtime (packages/provider-testing), the ProviderAdapterV2 contract with capability records (packages/provider-core), recorders for six providers, and 91 recorded scenarios (149 NDJSON transcripts, 8.0 MB). Publishing them as a versioned conformance suite would let each GUI test adapters against the same recorded behaviour and catch provider protocol drift once for all of them. Today both packages are private and coupled to Effect v4.",
+   "value": 4,
+   "reach": 3,
+   "confidence": "derived",
+   "horizon_fit": 1.2,
+   "effort": 4,
+   "action": "extract",
+   "evidence": [
+    "packages/provider-testing/src/replayTranscript.ts",
+    "packages/provider-core/src/server/ProviderAdapter.ts",
+    "apps/server/src/orchestration-v2/testkit/fixtures",
+    "apps/server/scripts/record-codex-app-server-replay-fixture.ts",
+    "stablyai__orca/README.md:20",
+    "aicodeking__pandacode/README.md:4-5"
+   ]
+  },
+  {
+   "lens": "O1",
+   "criterion": "OPP-1",
+   "title": "Extract the SQLite durable command and effect kernel",
+   "description": "EventSink, CommandReceiptStore and EffectOutbox form a compact, local-first durable-execution core: one-transaction commit, leased claims, replay-safe versus process-bound effect classes, process-loss reconciliation and a restart-chain cap. absurd covers the same ground on Postgres, and pi-durable at the agent-conversation level. A shared contract for these semantics, with T3's kernel as the SQLite implementation, would let harnesses reuse proven crash semantics instead of reimplementing them. The effect-type registry must be split from orchestration types first.",
+   "value": 4,
+   "reach": 3,
+   "confidence": "derived",
+   "horizon_fit": 1.1,
+   "effort": 4,
+   "action": "extract",
+   "evidence": [
+    "apps/server/src/orchestration-v2/EffectOutbox.ts:123-142,496-561",
+    "apps/server/src/orchestration-v2/CommandReceiptStore.ts",
+    "apps/server/src/orchestration-v2/RestartContinuation.ts:33",
+    "earendil-works__absurd/README.md:8",
+    "earendil-works__pi/packages/durable/README.md:5"
+   ]
+  },
+  {
+   "lens": "O5",
+   "criterion": "OPP-4",
+   "title": "Fetch vendored reference trees on demand instead of committing them",
+   "description": "21,835 of 28,433 tracked files (77%, 218 MB on disk) are git subtrees under .repos/ that agents read as references. Every CI job sparse-excludes them, and scripts/sync-reference-repos.ts already syncs them at pinned refs. Fetching them on demand at those pins keeps the agent benefit while shrinking clones and code-search noise.",
+   "value": 2,
+   "reach": 3,
+   "confidence": "observed",
+   "horizon_fit": 1.0,
+   "effort": 2,
+   "action": "retire",
+   "evidence": [
+    "git ls-files: 21,835 of 28,433 under .repos/",
+    "scripts/sync-reference-repos.ts",
+    ".github/workflows/ci.yml:44-51,69-73",
+    "AGENTS.md 'Where code lives' (.repos/ read-only references)"
+   ]
+  }
+ ],
+ "reengineering": [
+  {
+   "action": "harden",
+   "component": "Release and CI supply chain (.github/workflows/*, scripts/install.sh, scripts/install.ps1, scripts/npm-launcher/t3.mjs, packages/shared/src/cliRelease.ts)",
+   "gain": "Authenticity, not just integrity, on every install and self-update path, and no mutable third-party code in credentialed jobs.",
+   "measure": "SHA-pinned third-party action refs go from 20/116 to 116/116 (rqs probe ci.pinned_actions). All release assets carry attestations (from 0). An installer test rejects a tampered SHA256SUMS. A stable release fails when signing secrets are absent."
+  },
+  {
+   "action": "harden",
+   "component": "Safe defaults: packages/contracts/src/providerPolicy.ts:32 (runtime mode), apps/server/src/telemetry/AnalyticsService.ts:81 and Identify.ts (telemetry consent and identity)",
+   "gain": "Least agency and consent by default, without removing any capability.",
+   "measure": "A contract test asserts the default runtime mode is not full-access. Track the share of new threads started in Full access (existing feature.used analytics). AnalyticsService tests cover the toggle and DO_NOT_TRACK. PRV-1 and AGT-2 re-scored at 3 or higher."
+  },
+  {
+   "action": "refactor",
+   "component": "Largest modules: Orchestrator.ts (12,143 lines), ClaudeAdapterV2.ts (10,417), ChatView.tsx (8,994), provider-acp adapter.ts (8,514), CodexAdapterV2.ts (7,528)",
+   "gain": "Smaller units for review and for agent context, and fewer merge conflicts in a very high-PR-volume repo.",
+   "measure": "Non-test source files over 3,000 lines drop from 26 to 10 or fewer, with maximum file size tracked per release by a CI size budget."
+  },
+  {
+   "action": "re-cut-interface",
+   "component": "MCP server (apps/server/src/mcp, 83 tools in 11 toolkits)",
+   "gain": "Lower per-turn context cost and better tool selection for every provider session.",
+   "measure": "tools/list bytes per session type are measured in CI. Baseline: at least 38,362 description characters across 83 tools. Target: 50% or less for sessions with no preview or device attached."
+  }
+ ],
+ "questions": [
+  "Does the durable orchestration kernel avoid repeating side effects after a crash? Mostly yes. Commits happen in one transaction, receipts deduplicate commands, replay-safe effects are requeued and process-bound ones cancelled, and auto-resume is capped at 3 (EffectOutbox.ts:123-142,496-530; RestartContinuation.ts:33). Remaining risks: a documented power-loss window (synchronous=NORMAL) and no abrupt-kill fault injection.",
+  "Is telemetry consent a red line (PRV-1 at 1 or below)? No. Use is disclosed in a docs page, a first-run notice and the privacy policy, and no prompts or content are sent. It scores 2: on by default, opt-out only by environment variable, no DO_NOT_TRACK, and an 'anonymous' label despite linkable hashed provider-account ids.",
+  "Are agents run with least agency by default? No for threads: the default is Full access, which maps to Codex dangerFullAccess with approvals off and to Claude bypassPermissions, with no T3 sandbox. Yes for outside MCP agents, which default to read-only with mode ceilings and per-tool access classes."
+ ],
+ "not_examined": [
+  "Runtime behaviour: nothing was built or run (static review), so there was no oracle run, quickstart run or latency measurement.",
+  "Git history: the shallow clone has 1 commit, so contributor concentration, release cadence and breaking-change rate were not measured.",
+  "Branch-protection and required-review settings, GitHub secret scanning and published advisories, all configured outside the repo.",
+  "infra/relay (Cloudflare Worker, Postgres, Clerk) beyond notification payloads and monitoring queries.",
+  "apps/mobile native modules (Swift/Kotlin), native/* Rust and C helpers, and the vendored libghostty binaries.",
+  "Whether tsc-rs enforces the Effect language-service diagnostics during CI typecheck.",
+  "Whether the background-service log file captures the one-time startup pairing URL printed to stdout.",
+  "CSRF and WebSocket-origin posture of cookie-authenticated endpoints under the production wildcard CORS policy (apps/server/src/http.ts:258-275).",
+  "Main-process validation of IPC messages from preview webview guests that run without context isolation (apps/desktop/src/preview/PickPreload.ts).",
+  ".repos/ vendored reference subtrees (skipped by the probes and by this review)."
+ ],
+ "time_minutes": 115,
+ "scope_notes": "agent-harness: T3 Code runs provider coding agents (Codex, Claude, Cursor, Grok, OpenCode, Pi, ACP) that execute commands on the user's machine and serves them to web, desktop and mobile clients over a local server (127.0.0.1:3773), MCP and a cloud relay. All flags are set except heavy_compute, because model inference happens at the providers. This is a static review of commit 7e289ae1 (shallow clone), excluding the vendored .repos/ trees."
+}

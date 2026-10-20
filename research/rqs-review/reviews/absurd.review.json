@@ -1,0 +1,649 @@
+{
+ "rqs_review": 1,
+ "target": {
+  "path": "/home/user/GitHub_Repos_Dump/earendil-works__absurd",
+  "name": "absurd",
+  "head": "3cfc64f10b0bef7ff159ec4e01a4ae76424c8d05",
+  "shallow": true
+ },
+ "profile": "workflow-engine",
+ "flags": {
+  "uses_llm": false,
+  "has_ui": true,
+  "executes_code": true,
+  "network_service": true,
+  "parses_untrusted": true,
+  "uses_crypto": false,
+  "heavy_compute": false,
+  "distributed": true
+ },
+ "scope_notes": "Profile workflow-engine: a Postgres-only durable execution engine (sql/absurd.sql) with thin TS/Python/Go SDKs, the absurdctl CLI and the habitat dashboard (README.md:8-11, AGENTS.md:3-6). Flags checked against code: has_ui=true (habitat SolidJS UI, habitat/ui/src); network_service=true (habitat listens on :7890 and serves a JSON API, habitat/internal/config/config.go:15, habitat/internal/server/server.go:73-129); parses_untrusted=true because habitat decodes HTTP requests from any peer that reaches the port without authentication and absurdctl ingests remote SQL and a JSON index from GitHub (absurdctl:517-519, 645-679), not because of the probe's fetch count; executes_code=true (workers run user task code, absurdctl spawns psql, absurdctl:335); uses_llm=false (no model calls; the bundled 7.3 KB SKILL.md is assessed under INT-2/PERF-2 rather than AGT); uses_crypto=false (md5/random UUIDs only for naming, TLS delegated to drivers); distributed=true (npm, PyPI, GitHub Releases, Go module).",
+ "reviewer": {
+  "id": "reviewer-absurd",
+  "kind": "agent",
+  "conflicts": "none"
+ },
+ "date": "2026-10-20",
+ "red_line_decisions": {
+  "SEC-6": "Not triggered (level 2): no secrets in the tree (rg for AWS/GitHub/OpenAI/Slack/private-key patterns: no matches; only user:pass placeholders in docs); no secret scanner in CI.",
+  "SEC-7": "Not triggered (level 3): dynamic SQL quotes identifiers with %I/pq.QuoteIdentifier/quote_ident and passes values as parameters or %L/quote_literal; absurdctl runs psql with an argv list and psql variables.",
+  "EPI-5": "Not triggered (level 2): no headline claim is contradicted by measurement; docs carry an unsourced line-count comparison, a superlative tagline and two statements contradicted by code (habitat 'read-only', maxDelay semantics).",
+  "PRV-1": "Not triggered (level 5): no telemetry code exists.",
+  "PRV-3": "Not triggered (level 2): Apache-2.0 LICENSE present; SDK packages ship without the license text.",
+  "suspected_red_lines": "The automatic scorecard listed none."
+ },
+ "scores": {
+  "PUR-1": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": ["README.md:8-11", "README.md:56", "README.md:58-65", "README.md:215-226", "docs/concepts.md:131-133", "docs/agents.md:1-71", "skills/absurd/SKILL.md:1-5"],
+   "note": "States the problem (durable execution on Postgres only), how to start, a non-goal (no push model), the experimental Go SDK, the overlapping-execution limit, and agent use through a bundled skill. No machine-readable capability statement.",
+   "source": "review"
+  },
+  "PUR-2": {
+   "level": 1,
+   "confidence": "derived",
+   "evidence": ["docs/comparison.md:83-84", "docs/comparison.md:135-137", "probe test.bench: no benchmark directory, 0 mentions", "probe claims.harness: harness files 0, result files 0"],
+   "note": "No benchmark harness or results in the repo. The only numeric value claims (SDK line counts against Temporal and DBOS) give no counting method or source. The durability value is backed by functional tests and by an external SIGKILL trial, not by an in-repo measurement.",
+   "source": "review"
+  },
+  "PUR-3": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": ["docs/comparison.md:12-22", "sdks/typescript/package.json (no runtime dependencies; peer pg ^8.0.0)", "sdks/python/pyproject.toml:24-26 (psycopg only)", "sdks/go/absurd/go.mod:5 (pgx only)", "habitat/go.mod:8 github.com/go-crypt/crypt is a direct requirement but rg 'go-crypt' over habitat/**/*.go finds no import"],
+   "note": "Deliberately small surface and minimal runtime dependencies with a documented rationale; SDKs are intentionally thin wrappers over one SQL core. One unused direct dependency in habitat.",
+   "source": "review"
+  },
+  "COR-1": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [".github/workflows/test.yml:3-5", ".github/workflows/test.yml:52-53", "Makefile:39", "probe test.ratio: 0.687 (15588/22680 lines), 55 test files", "habitat/internal/server/handlers_tasks_test.go, prefix_test.go, internal/config/config_test.go: 13 Go tests not reached by make test (Makefile:39) or any workflow"],
+   "note": "SQL core tests (pytest, 23 files) and the TypeScript, Python and Go SDK suites run on every push and PR against real Postgres. Habitat's 13 Go tests never run in CI; only Ubuntu, Python 3.12, Node 24 and Postgres 16 are exercised; no coverage measurement.",
+   "source": "review"
+  },
+  "COR-2": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": ["sdks/go/tests/parity_test.go:161-222", "scripts/validate-psql:1-19", ".pi/prompts/make-migration.md:37-62", "probe test.golden: 0 golden or fixture files"],
+   "note": "Tests assert stored rows against hand-derived expectations. A schema-dump oracle for migrations (fresh absurd.sql vs base plus migration) exists but is only run manually from an agent prompt; the Go 'parity' tests do not run the other SDKs.",
+   "source": "review"
+  },
+  "COR-3": {
+   "level": 1,
+   "confidence": "derived",
+   "evidence": ["probe test.mutation, test.property, test.fuzz: none found", "tests/test_retry_delay_overflow.py", "tests/test_lock_ordering.py:61", "tests/test_lock_ordering.py:145"],
+   "note": "No property, fuzz or mutation testing; only targeted overflow and deadlock regression tests.",
+   "source": "review"
+  },
+  "COR-4": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": ["tests/conftest.py:155", "tests/docker/pg16-pgcron/Dockerfile:1-3", "tests/test_cron_pgcron_e2e.py", "RE4exa research/rea-self-analysis/results/prototype-crash-test.json (third-party trial, Absurd 0.5.1, Postgres 16.15)"],
+   "note": "Suites run against real Postgres and a real pg_cron image rather than mocks; a recorded third-party crash trial exists outside the repo. No self-application lane in CI.",
+   "source": "review"
+  },
+  "COR-5": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": ["sql/absurd.sql:37-52", "sql/absurd.sql:56-129", "sdks/typescript/src/index.ts:429-434", "sql/absurd.sql:2296-2321"],
+   "note": "Time is isolated behind absurd.current_time() and controllable through absurd.fake_now; retry delays and checkpoint names (name, name#2) are deterministic; ids are random time-ordered UUIDv7. No double-run comparison in CI.",
+   "source": "review"
+  },
+  "REL-1": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": ["sql/absurd.sql:915-1078", "sql/absurd.sql:1468-1553", "sql/absurd.sql:764-913", "sdks/typescript/src/index.ts:658", "sdks/typescript/src/index.ts:1266-1272", "tests/test_state_transitions.py:41", "tests/test_checkpoints.py:118", "RE4exa prototype-crash-test.json: worker SIGKILLed after 3 of 6 steps, runs 1:failed:$ClaimTimeout and 2:completed, repeated completed calls 0"],
+   "note": "Checkpoints in Postgres, leases with automatic extension, spawn idempotency keys, bounded attempts (default 5) and lease-overrun self-termination. Recovery is tested in CI by simulated claim expiry on a fake clock and was observed under a real SIGKILL outside the repo. Steps in flight at a crash run again (documented at-least-once, docs/concepts.md:131-133); no process-kill test in CI.",
+   "source": "review"
+  },
+  "REL-2": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": ["sql/absurd.sql:952", "sql/absurd.sql:142-145", "habitat/internal/server/handlers.go:1007", "sdks/typescript/src/index.ts:302-319", "sdks/python/src/absurd_sdk/__init__.py:632", "sdks/go/absurd/context.go:67", "sql/absurd.sql:226", "sql/absurd.sql:271", "habitat/internal/server/handlers.go:967"],
+   "note": "Lease sweeps, cleanup batches and habitat queries are bounded. Every run loads all committed checkpoints of its task into memory in all three SDKs; params, checkpoint states and event payloads have no size limit; habitat decodes request bodies without a size cap. No documented limits or large-input tests.",
+   "source": "review"
+  },
+  "REL-3": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": ["sql/absurd.sql:56-129", "sql/absurd.sql:1000-1015", "sql/absurd.sql:1272-1281", "sdks/typescript/src/index.ts:1211-1213", "absurdctl:1742-1752", "sql/migrations/0.5.0-0.5.1.sql:6-11"],
+   "note": "Failures are recorded with structured reasons ($ClaimTimeout with worker and expiry), retries use fixed or exponential backoff capped at one day with attempt limits, invalid legacy strategies fail the task instead of wedging the queue. Gaps: the worker loop retries database errors every 0.25 s without backoff, and a failed migration can leave a partial schema that already reports the new version.",
+   "source": "review"
+  },
+  "REL-4": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": ["habitat/cmd/habitat/main.go:66", "habitat/internal/server/server.go:90-97", "sdks/typescript/src/index.ts:1166-1169", "sdks/typescript/test/worker.test.ts:118"],
+   "note": "Habitat shuts down on SIGINT/SIGTERM with a 5 s grace; worker.close() drains in-flight tasks and is tested; SDKs leave signal wiring to the host; no leftover checks.",
+   "source": "review"
+  },
+  "PERF-1": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["tests/test_indexes.py:35-60", "tests/test_indexes.py:66-110", "probe test.bench: no benchmarks"],
+   "note": "No latency or throughput numbers or budgets. CI does assert with EXPLAIN that the hot claim, cancellation and cleanup queries use their indexes, which guards against plan regressions.",
+   "source": "review"
+  },
+  "PERF-2": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": ["skills/absurd/SKILL.md (7307 bytes, wc -c)", "skills/absurd/SKILL.md:47-84", "absurdctl:2401-2440", "probe agent.json_output: no JSON output flag"],
+   "note": "The agent path is summary-first (list-tasks, limit 50, then dump-task) and the skill is small, but outputs are text tables, dump-task prints every checkpoint payload without a size bound, and no output size is measured.",
+   "source": "review"
+  },
+  "SEC-1": {
+   "level": 0,
+   "confidence": "observed",
+   "evidence": ["git ls-files: no SECURITY.md or security contact", "probe meta.security_policy: not found", "CHANGELOG.md:63"],
+   "note": "No vulnerability reporting channel, response expectations or threat model; an SQL injection fix in absurdctl (0.1.0) was published without an advisory. Trust boundaries (database roles, habitat exposure, remote SQL) are undocumented.",
+   "source": "review"
+  },
+  "SEC-2": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["sdks/typescript/package-lock.json", "habitat/ui/package-lock.json", "sdks/python/uv.lock", "habitat/go.sum", ".github/workflows/test.yml:30 (npm ci)", ".github/workflows/build.yml:102 (npm install for the released habitat UI)", "probe deps.pinning: npm exact 0 / ranged 28", "probe deps.update_bot and ci.security_scans: none"],
+   "note": "Lockfiles are committed, but released habitat UI assets are built with npm install, npm ranges are caret, and there is no update bot or vulnerability scan.",
+   "source": "review"
+  },
+  "SEC-3": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": [".github/workflows/build.yml:279-281 (npm publish --provenance)", ".github/workflows/build.yml:352-355 and 387-390 (PyPI trusted publishing with id-token)", ".github/workflows/build.yml:181-187 (GitHub Release assets without checksums, signatures or attestations)"],
+   "note": "SDK and absurdctl packages are built in CI with npm provenance and PyPI trusted publishing. Habitat binaries, the standalone absurdctl and the SQL files on GitHub Releases carry no checksums or attestations.",
+   "source": "review"
+  },
+  "SEC-4": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": ["probe ci.sbom: no SBOM generation", "probe meta.notices: no NOTICE or third-party license file", ".github/workflows/build.yml:148-179"],
+   "note": "No SBOM or third-party notices for any release, including the habitat binary that embeds Go and JS dependencies.",
+   "source": "review"
+  },
+  "SEC-5": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": ["probe ci.pinned_actions: 0/37 third-party action references pinned to a full SHA, 2 on branches", ".github/workflows/build.yml:353", ".github/workflows/build.yml:388", "probe ci.permissions: 1/3 workflows set top-level permissions", ".github/workflows/test.yml:1-9", ".github/workflows/docs.yml:32"],
+   "note": "Actions are pinned by tag or branch (pypa/gh-action-pypi-publish@release/v1); test.yml and build.yml have no top-level permissions; docs CI pipes a remote install script to sh. Publishing uses environments and job-scoped id-token, and no pull_request_target exists.",
+   "source": "review"
+  },
+  "SEC-6": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": ["rg AWS/GitHub/OpenAI/Slack/private-key patterns over the tree: no matches", "absurdctl:248-253", "absurdctl:2949", "habitat/internal/config/config.go:76", "probe ci.security_scans: none"],
+   "note": "Red line not triggered. No committed secrets; absurdctl masks passwords in verbose URIs and recommends PGPASSWORD. No secret scanner; habitat accepts the password as a command-line flag and serves every task payload to unauthenticated clients.",
+   "source": "review"
+  },
+  "SEC-7": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": ["sql/absurd.sql:222-243", "sql/absurd.sql:3007-3035", "habitat/internal/server/handlers.go:1448-1450", "habitat/internal/server/handlers.go:679", "absurdctl:48-55", "absurdctl:278-350", "CHANGELOG.md:63"],
+   "note": "Red line not triggered. Dynamic SQL quotes identifiers (%I, pq.QuoteIdentifier, quote_ident) and passes values as parameters or quoted literals; absurdctl calls psql with an argv list and :'var' variables. Nothing gates these classes in CI. Applying remotely fetched SQL without verification is scored under OPS-4.",
+   "source": "review"
+  },
+  "SEC-8": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": ["habitat/internal/server/handlers.go:966-987", "habitat/internal/server/server.go:67-71", "rg MaxBytesReader|LimitReader in habitat/internal/server: no matches", "absurdctl:645-679"],
+   "note": "Inputs are parsed by memory-safe stdlib code (Go net/http and encoding/json with DisallowUnknownFields and UUID validation, Python json); a 10 s header timeout exists, but no body size limits, no read/write timeouts and no malformed-input fuzzing.",
+   "source": "review"
+  },
+  "INT-1": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": ["CONTRIBUTING.md:25-29", "sql/absurd.sql:16-31", "sql/absurd.sql:156-161", "docs/sdks/typescript.md", "docs/sdks/python.md", "docs/sdks/go.md"],
+   "note": "The engine is an open SQL function API callable from any Postgres client, wrapped by three documented SDKs; the schema version is introspectable. No version negotiation between SDKs and schema, the habitat HTTP API is undocumented, and the CLI has no JSON mode.",
+   "source": "review"
+  },
+  "INT-2": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": ["skills/absurd/SKILL.md", "absurdctl:2914-2960", "sdks/typescript/typedoc.json", "probe agent.describe: 0 describe/schema commands"],
+   "note": "Self-description is prose: a skill file, --help text and typed SDKs; SQL signatures are discoverable through Postgres catalogs. No describe or schema output for the CLI or the habitat API.",
+   "source": "review"
+  },
+  "INT-3": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": ["absurdctl:2914-2940 (18 commands)", "docs/comparison.md:12-22", "sql/absurd.sql (about 40 functions)"],
+   "note": "A small set of composable primitives (tasks, steps, sleep, events, retry) by stated design; surface size is not measured.",
+   "source": "review"
+  },
+  "INT-4": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["rg -c 'raise exception' sql/absurd.sql: 80", "rg -c \"sqlstate 'AB\" sql/absurd.sql: 16", "sdks/typescript/src/index.ts:1392-1400", "habitat/internal/server/handlers.go:1056-1063", "rg AB00[0-9] docs README.md CONTRIBUTING.md skills: no matches"],
+   "note": "Three SQLSTATE codes (AB001 cancelled, AB002 already failed, AB003 bad retry strategy) are mapped to typed SDK errors; the other 64 raise sites use free text, the codes are undocumented, and habitat returns plain-text errors.",
+   "source": "review"
+  },
+  "INT-5": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": ["sql/absurd.sql:813-890", "sql/absurd.sql:1887-1925", "tests/test_idempotent_spawn.py (8 tests)", "sdks/python/tests/test_idempotency.py (7 tests)", "sdks/typescript/test/idempotent.test.ts (7 tests)"],
+   "note": "Race-safe spawn idempotency keys, first-write-wins events and stable UUIDv7 task/run ids, all tested in CI. Not content-addressed.",
+   "source": "review"
+  },
+  "INT-6": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["habitat/ui/src/views/Tasks.tsx:792-794", "rg -c 'aria-|role=' habitat/ui/src: 10", "probe ui.i18n: none", "docs/quickstart.md (809 lines, not executed in CI)"],
+   "note": "Kobalte components give dialogs and selects accessible semantics, but task rows expand only on mouse click, there are no accessibility checks or translations, and the quickstart is not tested.",
+   "source": "review"
+  },
+  "INT-7": {
+   "level": 4,
+   "confidence": "derived",
+   "evidence": ["sql/absurd.sql:222-302", "docs/concepts.md:96-109", "sql/absurd.sql:156-161", "sql/migrations/"],
+   "note": "All state is in documented Postgres tables with JSON payloads, versioned by schema version and migrations, readable by any SQL tool. No dedicated export command.",
+   "source": "review"
+  },
+  "EPI-1": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": ["sql/absurd.sql:246-262", "sql/absurd.sql:1009-1014", "docs/concepts.md:419-424"],
+   "note": "Runs record params, attempt, worker id, timestamps and structured failures; checkpoints record their owner run; headers can carry trace ids. No code or SDK version is recorded with results.",
+   "source": "review"
+  },
+  "EPI-2": {
+   "level": "NA",
+   "confidence": "observed",
+   "evidence": ["README.md:67-82"],
+   "note": "Not applicable: Absurd stores and executes user code and makes no analytic or probabilistic claims to calibrate.",
+   "source": "review"
+  },
+  "EPI-3": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": ["absurdctl:1618-1640", "absurdctl:1746-1752", "sdks/typescript/src/index.ts:1534-1536"],
+   "note": "schema-version prints 'unknown' instead of guessing; migrate labels missing migration files as assumed null migrations but then reports success; a task removed by retention cleanup is reported as 'not found', indistinguishable from one that never existed.",
+   "source": "review"
+  },
+  "EPI-4": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": ["habitat/internal/server/handlers.go:450-462", "habitat/internal/server/handlers.go:600-607", "CHANGELOG.md:66"],
+   "note": "Habitat listings carry hasMore and fail with 504 on query timeouts instead of returning partial lists; cleanup returns counts.",
+   "source": "review"
+  },
+  "EPI-5": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": ["README.md:8", "docs/comparison.md:83-84", "docs/comparison.md:135-137", "wc -l sdks/python/src/absurd_sdk/__init__.py: 2317 physical lines; 1801 non-blank, non-comment, non-docstring lines (tokenizer count)", "docs/tools/habitat.md:87 vs habitat/internal/server/server.go:121", "docs/concepts.md:312 vs sql/absurd.sql:966-968"],
+   "note": "Red line not triggered. No performance claims; the comparison page is dated (April 2026). The 'under 2000' SDK size holds only under an unstated counting rule, the Temporal and DBOS numbers have no source, the tagline is a superlative, and two documented behaviours are contradicted by code.",
+   "source": "review"
+  },
+  "MNT-1": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": ["CONTRIBUTING.md:25-29", "CONTRIBUTING.md:68-120", "AGENTS.md:12-18", "probe static.arch_guards: none"],
+   "note": "The architecture (SQL core, thin SDKs calling only stored functions, habitat querying tables for observability) is documented and respected; no automated boundary checks.",
+   "source": "review"
+  },
+  "MNT-2": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": ["wc -l: sql/absurd.sql 3158, absurdctl 3027, sdks/python/src/absurd_sdk/__init__.py 2317, habitat/internal/server/handlers.go 1771", "probe size.duplicates: 0 duplicated bytes", "probe static.dupe_tools and static.deadcode_tools: none", "habitat/go.mod:8"],
+   "note": "No duplicated files, but several 1.7k-3.2k line single files, no duplication or dead-code checks, and an unused direct dependency.",
+   "source": "review"
+  },
+  "MNT-3": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["Makefile:31-36 (ty check for the Python SDK)", "Makefile:49 (tsc type-check for the TS SDK)", "habitat/ui/package.json (build runs tsc)", "Makefile:4-9 (prettier, ruff format, gofmt only via make format)", "probe static.lint: no linter configured"],
+   "note": "Type checking runs in CI for the TS SDK, Python SDK and habitat UI, and Go is compiled; formatters exist only as a local make target and no linter is configured.",
+   "source": "review"
+  },
+  "MNT-4": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": ["CONTRIBUTING.md:68-120", "AGENTS.md:1-59", "docs/agents.md", ".pi/prompts/make-migration.md", "CONTRIBUTING.md:42-49", "CONTRIBUTING.md:34"],
+   "note": "CONTRIBUTING has an architecture section and AGENTS.md plus agent prompts exist. Drift: the 'Error Payloads' convention section contains pasted README text about pull-based workers, and the referenced /make-migrations command is .pi/prompts/make-migration.md. No decision records.",
+   "source": "review"
+  },
+  "MNT-5": {
+   "level": 1,
+   "confidence": "inferred",
+   "evidence": ["probe static.debt_markers: 0 markers outside tests", "sdks/go/absurd/TODO.md:1-30 (completed parity checklist)", "README.md:56"],
+   "note": "Known shortcuts (experimental Go SDK, unauthenticated habitat, non-atomic migrations) are not recorded with repayment triggers in the repo; the external issue tracker was not examined.",
+   "source": "review"
+  },
+  "EVO-1": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["CHANGELOG.md:5-80", "CHANGELOG.md:22", "sql/migrations/", "docs/database.md:78-141", "docs/patterns/living-with-code-changes.md:1-20"],
+   "note": "Pre-1.0 SemVer with per-release changelog entries and SQL migrations, but behaviour changes are not labelled as breaking, releases carry no dates, and no SDK-to-schema compatibility statement exists.",
+   "source": "review"
+  },
+  "EVO-2": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [".github/workflows/build.yml:22-57", ".github/workflows/build.yml:126-189", ".github/workflows/build.yml:310-315", "scripts/release.sh:166-175", "scripts/release.sh:202-214"],
+   "note": "Tag-triggered releases with version validation, package builds and a wheel smoke test, and release.sh requires a changelog section. Neither release.sh nor the release jobs depend on the test suite, so a tag can publish untested artefacts.",
+   "source": "review"
+  },
+  "EVO-3": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": ["sdks/python/pyproject.toml:13-21", ".github/workflows/test.yml:18", "sdks/typescript/package.json (engines node >=18.0.0)", ".github/workflows/test.yml:26", "tests/conftest.py:155", "sql/absurd.sql:2305-2307", ".github/workflows/build.yml:62-79"],
+   "note": "Python 3.9-3.14 and Node >=18 are claimed but only 3.12 and 24 are tested; supported Postgres versions are not stated and only Postgres 16 is tested, so the Postgres 18 uuidv7 branch never runs; habitat binaries are built for three targets but not tested on them.",
+   "source": "review"
+  },
+  "EVO-4": {
+   "level": 1,
+   "confidence": "derived",
+   "evidence": ["probe evo.support: no support period or EOL policy", "sdks/python/pyproject.toml:13 (Development Status :: 3 - Alpha)"],
+   "note": "Only maturity labels (alpha classifier, experimental Go SDK); no support period or security-fix policy.",
+   "source": "review"
+  },
+  "OPS-1": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": ["habitat/internal/server/handlers.go:22-30", "absurdctl:1618-1640", "sql/absurd.sql:2765"],
+   "note": "Habitat has a database health endpoint, absurdctl reports the schema version, and pg_cron absence produces explicit errors; no doctor that checks schema/SDK version skew, queues or cron jobs.",
+   "source": "review"
+  },
+  "OPS-2": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": ["sdks/typescript/src/index.ts:184-215", "sdks/python/src/absurd_sdk/__init__.py:224-240", "habitat/internal/server/server.go:103-111", "habitat/internal/server/server.go:119"],
+   "note": "Pluggable SDK loggers and hooks for trace propagation, a metrics JSON endpoint in habitat and plain request logs; no structured logs, metric export or OpenTelemetry spans.",
+   "source": "review"
+  },
+  "OPS-3": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": ["habitat/internal/config/config.go:15", "habitat/internal/config/config.go:21", "habitat/internal/config/config.go:179-186", "habitat/README.md:23", "docs/tools/habitat.md:22", "habitat/internal/server/server.go:113-129"],
+   "note": "Settings are documented, but the network-facing default is insecure: habitat listens on all interfaces while the docs say localhost, has no authentication, defaults to sslmode=disable, and silently ignores malformed integer settings.",
+   "source": "review"
+  },
+  "OPS-4": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": ["README.md:92-123", "README.md:104-110", "absurdctl:585-606", "absurdctl:1716-1730", ".github/workflows/docs.yml:32"],
+   "note": "Package-manager installs exist (npm, PyPI, Go modules), but the documented binary download has no checksum, absurdctl init and migrate can fetch SQL from a GitHub ref and apply it without integrity verification, and no pinned offline install is described.",
+   "source": "review"
+  },
+  "PRV-1": {
+   "level": 5,
+   "confidence": "derived",
+   "evidence": ["probe priv.telemetry: no telemetry SDK, 0 mentions", "rg -i 'posthog|segment|sentry|mixpanel|amplitude|datadog|telemetry' outside lockfiles: only transitive test go.sum entries", "sdks/python/src/absurd_sdk/__init__.py:224-229 (hooks for host-owned tracing)"],
+   "note": "Red line not triggered. There is no telemetry: SDKs talk only to the configured Postgres and nothing is collected.",
+   "source": "review"
+  },
+  "PRV-2": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": ["README.md:8-11", "docs/concepts.md:432-436", "docs/cleanup.md:1-60", "sql/absurd.sql:425-461"],
+   "note": "Data stays in the user's own Postgres, with documented retention cleanup and queue drops; the habitat exposure default works against locality.",
+   "source": "review"
+  },
+  "PRV-3": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": ["LICENSE", "sdks/go/absurd/LICENSE", "sdks/typescript/package.json (files: dist, README.md; no LICENSE in sdks/typescript)", "sdks/python/pyproject.toml:7 (no LICENSE file in sdks/python)", "scripts/build-absurdctl:150-151", "README.md:228-232"],
+   "note": "Red line not triggered. Apache-2.0 with SPDX ids in manifests, and absurdctl wheels include the license, but the npm and PyPI SDK packages ship without the license text and the habitat binary ships no third-party notices.",
+   "source": "review"
+  },
+  "PRV-4": {
+   "level": 0,
+   "confidence": "derived",
+   "evidence": ["probe meta.compliance: 0 compliance documents, 0 regulation mentions"],
+   "note": "No position on the EU CRA (vulnerability handling from Sep 2026, SBOM and support period from Dec 2027) or other regulation for a distributed product.",
+   "source": "review"
+  },
+  "SUS-1": {
+   "level": 1,
+   "confidence": "inferred",
+   "evidence": ["probe meta.codeowners and meta.governance: none", "sdks/python/pyproject.toml:9-11 (one named author)", ".github/PULL_REQUEST_TEMPLATE.md:7-11 (Earendil Inc. contribution terms)"],
+   "note": "No CODEOWNERS or governance; the shallow clone (1 commit) does not show contributor spread; a company is named as steward.",
+   "source": "review"
+  },
+  "SUS-2": {
+   "level": 2,
+   "confidence": "inferred",
+   "evidence": [".github/PULL_REQUEST_TEMPLATE.md", ".github/workflows/test.yml:3-5", "probe meta.issue_templates: 1 (PR template only)"],
+   "note": "A PR template and CI on every PR; no issue templates, and required checks or reviews cannot be confirmed from the repository.",
+   "source": "review"
+  },
+  "SUS-3": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": ["README.md:228-232", "CONTRIBUTING.md:7-21", "AGENTS.md", ".pi/prompts/"],
+   "note": "AI use is disclosed in the README, AI assistance must be disclosed in PRs, and agent instructions and prompts are in the repo; no written review standard for agent changes and no trailers visible in the one commit read.",
+   "source": "review"
+  }
+ },
+ "gaps": [
+  {
+   "lens": "G7",
+   "title": "Habitat listens on all interfaces without authentication and exposes a write endpoint, while the docs describe a read-only localhost view",
+   "case": "habitat/internal/config/config.go:15 defaults the listen address to ':7890' (all interfaces); habitat/internal/server/server.go:113-129 registers every route without an authentication layer, including POST /api/tasks/retry (server.go:121, handlers.go:960-1069) which calls absurd.retry_task. docs/tools/habitat.md:22 and habitat/README.md:23 say the dashboard is at localhost, and docs/tools/habitat.md:87 calls it a read-only view.",
+   "impact": "Confidentiality and integrity: any peer that can reach the port can read task params, checkpoint states, results and event payloads, and can retry or respawn failed tasks. Operators who trust the docs can expose it unknowingly.",
+   "fix": "Bind to 127.0.0.1 by default, make write endpoints opt-in (for example --allow-writes) with an Origin and content-type check, add optional token authentication, correct the docs, and test the default bind and the disabled write path.",
+   "severity": "high",
+   "evidence": ["habitat/internal/config/config.go:15", "habitat/internal/server/server.go:113-129", "habitat/internal/server/handlers.go:960-1069", "docs/tools/habitat.md:22", "docs/tools/habitat.md:87", "habitat/README.md:23"]
+  },
+  {
+   "lens": "G9",
+   "title": "Release pipeline: tag-pinned actions, publishing not gated on tests, unattested binaries",
+   "case": "0 of 37 third-party action references are SHA-pinned (probe ci.pinned_actions), two use a branch (build.yml:353, 388); test.yml and build.yml have no top-level permissions; the release job needs only build-habitat and validate-release-versions (build.yml:129) while tests live in a separate workflow; release assets are uploaded without checksums or attestations (build.yml:181-187); the habitat UI is built with npm install (build.yml:102).",
+   "impact": "Supply-chain integrity: a moved tag or branch runs inside jobs holding contents:write or id-token:write; a tag can ship artefacts whose tests failed; users cannot verify habitat or standalone absurdctl binaries.",
+   "fix": "Pin actions by full SHA, set top-level 'permissions: contents: read', make release and publish jobs depend on a test job in the same workflow, publish SHA256SUMS with build-provenance attestations, and use npm ci for the UI build.",
+   "severity": "medium",
+   "evidence": [".github/workflows/build.yml:102", ".github/workflows/build.yml:129", ".github/workflows/build.yml:181-187", ".github/workflows/build.yml:353", ".github/workflows/build.yml:388", ".github/workflows/test.yml:1-9"]
+  },
+  {
+   "lens": "G4",
+   "title": "Migrations are applied non-atomically and bump the schema version first",
+   "case": "absurdctl applies each migration through psql with ON_ERROR_STOP but without --single-transaction (absurdctl:302-342, 1813-1817); the migration files have no top-level transaction and set get_schema_version as their first statement (sql/migrations/0.5.0-0.5.1.sql:6-11, 0.4.0-0.5.0.sql:6, 0.1.1-0.2.0.sql:7). A rerun compares the recorded version with the target and stops with 'already at' (absurdctl:1742-1745).",
+   "impact": "A migration that fails or is killed midway leaves a partially migrated schema that already reports the new version; the default retry path then skips the rest, so stored procedures and indexes can silently mismatch the SDKs.",
+   "fix": "Apply each file with psql --single-transaction (or wrap files in begin/commit), move the version bump to the end of each migration, and run scripts/validate-psql for every migration chain in CI, plus a fault-injected migration test.",
+   "severity": "medium",
+   "evidence": ["absurdctl:302-342", "absurdctl:1813-1817", "absurdctl:1742-1745", "sql/migrations/0.5.0-0.5.1.sql:6-11", "sql/migrations/0.4.0-0.5.0.sql:6", "scripts/validate-psql:1-19"]
+  },
+  {
+   "lens": "G7",
+   "title": "maxDelay is documented as a no-checkpoint watchdog but implemented as a time-to-first-start limit",
+   "case": "docs/concepts.md:312, docs/sdks/typescript.md:432 and docs/sdks/go.md:727 say maxDelay cancels a task if no checkpoint is written for N seconds. sql/absurd.sql:966-968 cancels only when first_started_at is null and enqueue time exceeds max_delay, which sdks/python/tests/test_retry.py:252-271 tests and docs/patterns/deployments.md:48 describes correctly.",
+   "impact": "Users and agents relying on maxDelay to stop stuck running tasks get no cancellation; such tasks keep running through claim expiry and retries.",
+   "fix": "Correct the three doc sites and SDK docstrings, or add a separate no-progress policy; add a docs test for the cancellation table.",
+   "severity": "medium",
+   "evidence": ["docs/concepts.md:312", "docs/sdks/typescript.md:432", "docs/sdks/go.md:727", "sql/absurd.sql:966-968", "sdks/python/tests/test_retry.py:252-271", "docs/patterns/deployments.md:48"]
+  },
+  {
+   "lens": "G10",
+   "title": "No security policy, private reporting channel or threat model",
+   "case": "git ls-files lists no SECURITY.md (probe meta.security_policy not found); CHANGELOG.md:63 records an absurdctl SQL injection fix without an advisory; no document describes database roles or grants (sql/absurd.sql has no GRANT/REVOKE and all functions run as the caller), habitat exposure or remote SQL.",
+   "impact": "Reporters have no private channel; EU CRA vulnerability-handling expectations (reporting from 11 Sep 2026) are unmet; deployers cannot tell which roles may manipulate which queues.",
+   "fix": "Add SECURITY.md with a private contact (GitHub Security Advisories), response times and a trust-boundary section covering database roles, habitat and absurdctl's network fetches; publish advisories for security fixes.",
+   "severity": "medium",
+   "evidence": ["CHANGELOG.md:63", "probe meta.security_policy: not found", "rg -n 'grant |revoke ' sql/absurd.sql: no matches"]
+  },
+  {
+   "lens": "G9",
+   "title": "absurdctl applies schema SQL fetched from GitHub without integrity verification",
+   "case": "fetch_text() reads URLs with urlopen (absurdctl:517-519); init downloads absurd.sql for any --ref that is not bundled (absurdctl:585-606) and migrate falls back to remote discovery when local migrations are incomplete (absurdctl:1716-1730); the SQL is then executed against the database (absurdctl:1813-1817).",
+   "impact": "Integrity: DDL and stored procedures installed into the user's database come from a mutable branch or tag over HTTPS with no checksum or signature, and an implicit fallback can trigger the fetch.",
+   "fix": "Ship a signed manifest of SHA-256 digests for released SQL files, verify before applying, refuse non-release refs unless --allow-unverified is given, and print the digest applied.",
+   "severity": "medium",
+   "evidence": ["absurdctl:517-519", "absurdctl:585-606", "absurdctl:1716-1730", "absurdctl:1813-1817"]
+  },
+  {
+   "lens": "G8",
+   "title": "Habitat tests never run in CI and declared runtimes are untested",
+   "case": "Makefile:39 defines test as test-core, test-typescript, test-python and test-go; habitat has no test target and test.yml:52-53 runs only make test, so 13 habitat Go tests never run. pyproject.toml:13-21 claims Python 3.9-3.14 and package.json claims node >=18, but CI uses 3.12 (test.yml:18) and 24 (test.yml:26); every suite uses postgres:16-alpine (tests/conftest.py:155), leaving the Postgres 18 uuidv7 branch (sql/absurd.sql:2305-2307) unexecuted.",
+   "impact": "Regressions in the network-facing dashboard (including the retry endpoint) and on declared Python, Node and Postgres versions ship unnoticed.",
+   "fix": "Add 'cd habitat && go test ./...' to make test, and a CI matrix over Python 3.9 and 3.14, Node 18 and 24, and Postgres 14-18.",
+   "severity": "medium",
+   "evidence": ["Makefile:39", ".github/workflows/test.yml:18", ".github/workflows/test.yml:26", ".github/workflows/test.yml:52-53", "tests/conftest.py:155", "sql/absurd.sql:2305-2307"]
+  },
+  {
+   "lens": "G3",
+   "title": "Every run reloads all checkpoints of its task; payloads have no size limits",
+   "case": "TaskContext.create loads every committed checkpoint of the task into a Map at each run start (sdks/typescript/src/index.ts:302-319; Python __init__.py:632; Go context.go:67) through get_task_checkpoint_states (sql/absurd.sql:1647-1699). params, checkpoint state and event payload columns are unbounded jsonb (sql/absurd.sql:226, 271, 284). docs/patterns/pi-ai-agent.md:39-49 recommends one checkpoint per agent message.",
+   "impact": "Long agent or batch tasks with thousands of checkpoints re-read and hold their whole history on every attempt, so memory and resume latency grow linearly with no documented ceiling.",
+   "fix": "Document payload and checkpoint-count limits, load checkpoints lazily by name (get_task_checkpoint_state already exists) or in pages, and add a test at 10x the expected history size.",
+   "severity": "low",
+   "evidence": ["sdks/typescript/src/index.ts:302-319", "sdks/python/src/absurd_sdk/__init__.py:632", "sdks/go/absurd/context.go:67", "sql/absurd.sql:1647-1699", "docs/patterns/pi-ai-agent.md:39-49"]
+  },
+  {
+   "lens": "G11",
+   "title": "Agents must parse text output and cannot match errors by code",
+   "case": "absurdctl has no JSON output mode (probe agent.json_output); dump-task prints formatted text and full JSON blobs without a size bound (absurdctl:2401-2440); 16 of the 80 SQL raise sites carry an SQLSTATE code (rg counts in sql/absurd.sql) and none of the codes are documented in docs, README, CONTRIBUTING or the skill.",
+   "impact": "The skill's agent users pay unbounded tokens per dump-task and must parse tables; errors cannot be handled by stable code.",
+   "fix": "Add --json and --max-bytes to list and dump commands, document an error-code table, and give the remaining raise sites stable codes.",
+   "severity": "low",
+   "evidence": ["absurdctl:2401-2440", "skills/absurd/SKILL.md:47-84", "rg -c 'raise exception' sql/absurd.sql: 80"]
+  },
+  {
+   "lens": "G1",
+   "title": "Unsourced size comparison and superlative in the docs",
+   "case": "docs/comparison.md:83-84 states 'Temporal's Python SDK is 170.000 lines of code, Absurd's is under 2000' and docs/comparison.md:135-137 gives DBOS 40.000 lines, without method or source; README.md:8 calls Absurd 'the simplest durable execution workflow system'. Measurement: sdks/python/src/absurd_sdk/__init__.py has 2317 physical lines (wc -l) and 1801 non-blank, non-comment, non-docstring lines (tokenizer count), so the claim holds only under an unstated rule.",
+   "impact": "Readers and agents selecting tools from prose cannot verify the comparison.",
+   "fix": "State the counting tool, rule, commits and date for each number, or remove the numbers.",
+   "severity": "low",
+   "evidence": ["docs/comparison.md:83-84", "docs/comparison.md:135-137", "README.md:8"]
+  },
+  {
+   "lens": "G12",
+   "title": "Habitat task rows are mouse-only",
+   "case": "habitat/ui/src/views/Tasks.tsx:792-794 expands a task through an onClick on a table row with no tabindex, role or key handler; habitat/ui/src has 10 aria or role attributes in total and no accessibility tooling (probe ui.a11y).",
+   "impact": "Keyboard and screen-reader users cannot open task details (WCAG 2.2 SC 2.1.1).",
+   "fix": "Render a disclosure button per row with aria-expanded (for example Kobalte Collapsible) and add an automated accessibility check to the UI build.",
+   "severity": "low",
+   "evidence": ["habitat/ui/src/views/Tasks.tsx:792-794"]
+  }
+ ],
+ "opportunities": [
+  {
+   "lens": "O2",
+   "criterion": "OPP-2",
+   "title": "One supported durable-agent path for pi instead of a stale pattern and a parallel engine",
+   "description": "The same organization ships two durable-agent approaches: docs/patterns/pi-ai-agent.md shows pi agent turns as Absurd steps, while pi's packages/durable re-implements tasks, checkpoints, sleeps, retries and a crash-loop guard on SQLite/JSONL. The Absurd pattern imports @mariozechner/pi-agent-core and @mariozechner/pi-ai, whereas the current packages are @earendil-works/pi-agent-core and @earendil-works/pi-ai. A maintained adapter (pi-durable Storage or lease on Absurd, or Absurd steps driving pi-durable phases) would give one tested path.",
+   "value": 4,
+   "reach": 3,
+   "confidence": "observed",
+   "horizon_fit": 1.2,
+   "effort": 3,
+   "action": "consolidate",
+   "evidence": ["docs/patterns/pi-ai-agent.md:13-20", "/home/user/GitHub_Repos_Dump/earendil-works__pi/packages/agent/package.json:2", "/home/user/GitHub_Repos_Dump/earendil-works__pi/packages/durable/README.md:5", "/home/user/GitHub_Repos_Dump/earendil-works__pi/packages/durable/README.md:783"]
+  },
+  {
+   "lens": "O3",
+   "criterion": "OPP-3",
+   "title": "Content-addressed step keys as an SDK helper",
+   "description": "The RE4exa prototype keyed Absurd steps by sha256 of canonical arguments and stored REA's content-addressed evidence ids; after a SIGKILL it resumed with 0 repeated completed calls and the same 6 evidence ids as an uncrashed control. A ctx.step variant that derives the checkpoint name from a canonical-JSON digest would make replays of deterministic tool calls idempotent by construction for evidence tools such as rea and caveman.",
+   "value": 3,
+   "reach": 3,
+   "confidence": "observed",
+   "horizon_fit": 1.2,
+   "effort": 2,
+   "action": "harden",
+   "evidence": ["/home/user/RE4exa/research/rea-self-analysis/results/prototype-crash-test.json", "/home/user/RE4exa/prototypes/rea-durable-evidence/README.md", "sdks/typescript/src/index.ts:429-434"]
+  },
+  {
+   "lens": "O10",
+   "criterion": "OPP-6",
+   "title": "Agent-first absurdctl: JSON output and a read-only mode",
+   "description": "Absurd already ships a skill that steers agents to absurdctl, but the CLI prints tables and unbounded JSON blobs. A --json mode with size limits and an enforced read-only mode would let agents inspect state cheaply and safely without prose parsing.",
+   "value": 3,
+   "reach": 3,
+   "confidence": "observed",
+   "horizon_fit": 1.3,
+   "effort": 2,
+   "action": "re-cut-interface",
+   "evidence": ["skills/absurd/SKILL.md:47-84", "absurdctl:2401-2440", "probe agent.json_output: none"]
+  },
+  {
+   "lens": "O12",
+   "criterion": "OPP-6",
+   "title": "Turn the skill's 'Safe operating rules' into enforced policy",
+   "description": "The skill lists state-changing commands agents must not run blindly (init, migrate, drop-queue, cleanup, cancel, retry, emit, spawn) only as prose. An ABSURDCTL_READONLY setting or per-command allowlist checked by absurdctl, plus a matching read-only database role in the docs, would make the rule machine-checkable.",
+   "value": 3,
+   "reach": 3,
+   "confidence": "observed",
+   "horizon_fit": 1.3,
+   "effort": 2,
+   "action": "harden",
+   "evidence": ["skills/absurd/SKILL.md:198-212", "absurdctl:2975-3027"]
+  },
+  {
+   "lens": "O13",
+   "criterion": "OPP-7",
+   "title": "CRA-ready releases: SECURITY.md, SBOM and attested binaries",
+   "description": "Absurd is distributed through npm, PyPI, GitHub Releases and Go modules with no security policy, SBOM or binary attestations. Adding them to build.yml before the EU CRA's reporting (Sep 2026) and main obligations (Dec 2027) turns a compliance gap into a selling point for an infrastructure library.",
+   "value": 3,
+   "reach": 4,
+   "confidence": "observed",
+   "horizon_fit": 1.5,
+   "effort": 2,
+   "action": "harden",
+   "evidence": [".github/workflows/build.yml:126-189", "probe ci.sbom: none", "probe meta.security_policy: not found"]
+  },
+  {
+   "lens": "O11",
+   "criterion": "OPP-1",
+   "title": "A shared kill-and-resume conformance harness for durable engines",
+   "description": "Absurd's CI simulates crashes with a fake clock; pi-durable exports storage and environment conformance kits; the RE4exa prototype has a real SIGKILL test. One extracted harness (kill at step k, resume, assert no completed step reruns and identical ids) run against absurd's three SDKs and pi-durable would publish a comparable durability number for each.",
+   "value": 3,
+   "reach": 3,
+   "confidence": "derived",
+   "horizon_fit": 1.2,
+   "effort": 3,
+   "action": "extract",
+   "evidence": ["tests/test_state_transitions.py:41", "/home/user/RE4exa/prototypes/rea-durable-evidence/test/crash-test.sh", "/home/user/GitHub_Repos_Dump/earendil-works__pi/packages/durable/README.md:794-808"]
+  }
+ ],
+ "reengineering": [
+  {
+   "action": "harden",
+   "component": "habitat (defaults, write endpoint, request limits, CI tests)",
+   "gain": "Removes unauthenticated read and write exposure in the default configuration and puts the dashboard under test.",
+   "measure": "A test asserts the default bind is 127.0.0.1 and that POST /api/tasks/retry returns 403 without opt-in; habitat's 13 Go tests run in make test on every PR."
+  },
+  {
+   "action": "harden",
+   "component": "absurdctl migrate and sql/migrations",
+   "gain": "Atomic schema upgrades whose recorded version cannot run ahead of the applied DDL.",
+   "measure": "CI applies every migration chain from 0.0.3 to main and diffs the schema dump against a fresh absurd.sql (empty diff required); a fault-injected migration leaves get_schema_version() unchanged."
+  },
+  {
+   "action": "harden",
+   "component": "release pipeline (.github/workflows/build.yml, scripts/release.sh)",
+   "gain": "Verifiable, test-gated releases for all channels.",
+   "measure": "OpenSSF Scorecard Pinned-Dependencies and Token-Permissions checks pass; 'gh attestation verify' succeeds for each release asset; release jobs list a test job in needs."
+  },
+  {
+   "action": "re-cut-interface",
+   "component": "absurdctl output and SQL error codes",
+   "gain": "Agents read state through bounded JSON and handle errors by stable code.",
+   "measure": "Bytes printed by dump-task for a 100-checkpoint task before and after --json --max-bytes; share of raise sites with documented SQLSTATE codes (16 of 80 today)."
+  }
+ ],
+ "questions": [
+  {
+   "question": "Does Absurd keep completed work across a worker crash without repeating completed steps?",
+   "answer": "Yes for completed steps: checkpoints are committed per step, leases expire and a new run reuses them; steps in flight at the crash run again (at-least-once). Verified by code reading, CI tests on a fake clock, and an external SIGKILL trial with 0 repeated completed calls.",
+   "evidence": ["sql/absurd.sql:915-1078", "tests/test_state_transitions.py:41", "/home/user/RE4exa/research/rea-self-analysis/results/prototype-crash-test.json"]
+  },
+  {
+   "question": "Is habitat safe to run with its defaults?",
+   "answer": "No: it binds all interfaces, has no authentication, offers an unauthenticated retry endpoint and defaults to sslmode=disable, while the docs describe a read-only localhost view.",
+   "evidence": ["habitat/internal/config/config.go:15", "habitat/internal/server/server.go:121", "docs/tools/habitat.md:87"]
+  },
+  {
+   "question": "Can Absurd and pi-durable be consolidated?",
+   "answer": "Partly. Both implement durable tasks, checkpoints, sleeps, retries and crash bounds. Absurd adds multi-worker leases on Postgres; pi-durable adds intent records, replay policies and a crash-loop guard but only single-process storage. A storage or lease adapter, not a merge, is the realistic path; Absurd's existing pi pattern doc is stale.",
+   "evidence": ["docs/patterns/pi-ai-agent.md:13-20", "/home/user/GitHub_Repos_Dump/earendil-works__pi/packages/durable/README.md:783"]
+  }
+ ],
+ "not_examined": [
+  "Runtime behaviour: nothing was built or run; the only runtime evidence is the RE4exa prototype's recorded crash trial.",
+  "Published artefacts on npm, PyPI and GitHub Releases (contents, attestations) were inferred from the workflows and package manifests, not downloaded.",
+  "Git history, contributor spread and branch protection (shallow clone with 1 commit).",
+  "The issue tracker and any private security process.",
+  "Habitat UI behaviour in a browser beyond static reading of Tasks.tsx; most other UI views.",
+  "Full reads of the Python SDK (2317 lines), Go SDK and absurdctl commands other than init, migrate, dump-task and the psql helpers.",
+  "Postgres versions other than 16 and pg_cron behaviour beyond the test files."
+ ],
+ "time_minutes": 95
+}

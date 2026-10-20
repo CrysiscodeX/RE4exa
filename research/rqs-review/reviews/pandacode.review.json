@@ -1,0 +1,669 @@
+{
+ "rqs_review": 1,
+ "target": {
+  "path": "/home/user/GitHub_Repos_Dump/aicodeking__pandacode",
+  "name": "pandacode",
+  "head": "cd6ae2fe0e6230264f0efe75a4759b5e0b04de70",
+  "shallow": true
+ },
+ "profile": "agent-harness",
+ "flags": {
+  "uses_llm": true,
+  "has_ui": true,
+  "executes_code": true,
+  "network_service": true,
+  "parses_untrusted": true,
+  "uses_crypto": true,
+  "heavy_compute": false,
+  "distributed": true
+ },
+ "scope_notes": "agent-harness: a Tauri desktop app that launches coding-agent CLIs (Claude Code, Codex, Kimi, OpenCode, Antigravity, Grok, GLM/MiMo) as host processes and serves them app tools over a per-turn loopback MCP server. Flags: uses_llm, has_ui and executes_code as probed; network_service set because the probe missed Rust listeners (per-turn MCP server providers/mcp_host.rs:82, bots web chat on 127.0.0.1:47321 bots/channels/http.rs:208); parses_untrusted (web pages, GitHub issues, VSIX archives, chat and webhook messages, VNC frames); uses_crypto (minisign update verification, HMAC/SigV4, VNC DES); distributed (GitHub Releases with auto-update); heavy_compute off because inference runs in the vendors' services and local VMs are user workloads. Red-line decisions: the automatic SEC-6 suspicion (4 pattern hits) is rejected because all four sit in #[cfg(test)] modules or a test file with placeholder values; SEC-7 (3), EPI-5 (2), PRV-1 (3) and PRV-3 (2) are scored above their red-line levels. Static review of commit cd6ae2f (shallow clone, one squashed commit); nothing was built or run.",
+ "reviewer": {
+  "id": "reviewer-pandacode",
+  "kind": "agent",
+  "conflicts": "none"
+ },
+ "date": "2026-10-20",
+ "scores": {
+  "PUR-1": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["README.md:3-16", "README.md:129-155", "README.md:208-211", "docs/approvals.md:5-7", "docs/platform-support.md:5-7"],
+   "note": "Problem, users and the start path are clear. Limits are scattered: the README does not say new tasks start in Full access (only docs/approvals.md:5-7 does) or that Windows and Linux builds are previews (docs/platform-support.md:5-7). No non-goals section.",
+   "source": "review"
+  },
+  "PUR-2": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["docs/validation.md:3-4", "docs/validation.md:61-81", "docs/validation.md:615-621", "tests/bundle.test.mjs:6-11", "scripts/measure.mjs:1-30", "releases/0.3.8.md:13-16"],
+   "note": "Measurements carry dates, methods and explicit non-claims (no T3 Code comparison claimed, docs/validation.md:80-81), and the startup bundle budget is a CI test. Most numbers are one-off local runs on macOS with no rerunnable harness, sample size or uncertainty. Release-note speedups (releases/0.3.8.md:13-16) have no harness.",
+   "source": "review"
+  },
+  "PUR-3": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": ["probe deps.counts: 47 unique dependencies, 13 npm runtime", "src-tauri/src/agent_tools.rs:326-356", "src-tauri/src/vm/tools.rs:27-40", "src-tauri/src/simulator/tools.rs:29-41", "src-tauri/src/bots/tools.rs:18-24", "AGENTS.md:38", "rg -l '\"antigravity\"' src-tauri/src | wc -l -> 22", "package.json:44 (three, used by src/simulator-3d.ts, simulator-hardware.ts, simulator-studio.ts)"],
+   "note": "The dependency set is lean (no React or Electron, docs/design.md:7) and features have their own docs. The surface is broad (bots on five channels, six VM and cloud providers, simulators, wallpapers, moodboards) with no measured use, adding a harness touches at least ten files (AGENTS.md:38), and three.js is used only for simulator device frames.",
+   "source": "review"
+  },
+  "COR-1": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [".github/workflows/ci.yml:26-33", ".github/workflows/ci.yml:54-58", "playwright.config.ts:5", "playwright.config.ts:18", "releases/0.3.8.md:20", "rg counts: 871 #[test] + 104 #[tokio::test]; 619 test() calls in 54 Playwright spec files; 20 Node test files"],
+   "note": "Rust lib tests and Node tests gate every PR on Linux. The 619-test Playwright UI suite is not run in CI (its config defaults to a macOS Chrome path), and 0.3.8 shipped with 8 known failing browser tests. cargo test --lib skips src-tauri/tests/gui_path.rs. No tests run on macOS or Windows in CI. The test/source ratio is not reported.",
+   "source": "review"
+  },
+  "COR-2": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["src-tauri/src/vm/vnc_auth.rs:21-29", "src-tauri/src/providers/acp.rs:1086", "docs/approvals.md:54-57", "docs/approvals.md:63-65", "AGENTS.md:16", "rg -c '#\\[ignore' src-tauri -> 30 opt-in live tests"],
+   "note": "Independent oracles exist for some parts: the VNC DES response is checked against an openssl computation, Grok ACP shapes are recorded from CLI 1.0.30/1.0.40 with a date, Codex mappings were checked against the installed app-server schema, and 23 recorded VS Code themes back the contrast test. Most protocol fixtures are hand-written without provenance, and the 30 live CLI tests are opt-in and never run in CI.",
+   "source": "review"
+  },
+  "COR-3": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": ["rg -i 'proptest|quickcheck|cargo-fuzz|libfuzzer|fast-check|hypothesis|stryker|mutant' (excluding lockfiles) -> no hits", "probes test.mutation, test.property, test.fuzz: found=false", "src-tauri/src/providers/mcp_host.rs:909"],
+   "note": "No mutation, property or fuzz testing. Malformed-input unit tests exist for the hand-written MCP HTTP parser (mcp_host.rs:909) but do not measure test strength.",
+   "source": "review"
+  },
+  "COR-4": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": ["docs/validation.md:27-47", "docs/agent-usage.md:21", "docs/agent-usage.md:68", "docs/bots.md:87", ".github/workflows/release.yml:88-91", "AGENTS.md:16"],
+   "note": "Documented trials use realistic inputs: real Claude and Codex turns with resume, 1,200 local Codex rollouts and a 7.9 GB log scan for the cost ledger, a live bot run, and 23 real VS Code themes. The packaged artefact is launched in CI on Windows and Linux (liveness only). Not run on every release with findings tracked.",
+   "source": "review"
+  },
+  "COR-5": {
+   "level": 2,
+   "confidence": "inferred",
+   "evidence": ["docs/agent-usage.md:20-22", "src-tauri/src/providers/claude_stream_tests.rs:40-55", "docs/design.md:30-32", "src-tauri/src/providers/mcp_host.rs:89-92"],
+   "note": "The app's own derived outputs are deterministic by construction (reply de-duplication by message and request ID, exact-text reconciliation tests, no invented completion times). Identifiers are random UUIDs, and the nondeterminism of model output is not documented as such. No double-run comparison.",
+   "source": "review"
+  },
+  "REL-1": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": ["src-tauri/src/storage.rs:406-431", "src-tauri/src/architect/tests.rs:663", "src-tauri/src/architect/tests.rs:1103", "src-tauri/src/context_recovery/tests.rs:214", "docs/parity-plan.md:16-18", "docs/parity-plan.md:34"],
+   "note": "State lives in SQLite. On restart, unfinished tools are settled with an explicit interruption note, runs are marked interrupted, goals are paused and teams wait for an explicit resume, so side effects are not repeated. Restart tests (store reopen) run in CI. These are not process-kill tests, durability is per task rather than per step, and reconciling stale runs is still 'Next' (parity-plan.md:34).",
+   "source": "review"
+  },
+  "REL-2": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": ["README.md:233-245", "docs/turn-changes.md:47-57", "src-tauri/src/providers/mcp_host.rs:11-14", "src-tauri/src/providers.rs:60-61", "src-tauri/src/providers/concurrent_process_tests.rs:183-203", "src-tauri/src/vsix_themes.rs:14-17", "docs/agent-tools.md:59-62"],
+   "note": "Limits on frames, tool input and output, MCP headers, bodies and results, transcript pages (100 messages, 2 MiB), diffs and captures are explicit and documented. A CI test runs four concurrent 3 MiB frames and asserts the outputs stay capped. Not 5: limits are fixed constants rather than settings, and resource use is not reported per operation.",
+   "source": "review"
+  },
+  "REL-3": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": ["src-tauri/src/storage.rs:410-414", "docs/turn-changes.md:7-9", "docs/turn-changes.md:56", "docs/agent-usage.md:3", "docs/agent-usage.md:54", "docs/approvals.md:42-44", "src-tauri/src/bots/channels/mod.rs:392-420"],
+   "note": "Partial results are labelled: interrupted tools, partial captures, omitted activity, and unavailable values shown as unavailable. Failed policy changes stop the turn. Bot channels reconnect with capped exponential backoff and stop on auth errors. Not 5: the safety-relevant default (Full access) fails open.",
+   "source": "review"
+  },
+  "REL-4": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": ["src-tauri/src/workspace.rs:217-270", "src-tauri/src/providers/windows_job.rs:1-40", "src-tauri/src/lib.rs:3165-3215", "src-tauri/src/providers/concurrent_process_tests.rs:206", "src-tauri/src/integrations.rs:892"],
+   "note": "Child processes run in their own process groups (Windows job objects with kill-on-close), are reaped on timeout and error, and are stopped on quit after a 12 s grace period. Tests assert that only the owning process group is reaped. There is no handler for a raw SIGTERM to the app, and no orphan sweep after a hard crash.",
+   "source": "review"
+  },
+  "PERF-1": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["tests/bundle.test.mjs:6-11", "docs/validation.md:615-621", "tests/concurrency.spec.ts:137-161", "src-tauri/src/providers/concurrent_process_tests.rs:202"],
+   "note": "The startup bundle budget (under 80 KiB gzip) is gated in CI. p95 frame times and large-frame latency were measured with fixtures and dated. The p95 < 250 ms assertion lives in the Playwright suite, which CI does not run, and the Rust timing is printed, not asserted. There is no latency budget for turn start.",
+   "source": "review"
+  },
+  "PERF-2": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": ["AGENTS.md:37", "src/token-saver.ts:93-108", "src-tauri/src/architect.rs:875-876", "src-tauri/src/architect/coordination.rs:58", "src-tauri/src/providers/mcp_host.rs:14", "measurement: sed -n 325,357p src-tauri/src/agent_tools.rs | wc -c -> 6,207 bytes for the 31 core tool definitions; sed -n 23,46p src-tauri/src/vm/tools.rs | wc -c -> 4,257 bytes"],
+   "note": "Attention is spent deliberately: instructions are cached as a system prompt for Claude-family harnesses, reminders go out every 8th turn, worker results are compact, mailboxes are paged and results are capped. The project does not measure catalog bytes or tokens per turn. My static count is about 10.5 KB of source for the core and VM catalogs, before optional Jev, simulator, bot and team tools.",
+   "source": "review"
+  },
+  "SEC-1": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": ["SECURITY.md:3-6", "SECURITY.md:10-22", "SECURITY.md:24-33", "docs/bots.md:44-53", "docs/agent-tools.md:24-31"],
+   "note": "Private reporting through GitHub advisories, response expectations, supported versions and an in/out-of-scope list are present, and bots and app tools have written safety models. The out-of-scope clause for actions 'after you grant it Full access' (SECURITY.md:32) does not match the default, which grants it (storage.rs:23). No consolidated threat model. Published advisories were not checked (no web access).",
+   "source": "review"
+  },
+  "SEC-2": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["package-lock.json", "src-tauri/Cargo.lock", "website/package-lock.json", ".github/workflows/ci.yml:26-27", ".github/workflows/ci.yml:56", "probes deps.update_bot files=[], ci.security_scans tools=[]"],
+   "note": "Lockfiles are committed and enforced (npm ci, cargo --locked). There is no Dependabot or Renovate, no cargo-audit, npm audit or other vulnerability scan, and npm ci runs dependency lifecycle scripts in CI and release jobs.",
+   "source": "review"
+  },
+  "SEC-3": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [".github/workflows/release.yml:42-100", ".github/workflows/release.yml:129-142", "docs/releasing.md:134-159", "README.md:140", "probe ci.provenance: steps=0, id_token_write=0"],
+   "note": "Releases are built on GitHub-hosted runners, and update files are minisign-signed. Installers are unsigned by default (macOS ad-hoc, Windows and Linux unsigned), and there is no provenance attestation (SLSA, Sigstore). The .sha256 files come from the same release, so they detect corruption, not tampering.",
+   "source": "review"
+  },
+  "SEC-4": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": ["probe ci.sbom: sbom_steps=0, vex_steps=0", "probe meta.notices: files=[]", "src/vendor/enriched-markdown/README.md:1-20"],
+   "note": "No SBOM or VEX, and no third-party notices file for the 47 dependencies compiled or bundled into releases. The one vendored component documents its source, integrity hash, change and license.",
+   "source": "review"
+  },
+  "SEC-5": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [".github/workflows/ci.yml:7-8", ".github/workflows/release.yml:15-16", ".github/workflows/release.yml:107-108", ".github/workflows/release.yml:57", "probe ci.pinned_actions: 13 of 13 SHA-pinned; ci.pull_request_target: none"],
+   "note": "All 13 action references are pinned by full SHA, top-level permissions are contents: read with write only in the publish job, and there is no pull_request_target. Not 4: no Scorecard or workflow-lint gate, and the build job sets APPLE_CERTIFICATE at job level, so it is in the environment of npm ci and the test steps.",
+   "source": "review"
+  },
+  "SEC-6": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["src-tauri/src/agent_usage_providers.rs:918", "src-tauri/src/cloud/deploy.rs:229", "src-tauri/src/bots/tests.rs:425-431", "src-tauri/src/cloud/deploy.rs:58-120", "src-tauri/src/providers/diagnostics.rs:3-37", "src-tauri/src/providers.rs:2818", "docs/jev.md:85-89", "docs/providers.md:416"],
+   "note": "Red line not confirmed: the four automatic secret hits are placeholder values inside #[cfg(test)] modules or an ignored test. Provider and channel keys live in the OS keychain, deploy credentials only in the child's environment with tested output scrubbing, and provider failure text drops credential lines. Gaps: no secret scanner in CI, the per-turn MCP bearer token is passed in argv (providers.rs:2818, providers/warm.rs:92), and Jev keys sit in a plaintext settings file (documented).",
+   "source": "review"
+  },
+  "SEC-7": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": ["src-tauri/src/workspace.rs:217-230", "AGENTS.md:36", "src-tauri/src/cloud/deploy.rs:125", "src-tauri/src/cloud/deploy.rs:163", "src-tauri/tauri.conf.json:32", "AGENTS.md:41", "probe risk.patterns: shell_true 0, os_system 0, sh_c 0; the 17 dyn_eval sites are exec methods that run commands inside VMs and cloud sandboxes (e.g. src-tauri/src/cloud/daytona.rs:133)"],
+   "note": "Red line not confirmed: host-side processes start with argv through one bounded runner, and deploy CLI arguments are split with shell_words and passed as argv. Shell strings appear only in commands sent into isolated VMs and sandboxes, which is their purpose. Markdown is sanitized by DOMPurify under a CSP without unsafe-eval, and spot checks of innerHTML templates show escape() on GitHub data. No static-analysis gate for these classes.",
+   "source": "review"
+  },
+  "SEC-8": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": ["src-tauri/src/vsix_themes.rs:14-17", "src-tauri/src/vsix_themes.rs:146-160", "src-tauri/src/providers/mcp_host.rs:263-353", "src-tauri/src/bots/channels/http.rs:14-16", "src/vendor/enriched-markdown/README.md:3-9", "docs/bots.md:85"],
+   "note": "Untrusted inputs (VSIX archives, chat and webhook requests, MCP requests, Markdown, VNC frames) are parsed in Rust or WebAssembly with size, depth and count limits, and malformed-input tests exist for the HTTP and channel parsers. No fuzzing.",
+   "source": "review"
+  },
+  "SEC-9": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": ["src-tauri/Cargo.toml:31-39", "src-tauri/tauri.conf.json:67-72", "src-tauri/src/vm/vnc_auth.rs:1-19", "src-tauri/src/cloud/agentcore.rs:5-7", "probe crypto.pqc: found=false"],
+   "note": "Cryptography goes through libraries (rustls with ring, hmac and sha2, Tauri's minisign updater). DES is used for VNC authentication to local VMs because the RFB protocol requires it. There is no algorithm inventory and no post-quantum plan for the Ed25519 update-signing key.",
+   "source": "review"
+  },
+  "AGT-1": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["src-tauri/src/agent_tools.rs:328", "src-tauri/src/agent_tools.rs:352", "src-tauri/src/architect/coordination.rs:57", "src-tauri/src/vm/tools.rs:28", "src/github.ts:48", "src/github.ts:154", "src/github.ts:217", "AGENTS.md:32", "rg -i 'injection' src src-tauri/src tests docs -> no hits"],
+   "note": "Untrusted content is labelled in tool descriptions and coordination prompts (task history, pages, screenshots, worker reports) and rendered through sanitizers. Imported GitHub issue bodies become task descriptions without a label and run in the default Full access mode. There is no injection test corpus.",
+   "source": "review"
+  },
+  "AGT-2": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": ["src-tauri/src/storage.rs:21-23", "src/main.ts:1505", "src/main.ts:2745", "src/github.ts:217", "src-tauri/src/overlay.rs:50-52", "src-tauri/src/lib.rs:2147", "src-tauri/src/providers.rs:2618-2630", "src-tauri/src/providers.rs:1236-1241", "src-tauri/src/providers/mcp_host.rs:491", "src-tauri/src/cloud/deploy.rs:25", "src-tauri/src/providers/mcp_host.rs:400-403"],
+   "note": "New, board, issue-import, launcher, worktree and team-profile tasks default to Full access. That launches Claude with bypassPermissions, Codex with danger-full-access and no approvals, and skips app-tool approvals except pandacode_cloud_cli. A scoped Ask mode exists and bots default to it (src/bots.ts:143). MCP tools/list carries no readOnly or destructive annotations.",
+   "source": "review"
+  },
+  "AGT-3": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["docs/turn-changes.md:16-45", "docs/design.md:27-32", "docs/bots.md:51-53", "docs/agent-tools.md:24-27", "src-tauri/src/storage.rs:23"],
+   "note": "Per-turn tool activity is readable, diffs are immutable and attributed, and there is a Stop control, a /stop command and a bot audit table. Under the default Full access, consequential actions need no approval, and there is no built-in revert of a turn's changes (the diff viewer is read-only; rollback is left to Git).",
+   "source": "review"
+  },
+  "AGT-4": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": ["probes test.bench: files=0; claims.harness: harness_files=0", "src-tauri/src/lib.rs:433", "src/token-saver.ts:16-21", "README.md:258-259"],
+   "note": "There is no evaluation set for model-dependent behaviour (app instructions, architect prompts, token-saver packs). The 30 live tests check protocol behaviour, are opt-in, and are not run when prompts or harness versions change.",
+   "source": "review"
+  },
+  "AGT-5": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": ["README.md:3-7", "README.md:110-118", "website/src/pages/privacy.astro:62-70", "docs/jev.md:60-75", "docs/agent-usage.md:15-27"],
+   "note": "Harnesses, model selection, and which data goes to which provider (agents, GitHub, bots, sandboxes, deploys, Jev/TypeSafe, OpenRouter) are documented. The app does not mark agent-authored files or commits, and there is no AI-BOM.",
+   "source": "review"
+  },
+  "AGT-6": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["docs/agent-usage.md:5-27", "docs/ipc.md:303-311", "docs/architect-workers.md:60-62", "src-tauri/src/vm/tools.rs:40", "src-tauri/src/vm/tools.rs:111", "src-tauri/src/providers/mcp_host.rs:491", "docs/agent-tools.md:59-60"],
+   "note": "Cost and limit visibility is strong (API-cost estimates, account limits, the unpriced share stated). Per-task caps exist only as Codex goal token budgets and team round and assignment limits. Teams default to unlimited parallel workers, and billed cloud machines can be created without a prompt in Full access; only the tool text asks the model to confirm.",
+   "source": "review"
+  },
+  "INT-1": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["src-tauri/src/main.rs:1-9", "src-tauri/src/providers/mcp_host.rs:392-398", "docs/ipc.md:1-3", "docs/providers.md:195-196", "src-tauri/src/providers/mcp_host.rs:102"],
+   "note": "Agents launched by PandaCode get a versioned MCP endpoint (2025-03-26 and 2025-06-18 negotiated), and PandaCode speaks ACP v1, Codex app-server JSON-RPC and Claude stream-json to harnesses. There is no CLI, API or MCP endpoint for outside agents or scripts, and the IPC contract is internal to the webview.",
+   "source": "review"
+  },
+  "INT-2": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["src-tauri/src/agent_tools.rs:25-28", "src-tauri/src/agent_tools.rs:391", "src-tauri/src/providers/mcp_host.rs:400-403", "src/types.ts", "probe agent.describe: found=false"],
+   "note": "Tool schemas are JSON Schema with additionalProperties false, and arguments are validated before dispatch. There is no describe command, no published or versioned contract, and no drift check.",
+   "source": "review"
+  },
+  "INT-3": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": ["src-tauri/src/agent_tools.rs:326-356", "src-tauri/src/agent_tools.rs:64-81", "src-tauri/src/vm/tools.rs:27-40", "src-tauri/src/simulator/tools.rs:29-41", "src-tauri/src/bots/tools.rs:18-24", "src-tauri/src/architect.rs:874-879", "src-tauri/src/architect/coordination.rs:56-61"],
+   "note": "Up to about 67 tools depending on context: 31 core, 2 preview, 11 opt-in Jev, 5 VM, 5 simulator, 1 deploy, 7 bot and about 10 team tools. Catalogs are assembled per context, but their size is not measured, and several single-purpose task mutations (rename, pin, archive, set stage, open) could share one parameterised tool.",
+   "source": "review"
+  },
+  "INT-4": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["docs/ipc.md:3", "src-tauri/src/providers/mcp_host.rs:407-418", "src-tauri/src/providers/mcp_host.rs:478", "src/github-hub-prompts.ts:65", "src-tauri/src/providers/diagnostics.rs:3-37"],
+   "note": "Errors are actionable prose ('retry this call alone', install hints), with JSON-RPC codes at the protocol layer. IPC errors are plain strings and tool errors are free text in isError results, with no stable codes or retryable flag.",
+   "source": "review"
+  },
+  "INT-5": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["src-tauri/src/architect.rs:874", "src-tauri/src/architect.rs:877", "src-tauri/src/architect.rs:1401", "src-tauri/src/architect/coordination.rs:57-61", "src-tauri/src/architect/tests.rs:350", "src-tauri/src/architect/tests.rs:1459", "src-tauri/src/agent_tools.rs:333-341"],
+   "note": "Team writes (dispatch, follow-up, team messages, checkpoints) carry idempotency keys that reject conflicting arguments, mailboxes are cursor-paged, and IDs are stable UUIDs or provider:native-id. The core write tools (create_task, send_message, queue_message, steer_task) have no keys, so a retried call can duplicate its effect.",
+   "source": "review"
+  },
+  "INT-6": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": ["README.md:157-176", ".github/workflows/ci.yml:26-30", "AGENTS.md:16-21", "AGENTS.md:33", "tests/palette.test.mjs", "rg -c getByRole tests/*.spec.ts -> 2,043 role-based queries", "probe ui.i18n: found=false"],
+   "note": "The build-from-source steps are what CI runs. The UI uses roles, accessible names, focus handling and reduced-motion, reduced-transparency and contrast fallbacks; contrast is checked in CI (palette test), and 2,043 role-based Playwright queries exist (not run in CI). English only, no i18n, no WCAG conformance statement.",
+   "source": "review"
+  },
+  "INT-7": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": ["README.md:274-279", "docs/ipc.md:330-331", "src-tauri/src/conversation_import.rs", "docs/parity-plan.md:67"],
+   "note": "Data lives in a documented SQLite file, each task exports to Markdown (8 MiB cap), and native CLI sessions can be imported. There is no bulk export of all data in a documented schema and no trace export.",
+   "source": "review"
+  },
+  "EPI-1": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": ["docs/turn-changes.md:16-45", "docs/ipc.md:225-230", "src-tauri/src/turn_changes.rs", "docs/agent-usage.md:20"],
+   "note": "Turn changes are attributed with source IDs and frozen snapshots, tool activity is stored as versioned JSON, and tasks record harness, model, mode and resume ID. Turn records do not capture the harness CLI version, input digests or the exact instructions sent, so a turn cannot be reproduced from its record.",
+   "source": "review"
+  },
+  "EPI-2": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": ["docs/jev.md:60-64", "src-tauri/src/agent_tools.rs:77-81", "src/token-saver.ts:16-21", "docs/agent-usage.md:27"],
+   "note": "Optional Jev advice carries probabilities with a stated meaning and can return no recommendation; cost estimates are labelled and state the unpriced share. Elsewhere, agent output and the token-saver meter are shown without uncertainty, and PandaCode measures no calibration.",
+   "source": "review"
+  },
+  "EPI-3": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": ["docs/turn-changes.md:7-8", "docs/agent-usage.md:3", "docs/agent-tools.md:47-48", "src-tauri/src/agent_tools.rs:342", "src-tauri/src/agent_tools.rs:79", "docs/parity-plan.md:30"],
+   "note": "Absence is labelled consistently: empty captures do not claim 'no changes', missing limits stay unavailable, the integration inventory says it is not exhaustive, interrupt reports a request rather than a stop, and unknown reset times stay unknown. Coverage is not machine-readable.",
+   "source": "review"
+  },
+  "EPI-4": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": ["docs/design.md:34-38", "docs/turn-changes.md:56", "docs/ipc.md:328-329", "docs/platform-support.md:101-112", "docs/validation.md:3-4", "docs/agent-usage.md:27"],
+   "note": "Reports separate what was examined from what was skipped: omitted live activity is identified, partial captures are labelled, imports indicate truncation, validation records 'Not run' items and untested platforms, and the cost headline states the unpriced share.",
+   "source": "review"
+  },
+  "EPI-5": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["docs/design.md:7", "docs/design.md:48", "docs/ipc.md:8", "docs/ipc.md:28", "docs/agent-tools.md:26-27", "src-tauri/src/storage.rs:23", "src/token-saver-panel.ts:31", "src/token-saver.ts:111-115", "README.md:125", "src-tauri/src/agent_updates.rs:278-306", "docs/validation.md:78-81"],
+   "note": "Red line not confirmed: measured numbers in validation.md carry dates, methods and explicit non-claims, and the README headline claims hold. Several docs claim tasks start in Ask or Standard and that no HTTP server listens, which the code contradicts. The UI shows 'about N% fewer tokens' computed from fixed constants, and the privacy table omits four version-check hosts.",
+   "source": "review"
+  },
+  "MNT-1": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["docs/design.md:5-7", "docs/ipc.md:1-3", "AGENTS.md:24", "AGENTS.md:38", "probe static.arch_guards: found=false", "rg -l '\"antigravity\"' src-tauri/src | wc -l -> 22"],
+   "note": "Architecture and the IPC contract are documented, frontend modules take callbacks instead of importing main.ts state, and tsc flags provider maps. There are no automated boundary checks, and harness identity is spread across string matches in many files.",
+   "source": "review"
+  },
+  "MNT-2": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": ["wc -l: src-tauri/src/providers.rs 4,295; src/main.ts 3,534; src-tauri/src/storage.rs 3,471; src-tauri/src/lib.rs 3,217", "probe size.duplicates: 1 group, 1,992 bytes (0.03% of text)", ".github/workflows/ci.yml:57-58", "CONTRIBUTING.md:111"],
+   "note": "Duplication is negligible, and clippy with -D warnings turns Rust dead-code warnings into CI failures (3 allow sites). Four files exceed 3,000 lines, against the 'keep files small' rule (CONTRIBUTING.md:111), and there is no dead-code or size check for TypeScript.",
+   "source": "review"
+  },
+  "MNT-3": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": ["tsconfig.json", ".github/workflows/ci.yml:30", ".github/workflows/ci.yml:57-58", "rg '@ts-ignore|@ts-expect-error|eslint-disable' src -> 0", "rg -c 'allow(clippy' src-tauri/src -> 1"],
+   "note": "Strict TypeScript and all-targets clippy with warnings denied run in CI with almost no suppressions. There is no formatter check (rustfmt or prettier) and no TypeScript linter.",
+   "source": "review"
+  },
+  "MNT-4": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": ["CONTRIBUTING.md:1-113", "AGENTS.md:1-42", "docs/design.md", "docs/ipc.md", "probe meta.docs: 33 pages, decision_records 0"],
+   "note": "CONTRIBUTING, a detailed AGENTS.md and 30 docs pages exist. There are no decision records, and several docs have drifted from the code: the default permission mode, the provider list (docs/ipc.md:255-256), and 'no listening HTTP server' (docs/design.md:7).",
+   "source": "review"
+  },
+  "MNT-5": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["probe static.debt_markers: count=0", "releases/0.3.8.md:18-20", "docs/parity-plan.md:26-55", "docs/bots.md:89-93", "docs/releasing.md:159"],
+   "note": "Known gaps are recorded in prose (failing browser tests, 'Next' items, 'Not yet built', Windows signing) but without owners or repayment triggers. There are no debt markers in code.",
+   "source": "review"
+  },
+  "EVO-1": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": ["docs/releasing.md:63-64", "releases/ (58 notes files)", ".github/workflows/release.yml:28-40"],
+   "note": "Plain numeric SemVer is stated and enforced (the tag must match the version, and notes must exist), and every release has notes. The app is pre-1.0 and migrates its schema automatically. No automated contract diff.",
+   "source": "review"
+  },
+  "EVO-2": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [".github/workflows/release.yml:70-71", ".github/workflows/release.yml:88-91", "docs/releasing.md:109-113", "releases/0.3.8.md:20", "website/src/data/release-dates.json (58 entries, 2026-09-17 to 2026-10-20)", "README.md:148-152"],
+   "note": "Release automation with notes and a version/tag check exists. Qualification in the release job is release-script tests plus a Windows/Linux liveness probe. There were 58 releases between 2026-09-17 and 2026-10-20 (10 on 2026-09-20), installed silently when idle. No release channels or staged rollout.",
+   "source": "review"
+  },
+  "EVO-3": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["docs/platform-support.md:3-16", "docs/validation.md:3-4", ".github/workflows/ci.yml:15", ".github/workflows/ci.yml:37", ".github/workflows/release.yml:47-50", "playwright.config.ts:18"],
+   "note": "A support matrix is stated honestly (Windows and Linux are previews). CI tests run only on Linux; macOS, the only validated platform, is built in the release job without running tests, and the browser suite is configured for a macOS Chrome path.",
+   "source": "review"
+  },
+  "EVO-4": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["SECURITY.md:3-6"],
+   "note": "Only the latest release receives security fixes. No support period or end-of-life policy is declared.",
+   "source": "review"
+  },
+  "OPS-1": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["src/settings.ts:126-128", "src/github-hub-prompts.ts:65", "docs/jev.md:77-83", "src-tauri/src/providers/diagnostics.rs:3-37", "docs/bots.md:59"],
+   "note": "Per-feature checks with fixes exist: installed-harness status, a gh install hint, Jev Check setup, channel credential tests, and cleaned provider startup errors. There is no single diagnostic report, and nothing is machine-readable.",
+   "source": "review"
+  },
+  "OPS-2": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": ["src-tauri/Cargo.toml (no log, tracing or env_logger dependency)", "rg 'eprintln!|println!' src-tauri/src -> ad hoc prints, e.g. 10 in lib.rs", "probe obs.otel: found=false", "docs/bots.md:53", "docs/ipc.md:330-331"],
+   "note": "No logging framework, levels or traces. The SQLite tool-activity and bot_activity records give an audit trail but not operational logs, and there is no trace export.",
+   "source": "review"
+  },
+  "OPS-3": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": ["src-tauri/src/storage.rs:17-23", "docs/architect-workers.md:60-62", "probe obs.env_vars: 37 read, 10 documented (undocumented include PANDACODE_DB_PATH, KIMI_BASE_URL, DISABLE_UPDATES)"],
+   "note": "Permission modes are validated, but the default for new tasks is the least safe mode, teams default to unlimited parallel workers, and 27 of the 37 environment variables read are undocumented.",
+   "source": "review"
+  },
+  "OPS-4": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["README.md:140-152", "docs/releasing.md:22", "src-tauri/tauri.conf.json:67-76", "tests/open-source.test.mjs:33-41", "src-tauri/src/vm/setup.rs:30-41"],
+   "note": "Updates are verified against a pinned public key (guarded by a test), and the Tart installer checks the signing team and notarization. First installs are unsigned binaries with same-origin .sha256 files, and the README tells users to override OS warnings.",
+   "source": "review"
+  },
+  "PRV-1": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": ["README.md:112", "CONTRIBUTING.md:106-108", "src-tauri/src/agent_updates.rs:3", "src-tauri/scripts/jev_runner.py:417-423", "tests/jev_runner_test.py:466-469", "probe priv.telemetry: no SDK outside tests"],
+   "note": "Red line not confirmed: there is no telemetry or analytics, and the optional browser runtime's own telemetry is switched off with a test. Automatic version checks send no user data, but four of their hosts are missing from the disclosure (README.md:125 vs agent_updates.rs:278-306).",
+   "source": "review"
+  },
+  "PRV-2": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": ["README.md:112-118", "website/src/pages/privacy.astro:47", "website/src/pages/privacy.astro:58", "docs/agent-usage.md:60-70", "src-tauri/src/support.rs:20-28"],
+   "note": "Data stays in local SQLite, flows to chosen services are documented, support details are an explicit allowlist, and usage parsers discard prompt and reply text. Deletion is per task or by removing the data folder. Reading other CLIs' stored logins to show usage is disclosed.",
+   "source": "review"
+  },
+  "PRV-3": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["LICENSE:1-29", "package.json:6", "README.md:9-12", "src/vendor/enriched-markdown/LICENSE", "probe meta.license: spdx MIT, modified=true", "probe meta.notices: files=[]"],
+   "note": "Red line not confirmed: a license is present. It is MIT plus a fork-attribution clause, with no SPDX identifier (package.json says 'SEE LICENSE IN LICENSE'), and no third-party notices ship for the bundled npm and Rust dependencies.",
+   "source": "review"
+  },
+  "PRV-4": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": ["probe meta.compliance: 0 mentions", "rg -i 'cyber resilience|ai act|CRA|accessibility act|2024/2847|2024/1689' README.md SECURITY.md CONTRIBUTING.md docs website/src/pages -> no hits"],
+   "note": "No stated position on the EU CRA (the app is distributed with auto-update), the AI Act or accessibility law.",
+   "source": "review"
+  },
+  "SUS-1": {
+   "level": 1,
+   "confidence": "inferred",
+   "evidence": ["git log -1: AICodeKing <aicodeking@proton.me> with a Co-Authored-By: Claude Opus 5.5 trailer (shallow clone, one commit)", "probe meta.codeowners: files=[]", "CODE_OF_CONDUCT.md"],
+   "note": "One visible maintainer, and no CODEOWNERS, governance or succession document. History is a single squashed commit, so contributor spread cannot be observed.",
+   "source": "review"
+  },
+  "SUS-2": {
+   "level": 2,
+   "confidence": "inferred",
+   "evidence": [".github/ISSUE_TEMPLATE/bug_report.yml", ".github/ISSUE_TEMPLATE/feature_request.yml", ".github/pull_request_template.md:1-19", ".github/workflows/ci.yml:2-6", "CONTRIBUTING.md:86-95", "docs/releasing.md:84-90"],
+   "note": "Issue and PR templates and PR CI exist, and CONTRIBUTING says a maintainer reviews PRs. The release procedure pushes directly to main, and branch protection or required checks cannot be observed.",
+   "source": "review"
+  },
+  "SUS-3": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["AGENTS.md:1-42", "CONTRIBUTING.md:7", "git log -1 trailer: Co-Authored-By: Claude Opus 5.5", "docs/design.md:3"],
+   "note": "Agent instructions exist, and the commit keeps an AI co-author trailer. There is no stated review standard for agent-written changes.",
+   "source": "review"
+  }
+ },
+ "gaps": [
+  {
+   "lens": "G1",
+   "title": "Docs say tasks start in Ask; the code starts them in Full access",
+   "case": "src-tauri/src/storage.rs:23 sets DEFAULT_PERMISSION_MODE = \"full\", used by src/main.ts:1505, src/main.ts:2745, src/github.ts:217, src-tauri/src/overlay.rs:50-52, src-tauri/src/lib.rs:2147 and src-tauri/src/architect/profiles.rs:305. This contradicts docs/design.md:48, docs/ipc.md:8, docs/ipc.md:28, docs/agent-tools.md:26-27 and SECURITY.md:32 ('after you grant it'); only docs/approvals.md:5-7 states the real default.",
+   "impact": "Readers of the architecture and security docs believe agents ask before acting, while new tasks launch Claude with bypassPermissions and Codex with danger-full-access and skip app-tool approvals (providers.rs:2618-2630, providers.rs:1236-1241, mcp_host.rs:491). The security scope rests on a grant the user never made. Impact category: excessive agency on the user's machine and accounts.",
+   "fix": "Default new tasks to ask, or require an explicit first-run choice, and keep Full access as a per-task opt-in. Update design.md, ipc.md, agent-tools.md and SECURITY.md together, and add a test that asserts the default plus a CI doc check for the stated default.",
+   "severity": "high",
+   "evidence": ["src-tauri/src/storage.rs:23", "docs/design.md:48", "docs/ipc.md:8", "docs/approvals.md:5-7", "SECURITY.md:32"]
+  },
+  {
+   "lens": "G2",
+   "title": "Imported GitHub issues become Full-access prompts without an untrusted label",
+   "case": "src/github.ts:154 copies the issue body verbatim into the task description, and src/github.ts:217 creates the task with mode 'full'. References inside messages are wrapped as 'GitHub context (repository content, not instructions)' at src/github.ts:48; imported bodies are not.",
+   "impact": "Text written by any issue author becomes the instruction of an agent that runs without approvals once the user starts the task. Impact category: prompt injection leading to excessive agency (OWASP LLM01, LLM06).",
+   "fix": "Wrap imported issue bodies in the same untrusted-context block, start imported tasks in ask mode, and show the issue author and a third-party-text marker before the task starts.",
+   "severity": "high",
+   "evidence": ["src/github.ts:48", "src/github.ts:154", "src/github.ts:217"]
+  },
+  {
+   "lens": "G11",
+   "title": "Billed cloud machines can be created without approval in Full access",
+   "case": "src-tauri/src/vm/tools.rs:40 (vm_manage creates Daytona, AWS EC2 or AgentCore machines) and vm/tools.rs:111; src-tauri/src/providers/mcp_host.rs:491 skips approvals in full mode except for ALWAYS_ASK = [\"pandacode_cloud_cli\"] (src-tauri/src/cloud/deploy.rs:25). The only guard is tool-description text asking the model to confirm.",
+   "impact": "Unbounded spend in the user's connected cloud accounts from a default-mode agent loop or an injected instruction. Impact category: unbounded consumption (OWASP LLM10).",
+   "fix": "Add cloud create and start actions of vm_manage to ALWAYS_ASK, add a per-task machine-count or spend cap, and cover both in the mcp_host tests.",
+   "severity": "medium",
+   "evidence": ["src-tauri/src/vm/tools.rs:40", "src-tauri/src/providers/mcp_host.rs:491", "src-tauri/src/cloud/deploy.rs:25"]
+  },
+  {
+   "lens": "G8",
+   "title": "The UI suite and the primary platform are outside CI",
+   "case": ".github/workflows/ci.yml:26-33 and :54-58 run tsc, Node tests, release-script tests and cargo test --lib on Linux only. The 54 Playwright spec files (619 tests) never run in CI, and playwright.config.ts:18 defaults to a macOS Chrome path. releases/0.3.8.md:20 ships with 8 known failing browser tests, and --lib skips src-tauri/tests/gui_path.rs.",
+   "impact": "UI regressions and macOS-only behaviour reach users unchecked at about 1.7 releases per day, and failing tests become accepted.",
+   "fix": "Run Playwright in Chrome and WebKit in CI on Linux and macOS (PANDACODE_TEST_CHROME set), run the full cargo test, including integration tests, on macOS and Windows, and block release tags on red.",
+   "severity": "medium",
+   "evidence": [".github/workflows/ci.yml:54-58", "playwright.config.ts:18", "releases/0.3.8.md:20"]
+  },
+  {
+   "lens": "G9",
+   "title": "No SBOM, provenance, update bot or vulnerability scan; a signing secret is exposed to dependency installs",
+   "case": "Probes ci.sbom (0 steps), ci.provenance (false), deps.update_bot (none) and ci.security_scans (none); installers are unsigned by default (docs/releasing.md:134-159); .github/workflows/release.yml:57 sets APPLE_CERTIFICATE at job level, so it is in the environment of npm ci (release.yml:70).",
+   "impact": "Users cannot verify who built a release or which components it contains, known-vulnerable dependencies go unnoticed, and the CRA SBOM and vulnerability-handling obligations due from December 2027 are unprepared. Impact category: supply-chain integrity.",
+   "fix": "Generate CycloneDX SBOMs for npm and Cargo in release.yml, add a build-provenance attestation step, enable Dependabot or Renovate with cargo-audit and npm audit gates, move the certificate secret to the signing step only, and use npm ci --ignore-scripts where the build allows.",
+   "severity": "medium",
+   "evidence": [".github/workflows/release.yml:57", ".github/workflows/release.yml:70", "docs/releasing.md:134-159"]
+  },
+  {
+   "lens": "G13",
+   "title": "Release churn outpaces qualification, with one visible maintainer",
+   "case": "website/src/data/release-dates.json lists 58 releases from 2026-09-17 to 2026-10-20 (34 days), 10 of them on 2026-09-20. The release job runs only release-script tests and a liveness probe (.github/workflows/release.yml:70-91), and installed apps update silently when idle (README.md:148-152). git log shows one author.",
+   "impact": "Every installed copy absorbs lightly qualified changes automatically, and a bad release reaches all installs within hours. Continuity, including custody of the update-signing key (docs/releasing.md:45-49), depends on one person.",
+   "fix": "Add stable and preview update channels, batch user-facing releases, run the full test suites in the release job, and document key custody and a second maintainer.",
+   "severity": "medium",
+   "evidence": ["website/src/data/release-dates.json", ".github/workflows/release.yml:70-91", "README.md:148-152", "docs/releasing.md:45-49"]
+  },
+  {
+   "lens": "G2",
+   "title": "Bot Guard always-ask list is a substring denylist",
+   "case": "src-tauri/src/bots/guard.rs:27-31 and :66-69 match a fixed list of literal substrings case-insensitively. docs/bots.md:50 notes that the Guard does not see bots in Full access, and docs/bots.md:91 lists a model-based reviewer as not built.",
+   "impact": "Equivalent forms of listed dangerous commands arriving from remote chat channels are not recognised and fall through to ordinary rule decisions. Impact category: excessive agency from untrusted remote input.",
+   "fix": "Classify parsed commands (argv tokens with normalised flags) instead of substrings, treat any shell command from a remote channel as ask unless an exact allow rule matches, and add a table-driven test of equivalent command forms.",
+   "severity": "medium",
+   "evidence": ["src-tauri/src/bots/guard.rs:27-31", "src-tauri/src/bots/guard.rs:66-69", "docs/bots.md:50"]
+  },
+  {
+   "lens": "G9",
+   "title": "Per-turn MCP bearer token is placed in process arguments",
+   "case": "src-tauri/src/providers.rs:2818 and src-tauri/src/providers/warm.rs:92 pass --mcp-config with the Authorization header on the harness command line. The same project keeps GLM and MiMo keys out of argv for this reason (docs/providers.md:416).",
+   "impact": "Other local users or processes that can list process arguments can read the token while a turn runs and call app tools on the loopback server. Impact category: least privilege on shared hosts.",
+   "fix": "Pass the MCP configuration through a 0600 temporary file, the child's environment or stdin, and add a test that no token appears in argv.",
+   "severity": "low",
+   "evidence": ["src-tauri/src/providers.rs:2818", "src-tauri/src/providers/warm.rs:92", "docs/providers.md:416"]
+  },
+  {
+   "lens": "G1",
+   "title": "Privacy disclosure omits four automatic request hosts",
+   "case": "src-tauri/src/agent_updates.rs:278-306 checks registry.npmjs.org, releases.openai.com, pypi.org and storage.googleapis.com. README.md:125 and website/src/pages/privacy.astro:54 list only formulae.brew.sh, downloads.claude.ai, api.github.com and cdn.kimi.com, and CONTRIBUTING.md:106-108 requires every automatic request to be listed.",
+   "impact": "Users and administrators who allowlist outbound hosts from the published table get an incomplete picture. Impact category: transparency (GDPR Art. 13).",
+   "fix": "Generate the privacy table from metadata_endpoint(), or add a test that every URL in agent_updates.rs appears in README.md and privacy.astro.",
+   "severity": "low",
+   "evidence": ["src-tauri/src/agent_updates.rs:278-306", "README.md:125", "website/src/pages/privacy.astro:54"]
+  },
+  {
+   "lens": "G1",
+   "title": "Token-saver meter shows savings PandaCode never measured",
+   "case": "src/token-saver.ts:111-115 computes the share saved from fixed per-pack constants (0.12 to 0.35), and src/token-saver-panel.ts:31 and :48 show 'about N% fewer tokens'. The usage ledger already counts tokens per reply (docs/agent-usage.md:19-22).",
+   "impact": "Users choose response packs on a number that was never measured for their harness or model. Impact category: misleading claims in the UI.",
+   "fix": "Compute observed output tokens per thread before and after a pack from the ledger, show 'not measured' until data exists, and keep the published benchmark figures as cited sources.",
+   "severity": "low",
+   "evidence": ["src/token-saver.ts:111-115", "src/token-saver-panel.ts:31", "docs/agent-usage.md:19-22"]
+  }
+ ],
+ "opportunities": [
+  {
+   "lens": "O1",
+   "criterion": "OPP-1",
+   "title": "Extract the hardened loopback MCP host",
+   "description": "providers/mcp_host.rs implements a per-run MCP HTTP endpoint with a random bearer token, an exact Host match, Origin rejection, one bounded request per connection, request, size and time limits, mode-dependent approvals and tests. Packaged as its own crate, it would give other harnesses in the reviewed set (t3code, orca, pi) and tool servers (rea) a tested local transport.",
+   "value": 4,
+   "reach": 4,
+   "confidence": "observed",
+   "horizon_fit": 1.2,
+   "effort": 2,
+   "action": "extract",
+   "evidence": ["src-tauri/src/providers/mcp_host.rs:82-133", "src-tauri/src/providers/mcp_host.rs:263-353", "src-tauri/src/providers/mcp_host.rs:484-523", "src-tauri/src/providers/mcp_host.rs:909"]
+  },
+  {
+   "lens": "O2",
+   "criterion": "OPP-2",
+   "title": "Consolidate harness adapters with t3code and orca",
+   "description": "PandaCode normalizes Claude stream-json, Codex app-server JSON-RPC and ACP v1 behind one event interface. T3 Code drives the same CLIs, and Orca is another harness GUI in the reviewed set. A shared adapter library with recorded, dated frame fixtures would cut duplicated protocol work and give all three the same oracle set. I did not inspect the t3code or orca adapters, so the overlap is inferred from their READMEs.",
+   "value": 4,
+   "reach": 4,
+   "confidence": "inferred",
+   "horizon_fit": 1.2,
+   "effort": 4,
+   "action": "consolidate",
+   "evidence": ["src-tauri/src/providers.rs:2595-2650", "src-tauri/src/providers/acp.rs:1086", "AGENTS.md:38", "/home/user/GitHub_Repos_Dump/pingdotgg__t3code/README.md:3-5", "docs/design.md:3"]
+  },
+  {
+   "lens": "O3",
+   "criterion": "OPP-3",
+   "title": "Pluggable System-One decisions: my-jev or laya for the Guard and approvals",
+   "description": "The Jev decision client posts state, question and options to a hardcoded endpoint. my-jev trains a model with the same input and output shape (one letter plus a probability per option) and reports a third-party tool-risk benchmark, and laya and laya-coreml serve typed decisions locally. A configurable endpoint would give the rule-based bot Guard its missing model-based reviewer and an on-device option.",
+   "value": 4,
+   "reach": 3,
+   "confidence": "derived",
+   "horizon_fit": 1.4,
+   "effort": 3,
+   "action": "re-cut-interface",
+   "evidence": ["src-tauri/src/jev_decisions/api.rs:15-16", "src-tauri/src/jev_decisions/api.rs:69-91", "docs/bots.md:91", "/home/user/GitHub_Repos_Dump/PromptEngineer48__my-jev/README.md:1-5", "/home/user/GitHub_Repos_Dump/PromptEngineer48__my-jev/README.md:22"]
+  },
+  {
+   "lens": "O14",
+   "criterion": "OPP-7",
+   "title": "Full access in a box",
+   "description": "Run Full-access tasks inside contained environments: the existing Tart VMs with a read-only project share, or agent-sandbox-lockdown's internal network with allowlisting DNS and proxy. This turns the riskiest default into a contained one and fits the CRA's secure-by-default obligations from December 2027. Blocker: the MCP host accepts only loopback peers (mcp_host.rs:102), so a containerised harness needs a forwarded transport.",
+   "value": 5,
+   "reach": 4,
+   "confidence": "inferred",
+   "horizon_fit": 1.5,
+   "effort": 4,
+   "action": "re-platform",
+   "evidence": ["src-tauri/src/vm/tools.rs:36", "src-tauri/src/providers/mcp_host.rs:102", "/home/user/GitHub_Repos_Dump/PromptEngineer48__agent-sandbox-lockdown/docker-compose.yml:7-13", "src-tauri/src/storage.rs:23"]
+  },
+  {
+   "lens": "O8",
+   "criterion": "OPP-3",
+   "title": "Measure token-saver packs with the usage ledger",
+   "description": "The ledger already de-duplicates per-reply token counts, while the token saver shows fixed estimates for packs taken from caveman and rtk. Joining per-thread pack state with ledger counts yields measured savings per harness and model, which caveman and ponytail could also cite.",
+   "value": 3,
+   "reach": 3,
+   "confidence": "observed",
+   "horizon_fit": 1.1,
+   "effort": 2,
+   "action": "harden",
+   "evidence": ["docs/agent-usage.md:19-22", "src/token-saver.ts:6-8", "src/token-saver.ts:111-115"]
+  },
+  {
+   "lens": "O7",
+   "criterion": "OPP-6",
+   "title": "Re-cut the app-tool catalog and add MCP annotations",
+   "description": "The 31 core pandacode_* tools include several single-purpose task mutations (rename_task, pin_task, archive_task, set_task_stage, open_task), and tools/list carries no readOnlyHint or destructiveHint. One parameterised task tool plus accurate annotations would shrink the per-turn catalog and let hosts auto-approve reads; leanrea documents the cost of oversized tool catalogs.",
+   "value": 3,
+   "reach": 3,
+   "confidence": "derived",
+   "horizon_fit": 1.2,
+   "effort": 2,
+   "action": "re-cut-interface",
+   "evidence": ["src-tauri/src/agent_tools.rs:336-347", "src-tauri/src/providers/mcp_host.rs:400-403", "/home/user/GitHub_Repos_Dump/aicodeking__leanrea/README.md:1-5"]
+  }
+ ],
+ "reengineering": [
+  {
+   "action": "harden",
+   "component": "Permission defaults and app-tool policy (src-tauri/src/storage.rs:23, src-tauri/src/providers/mcp_host.rs:484-523, src-tauri/src/cloud/deploy.rs:25)",
+   "gain": "New tasks start in ask; cloud machine creation and issue-sourced tasks always ask; MCP annotations let hosts auto-approve only reads; docs match the code.",
+   "measure": "Share of new tasks that start in Full access without an explicit choice (every new-task path today) falls to 0; a test shows vm_manage create raises an approval in full mode; a CI doc check finds the same default in design.md, ipc.md, agent-tools.md and SECURITY.md."
+  },
+  {
+   "action": "harden",
+   "component": "CI and release pipeline (.github/workflows/ci.yml, .github/workflows/release.yml)",
+   "gain": "UI and macOS regressions are caught before release, and releases become verifiable.",
+   "measure": "Playwright suites run in CI on macOS and Linux; known failing browser tests at release go from 8 to 0; an SBOM and a provenance attestation are attached to each release; a dependency audit job exists."
+  },
+  {
+   "action": "refactor",
+   "component": "Provider registry (providers.rs, providers/acp.rs, storage.rs allowlists, overlay.rs, architect*.rs, terminal.rs, slash_commands*.rs, provider_settings.rs)",
+   "gain": "Adding a harness becomes one descriptor plus one adapter, and the documented provider list cannot drift.",
+   "measure": "Files touched to add a harness drop from at least 10 (AGENTS.md:38) to at most 3; files containing the literal \"antigravity\" drop from 22 to at most 3."
+  },
+  {
+   "action": "extract",
+   "component": "Loopback MCP host (src-tauri/src/providers/mcp_host.rs, host_tools.rs)",
+   "gain": "A reusable, tested local transport for other harnesses and tool servers.",
+   "measure": "Crate builds and its tests (including rejects_auth_origin_host_smuggling_and_oversized_frames) pass outside PandaCode; at least one other reviewed repository adopts it."
+  }
+ ],
+ "questions": [
+  "Is PandaCode safe to run with its defaults on a machine with real repositories and cloud credentials? No. New tasks start in Full access, which disables harness approvals and app-tool approvals except deploy CLIs (storage.rs:23, mcp_host.rs:491). Use Standard or Ask mode, or a VM, for untrusted work.",
+  "Do automated tests gate what users depend on? Partly. Rust core and Node tests gate PRs on Linux; the 619-test UI suite and macOS are outside CI, and 0.3.8 shipped with 8 failing browser tests.",
+  "What is worth extracting or combining with other reviewed repositories? The hardened loopback MCP host, the harness adapters (overlapping t3code and orca), and a pluggable System-One decision endpoint that my-jev or laya could serve."
+ ],
+ "not_examined": [
+  "Runtime behaviour: nothing was built or run; every level comes from reading code, docs and CI files",
+  "Most of the roughly 74k Rust lines: sampled providers.rs, providers/mcp_host.rs, agent_tools.rs, storage.rs, workspace.rs, the lib.rs exit path, vm/, cloud/deploy.rs, bots/guard.rs and the channel loop",
+  "Frontend injection review beyond spot checks of innerHTML templates in src/github-hub.ts and src/github.ts",
+  "The website (website/) beyond the privacy and license pages",
+  "Published security advisories, release assets and signatures (no web access)",
+  "Git history beyond the single squashed commit",
+  "The Cloudflare worker (src-tauri/src/cloud/cloudflare_worker) and the Jev runner beyond its telemetry settings"
+ ],
+ "time_minutes": 95
+}

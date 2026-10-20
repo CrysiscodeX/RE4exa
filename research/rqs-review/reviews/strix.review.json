@@ -1,0 +1,916 @@
+{
+ "rqs_review": 1,
+ "target": {
+  "path": "/home/user/GitHub_Repos_Dump/usestrix__strix",
+  "name": "strix",
+  "head": "aa2036f22942eed3ecd142169289a256a2e7acb7",
+  "shallow": true
+ },
+ "profile": "security-tool",
+ "flags": {
+  "uses_llm": true,
+  "has_ui": true,
+  "executes_code": true,
+  "network_service": true,
+  "parses_untrusted": true,
+  "uses_crypto": true,
+  "heavy_compute": false,
+  "distributed": true
+ },
+ "scope_notes": "security-tool profile: an autonomous, code-executing AI pentest agent run with Docker; uses_crypto set true (AES-256 report encryption, PKCE, HMAC, cryptography dep) which the probe missed, adding SEC-9; heavy_compute false (LLM inference is remote).",
+ "reviewer": {
+  "id": "reviewer-strix",
+  "kind": "agent",
+  "conflicts": "none"
+ },
+ "date": "2026-10-20",
+ "scores": {
+  "PUR-1": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "README.md:44",
+    "README.md:385",
+    "AGENTS.md:36"
+   ],
+   "note": "README states problem, users (incl. agents), quickstart, exit codes/artifacts and an authorized-use warning; no machine-readable capability statement.",
+   "source": "review"
+  },
+  "PUR-2": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": [
+    "benchmarks/README.md:18",
+    "benchmarks/README.md:24"
+   ],
+   "note": "Only headline cited is XBEN 96% for v0.4.0 (repo at 1.7.0); harness+raw results live in external usestrix/benchmarks, none committed here, so not reproducible at this commit.",
+   "source": "review"
+  },
+  "PUR-3": {
+   "level": 2,
+   "confidence": "inferred",
+   "evidence": [
+    "strix/interface:181 files",
+    "pyproject.toml:80",
+    "CONTRIBUTING.md:117"
+   ],
+   "note": "Large surface (TUI+React viewer bundle+cloud CLI 138 cmds); components have documented reasons but no necessity gate or tracked surface size.",
+   "source": "review"
+  },
+  "COR-1": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": [
+    ".github/workflows/ci-python.yml:47",
+    ".github/workflows/ci-tui.yml:25",
+    ".github/workflows/ci.yml:33"
+   ],
+   "note": "131 py + 17 go test files, test/source 0.665; CI runs pytest (3.12-3.14), go test -race, viewer build, wheel/binary smoke; ci-passed gate. No coverage measurement/threshold.",
+   "source": "review"
+  },
+  "COR-2": {
+   "level": 2,
+   "confidence": "inferred",
+   "evidence": [
+    "tests/test_tui_protocol_conformance.py:1",
+    "tests/test_sarif.py:39",
+    "tests/test_packaging.py"
+   ],
+   "note": "Oracles are internal (Go/Python protocol-constant parity, SARIF schema, packaging asserts); no independent answer key/golden for the model-dependent security findings.",
+   "source": "review"
+  },
+  "COR-3": {
+   "level": 1,
+   "confidence": "derived",
+   "evidence": [
+    "pyproject.toml:60",
+    "tests/test_api_spec.py:121",
+    "strix/utils/api_spec.py:33"
+   ],
+   "note": "No mutation/property/fuzz testing in host code (no hypothesis/atheris; probe fuzz=0 files, refs are docs); untrusted-input parsers have malformed-input unit tests + a depth cap but no fuzzing.",
+   "source": "review"
+  },
+  "COR-4": {
+   "level": 2,
+   "confidence": "inferred",
+   "evidence": [
+    ".github/workflows/ci-package.yml:33",
+    ".github/workflows/ci-package.yml:62"
+   ],
+   "note": "CI installs the wheel into a clean env and runs the CLI, and runs a real quick scan to check provider-credential wiring; no self-scan of strix's own code and no tracked findings.",
+   "source": "review"
+  },
+  "COR-5": {
+   "level": 2,
+   "confidence": "inferred",
+   "evidence": [
+    "strix/report/state.py:209",
+    "strix/report/sarif.py:493",
+    "strix/report/state.py:267"
+   ],
+   "note": "LLM-driven output is inherently nondeterministic; run/finding ids are sequential/uuid and SARIF partialFingerprints give cross-run stickiness, but nondeterminism is not documented or isolated by seeds.",
+   "source": "review"
+  },
+  "REL-1": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "strix/interface/cli_args.py:301",
+    "tests/test_runner_interrupt.py:67",
+    "tests/test_tui_resume_history.py:153"
+   ],
+   "note": "--resume rehydrates root + non-terminal subagents' full LLM history and agent topology from strix_runs (run.json + SQLite sessions, atomic writes); kill/interrupt-and-resume is tested. Tool side effects are not idempotent on replay.",
+   "source": "review"
+  },
+  "REL-2": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "strix/config/settings.py:142",
+    "strix/runtime/docker_client.py:93",
+    "strix/tools/output_store.py:1"
+   ],
+   "note": "Tool outputs capped by bytes/lines/tokens with spill-to-disk + context auto-compact; sandbox json-log capped on by default; optional cgroup mem/cpu/pids caps; USD and turn budgets.",
+   "source": "review"
+  },
+  "REL-3": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "strix/report/coverage.py:314",
+    "strix/report/sarif.py:736",
+    "strix/core/execution.py:889"
+   ],
+   "note": "coverage.json marks complete:false with caveats and SARIF sets executionSuccessful:false on a truncated run; transient model failures retry with bounded backoff.",
+   "source": "review"
+  },
+  "REL-4": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "strix/interface/cli.py:154",
+    "strix/runtime/docker_client.py:278",
+    "tests/test_runner_teardown.py:62"
+   ],
+   "note": "SIGINT/SIGTERM/SIGHUP handlers + atexit cleanup; sandbox container best-effort killed on delete; teardown settles live children before closing sessions, with tests.",
+   "source": "review"
+  },
+  "PERF-1": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": [
+    "benchmarks/README.md:41",
+    "docs/advanced/configuration.mdx:156"
+   ],
+   "note": "External XBEN notes ~19 min/solve and cost; no in-repo latency harness or per-operation budgets; per-call timing only via optional STRIX_RUN_RECORD_TIMINGS.",
+   "source": "review"
+  },
+  "PERF-2": {
+   "level": 3,
+   "confidence": "inferred",
+   "evidence": [
+    "strix/tools/output_store.py:21",
+    "strix/llm/context_budget.py:1",
+    "strix/config/settings.py:142"
+   ],
+   "note": "Summary-first tool outputs with disk-spill retrieval handles, model-aware context budget and auto-compaction; ~44 base agent tools. Catalog/per-answer token cost not measured.",
+   "source": "review"
+  },
+  "SEC-1": {
+   "level": 0,
+   "confidence": "observed",
+   "evidence": [],
+   "note": "No SECURITY.md, no threat-model/trust-boundary doc and no vulnerability-disclosure contact for a code-executing autonomous security tool; README carries only an authorized-use warning. Red-line SEC checked: no committed secrets (SEC-6) and no injection-prone host patterns (SEC-7).",
+   "source": "review"
+  },
+  "SEC-2": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": [
+    "uv.lock",
+    "strix/interface/tui/go.sum",
+    ".github/dependabot.yml",
+    ".github/workflows/ci-python.yml:38"
+   ],
+   "note": "Lockfiles for py/go/npm; dependabot across 4 ecosystems with cooldown; bandit SAST in CI. No known-vulnerability dependency scanner gates repo CI (govulncheck/trivy/trufflehog listed by the probe are tools inside the sandbox image, not repo CI).",
+   "source": "review"
+  },
+  "SEC-3": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": [
+    ".github/workflows/build-release.yml:100",
+    ".github/workflows/build-release.yml:122"
+   ],
+   "note": "Releases build in CI across 5 platforms but carry no provenance/attestation or signing; GitHub release just uploads artifacts with auto notes.",
+   "source": "review"
+  },
+  "SEC-4": {
+   "level": 1,
+   "confidence": "derived",
+   "evidence": [
+    ".github/workflows/build-release.yml",
+    "meta.notices:absent"
+   ],
+   "note": "No SBOM generation in CI and no NOTICE/third-party license file, though the wheel bundles a Go sidecar and a prebuilt React viewer.",
+   "source": "review"
+  },
+  "SEC-5": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    ".github/workflows/build-release.yml:37",
+    ".github/workflows/ci.yml:10",
+    ".github/workflows/ci-workflows.yml:28"
+   ],
+   "note": "All 24 third-party action refs pinned by full SHA; every workflow sets least-privilege top-level permissions (contents:read), release job scopes contents:write; no pull_request_target; zizmor + actionlint gates; persist-credentials:false.",
+   "source": "review"
+  },
+  "SEC-6": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": [
+    "risk.secrets:found=false",
+    ".pre-commit-config.yaml:43",
+    "strix/utils/secret_files.py:12"
+   ],
+   "note": "RED LINE: not triggered. No secrets committed outside tests (independently confirmed); stored credentials written 0600; bandit in CI/pre-commit. Weaker than horizon: no secret scanner in repo CI and no tested redaction of agent-visible outputs.",
+   "source": "review"
+  },
+  "SEC-7": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": [
+    "risk.patterns",
+    "strix/interface/utils.py:585",
+    "strix/interface/viewer/frontend/src/lib/hljs.ts:20"
+   ],
+   "note": "RED LINE: not triggered. Host Python/Go free of shell-string/eval/unsafe-deserialization/TLS-off on untrusted paths (subprocess uses list args). The 4 dangerouslySetInnerHTML sites render hljs-escaped/entity-escaped content in the loopback-only viewer.",
+   "source": "review"
+  },
+  "SEC-8": {
+   "level": 3,
+   "confidence": "inferred",
+   "evidence": [
+    "strix/utils/api_spec.py:33",
+    "strix/utils/api_spec.py:57",
+    "tests/test_api_spec.py:121"
+   ],
+   "note": "Untrusted API specs parsed in memory-safe Python with yaml.safe_load, a recursion-depth cap and malformed-input tests; untrusted target/web content is handled inside the Docker sandbox. No continuous fuzzing of the parsers.",
+   "source": "review"
+  },
+  "SEC-9": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "strix/config/codex.py:169",
+    "strix/interface/viewer/report_pdf.py:679",
+    "strix/interface/tui/sidecar.py:81"
+   ],
+   "note": "uses_crypto set true: PKCE S256, AES-256 report encryption (pypdf), hmac.compare_digest, secrets tokens, cryptography>=48 dep. No deprecated algorithms, but no algorithm inventory, abstraction layer or PQC migration plan.",
+   "source": "review"
+  },
+  "AGT-1": {
+   "level": 2,
+   "confidence": "inferred",
+   "evidence": [
+    "strix/agents/prompts/system_prompt.jinja:470",
+    "strix/runtime/session_manager.py:317",
+    "agent.prompt_injection"
+   ],
+   "note": "Untrusted target content (the agent's input by design) is run inside an isolated sandbox and some surfaces are labelled (Caido error pages 'NOT RESPONSES FROM THE TARGET'), but instruction/data channels are not separated in prompts and there is no injection-resistance regression corpus.",
+   "source": "review"
+  },
+  "AGT-2": {
+   "level": 2,
+   "confidence": "inferred",
+   "evidence": [
+    "strix/runtime/docker_client.py:228",
+    "containers/Dockerfile:36",
+    "strix/interface/scan_setup.py:278"
+   ],
+   "note": "Agent runs with broad in-sandbox power by design (NET_ADMIN/NET_RAW, passwordless sudo inside the container); no per-tool readOnly/destructive machine hints; scope authorization is limited to declared target base URLs with no deny-by-default egress.",
+   "source": "review"
+  },
+  "AGT-3": {
+   "level": 3,
+   "confidence": "inferred",
+   "evidence": [
+    "strix/tools/wait_for_user/tool.py",
+    "strix/interface/cli.py:155",
+    "strix/core/agents.py:165"
+   ],
+   "note": "Interactive TUI shows a live action view, supports steering, wait_for_user and Ctrl-C stop; run.json/request_log are a readable action log; budgets stop runs. Exploit actions are not reversible (inherent).",
+   "source": "review"
+  },
+  "AGT-4": {
+   "level": 2,
+   "confidence": "inferred",
+   "evidence": [
+    "benchmarks/README.md",
+    "strix/report/dedupe.py"
+   ],
+   "note": "No in-repo evaluation suite run when models/prompts/providers change; the only eval is the external XBEN benchmark. A model is used for finding dedupe without a regression eval.",
+   "source": "review"
+  },
+  "AGT-5": {
+   "level": 2,
+   "confidence": "inferred",
+   "evidence": [
+    "docs/llm-providers/overview.mdx",
+    "strix/report/writer.py:143",
+    "README.md:353"
+   ],
+   "note": "Providers/models documented and recommended models listed; reports are stamped 'Generated' with a timestamp but not marked AI-generated, and there is no model/data card or AI-BOM.",
+   "source": "review"
+  },
+  "AGT-6": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "strix/interface/cli_args.py:276",
+    "strix/config/settings.py:91",
+    "strix/telemetry/posthog.py:260"
+   ],
+   "note": "Per-run USD budget (cumulative, graduated warnings, sub-agent reserve), per-agent turn cap and max tool calls per turn; cost/usage recorded in run.json and beacons.",
+   "source": "review"
+  },
+  "INT-1": {
+   "level": 3,
+   "confidence": "inferred",
+   "evidence": [
+    "strix/tools/mcp/client.py:33",
+    "strix/report/sarif.py:299",
+    "AGENTS.md:57"
+   ],
+   "note": "CLI with JSON output, an MCP client, a cloud REST CLI mirroring a published OpenAPI, and SARIF 2.1.0 output; no stated version/compatibility policy for the CLI contract.",
+   "source": "review"
+  },
+  "INT-2": {
+   "level": 2,
+   "confidence": "inferred",
+   "evidence": [
+    "skills/api-security-testing/SKILL.md",
+    "agent.describe",
+    "AGENTS.md:37"
+   ],
+   "note": "Nine SKILL.md packs, --help and JSON/SARIF output give partial self-description; no describe --json manifest of commands/inputs/outputs/effects and no contract-vs-code drift check.",
+   "source": "review"
+  },
+  "INT-3": {
+   "level": 3,
+   "confidence": "inferred",
+   "evidence": [
+    "strix/agents/factory.py:622",
+    "strix/interface/cloud/spec.py:1"
+   ],
+   "note": "~44 composable base agent tools (reasonable); the 138-command cloud CLI is large but is a declarative 1:1 mirror of REST verbs rather than bespoke tools.",
+   "source": "review"
+  },
+  "INT-4": {
+   "level": 3,
+   "confidence": "inferred",
+   "evidence": [
+    "strix/interface/cloud/http.py:30",
+    "strix/tools/mcp/failures.py:43",
+    "AGENTS.md:51"
+   ],
+   "note": "Cloud CLI has stable exit codes (0/1/2/4/5), next_step hints and JSON error payloads; MCP failures carry a typed kind with a correct retryable flag. Agent in-sandbox tool errors are free-text strings.",
+   "source": "review"
+  },
+  "INT-5": {
+   "level": 3,
+   "confidence": "inferred",
+   "evidence": [
+    "tests/test_cloud_idempotency.py:38",
+    "AGENTS.md:44",
+    "strix/report/sarif.py:493"
+   ],
+   "note": "Cloud mutations take stable idempotency keys bound to actor+body (tested); source uploads are approved by archive sha256; run names and vuln-NNNN ids are stable; SARIF fingerprints address findings.",
+   "source": "review"
+  },
+  "INT-6": {
+   "level": 2,
+   "confidence": "inferred",
+   "evidence": [
+    "strix/interface/viewer/frontend/src/App.tsx",
+    "ui.a11y",
+    "ui.i18n:absent"
+   ],
+   "note": "Quickstart is exercised by the packaging smoke and --help is complete; the React viewer has 76 a11y attributes but no accessibility tooling/tests and no internationalisation.",
+   "source": "review"
+  },
+  "INT-7": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "AGENTS.md:37",
+    "strix/report/sarif.py:299"
+   ],
+   "note": "Results exported on disk as SARIF 2.1.0, vulnerabilities.json, run.json and markdown report; open, documented, third-party-readable formats.",
+   "source": "review"
+  },
+  "EPI-1": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "strix/tools/reporting/tool.py:479",
+    "strix/report/coverage.py:270",
+    "strix/report/state.py:888"
+   ],
+   "note": "Findings carry evidence, PoC, counterevidence and confidence; run.json records model/usage/version; coverage.json separates agent_reported from machine_observed provenance; SARIF carries tool version + fingerprints.",
+   "source": "review"
+  },
+  "EPI-2": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "strix/tools/reporting/tool.py:303",
+    "strix/tools/reporting/tool.py:171",
+    "strix/report/coverage.py:263"
+   ],
+   "note": "Findings require a confidence class (high/medium/low) with a mandatory rationale when below high, plus counterevidence and severity-change conditions; coverage marks surfaces 'unexamined, not clean'.",
+   "source": "review"
+  },
+  "EPI-3": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "strix/report/coverage.py:5",
+    "strix/report/coverage.py:263",
+    "strix/report/sarif.py:736"
+   ],
+   "note": "coverage.json explicitly distinguishes 'tested, nothing found' from 'never looked', reports gaps, and a truncated run is stamped incomplete rather than clean.",
+   "source": "review"
+  },
+  "EPI-4": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    "strix/report/coverage.py:244",
+    "strix/report/coverage.py:314",
+    "strix/report/sarif.py:744"
+   ],
+   "note": "coverage.json reconciles declared scope, surfaces reviewed, skill-implied gaps and completeness caveats, with machine-observed facts that contradict (not confirm) the agent's ledger; surfaced into SARIF. Not CI-gated for reconciliation of declared questions.",
+   "source": "review"
+  },
+  "EPI-5": {
+   "level": 2,
+   "confidence": "inferred",
+   "evidence": [
+    "README.md:46",
+    "benchmarks/README.md:24",
+    "docs/advanced/configuration.mdx:148"
+   ],
+   "note": "RED LINE: not triggered (no in-repo measurement contradicts a headline). But claims lean on superlatives and an external, stale (v0.4.0) benchmark, and configuration docs describe OTEL/Traceloop + events.jsonl that are absent from the shipped code.",
+   "source": "review"
+  },
+  "MNT-1": {
+   "level": 2,
+   "confidence": "inferred",
+   "evidence": [
+    "CONTRIBUTING.md:68",
+    "AGENTS.md:62",
+    "static.arch_guards:absent"
+   ],
+   "note": "Package layout (agents/tools/runtime/report/interface) is documented, but there are no enforced architecture/import boundary rules.",
+   "source": "review"
+  },
+  "MNT-2": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": [
+    "size.largest",
+    "size.duplicates",
+    "pyproject.toml:207"
+   ],
+   "note": "Largest source file 2603 lines; 0 duplicate files; ruff enables eradicate (ERA) for dead code; no dedicated duplication/dead-code budget enforced.",
+   "source": "review"
+  },
+  "MNT-3": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    "pyproject.toml:103",
+    "pyproject.toml:163",
+    ".github/workflows/ci-python.yml:19",
+    ".github/workflows/ci-tui.yml:23"
+   ],
+   "note": "ruff (large rule set) + mypy strict + pyright strict + bandit configured and run in CI; gofmt/go vet/go test -race for the TUI; tsconfig strict for the viewer.",
+   "source": "review"
+  },
+  "MNT-4": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": [
+    "CONTRIBUTING.md",
+    "AGENTS.md",
+    "docs/"
+   ],
+   "note": "CONTRIBUTING, AGENTS.md, a docs site and nine SKILL.md packs are present and current; no architecture decision records.",
+   "source": "review"
+  },
+  "MNT-5": {
+   "level": 2,
+   "confidence": "inferred",
+   "evidence": [
+    "static.debt_markers",
+    "strix/runtime/docker_client.py:19",
+    "pyproject.toml:227"
+   ],
+   "note": "Zero TODO/FIXME markers and detailed lint-ignore rationales, but no debt ledger and at least one hidden drift: docker_client.py claims 'Pinned to openai-agents==0.14.6' while uv.lock pins 0.19.0.",
+   "source": "review"
+  },
+  "EVO-1": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": [
+    "pyproject.toml:3",
+    "meta.changelog:absent",
+    "evo.semver"
+   ],
+   "note": "Version 1.7.0 declared; no committed CHANGELOG, no stated SemVer/migration policy, and GitHub auto-generated notes are the only release record.",
+   "source": "review"
+  },
+  "EVO-2": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": [
+    ".github/workflows/build-release.yml:122",
+    "meta.changelog:absent"
+   ],
+   "note": "Release workflow builds, asserts wheel/binary shape and runs --version across platforms, but there is no changelog or documented qualification record, so cadence is not absorbable from the repo.",
+   "source": "review"
+  },
+  "EVO-3": {
+   "level": 4,
+   "confidence": "derived",
+   "evidence": [
+    ".github/workflows/build-release.yml:16",
+    ".github/workflows/ci-python.yml:52",
+    "pyproject.toml:7"
+   ],
+   "note": "Release matrix covers macOS arm64+x86_64, linux x86_64+arm64 and Windows; CI tests Python 3.12-3.14; requires-python and Go 1.24 stated and enforced in builds.",
+   "source": "review"
+  },
+  "EVO-4": {
+   "level": 1,
+   "confidence": "derived",
+   "evidence": [
+    "evo.support:absent"
+   ],
+   "note": "No support period, EOL policy or security-update window is stated for a distributed product (EU CRA support-period obligation).",
+   "source": "review"
+  },
+  "OPS-1": {
+   "level": 2,
+   "confidence": "inferred",
+   "evidence": [
+    "strix/interface/environment.py:34",
+    "strix/interface/environment.py:166"
+   ],
+   "note": "Startup validation checks model/API-key/Docker and prints actionable fixes, but there is no dedicated, separately-invokable doctor/self-check command and coverage is narrow.",
+   "source": "review"
+  },
+  "OPS-2": {
+   "level": 2,
+   "confidence": "inferred",
+   "evidence": [
+    "strix/telemetry/logging.py:39",
+    "docs/advanced/configuration.mdx:160",
+    "obs.otel:absent"
+   ],
+   "note": "Logging carries contextual scan_id/agent_id fields with configurable levels, but logs are not structured JSON and there are no metrics; the OTEL/Traceloop tracing described in the docs is not implemented in this repo.",
+   "source": "review"
+  },
+  "OPS-3": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": [
+    "obs.env_vars",
+    "strix/config/settings.py:22",
+    "docs/advanced/configuration.mdx:140"
+   ],
+   "note": "pydantic-settings validates types at load and loopback viewer bind is a safe default, but ~22 of 28 env vars are undocumented and telemetry defaults on (not the safe default).",
+   "source": "review"
+  },
+  "OPS-4": {
+   "level": 1,
+   "confidence": "derived",
+   "evidence": [
+    "README.md:84",
+    "scripts/install.sh:154",
+    "risk.remote_script"
+   ],
+   "note": "Primary install is curl|bash and the installer downloads the release binary with no checksum or signature verification; pipx/uv/pip paths exist but are not the headline.",
+   "source": "review"
+  },
+  "PRV-1": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "strix/config/settings.py:165",
+    "strix/telemetry/README.md:11",
+    "strix/telemetry/posthog.py:198",
+    "priv.dnt:absent"
+   ],
+   "note": "RED LINE: not triggered. Telemetry is on by default but disclosed (telemetry/README.md, configuration docs), anonymised with a random session id and no user content ($process_person_profile false). Below meets: no DO_NOT_TRACK support and no prominent first-run notice.",
+   "source": "review"
+  },
+  "PRV-2": {
+   "level": 3,
+   "confidence": "inferred",
+   "evidence": [
+    "README.md:205",
+    "strix/telemetry/README.md:22",
+    "docs/usage/viewer.mdx:14"
+   ],
+   "note": "Local-first: scans run in local Docker, results stay on disk, viewer 'nothing leaves your machine'; telemetry is content-free and the managed cloud is a separate opt-in. No explicit deletion/export tooling beyond on-disk files.",
+   "source": "review"
+  },
+  "PRV-3": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "LICENSE",
+    "pyproject.toml:6",
+    "meta.notices:absent"
+   ],
+   "note": "RED LINE: not triggered. Apache-2.0 LICENSE present with the SPDX id in pyproject; but there is no NOTICE/third-party notices file despite bundling a Go sidecar, a React viewer and many dependencies.",
+   "source": "review"
+  },
+  "PRV-4": {
+   "level": 1,
+   "confidence": "inferred",
+   "evidence": [
+    "meta.compliance:0 docs",
+    "README.md:133"
+   ],
+   "note": "No stated regulatory position for strix itself; the regulation mentions in docs are about producing SOC2/ISO/PCI reports for customers, not strix's own EU CRA / AI-Act posture as a distributed autonomous agent.",
+   "source": "review"
+  },
+  "SUS-1": {
+   "level": 1,
+   "confidence": "derived",
+   "evidence": [
+    "meta.codeowners:absent",
+    "meta.governance:absent"
+   ],
+   "note": "No CODEOWNERS and no governance/succession doc; company-backed (usestrix) but repo governance and maintainer breadth are not evidenced (shallow clone).",
+   "source": "review"
+  },
+  "SUS-2": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": [
+    ".github/ISSUE_TEMPLATE/bug_report.md",
+    ".github/workflows/ci.yml:33",
+    "CONTRIBUTING.md:57"
+   ],
+   "note": "Issue templates, a required ci-passed gate aggregating all lanes, a documented PR process and a pre-commit config.",
+   "source": "review"
+  },
+  "SUS-3": {
+   "level": 2,
+   "confidence": "inferred",
+   "evidence": [
+    "AGENTS.md:1",
+    "CONTRIBUTING.md",
+    "ai.disclosure"
+   ],
+   "note": "AGENTS.md and SKILL.md support agents using strix, but neither CONTRIBUTING nor AGENTS states a policy for how AI-authored contributions to this repo are reviewed or attributed.",
+   "source": "review"
+  }
+ },
+ "gaps": [
+  {
+   "lens": "G9",
+   "title": "No security policy, threat model or disclosure channel",
+   "severity": "high",
+   "case": "No SECURITY.md anywhere in the repo (meta.security_policy found=false); README.md:385 carries only an authorized-use warning.",
+   "impact": "governance / coordinated-vulnerability-handling: a code-executing security tool has no coordinated-disclosure path or stated trust boundaries (EU CRA gap).",
+   "fix": "Add SECURITY.md with a disclosure contact and response targets, publish advisories (GHSA), and commit a threat-model/trust-boundary section.",
+   "evidence": [
+    "meta.security_policy",
+    "README.md:385"
+   ]
+  },
+  {
+   "lens": "G9",
+   "title": "Unverified install and unattested releases",
+   "severity": "high",
+   "case": "README.md:84 and scripts/install.sh:154 fetch the release binary over curl|bash with no checksum/signature check; build-release.yml:100 uploads artifacts with no provenance/signing (ci.provenance found=false).",
+   "impact": "supply chain: tampering with the installer or release artifacts of a tool that then runs with Docker and broad in-sandbox privileges.",
+   "fix": "Publish signed artifacts with build provenance (Sigstore/SLSA) and make the installer verify a checksum or signature.",
+   "evidence": [
+    "scripts/install.sh:154",
+    ".github/workflows/build-release.yml:100"
+   ]
+  },
+  {
+   "lens": "G1",
+   "title": "Documentation describes observability the code does not ship",
+   "severity": "medium",
+   "case": "docs/advanced/configuration.mdx:148-166 documents TRACELOOP/OTEL remote tracing and a local events.jsonl, but no OTEL/Traceloop/events.jsonl implementation exists in strix/ (grep).",
+   "impact": "epistemic: operators relying on the documented audit/trace trail get nothing, and the doc overstates shipped capability.",
+   "fix": "Ship the OTEL export and events.jsonl, or remove the documentation until it is implemented in this repo.",
+   "evidence": [
+    "docs/advanced/configuration.mdx:148",
+    "obs.otel"
+   ]
+  },
+  {
+   "lens": "G1",
+   "title": "Headline capability number is external and stale",
+   "severity": "medium",
+   "case": "benchmarks/README.md:24 cites a 96% XBEN result for Strix v0.4.0 while pyproject.toml:3 is 1.7.0; the harness and raw results live in an external repo (benchmarks/README.md:8), none committed here.",
+   "impact": "epistemic: the flagship capability claim cannot be reproduced at the reviewed commit and is tied to an old version.",
+   "fix": "Commit the harness and raw results (or a slim answer-key lane) and re-run it against the shipped version, dated.",
+   "evidence": [
+    "benchmarks/README.md:24",
+    "pyproject.toml:3"
+   ]
+  },
+  {
+   "lens": "G10",
+   "title": "No SBOM, VEX or third-party notices for a distributed bundle",
+   "severity": "medium",
+   "case": "No SBOM step in CI (ci.sbom found=false) and no NOTICE/third-party license file (meta.notices found=false), though the wheel bundles a Go sidecar and a prebuilt React viewer.",
+   "impact": "compliance: EU CRA SBOM obligation (Dec 2027) unmet and third-party attribution debt.",
+   "fix": "Generate a CycloneDX/SPDX SBOM per release and add a complete NOTICE file.",
+   "evidence": [
+    "ci.sbom",
+    "meta.notices"
+   ]
+  },
+  {
+   "lens": "G8",
+   "title": "Untrusted-input parsers are not fuzzed",
+   "severity": "medium",
+   "case": "strix/utils/api_spec.py parses attacker-influenceable OpenAPI/Swagger/Postman specs; it has malformed-input unit tests (tests/test_api_spec.py:121) and a depth cap but no fuzzing, and there is no mutation/property testing anywhere (COR-3).",
+   "impact": "correctness/robustness: parser edge cases on hostile input are unverified.",
+   "fix": "Add fuzz targets for the spec parser and the other untrusted-input readers with size/recursion assertions.",
+   "evidence": [
+    "strix/utils/api_spec.py:57",
+    "tests/test_api_spec.py:121"
+   ]
+  },
+  {
+   "lens": "G11",
+   "title": "Untrusted target content is not separated from instructions",
+   "severity": "medium",
+   "case": "The agent is designed to act on target-controlled content, but strix/agents/prompts/system_prompt.jinja does not mark an untrusted_content channel distinct from instructions, and there is no injection-resistance regression suite (agent.prompt_injection refs are sandbox/isolation, not channel separation).",
+   "impact": "AI safety: an autonomous agent can be steered by instructions embedded in target content; mitigation currently rests on prompt wording, not a policy boundary.",
+   "fix": "Label untrusted channels explicitly and add a held-out injection regression corpus run per model version (defensive, no technique detail needed).",
+   "evidence": [
+    "strix/agents/prompts/system_prompt.jinja:470",
+    "agent.prompt_injection"
+   ]
+  },
+  {
+   "lens": "G10",
+   "title": "Cryptography has no inventory, abstraction or PQC plan",
+   "severity": "low",
+   "case": "AES-256 report encryption (strix/interface/viewer/report_pdf.py:679), PKCE S256 (strix/config/codex.py:169) and HMAC (sidecar) are used directly with no algorithm inventory, replaceable layer or post-quantum plan.",
+   "impact": "horizon/compliance: CNSA 2.0 and the NIST 2030-35 transition are unprepared.",
+   "fix": "Document a crypto inventory, route crypto through one abstraction, and publish a dated ML-KEM/ML-DSA migration plan.",
+   "evidence": [
+    "strix/interface/viewer/report_pdf.py:679",
+    "strix/config/codex.py:169"
+   ]
+  },
+  {
+   "lens": "G10",
+   "title": "No support period, changelog or SemVer policy",
+   "severity": "low",
+   "case": "No committed CHANGELOG, no stated SemVer/migration policy (evo.semver) and no support/EOL window (evo.support found=false) for a PyPI-distributed product.",
+   "impact": "evolution/compliance: downstreams cannot pin on compatibility or on a security-fix window (EU CRA support-period).",
+   "fix": "Add a CHANGELOG with migration notes, state a SemVer policy and declare a support period.",
+   "evidence": [
+    "meta.changelog",
+    "evo.support"
+   ]
+  }
+ ],
+ "opportunities": [
+  {
+   "lens": "O9",
+   "criterion": "OPP-6",
+   "title": "Extract the coverage-accounting record as a shared standard",
+   "description": "coverage.json separates declared scope, tested-clean, unexamined gaps and completeness caveats, and keeps agent-reported apart from machine-observed facts that contradict it. It is a self-contained, high-value artifact (dissection score 18) that rea (residual unknowns) and caveman could consume as a common coverage-record format.",
+   "value": 5,
+   "reach": 4,
+   "confidence": "observed",
+   "horizon_fit": 1.3,
+   "effort": 2,
+   "action": "extract",
+   "evidence": [
+    "strix/report/coverage.py:244",
+    "strix/report/coverage.py:314"
+   ]
+  },
+  {
+   "lens": "O3",
+   "criterion": "OPP-3",
+   "title": "Bound agent egress with agent-sandbox-lockdown's allowlist",
+   "description": "The strix sandbox grants NET_ADMIN/NET_RAW with no deny-by-default egress (its own report prose recommends one). Composing with agent-sandbox-lockdown's CoreDNS + tinyproxy deny-by-default allowlist would bound what an autonomous pentest agent can reach to the authorized scope.",
+   "value": 4,
+   "reach": 3,
+   "confidence": "derived",
+   "horizon_fit": 1.3,
+   "effort": 3,
+   "action": "harden",
+   "evidence": [
+    "strix/runtime/docker_client.py:228",
+    "strix/tools/finish/tool.py:292"
+   ]
+  },
+  {
+   "lens": "O7",
+   "criterion": "OPP-6",
+   "title": "Route tool outputs through caveman's compressors + CCR",
+   "description": "strix already spills oversized tool output to disk and retrieves it by path; caveman's byte-safe S0-S4 compressors and content-addressed CCR recovery handles would cut agent context cost further while keeping byte-exact recovery, sharing a retrieval-handle shape.",
+   "value": 4,
+   "reach": 4,
+   "confidence": "inferred",
+   "horizon_fit": 1.2,
+   "effort": 3,
+   "action": "consolidate",
+   "evidence": [
+    "strix/tools/output_store.py:1",
+    "strix/llm/context_budget.py:1"
+   ]
+  },
+  {
+   "lens": "O13",
+   "criterion": "OPP-7",
+   "title": "Turn the report pipeline into a CRA/AI-Act evidence pipeline",
+   "description": "strix already emits SARIF 2.1.0 and coverage completeness and sells compliance-ready reports; adding SBOM/VEX and an AI-BOM to the release and report pipeline makes it a dated-obligation-ready output customers will need by 2027.",
+   "value": 4,
+   "reach": 3,
+   "confidence": "inferred",
+   "horizon_fit": 1.4,
+   "effort": 3,
+   "action": "harden",
+   "evidence": [
+    "strix/report/sarif.py:299",
+    "strix/report/coverage.py:244"
+   ]
+  },
+  {
+   "lens": "O8",
+   "criterion": "OPP-5",
+   "title": "Commit a reproducible benchmark lane with bench hygiene",
+   "description": "Bring the XBEN harness (or a slim answer-key) in-repo and run it per release with ponytail-style bench hygiene (interleaved arms, reps, CI), so the headline number is versioned and reproducible instead of external and stale.",
+   "value": 3,
+   "reach": 3,
+   "confidence": "derived",
+   "horizon_fit": 1.1,
+   "effort": 3,
+   "action": "harden",
+   "evidence": [
+    "benchmarks/README.md:8",
+    "benchmarks/README.md:24"
+   ]
+  }
+ ],
+ "reengineering": [
+  {
+   "action": "harden",
+   "component": "install + release supply chain (scripts/install.sh, .github/workflows/build-release.yml)",
+   "gain": "tamper-evident distribution for a privileged tool",
+   "measure": "release carries a provenance attestation and signature, installer verifies a checksum/signature, and an SBOM is attached per release"
+  },
+  {
+   "action": "harden",
+   "component": "security governance (SECURITY.md, threat model, disclosure)",
+   "gain": "coordinated disclosure path and EU-CRA readiness",
+   "measure": "SECURITY.md with contact + response targets committed, a threat-model doc present, and an advisory process (GHSA) in place"
+  },
+  {
+   "action": "extract",
+   "component": "strix/report/coverage.py coverage-accounting record",
+   "gain": "a reusable coverage-record standard across the reviewed tools",
+   "measure": "a versioned schema is published and consumed by at least one other repository"
+  },
+  {
+   "action": "harden",
+   "component": "strix/runtime sandbox egress",
+   "gain": "agent reachability bounded to authorized scope",
+   "measure": "a deny-by-default egress allowlist is enforced for the sandbox and covered by a test"
+  }
+ ],
+ "questions": [
+  "Does strix commit live secrets or leak them in logs/outputs (SEC-6 red line)? No: no secrets outside tests, stored credentials are 0600, and bandit runs in CI/pre-commit; not a red line.",
+  "Are there injection-prone operations on untrusted paths in host code (SEC-7 red line)? No: host Python/Go avoid shell-strings/eval/unsafe-deserialization/TLS-off (subprocess uses list args); the viewer's dangerouslySetInnerHTML sites render escaped/highlighted content on a loopback-only server; not a red line.",
+  "Are headline/benchmark claims contradicted by an in-repo measurement (EPI-5 red line)? No in-repo measurement exists to contradict; the claims are external-cited, stale (v0.4.0) or documentation of unshipped features, so EPI-5 is 2, not 0."
+ ],
+ "not_examined": [
+  "Runtime behaviour (static review only; nothing was executed)",
+  "The external usestrix/benchmarks repo that holds the XBEN harness and raw results",
+  "The managed app.strix.ai cloud backend and enterprise features",
+  "The Kali sandbox image contents beyond containers/Dockerfile",
+  "Git history and contributor breadth (shallow clone, single commit read)"
+ ],
+ "time_minutes": 95
+}

@@ -1,0 +1,652 @@
+{
+ "rqs_review": 1,
+ "target": {
+  "path": "/home/user/GitHub_Repos_Dump/aicodeking__leanrea",
+  "name": "leanrea",
+  "head": "09ba4aa0217f82cd880f855a60b877f59f39b22b",
+  "shallow": true
+ },
+ "profile": "skill-pack",
+ "flags": {
+  "uses_llm": true,
+  "has_ui": false,
+  "executes_code": true,
+  "network_service": false,
+  "parses_untrusted": true,
+  "uses_crypto": false,
+  "heavy_compute": false,
+  "distributed": true
+ },
+ "scope_notes": "Profile skill-pack: the product is one 66-line SKILL.md that shapes agent behaviour, plus a benchmark that backs its claims against REA. Flags changed from the suggestion: parses_untrusted true (the targets are third-party binaries, app bundles, firmware and websites, SKILL.md:3), distributed true (installed and updated via 'npx skills add/update', README.md:51-61). executes_code true because the skill drives the agent's shell. SEC-4 NA (the artefact bundles no third-party components), SEC-5 NA (no CI), MNT-1 NA (no code architecture). The product is judged by the agent behaviour it asks for, its claims and its benchmark.",
+ "reviewer": {
+  "id": "reviewer-leanrea",
+  "kind": "agent",
+  "conflicts": "none"
+ },
+ "date": "2026-10-20",
+ "scores": {
+  "PUR-1": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["README.md:3-5", "README.md:54,69 (agents supported)", "README.md:42-46 (caveats about the benchmark)", "leanrea/SKILL.md:11,23 (macOS-only first moves; platform not stated in README)"],
+   "note": "Problem, users and start are clear; the caveats cover the benchmark, not the skill's own limits (macOS-centric commands, target types never benchmarked); no non-goals.",
+   "source": "review"
+  },
+  "PUR-2": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": ["bench/BENCHMARK.md:1-14 (date 2026-10-16, setup, arms, 3 reps)", "bench/results/final.jsonl (36 runs)", "bench/run.py, bench/run_all.sh, bench/tasks.json (harness and keys)", "derived: totals recomputed from final.jsonl: leanrea 387.7 s, $2.17, 55 turns, 2.40 M tokens, 74/75; REA 627.4 s, $3.36, 124, 5.93 M, 75/75; none 478.8 s, $2.21, 81, 3.11 M (match README.md:18-22)", "bench/BENCHMARK.md:23-24,50-53 (net-negative cells: no skill faster on the native task; cost equal to no skill)"],
+   "note": "Method, baselines, sample size, date, raw data and net-negative cells are present and the totals reproduce; no uncertainty, n=3, one model, and the committed file is not the shipped harness's own output (see gaps).",
+   "source": "review"
+  },
+  "PUR-3": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": ["README.md:7-12 (one SKILL.md, 0 tools, 8 KB)", "bench/ (only the harness behind the claims)"],
+   "note": "Minimal surface with a reason for every file; size measured once, not tracked.",
+   "source": "review"
+  },
+  "COR-1": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": ["probe test.ratio: 0 test files", "probe ci.workflows: none", "bench/run_all.sh:1-7 (hand-run, paid benchmark)"],
+   "note": "Only a hand-run benchmark exercises the behaviour; nothing runs on change.",
+   "source": "review"
+  },
+  "COR-2": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["bench/tasks.json:5-49 (hand-made answer keys)", "bench/tasks.json:43,48 (keys 'hash' and 'JSON' match any answer that mentions the word)", "bench/BENCHMARK.md:41 (a grader false negative corrected by hand)"],
+   "note": "Independent keys exist for 4 tasks on 3 targets; several keys are too lenient to separate right from wrong answers and none is self-tested.",
+   "source": "review"
+  },
+  "COR-3": {
+   "level": 0,
+   "confidence": "observed",
+   "evidence": ["probe test.mutation, test.property, test.fuzz: none", "bench/run.py:44 (regex grading without known-good or known-bad checks)"],
+   "note": "Neither the graders nor the snippets are tested.",
+   "source": "review"
+  },
+  "COR-4": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": ["bench/setup.sh:7-14 (real Notion.app asar, its native addon, Homebrew gh)", "RE4exa/research/rea-self-analysis/results/lens-leanrea/timing.json ({\"ms\":219,\"bytes\":2559})", "RE4exa/research/rea-self-analysis/results/lens-leanrea/answers.txt (recipe applied to REA's own package, 7 questions)"],
+   "note": "Benchmarked on real third-party artefacts; an independent trial applied the recipe to REA's package (219 ms, 2,559 bytes, answers as raw string hits).",
+   "source": "review"
+  },
+  "COR-5": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": ["bench/results/final.jsonl: REA electron wall 47.5, 82.9, 122.4 s; no-skill deep scores 8/8, 0/8, 8/8", "README.md:43 (only 3 reps)"],
+   "note": "Agent outputs vary run to run; the spread is in the raw data but not reported or bounded.",
+   "source": "review"
+  },
+  "REL-1": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["leanrea/SKILL.md:11 (reuse an extraction if one exists)", "leanrea/SKILL.md:14 (dump a disassembly once, then grep the file)", "bench/run.py:50 (one result file per cell)"],
+   "note": "Intermediate work persists on disk and is reused; nothing records which steps of an investigation finished.",
+   "source": "review"
+  },
+  "REL-2": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": ["leanrea/SKILL.md:14-15 (never cat a big file; cap every output with head or -m)", "bench/run.py:16,28 (--max-budget-usd 4, 1,500 s timeout per cell)"],
+   "note": "Output caps are a core rule; the benchmark bounds spend and time per cell.",
+   "source": "review"
+  },
+  "REL-3": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": ["leanrea/SKILL.md:16 (unknown is not absent; static reading is not observed execution)", "leanrea/SKILL.md:17 (missing tool: use the fallback in the same row)", "bench/run.py:30 (error result kept when no result event arrives)"],
+   "note": "Partial answers must be labelled and missing tools degrade to fallbacks.",
+   "source": "review"
+  },
+  "REL-4": {
+   "level": 2,
+   "confidence": "inferred",
+   "evidence": ["leanrea/SKILL.md:29 (extraction directory reset before reuse)", "leanrea/SKILL.md:55 (lldb -p, frida -f, --inspect without stop or cleanup guidance)", "bench/run.py:28 (subprocess timeout ends only the direct child)", "bench/mcp_list.py:10,21 (SystemExit on EOF before p.kill)"],
+   "note": "Extraction directories are reset; processes started for runtime tracing, and MCP children after a timeout, are left to the user.",
+   "source": "review"
+  },
+  "PERF-1": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": ["bench/BENCHMARK.md:16-31 (median wall time per task and arm)", "bench/BENCHMARK.md:67-73 (tool-level timings, REA CLI vs raw command)", "leanrea/SKILL.md:18 (budget: 2-4 tool calls)"],
+   "note": "Main operations are timed and a call budget is stated; raw microbenchmark timings are not committed.",
+   "source": "review"
+  },
+  "PERF-2": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": ["bench/BENCHMARK.md:57-63 (context overhead +3.1k tokens when invoked)", "leanrea/SKILL.md:15,18 (batch probes, cap outputs, turns cost more than bytes)", "derived: tokens over 12 runs 2.40 M (leanrea) vs 5.93 M (REA), bench/results/final.jsonl"],
+   "note": "Context cost is measured and small; output discipline is the skill's core; nothing checks it automatically.",
+   "source": "review"
+  },
+  "SEC-1": {
+   "level": 0,
+   "confidence": "observed",
+   "evidence": ["probe meta.security_policy: no file, no contact"],
+   "note": "No security contact or statement of what the skill trusts, for a tool aimed at untrusted software.",
+   "source": "review"
+  },
+  "SEC-2": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": ["leanrea/SKILL.md:29,38,39 (npx -y @electron/asar, @electron/fuses, prettier: latest version, auto-confirmed)", "leanrea/SKILL.md:66 (brew, npm -g, cargo install without versions)", "bench/setup.sh:15 (rea-agents@6.5.0 with --ignore-scripts)"],
+   "note": "The benchmark pins and disables install scripts; the skill itself runs unpinned registry packages on every use.",
+   "source": "review"
+  },
+  "SEC-3": {
+   "level": 1,
+   "confidence": "inferred",
+   "evidence": ["README.md:51,61 (installed and updated from the GitHub repo via the skills CLI)", "git tag -> none (shallow clone)", "probe ci.provenance: none"],
+   "note": "Distributed as source from the default branch; no tags, signed releases or attestations; the commit hash is the only provenance.",
+   "source": "review"
+  },
+  "SEC-4": {
+   "level": "NA",
+   "confidence": "observed",
+   "evidence": ["README.md:67 (the installed artefact is the leanrea/ folder with SKILL.md only)"],
+   "note": "NA: the distributed artefact is one Markdown file that bundles no third-party components; the tools it calls are not shipped.",
+   "reason": "no bundled components to inventory",
+   "source": "review"
+  },
+  "SEC-5": {
+   "level": "NA",
+   "confidence": "observed",
+   "evidence": ["probe ci.workflows: files []"],
+   "note": "NA: no CI workflows exist; the missing automation is scored under COR-1 and SUS-2.",
+   "reason": "no CI workflows exist",
+   "source": "review"
+  },
+  "SEC-6": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": ["probe risk.secrets: 0", ".gitignore:1-4", "leanrea/SKILL.md:23 (up to 400 lines of target strings into the agent's context; no redaction rule)"],
+   "note": "No secrets in the repo; no scanner; no rule against repeating credentials found inside analysed targets. Red line RL-2 not triggered.",
+   "source": "review"
+  },
+  "SEC-7": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": ["bench/run.py:13-14,28 (argv lists, no shell strings)", "bench/mcp_list.py:5 (command taken from the caller's own argv)", "leanrea/SKILL.md:23,29 (unquoted $T, $X, $D in paste-and-run snippets; rm -rf $X)", "leanrea/SKILL.md:55 (launches or attaches to the target: frida -f, lldb -p, Electron --inspect)"],
+   "note": "No injection-prone operation in shipped code and no untrusted input reaches a shell string; the recipe runs untrusted targets on the host without isolation or consent and uses unquoted variables. Red line RL-4 not triggered.",
+   "source": "review"
+  },
+  "SEC-8": {
+   "level": 1,
+   "confidence": "derived",
+   "evidence": ["leanrea/SKILL.md:47,53 (jadx, apktool, binwalk -e, unblob -e on untrusted files)", "leanrea/SKILL.md:41-43 (otool, nm, readelf, objdump)", "leanrea/SKILL.md:11,50 (work on a copy; SQLite opened read-only)"],
+   "note": "Untrusted inputs go to native parsers and extractors on the host; only working on a copy and read-only SQLite protect anything; no isolation advice.",
+   "source": "review"
+  },
+  "AGT-1": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": ["leanrea/SKILL.md:23 (target strings into context)", "leanrea/SKILL.md:31,54 (bundle slices and website content)", "rg -n -i 'untrusted|inject|instruction' leanrea/SKILL.md -> no rule about untrusted content", "bench/tasks.json (no injection case)"],
+   "note": "Target content is never marked as data and no injection case is tested, while the agent holds a shell.",
+   "source": "review"
+  },
+  "AGT-2": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["leanrea/SKILL.md:17 (brew install only if the user allows it)", "leanrea/SKILL.md:65 (install only on request)", "leanrea/SKILL.md:11 (work on a copy)", "leanrea/SKILL.md:29,38 (npx -y auto-confirms downloads)", "leanrea/SKILL.md:55 (spawning or attaching to running software without asking)"],
+   "note": "Installs need consent and analysis uses copies; registry downloads and launching or attaching to software do not.",
+   "source": "review"
+  },
+  "AGT-3": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": ["leanrea/SKILL.md:16 (claims cite file:offset or a symbol, so a person can check them)", "leanrea/SKILL.md:17,65 (consent for installs)"],
+   "note": "Answers are checkable and installs need consent; no guidance on stopping or undoing runtime actions.",
+   "source": "review"
+  },
+  "AGT-4": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["bench/tasks.json (4 tasks with expected answers)", "bench/BENCHMARK.md:1-3 (one run, 2026-10-16, Sonnet 5.5, Claude Code 2.1.301)", "probe ci.workflows: none"],
+   "note": "An evaluation set with expected outcomes and recorded results exists for one model and one date; no practice of rerunning it when the skill, model or host changes.",
+   "source": "review"
+  },
+  "AGT-5": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["bench/BENCHMARK.md:3 (model, host and REA versions)", "leanrea/SKILL.md:29,54 (npm registry and website fetches, not described in the README)"],
+   "note": "The benchmark names its model and host; the skill's own network flows, and that analysed proprietary code goes to the model provider, are not stated.",
+   "source": "review"
+  },
+  "AGT-6": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": ["leanrea/SKILL.md:18 (2-4 tool calls; stop when every item has evidence)", "bench/run.py:16 (--max-budget-usd 4 per cell)", "bench/results/final.jsonl (cost and tokens per run)"],
+   "note": "A call budget is part of the skill and the benchmark caps and reports spend; nothing enforces the call budget in normal use.",
+   "source": "review"
+  },
+  "INT-1": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["leanrea/SKILL.md:1-4 (SKILL.md frontmatter)", "README.md:51-69 (skills CLI, manual copy, paste into rules)", "probe evo.semver: no version"],
+   "note": "Uses the open SKILL.md convention across agents; no version or compatibility statement.",
+   "source": "review"
+  },
+  "INT-2": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["leanrea/SKILL.md:3 (description lists targets and uses)", "leanrea/SKILL.md:16 (answer format in prose)"],
+   "note": "The frontmatter lets hosts select the skill; the output contract is prose only.",
+   "source": "review"
+  },
+  "INT-3": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": ["README.md:11 (0 tools added)", "bench/BENCHMARK.md:60 (+3.1k tokens when invoked)", "leanrea/SKILL.md:35-55 (one router table)"],
+   "note": "One file, no tools, measured context cost.",
+   "source": "review"
+  },
+  "INT-4": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["leanrea/SKILL.md:17 (fallback per row)", "bench/setup.sh:9-10 (actionable prerequisite messages)", "bench/run.py:9 (an unknown task id raises StopIteration)"],
+   "note": "Fallback guidance and two actionable setup messages; no other error conventions.",
+   "source": "review"
+  },
+  "INT-5": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": ["leanrea/SKILL.md:11 (one directory per target, reused)", "leanrea/SKILL.md:16 (claims cite file:offset or symbol)", "leanrea/SKILL.md:29 (extraction reset before reuse)"],
+   "note": "Read-only work on copies is safe to repeat and citations point at stable locations; targets have no content identifier.",
+   "source": "review"
+  },
+  "INT-6": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["README.md:48-74 (install variants and usage)", "leanrea/SKILL.md:11,23 (cp -c, lipo, otool, xcrun: macOS only)", "leanrea/SKILL.md:29 ($TMPDIR is unset on many Linux hosts)"],
+   "note": "Install docs are clear; the paste-and-run native first move only works on macOS, which is not stated.",
+   "source": "review"
+  },
+  "INT-7": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": ["README.md:69 (plain text, can be pasted into any agent)", "bench/results/final.jsonl (JSONL)"],
+   "note": "Plain-text skill and JSONL results; nothing proprietary.",
+   "source": "review"
+  },
+  "EPI-1": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["leanrea/SKILL.md:16 (cite file:offset or symbol for seen claims)", "bench/results/final.jsonl (no target digest, skill commit or model id per row)"],
+   "note": "Claims are tied to locations; answers and results do not record target identity, skill version or tool versions.",
+   "source": "review"
+  },
+  "EPI-2": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": ["leanrea/SKILL.md:16 (seen / inferred / unknown)"],
+   "note": "Every claim must carry a class; whether agents apply it and how accurate the classes are is not measured.",
+   "source": "review"
+  },
+  "EPI-3": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": ["leanrea/SKILL.md:16 (a fact you did not find is unknown, not absent)", "leanrea/SKILL.md:13 (rg hides dot-folders: always search with rg -uu)"],
+   "note": "Explicit rule, with a concrete coverage trap named.",
+   "source": "review"
+  },
+  "EPI-4": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["leanrea/SKILL.md:18 (stop when every asked item has evidence)"],
+   "note": "Item-by-item completion is required; reporting what was not examined is not.",
+   "source": "review"
+  },
+  "EPI-5": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": ["README.md:3 ('does what REA does', measured on 4 tasks and 3 targets)", "README.md:24 ('at the same accuracy': 74/75 vs 75/75)", "README.md:46 ('about 19% faster' than no skill)", "derived: paired bootstrap over the 12 task-rep cells of bench/results/final.jsonl (20,000 resamples): leanrea/REA wall ratio 0.63 [0.51, 0.76], cost 0.65 [0.59, 0.70], lower in 12/12 cells; leanrea/no-skill wall 0.87 [0.70, 1.05], cost 1.03 [0.92, 1.15]", "bench/BENCHMARK.md:1,75-77 (date and caveats next to the numbers)"],
+   "note": "Numbers are dated, sourced and reproduce from raw data, with caveats alongside; the headline generalises beyond the 4 tasks and the gain over no skill is within noise at n=3. Not contradicted by measurement: red line RL-5 not triggered.",
+   "source": "review"
+  },
+  "MNT-1": {
+   "level": "NA",
+   "confidence": "observed",
+   "evidence": ["probe suggested_profile: 1 SKILL.md and 121 code lines"],
+   "note": "NA: no code architecture to bound; the product is one Markdown file and bench/ holds five short scripts.",
+   "reason": "no modules or layers",
+   "source": "review"
+  },
+  "MNT-2": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": ["probe size.duplicates: 0 groups", "probe size.largest: bench/run.py 51 lines is the largest script"],
+   "note": "Tiny files, no duplication; no checks, none needed at this size.",
+   "source": "review"
+  },
+  "MNT-3": {
+   "level": 0,
+   "confidence": "observed",
+   "evidence": ["probe static.lint, static.format, static.types: none"],
+   "note": "No lint, format or frontmatter validation for the skill or the scripts.",
+   "source": "review"
+  },
+  "MNT-4": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": ["README.md:76-107 (contents and reproduction)", "probe meta.contributing, meta.agents_md: none"],
+   "note": "README explains contents and the benchmark; no contributor or agent instructions.",
+   "source": "review"
+  },
+  "MNT-5": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["README.md:107 and bench/setup.sh:18 (answer keys must change with app and toolchain versions)"],
+   "note": "One maintenance trigger is recorded; other limits (macOS-only moves, lenient keys) are not.",
+   "source": "review"
+  },
+  "EVO-1": {
+   "level": 0,
+   "confidence": "observed",
+   "evidence": ["probe evo.semver: none", "probe meta.changelog: none", "README.md:61 (update pulls the latest)"],
+   "note": "No version or changelog; users cannot pin a known-good skill.",
+   "source": "review"
+  },
+  "EVO-2": {
+   "level": 0,
+   "confidence": "observed",
+   "evidence": ["probe ci.release_automation: none", "git tag -> none"],
+   "note": "No releases; the default branch is the product.",
+   "source": "review"
+  },
+  "EVO-3": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": ["README.md:16 (benchmark on macOS arm64)", "leanrea/SKILL.md:11,23,41 (macOS tools in the first moves)"],
+   "note": "Platform support for the skill is not stated; only the benchmark platform is.",
+   "source": "review"
+  },
+  "EVO-4": {
+   "level": 0,
+   "confidence": "observed",
+   "evidence": ["probe evo.support: none"],
+   "note": "No support statement.",
+   "source": "review"
+  },
+  "OPS-1": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": ["bench/setup.sh:9-10 (two prerequisite checks, benchmark only)", "probe obs.doctor: none"],
+   "note": "No prerequisite check for the skill's tools.",
+   "source": "review"
+  },
+  "OPS-2": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["bench/run.py:31-49 (per-run turns, cost, tokens, tools used, misses)"],
+   "note": "The benchmark records structured per-run metrics; the skill relies on the host's transcript.",
+   "source": "review"
+  },
+  "OPS-3": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["bench/run.py:2,6,8 (LEANREA_WORK, BENCH_MODEL)", "bench/run_all.sh:4 (REPS)", "bench/ctx.sh:15 (ENABLE_TOOL_SEARCH)", "bench/run.py:17 (allowed-tools list rather than a permission bypass)"],
+   "note": "Benchmark settings are documented only in script headers; defaults are conservative.",
+   "source": "review"
+  },
+  "OPS-4": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["README.md:51 (npx skills add: unpinned CLI, repository head)", "README.md:66-68 (manual clone and copy, can be pinned to a commit)", "probe risk.remote_script: none"],
+   "note": "No pipe-to-shell; the primary path runs the latest skills CLI and repository head without verification; the manual path can pin a commit.",
+   "source": "review"
+  },
+  "PRV-1": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": ["probe priv.telemetry: none", "rg -n -i 'telemetry|DO_NOT_TRACK|analytics' -> no match"],
+   "note": "No telemetry in the skill or the benchmark; the third-party skills CLI was not examined. Red line RL-3 not triggered.",
+   "source": "review"
+  },
+  "PRV-2": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": ["leanrea/SKILL.md:11 (local copies under $TMPDIR/re)", "leanrea/SKILL.md:12-15 (local CLI tools first)"],
+   "note": "Analysis is local by default; network use is limited to npx downloads and website fetches.",
+   "source": "review"
+  },
+  "PRV-3": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": ["LICENSE:1-3 (MIT, 2026 AICodeKing)", "README.md:113 (MIT licensed)", "README.md:111 (REA credited; no code copied)"],
+   "note": "MIT license present; no third-party code in the repository. Red line RL-1 not triggered.",
+   "source": "review"
+  },
+  "PRV-4": {
+   "level": 0,
+   "confidence": "observed",
+   "evidence": ["probe meta.compliance: none", "rg -n -i 'legal|authori' README.md leanrea/SKILL.md -> no match", "bench/setup.sh:7-13 (benchmark reverse engineers a proprietary desktop app)"],
+   "note": "No position on applicable rules, including the legal limits of reverse engineering third-party software.",
+   "source": "review"
+  },
+  "SUS-1": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": ["git log -1: one author (AICodeKing), shallow clone", "probe meta.codeowners, meta.governance: none"],
+   "note": "Single maintainer.",
+   "source": "review"
+  },
+  "SUS-2": {
+   "level": 0,
+   "confidence": "observed",
+   "evidence": ["probe ci.workflows: none", "probe meta.issue_templates: none"],
+   "note": "No checks or templates.",
+   "source": "review"
+  },
+  "SUS-3": {
+   "level": "U",
+   "confidence": "inferred",
+   "evidence": ["git log -1 09ba4aa: no attribution trailer", "probe ai.disclosure: 0 mentions, no agent files"],
+   "note": "One commit is visible; whether agents wrote the skill and how changes are reviewed cannot be determined.",
+   "source": "review"
+  }
+ },
+ "red_line_decisions": {
+  "SEC-6": "Not triggered (level 2): no secrets committed; missing redaction guidance is a gap.",
+  "SEC-7": "Not triggered (level 2): no untrusted input reaches a shell string or eval in shipped code; running targets without isolation is scored as a gap.",
+  "EPI-5": "Not triggered (level 2): the headline overgeneralises but no number is contradicted by the committed data, which reproduces exactly.",
+  "PRV-1": "Not triggered (level 3): no telemetry found.",
+  "PRV-3": "Not triggered (level 3): MIT LICENSE present.",
+  "suspected_red_lines": "The automatic scorecard reported none."
+ },
+ "gaps": [
+  {
+   "lens": "G11",
+   "title": "No rule for untrusted content read from targets",
+   "case": "The skill sends agents to read strings, bundle slices, web pages and captures of third-party software (leanrea/SKILL.md:23,31,52,54) and has no rule that this content is data, not instructions; bench/tasks.json has no injection case.",
+   "impact": "Text planted in an analysed target can steer an agent that holds a shell (OWASP LLM01).",
+   "fix": "Add a rule that target content is untrusted data and never a source of commands; add a benchmark target with planted instructions.",
+   "severity": "high",
+   "evidence": ["leanrea/SKILL.md:23", "leanrea/SKILL.md:31", "leanrea/SKILL.md:54", "bench/tasks.json"]
+  },
+  {
+   "lens": "G1",
+   "title": "Headline equivalence exceeds the benchmark",
+   "case": "README.md:3 says the file 'does what REA does' and README.md:24 'at the same accuracy', from 4 tasks on 3 targets, one model, 3 reps (74/75 vs 75/75). A paired bootstrap of bench/results/final.jsonl gives leanrea/REA wall ratio 0.63 [0.51, 0.76] (robust, 12/12 cells) but leanrea/no-skill wall ratio 0.87 [0.70, 1.05], so 'about 19% faster' (README.md:46) is not separable from no change.",
+   "impact": "Agents and people choosing a tool from the README get a broader claim than the measurement supports.",
+   "fix": "Scope the headline to the measured tasks, report intervals, and rerun with at least 5 interleaved reps.",
+   "severity": "medium",
+   "evidence": ["README.md:3", "README.md:24", "README.md:46", "bench/results/final.jsonl"]
+  },
+  {
+   "lens": "G1",
+   "title": "Committed results are not the shipped harness's output and cannot be audited",
+   "case": "bench/run_all.sh:5-7 runs reps 1..REPS and appends to results/run.jsonl, but the committed bench/results/final.jsonl holds reps 11-13; answers are written only to the gitignored work directory (bench/run.py:50), so only miss lists such as ['event ch'] are visible.",
+   "impact": "Grades and the stated reason for the one miss (README.md:24) cannot be checked, and whether other reps were run is not stated.",
+   "fix": "Commit the full run log with answers (or their hashes) and document how final.jsonl was produced.",
+   "severity": "medium",
+   "evidence": ["bench/run_all.sh:5-7", "bench/run.py:50", "bench/results/final.jsonl", ".gitignore:1"]
+  },
+  {
+   "lens": "G8",
+   "title": "Lenient regex graders without self-tests",
+   "case": "bench/tasks.json:43 ('hash': 'hash'), :45 ('sock': '\\.sock') and :48 ('json': 'JSON') pass any answer that mentions the word; bench/run.py:44 applies them with no known-good or known-bad check; BENCHMARK.md:41 records a false negative fixed by hand.",
+   "impact": "Score parity between arms can hide wrong answers.",
+   "fix": "Give every key a known-good and a known-bad answer checked before scoring, and tighten the keys.",
+   "severity": "medium",
+   "evidence": ["bench/tasks.json:43-48", "bench/run.py:44", "bench/BENCHMARK.md:41"]
+  },
+  {
+   "lens": "G9",
+   "title": "Unpinned registry packages executed on every use",
+   "case": "leanrea/SKILL.md:29 and :38 run 'npx -y @electron/asar' and 'npx -y @electron/fuses', :39 'npx -y prettier', each fetching and running the latest version without confirmation.",
+   "impact": "Supply-chain exposure on the analyst's machine at every run.",
+   "fix": "Pin versions in the snippets or require the preinstalled tools listed in the Install section.",
+   "severity": "medium",
+   "evidence": ["leanrea/SKILL.md:29", "leanrea/SKILL.md:38", "leanrea/SKILL.md:39"]
+  },
+  {
+   "lens": "G2",
+   "title": "No isolation for parsing or running untrusted targets",
+   "case": "Extractors and parsers (binwalk -e, unblob -e, jadx, apktool; leanrea/SKILL.md:47,53) and runtime rows that launch or attach to the target (frida -f, lldb -p, Electron --inspect; :55) run directly on the host with no sandbox, VM or consent step.",
+   "impact": "A malicious target can exploit parser defects or run code with the analyst's privileges.",
+   "fix": "Recommend a disposable VM or container for extraction and dynamic analysis, and require consent before launching a target.",
+   "severity": "medium",
+   "evidence": ["leanrea/SKILL.md:47", "leanrea/SKILL.md:53", "leanrea/SKILL.md:55"]
+  },
+  {
+   "lens": "G12",
+   "title": "macOS-only first moves presented as universal",
+   "case": "'cp -c' (APFS clone, leanrea/SKILL.md:11), lipo, otool, xcrun dyld_info and codesign (:23,41) and $TMPDIR (unset on many Linux hosts, so 'rm -rf $X' targets /re/asar, :29) are in the paste-and-run moves; the README states macOS only for the benchmark (README.md:16).",
+   "impact": "On Linux the native first move fails and costs the turns the skill aims to save.",
+   "fix": "State the platform scope, add a Linux first move (readelf, nm, objdump), default TMPDIR and quote variables.",
+   "severity": "medium",
+   "evidence": ["leanrea/SKILL.md:11", "leanrea/SKILL.md:23", "leanrea/SKILL.md:29", "README.md:16"]
+  },
+  {
+   "lens": "G13",
+   "title": "No versions; benchmark keys tied to one app build",
+   "case": "'npx skills update leanrea' pulls the latest (README.md:61); there are no tags or changelog; answer keys match Notion 7.35.1 and go1.27.1 only (README.md:107, bench/setup.sh:18).",
+   "impact": "Users cannot pin a known-good skill, and the benchmark stops being rerunnable as the targets update.",
+   "fix": "Tag releases, record the skill commit in each result row, and keep keys per target version.",
+   "severity": "low",
+   "evidence": ["README.md:61", "README.md:107", "bench/setup.sh:18"]
+  },
+  {
+   "lens": "G10",
+   "title": "No authorised-use note for reverse engineering",
+   "case": "Neither README.md nor leanrea/SKILL.md mentions licence terms or legal limits of reverse engineering, while the benchmark reverse engineers a proprietary app (bench/setup.sh:7-13).",
+   "impact": "Users and agents get no guardrail on authorised use.",
+   "fix": "Add a short note on authorised use and where interoperability exceptions apply.",
+   "severity": "low",
+   "evidence": ["bench/setup.sh:7-13", "README.md", "leanrea/SKILL.md"]
+  }
+ ],
+ "opportunities": [
+  {
+   "lens": "O3",
+   "criterion": "OPP-3",
+   "title": "Cheap-probe front end for REA and rex",
+   "description": "On the same operations raw commands took 0.04-4.8 s where REA's CLI took 0.56-47.9 s (bench/BENCHMARK.md:67-73), and RE4exa's lens run answered 7 answer-key questions in 219 ms. Routing first questions through leanrea's router and keeping REA for typed relations, evidence records and graph queries combines the speed with REA's provenance.",
+   "value": 4,
+   "reach": 3,
+   "confidence": "derived",
+   "horizon_fit": 1.2,
+   "effort": 3,
+   "action": "extract",
+   "evidence": ["bench/BENCHMARK.md:67-73", "RE4exa/research/rea-self-analysis/results/lens-leanrea/timing.json"]
+  },
+  {
+   "lens": "O11",
+   "criterion": "OPP-2",
+   "title": "Adopt ponytail's benchmark hygiene",
+   "description": "ponytail's agentic harness interleaves arms, runs 5 reps, self-tests every grader with good and bad references before spending (DietrichGebert__ponytail benchmarks/agentic/run.py:205-229) and reports bootstrap intervals; leanrea's 3-rep side-by-side design (bench/run_all.sh:5-7) cannot separate leanrea from no skill (wall ratio 0.87 [0.70, 1.05]). One shared harness also gives a common answer-key format with RE4exa's REA answer key.",
+   "value": 4,
+   "reach": 3,
+   "confidence": "observed",
+   "horizon_fit": 1.1,
+   "effort": 3,
+   "action": "consolidate",
+   "evidence": ["bench/run_all.sh:5-7", "bench/tasks.json", "GitHub_Repos_Dump/DietrichGebert__ponytail/benchmarks/agentic/run.py:205-229"]
+  },
+  {
+   "lens": "O9",
+   "criterion": "OPP-6",
+   "title": "Machine-readable router table",
+   "description": "The 19-row router (leanrea/SKILL.md:35-55) as data (detect pattern, command, fallback, output cap, platform), rendered into SKILL.md, would fix the macOS-only first moves, make each row testable on fixture binaries, and let rea, rex and pandacode reuse the same routing.",
+   "value": 3,
+   "reach": 3,
+   "confidence": "inferred",
+   "horizon_fit": 1.2,
+   "effort": 2,
+   "action": "re-cut-interface",
+   "evidence": ["leanrea/SKILL.md:35-55", "leanrea/SKILL.md:23"]
+  },
+  {
+   "lens": "O3",
+   "criterion": "OPP-3",
+   "title": "Run the recipe inside agent-sandbox-lockdown",
+   "description": "agent-sandbox-lockdown provides a Docker sandbox with DNS and egress allowlists, least-privilege tools, approval for writes and a JSONL tool-call log (its README). Running leanrea's extraction and runtime rows there closes the isolation gap without changing the recipe's commands.",
+   "value": 3,
+   "reach": 2,
+   "confidence": "inferred",
+   "horizon_fit": 1.3,
+   "effort": 3,
+   "action": "harden",
+   "evidence": ["leanrea/SKILL.md:47,53,55", "GitHub_Repos_Dump/PromptEngineer48__agent-sandbox-lockdown/README.md"]
+  },
+  {
+   "lens": "O12",
+   "criterion": "OPP-5",
+   "title": "Attention rules as host hooks",
+   "description": "'Never cat a big file', 'cap every output' and '2-4 tool calls' are prose (leanrea/SKILL.md:14-18). A pre-tool hook of the kind ponytail ships for Claude Code and Codex (hooks/claude-codex-hooks.json there) could warn on uncapped output commands and count calls, making the budget enforceable.",
+   "value": 2,
+   "reach": 3,
+   "confidence": "inferred",
+   "horizon_fit": 1.2,
+   "effort": 3,
+   "action": "harden",
+   "evidence": ["leanrea/SKILL.md:14-18", "GitHub_Repos_Dump/DietrichGebert__ponytail/hooks/claude-codex-hooks.json"]
+  }
+ ],
+ "reengineering": [
+  {
+   "action": "harden",
+   "component": "bench/ (run_all.sh, run.py, tasks.json)",
+   "gain": "Claims with uncertainty and auditable grading",
+   "measure": "Interleaved arms with at least 5 reps; paired bootstrap interval on leanrea/no-skill excludes 1 or the claim is withdrawn; every key rejects a known-wrong answer before scoring; answers committed"
+  },
+  {
+   "action": "re-cut-interface",
+   "component": "Router table in leanrea/SKILL.md",
+   "gain": "Platform-correct first moves and a reusable routing table",
+   "measure": "SKILL.md stays at or under 8 KB; Linux and macOS first moves both succeed on fixture ELF and Mach-O binaries"
+  },
+  {
+   "action": "harden",
+   "component": "Safety rules in leanrea/SKILL.md",
+   "gain": "Agents resist planted instructions and do not run unpinned or untrusted code by default",
+   "measure": "A benchmark target with planted instructions is followed in 0 of 5 runs; rg finds no unpinned 'npx -y' in SKILL.md"
+  }
+ ],
+ "questions": [
+  {
+   "question": "Do the README's benchmark totals follow from the committed raw data?",
+   "answer": "Yes: recomputed from bench/results/final.jsonl (leanrea 387.7 s, $2.17, 55 turns, 2.40 M tokens, 74/75; REA 627.4 s, $3.36, 124, 5.93 M, 75/75; percentages 38.2, 35.4, 55.6, 59.5)."
+  },
+  {
+   "question": "Is leanrea faster than REA and than no skill?",
+   "answer": "Faster and cheaper than REA in 12 of 12 paired cells (wall ratio 0.63, 95% bootstrap 0.51-0.76); against no skill the wall-time difference is not distinguishable from zero at n=3 (0.87, 0.70-1.05) and cost is equal."
+  },
+  {
+   "question": "Is the skill safe to point at untrusted software?",
+   "answer": "Not as written: it has no untrusted-content rule, no isolation or consent step for running targets, and runs unpinned npx packages."
+  }
+ ],
+ "not_examined": [
+  "The skills CLI (skills.sh) and its install and update behaviour",
+  "REA itself and the benchmark targets (Notion.app, gh): no macOS and nothing was run",
+  "Per-run answers (not committed)",
+  "Raw outputs behind the context-overhead and tool microbenchmark tables (not committed)",
+  "Git history beyond one shallow commit"
+ ],
+ "time_minutes": 45
+}

@@ -1,0 +1,1092 @@
+{
+ "rqs_review": 1,
+ "target": {
+  "path": "/home/user/GitHub_Repos_Dump/NandhaKishorM__laya",
+  "name": "laya",
+  "head": "ffc142012af63d015fa19f05f29f9c5ff329a2cc",
+  "shallow": true
+ },
+ "profile": "ml-system",
+ "flags": {
+  "uses_llm": true,
+  "has_ui": false,
+  "executes_code": false,
+  "network_service": true,
+  "parses_untrusted": true,
+  "uses_crypto": false,
+  "heavy_compute": true,
+  "distributed": true
+ },
+ "reviewer": {
+  "id": "reviewer-laya",
+  "kind": "agent",
+  "conflicts": "none"
+ },
+ "date": "2026-10-20",
+ "scores": {
+  "PUR-1": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "README.md:8",
+    "README.md:42-80",
+    "README.md:1590-1714",
+    "laya/mcp/server.py:95-101",
+    "CONTRIBUTING.md:7-13"
+   ],
+   "note": "States the problem (typed choice/score/noul decisions), users (developers; agents via the MCP server), a quickstart, a long 'Honest limits' section and non-goals (no open Q&A or generation). No machine-readable capability statement; the README is 118,913 bytes (1,803 lines).",
+   "source": "review"
+  },
+  "PUR-2": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "research/results/t4_colab_benchmark.json (meta: seed 13, Tesla T4, 2026-09-19; latency; calibration_repair)",
+    "research/results/app_benchmark_results.json (meta: n_per_task 400, seed 13, 2026-09-19)",
+    "research/scripts/build_benchmark_nb.py:681-731",
+    ".github/workflows/evals.yml:1-11,49-63",
+    "BENCHMARKS.md:51",
+    "tests/test_doc_tables.py:362-367"
+   ],
+   "note": "Harnesses, seeds, sample sizes, dates and baselines (random, majority class, teacher ceiling) are committed, and net-negative results are reported (base checkpoints below the majority-class baseline, Banking77, moderation, Khmer). Exceptions: the fine-tuned 0.766 headline has no committed result, the 103-332 q/s range is hand-picked per the repo's own test, headline tables carry no intervals, and only the English checkpoint is re-evaluated in CI (weekly).",
+   "source": "review"
+  },
+  "PUR-3": {
+   "level": 2,
+   "confidence": "inferred",
+   "evidence": [
+    "laya-ts/",
+    "laya-rust/",
+    "laya-go/",
+    "laya-java/",
+    "laya-dotnet/",
+    "sdk/python/",
+    "sdk/typescript/",
+    "laya/onnx_agent.py (891 lines, second host)",
+    "pyproject.toml:39-103 (extras and 5 console scripts)",
+    "probe deps.counts: 42 dependencies across 13 manifests"
+   ],
+   "note": "Seven implementations of the inference host (Python Agent, Python ONNXAgent, TypeScript, Rust, Go, Java, .NET), two HTTP SDKs and five agent-framework integrations. Parity is enforced, but there is no necessity gate or surface-size tracking, and the Python ONNX path duplicates the host instead of using the backend contract.",
+   "source": "review"
+  },
+  "COR-1": {
+   "level": 4,
+   "confidence": "derived",
+   "evidence": [
+    ".github/workflows/ci.yml:66-116 (py3.10-3.13 Ubuntu)",
+    ".github/workflows/ci.yml:210-257 (Windows)",
+    "scripts/test_suites.py:1-25",
+    ".github/workflows/release.yml (test_suites.py before publish)",
+    "probe test.ratio: 112,150 test / 106,863 source lines (1.049)"
+   ],
+   "note": "Weight-free suites run on every PR on Linux (four Python versions) and Windows, plus TypeScript, Go, Java, .NET and Rust lanes; the same suite list gates PyPI publishing. No coverage measurement; behaviour that needs real checkpoints is only checked in the weekly evals lane; branch protection is not visible.",
+   "source": "review"
+  },
+  "COR-2": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    ".github/workflows/go.yml:1-30,97-128",
+    "laya-rust/tests/predict_parity_tests.rs:31-34",
+    "laya-go/onnx/predict_test.go:24-27",
+    ".github/workflows/dotnet.yml:1-13,107-110",
+    "research/eval/laya_eval.py:57",
+    ".github/workflows/evals.yml:54-63"
+   ],
+   "note": "Ports are differential-tested against the Python reference with explicit tolerances (2e-4 probabilities), with goldens re-recorded from Python per commit; the .NET and some parity lanes are advisory (continue-on-error). Decision quality is checked against human-labelled MASSIVE data weekly, for the English checkpoint only.",
+   "source": "review"
+  },
+  "COR-3": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": [
+    "laya-rust/tests/proptest_tests.rs:1-30",
+    "research/eval/metamorphic.py",
+    "research/eval/README.md:400-415",
+    "probe test.fuzz: found=false",
+    "probe test.mutation: 0 configs, 1 mention"
+   ],
+   "note": "One small proptest block in Rust and metamorphic robustness diagnostics (option shuffle, label rename). No mutation testing and no fuzzing of the HTTP or MCP request parsers.",
+   "source": "review"
+  },
+  "COR-4": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    ".github/workflows/ci.yml:47 (packed npm package end-to-end)",
+    ".github/workflows/ci.yml:308-332 (installed wheel; client against legacy v0.4.7 server)",
+    ".github/workflows/evals.yml:1-11 (release-triggered real-checkpoint eval, ONNX parity, demo-server smoke)",
+    "research/results/*.json (real labelled datasets)"
+   ],
+   "note": "Realistic labelled datasets back the benchmarks, and the shipped artefacts (packed npm tarball, built wheel and sdist, ONNX export of the real checkpoint, demo server) are exercised in CI, including on each published release.",
+   "source": "review"
+  },
+  "COR-5": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "README.md:1038",
+    "benchmarks/results/parity_english_rtx4070.json",
+    "benchmarks/results/parity_english_fp16_rtx4070.json",
+    "BENCHMARKS.md:11-36",
+    "docs/http-api.md:360-366",
+    "research/eval/laya_eval.py:84-87"
+   ],
+   "note": "Seeds are fixed; dtype effects (bf16 flips 3 of 864 argmaxes versus fp32, fp16 none) and batch-shape float drift are measured and documented; committed sweeps were re-run on three machines and a non-reproducing file was replaced. Default checkpoint and dataset loads are unpinned, and there is no double-run comparison in CI.",
+   "source": "review"
+  },
+  "REL-1": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "laya/train.py:1125-1130",
+    "laya/train.py:599-602",
+    "rg -n -i resume laya/ -> no matches",
+    "laya/cli.py:361-404"
+   ],
+   "note": "Training writes checkpoint_latest atomically after each epoch, but there is no resume path. Batch scoring (laya --batch) builds every request, runs one predict_batch call and prints only at the end, so a kill loses the whole run.",
+   "source": "review"
+  },
+  "REL-2": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "laya/serve.py:88-100",
+    "docs/http-api.md:340-370",
+    "laya/cli.py:137-139"
+   ],
+   "note": "Server limits are documented and enforced (2 MiB streaming body cap, 50,000-character state, 64 questions, token-budget chunking of batches, admission semaphore). Library and CLI batches default to one forward pass per routed group, and no tests at 10x expected size were found.",
+   "source": "review"
+  },
+  "REL-3": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "laya/agent.py:1262",
+    "README.md:1583-1588",
+    "docs/http-api.md:420-438",
+    "laya/confidence.py:251"
+   ],
+   "note": "GPU out-of-memory falls back to CPU with a warning; invalid temperatures fall back to 1.0 with a warning; inference failures return a fixed 500 and overload returns 503 with Retry-After; an answer without usable confidence is reported as 'unevaluated'.",
+   "source": "review"
+  },
+  "REL-4": {
+   "level": 3,
+   "confidence": "inferred",
+   "evidence": [
+    "laya/serve.py:1225-1236",
+    "laya/train.py:599-602",
+    "tests/test_context_manager.py",
+    "probe obs.signals: 8 references"
+   ],
+   "note": "The app lifespan cancels the idle-unload reaper and drains the executor; writes go through temp-then-rename. No tests that check for leftovers and no explicit SIGTERM handling beyond uvicorn were found.",
+   "source": "review"
+  },
+  "PERF-1": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "research/results/t4_colab_benchmark.json (latency p50/p95 by question count)",
+    "BENCHMARKS.md:231-505",
+    "research/results/nvidia_capacity_20260925.json",
+    "laya/mcp/server.py:95-97"
+   ],
+   "note": "Latency is measured with p50/p95 on T4, RTX, GB10, Ryzen, Arc, M1/M5 and EPYC, plus a p99-SLO capacity study; agents are told ~33 ms GPU / ~200 ms CPU. No performance gate in CI.",
+   "source": "review"
+  },
+  "PERF-2": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": [
+    "AST measurement of laya/mcp/server.py: >=12,613 bytes of tool descriptions across 10 tools (3 not statically resolvable)",
+    "AST measurement: _GUARDRAILS 378 B used 9x, _CONTROLS_DOC 1,151 B used 5x, _MODEL_DOC 247 B used 4x",
+    "laya/mcp/server.py:209-210 (json.dumps indent=2)",
+    "README.md (118,913 bytes)"
+   ],
+   "note": "About 10 KB of the catalog is repeated boilerplate, outputs are pretty-printed JSON with full distributions and routing detail, and catalog size is not measured or budgeted by the project. Individual answers are small by nature (typed values, no generated text).",
+   "source": "review"
+  },
+  "PERF-3": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "probe perf.energy: found=false",
+    "BENCHMARKS.md:198-207,231-505",
+    "README.md:861-900",
+    "README.md:1658 (cached_embed_fn LRU 4,096)",
+    "tests/test_question_token_reuse.py",
+    "scripts/export_onnx.py:366-373 (--quantize INT8)"
+   ],
+   "note": "Time per unit of work is measured across many devices and reuse paths exist (question-token reuse, embedding cache, preload/LRU, batching, INT8 ONNX). Energy or carbon is not measured for training or inference.",
+   "source": "review"
+  },
+  "SEC-1": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "SECURITY.md:19-45",
+    "SECURITY.md:49-86",
+    "docs/security.md:347-366",
+    "SECURITY.md:9-15"
+   ],
+   "note": "Private advisory channel and e-mail contact with 48-hour acknowledgement and 5-business-day triage targets; hardening guidance names the trust boundaries (Hub weights, HTTP server, container, prompt screening). The supported-versions table is stale (0.3.x listed as current while 0.4.12 ships) and no published advisories are visible from the repository.",
+   "source": "review"
+  },
+  "SEC-2": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "probe deps.lockfiles: flake.lock, laya-go/onnx/go.sum, laya-rust/Cargo.lock, laya-ts/package-lock.json, sdk/typescript/package-lock.json",
+    ".github/dependabot.yml (pip, npm x2, github-actions)",
+    ".github/workflows/security.yml:50-130 (pip-audit core+serve blocking)",
+    ".github/workflows/go.yml (govulncheck)",
+    "pyproject.toml:27-33",
+    "Dockerfile:30"
+   ],
+   "note": "Lockfiles, an update bot and vulnerability scanning exist for most ecosystems. The Python package itself has no lock, and the Docker image resolves unpinned Python dependencies at build time (only torch is pinned); Dependabot does not cover Cargo, Go, Gradle or NuGet.",
+   "source": "review"
+  },
+  "SEC-3": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    ".github/workflows/release.yml:68-82 (environment pypi, id-token: write, pypa/gh-action-pypi-publish v1.14.2)",
+    ".github/workflows/release-ts.yml:82-95 (npm publish --provenance)",
+    ".github/workflows/release-java.yml:104-111 (signed Maven Central release)"
+   ],
+   "note": "Releases are built in CI and published with OIDC trusted publishing (PyPI) and npm provenance; Java artefacts are signed. No user-facing verification instructions, no SLSA L3 and no reproducible-build check.",
+   "source": "review"
+  },
+  "SEC-4": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": [
+    "probe ci.sbom: found=false",
+    "probe meta.notices: found=false",
+    "verify/checkpoints.json (weights inventory with sizes and SHA-256)"
+   ],
+   "note": "No SBOM or VEX and no third-party notices file. The checkpoint manifest is a partial model inventory but is not generated per release.",
+   "source": "review"
+  },
+  "SEC-5": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    "probe ci.pinned_actions: 118/118 SHA-pinned",
+    "probe ci.permissions: 12/12 workflows set top-level permissions",
+    "probe ci.pull_request_target: none",
+    ".github/workflows/release.yml:68-92"
+   ],
+   "note": "All third-party actions are pinned by full SHA, every workflow declares permissions, there is no pull_request_target, and write scopes are confined to the release jobs with a protected 'pypi' environment. No Scorecard gate; signed tags cannot be checked in a shallow clone.",
+   "source": "review"
+  },
+  "SEC-6": {
+   "level": 4,
+   "confidence": "derived",
+   "evidence": [
+    ".github/workflows/security.yml:20-47 (gitleaks on the diff and on the working tree, checksum-verified binary)",
+    "probe risk.secrets: 0 outside tests",
+    ".gitleaksignore (2 SHA-256 false positives)",
+    "SECURITY.md:76 (LAYA_API_KEY_FILE)",
+    "docs/http-api.md:427 (fixed 500 body)"
+   ],
+   "note": "Red line decision: not triggered. No secrets found in HEAD; two secret scans run on every PR; file-backed secrets and a fixed error body keep keys out of outputs. security.yml notes a PyPI token once present in a committed transcript; the shallow clone cannot show whether it was revoked.",
+   "source": "review"
+  },
+  "SEC-7": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    ".github/workflows/security.yml:193-217 (CI gate: no pickle/torch.load/yaml.load, no subprocess/eval/exec in laya/)",
+    ".github/workflows/security.yml:140-190 (CodeQL python, java-kotlin, javascript-typescript, go)",
+    "research/evals/massive_route_comparison.py:47",
+    "research/scripts/bench_length_batching.py:119",
+    "scripts/export_onnx.py:360 (probe TLS hit is a docstring)"
+   ],
+   "note": "Red line decision: not triggered. The shipped package is gated in CI against unsafe deserialization, shell-outs and dynamic execution, and weights load through safetensors only. The three exec() sites are research scripts that compile the repository's own source from a git revision, not reachable from requests.",
+   "source": "review"
+  },
+  "SEC-8": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "laya/agent.py:577-687 (safetensors load_file)",
+    "laya/serve.py:88-100",
+    "docs/http-api.md:340-350",
+    "tests/test_example_server_errors.py",
+    "tests/test_serve.py",
+    "laya/revisions.py:111-152",
+    "probe test.fuzz: found=false"
+   ],
+   "note": "Requests are parsed in memory-safe Python with size limits and malformed-input tests (invalid JSON, lone surrogates); weights use a non-executable format. Tokenizer and torch native code still parse inputs, model files are fetched unpinned and unverified by default, and nothing is fuzzed.",
+   "source": "review"
+  },
+  "AGT-1": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "docs/guardrail-limitations.md:1-30",
+    "tests/test_guard_document_781.py:1-14",
+    "SECURITY.md:79-82",
+    "laya/mcp/server.py:95-101"
+   ],
+   "note": "Questions (instructions) and state (data) are separate inputs and outputs are bounded to declared labels. No test checks whether instructions embedded in a state steer other answers, and the guard preset is documented to miss injections embedded in documents (#781: three cases scored 0.000-0.301).",
+   "source": "review"
+  },
+  "AGT-2": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "laya/mcp/server.py:249-616 (10 tools, no annotations)",
+    "laya/mcp/tools.py",
+    "probe agent.approval"
+   ],
+   "note": "Tools only read and score (plus a first-use checkpoint download). No readOnly, destructive or idempotent hints are declared, so hosts cannot auto-classify them.",
+   "source": "review"
+  },
+  "AGT-3": {
+   "level": 2,
+   "confidence": "inferred",
+   "evidence": [
+    "README.md:1022-1034",
+    "README.md:1104-1110",
+    "laya/hooks.py:524",
+    "docs/hooks/tracing.md:1-30"
+   ],
+   "note": "The product takes no actions itself. Oversight is a caller pattern (low_confidence leads to human escalation) plus optional hooks for audit logging; there is no built-in decision log.",
+   "source": "review"
+  },
+  "AGT-4": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    ".github/workflows/evals.yml:1-11,49-63",
+    "research/evals/thresholds.json",
+    "laya/evals.py",
+    "laya/evals_cli.py:196-250",
+    "research/results/presentation_checks_choice.json"
+   ],
+   "note": "A labelled evaluation runs weekly, on release and on demand against a committed baseline with tolerances (accuracy 0.02, ECE 0.03). It covers only the English checkpoint on MASSIVE English (n=100), runs after publication rather than blocking it, and reports no intervals.",
+   "source": "review"
+  },
+  "AGT-5": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": [
+    "README.md:132-137",
+    "research/results/t4_colab_benchmark.json (caveats.training_overlap)",
+    "verify/checkpoints.json",
+    "git ls-files | grep -i card -> no model or data card",
+    "Hugging Face model cards: not reachable from this environment"
+   ],
+   "note": "Checkpoints are described (encoder, parameters, context) and the training method is named, but the training-data composition is only hinted at in result caveats (AG News and BoolQ in the training mix) and no model or data card ships in the repository.",
+   "source": "review"
+  },
+  "AGT-6": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "laya/agent.py:1549-1566",
+    "laya/serve.py:20-60 (LAYA_MAX_TOKEN_BUDGET, LAYA_MAX_BATCH_TOKENS, LAYA_MAX_CONCURRENT)",
+    "laya/hooks.py:248"
+   ],
+   "note": "Every result reports token usage and truncation; the server caps token budgets, batch tokens and concurrency; hooks take timeouts. Self-hosted, so no money cost; there is no per-request time limit (left to a reverse proxy).",
+   "source": "review"
+  },
+  "INT-1": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    "laya/mcp/server.py:47-87",
+    "laya/serve.py:1-16",
+    "laya/cli.py:132",
+    ".github/workflows/ci.yml:312-332"
+   ],
+   "note": "MCP stdio server, a documented HTTP API speaking TypeSafe Jev's /v1/systemone protocol (with a strict mode), a CLI with JSON/JSONL, and SDKs; CI tests the current client against a v0.4.7 server. No declared compatibility window.",
+   "source": "review"
+  },
+  "INT-2": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "laya/serve.py:1331-1332",
+    "laya/serve.py:1428-1429",
+    "docs/http-api.md:111-247",
+    "probe agent.describe: 0 describe/schema commands"
+   ],
+   "note": "HTTP handlers read a raw Request, so the generated OpenAPI carries no request schema; the contract is prose. MCP tools expose loose signature-derived schemas (dict/str); there are no output schemas and no describe command.",
+   "source": "review"
+  },
+  "INT-3": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": [
+    "laya/mcp/server.py:249-616 (10 tools)",
+    "pyproject.toml:98-103 (5 console scripts)"
+   ],
+   "note": "A small, parameterised tool set (route, predict, batch variants, shortlist, tournament, preset, decide, long, status). The project does not measure its surface.",
+   "source": "review"
+  },
+  "INT-4": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "laya/mcp/tools.py:14-20",
+    "rg -o 'ToolError(\"<code>\"' laya/mcp/tools.py -> 15 distinct codes",
+    "laya/mcp/server.py:224-246",
+    "docs/http-api.md:420-438",
+    "laya/serve.py:1318-1324"
+   ],
+   "note": "MCP errors carry stable codes with messages and isError; the HTTP error table maps causes to statuses and names fixes; overload returns 503 with Retry-After. HTTP bodies hold free-text detail without codes, MCP errors have no retryable flag, and internal_error echoes exception text.",
+   "source": "review"
+  },
+  "INT-5": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": [
+    "laya/agent.py:1874",
+    "docs/hooks/tracing.md:16-30",
+    "docs/http-api.md:360-366"
+   ],
+   "note": "Inference is read-only, so retries are safe, but results carry no identifier or input digest (the model field is the constant 'laya-rl-agent'), run_id is per process, and batch shape can move floating-point results.",
+   "source": "review"
+  },
+  "INT-6": {
+   "level": 2,
+   "confidence": "inferred",
+   "evidence": [
+    "CONTRIBUTING.md:73-81 (end-to-end suites need local weights)",
+    "tests/test_doc_citations.py",
+    "tests/test_doc_tables.py",
+    "tests/test_env_docs.py",
+    "examples/server.py",
+    "research/benchmarks/feishu_zh/README.zh-CN.md"
+   ],
+   "note": "Docs are drift-checked in CI and some community docs are localised, but the README quickstart needs weights and is not run in PR CI, and the web playground's accessibility was not assessed.",
+   "source": "review"
+  },
+  "INT-7": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "laya/agent.py:629",
+    "scripts/export_onnx.py",
+    "laya/cli.py:11",
+    "docs/evals.md",
+    "research/evals/dataset.template.jsonl",
+    "laya/calibrate.py:624"
+   ],
+   "note": "Weights in safetensors and ONNX, results in JSON/JSONL, a documented JSONL evaluation format and JSON calibration payloads. The formats are documented but not versioned with schemas.",
+   "source": "review"
+  },
+  "EPI-1": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "laya/agent.py:1874",
+    "laya/router.py:1400",
+    "docs/security.md:284-300",
+    "research/results/t4_colab_benchmark.json (meta has seed, GPU, library versions, repo names; no checkpoint commit)",
+    "research/results/eval_english_51_languages.json (config has laya_version and seed; no model revision)"
+   ],
+   "note": "Results carry the routing decision and usage, but no input digest, package version or checkpoint revision; the revision is available only from agent.revision or an authenticated /health. Committed benchmark files record seeds and library versions but not model or dataset revisions.",
+   "source": "review"
+  },
+  "EPI-2": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    "README.md:1040-1100",
+    "laya/confidence.py:124-251",
+    "laya/calibrate.py:411-509",
+    "research/results/t4_colab_benchmark.json (calibration_repair: mean ECE 0.4656 -> 0.0812 laya, 0.3135 -> 0.1059 multilingual)",
+    "research/scripts/build_benchmark_nb.py:681-731 (fit on one half, report on the other)",
+    "research/evals/thresholds.json",
+    "README.md:1578-1580"
+   ],
+   "note": "Every answer carries probabilities and confidence; abstention gating is per option-count bucket with explicit passed/abstained/unevaluated states; thresholds can be fitted to a target error; calibration is measured out of sample on labelled data and its drift is gated weekly. Not 5: shipped checkpoints are over-confident (laya-multilingual has no fitted temperatures), abstention is off by default, and ECE has no intervals.",
+   "source": "review"
+  },
+  "EPI-3": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "laya/confidence.py:251",
+    "laya/evidence.py:1-27",
+    "README.md:572-580",
+    "README.md:660",
+    "README.md:1559-1563"
+   ],
+   "note": "Missing confidence is 'unevaluated', checkpoint evidence states are PRESENT/MISSING/INSUFFICIENT/UNKNOWN and never invented, and language detection reports 'language_undecided'. As a forced-choice classifier it always answers; confident wrong answers on unreadable input (Khmer 0.000 accuracy at 0.705 served confidence) are documented, with routing as the mitigation.",
+   "source": "review"
+  },
+  "EPI-4": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    "laya/agent.py:1549-1566",
+    "laya/agent.py:1736-1760",
+    "tests/test_truncation.py",
+    "tests/test_state_budget.py",
+    "tests/test_doc_tables.py:362-367"
+   ],
+   "note": "Each result states how many state tokens were read and dropped, which questions were truncated and which options collapsed; predict_long reports windows read; the doc-table test lists the claims it cannot back.",
+   "source": "review"
+  },
+  "EPI-5": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "README.md:8 ('100+ languages'; 51 measured per BENCHMARKS.md:55)",
+    "README.md:89 (0.766 with no caveat; no committed artifact per tests/test_doc_tables.py:363)",
+    "README.md:129 ('nothing to hallucinate')",
+    "README.md:1486 (103-332 q/s; 'hand-picked from a range spanning 55-553' per tests/test_doc_tables.py:364)",
+    "README.md:1505 (ECE '3x better' across different benchmarks)",
+    "pyproject.toml:8 and laya/mcp/server.py:97 ('calibrated') vs README.md:1578",
+    "tests/test_doc_tables.py (table cells asserted against committed JSON)",
+    "BENCHMARKS.md:3",
+    "README.md:1590"
+   ],
+   "note": "Red line decision: not triggered (level 2, not 0). Most numeric cells are CI-checked against committed results and the README puts the contradicting calibration measurement next to its claim. Overstatements remain in the tagline, package metadata and MCP descriptions (calibrated probabilities, no hallucination, 100+ languages), one headline accuracy without its artifact, a hand-picked throughput range and a non-matched ECE comparison.",
+   "source": "review"
+  },
+  "MNT-1": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "tests/test_lazy_import.py:1-5",
+    "README.md:1446",
+    "laya/backends/__init__.py:1-20",
+    "probe static.arch_guards: found=false"
+   ],
+   "note": "Some boundaries are enforced by tests (import laya must not import torch; evals are numpy-only; a backend contract), but there is no architecture overview for a seven-implementation monorepo.",
+   "source": "review"
+  },
+  "MNT-2": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": [
+    "probe size.largest: laya-java/scripts/gen_fixtures.py 5,412 lines; laya/agent.py 2,157; laya/router.py 1,906; laya/serve.py 1,602",
+    "probe size.duplicates: 61 groups, 133 files, 1,465,419 bytes (top 8 groups are golden fixtures)",
+    ".github/workflows/go.yml:56-59 (Go dead-code check only)"
+   ],
+   "note": "Several core modules exceed 1,500 lines; duplication is mostly golden fixtures copied across ports; duplication and dead-code checks exist only for Go.",
+   "source": "review"
+  },
+  "MNT-3": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    ".github/workflows/ci.yml:279",
+    "probe static.types: tsconfig strict 2/5, no Python type checker",
+    ".github/workflows/go.yml (gofmt, staticcheck)"
+   ],
+   "note": "Python, the core language, is checked only by a narrow ruff rule set (syntax errors, undefined and unused names) and compileall; no type checker or formatter runs in CI. Compiled ports get compiler checks.",
+   "source": "review"
+  },
+  "MNT-4": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "CONTRIBUTING.md",
+    "AGENTS.md",
+    "docs/ (37 pages)",
+    "research/README.md",
+    "tests/test_doc_citations.py",
+    "tests/test_env_docs.py"
+   ],
+   "note": "Contributor and agent instructions exist and docs are drift-checked in CI; no decision records and no architecture overview.",
+   "source": "review"
+  },
+  "MNT-5": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "README.md:1590-1714 (#156, #131, #185, #1245 with repayment conditions)",
+    "tests/test_doc_tables.py:362-367",
+    "probe static.debt_markers: 0"
+   ],
+   "note": "Known model defects and unbacked claims are recorded with issue numbers and the condition that ends them ('until a retrained checkpoint lands').",
+   "source": "review"
+  },
+  "EVO-1": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "probe meta.changelog: no root changelog",
+    "README.md:97-120",
+    ".github/workflows/release.yml (gh release --generate-notes)",
+    "laya-rust/CHANGELOG.md:5",
+    "laya-java/CHANGELOG.md:5",
+    "laya-dotnet/CHANGELOG.md:5",
+    "pyproject.toml:7"
+   ],
+   "note": "The core package (0.4.12, pre-1.0) has no changelog, breaking-change policy or migration guide; only the latest release is summarised in the README. The language ports keep SemVer changelogs.",
+   "source": "review"
+  },
+  "EVO-2": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": [
+    ".github/workflows/release.yml (tag -> shared suites -> build -> version/tag check -> twine check -> trusted publish -> release)",
+    ".github/workflows/evals.yml:10-11"
+   ],
+   "note": "Automated, qualified releases with generated notes. Cadence cannot be assessed from a one-commit shallow clone (tag v0.4.12 only).",
+   "source": "review"
+  },
+  "EVO-3": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    ".github/workflows/ci.yml:75",
+    ".github/workflows/ci.yml:212",
+    ".github/workflows/docker.yml:20,46-48",
+    "pyproject.toml:12-22",
+    "README.md:150-330",
+    "grep -i macos .github/workflows/*.yml -> comment only"
+   ],
+   "note": "Python 3.10-3.13 on Linux, Windows and ARM64 container builds are tested; macOS (including MPS and Intel Macs, with a setup script) is documented but has no CI runner.",
+   "source": "review"
+  },
+  "EVO-4": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "SECURITY.md:9-15",
+    "pyproject.toml:7"
+   ],
+   "note": "A supported-versions table exists but lists 0.3.x as current while 0.4.12 ships, and gives no dates or support period.",
+   "source": "review"
+  },
+  "OPS-1": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": [
+    "laya/mcp/server.py:249",
+    "laya/serve.py:1265",
+    "verify/checkpoints.py",
+    "docker/check_torch.py",
+    "laya/cli.py:411-417"
+   ],
+   "note": "Health and status endpoints, a checkpoint verifier and error messages with fix hints exist, but no single doctor command checks prerequisites and prints fixes.",
+   "source": "review"
+  },
+  "OPS-2": {
+   "level": 3,
+   "confidence": "inferred",
+   "evidence": [
+    "laya/serve.py:768-790",
+    "laya/serve.py:85",
+    "docs/hooks/tracing.md:1-30",
+    "probe obs.otel: no built-in OpenTelemetry"
+   ],
+   "note": "Plain-text logs with validated levels; per-call run_id and documented OpenTelemetry tracing through user hooks; no built-in metrics or traces.",
+   "source": "review"
+  },
+  "OPS-3": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "laya/serve.py:20-60",
+    "laya/serve.py:23",
+    "laya/serve.py:39",
+    "laya/serve.py:1593",
+    "probe obs.env_vars: 66 read, 55 documented",
+    "tests/test_env_docs.py",
+    "SECURITY.md:60-72",
+    "compose.http.yaml:35"
+   ],
+   "note": "Settings are documented, drift-tested and validated at start-up, and compose publishes on 127.0.0.1. The laya-serve default itself is the unsafe choice: it binds 0.0.0.0 with authentication off unless LAYA_API_KEY is set (warned about in SECURITY.md).",
+   "source": "review"
+  },
+  "OPS-4": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "README.md:24-28",
+    "setup_laya_linux.sh:58-76",
+    "docs/security.md:1-12",
+    "verify/checkpoints.json",
+    "flake.lock",
+    "probe risk.remote_script: no pipe-to-shell"
+   ],
+   "note": "Package-manager installs without pipe-to-shell, and a pinned Nix path exists, but the main artefact (weights) is downloaded at the Hub default revision and unverified unless the user opts into pinning or a digest map.",
+   "source": "review"
+  },
+  "PRV-1": {
+   "level": 4,
+   "confidence": "derived",
+   "evidence": [
+    "rg -i 'telemetry|analytics|posthog|sentry' laya/ laya-ts/src sdk/ docker/ -> comments about hook telemetry only",
+    "probe priv.telemetry: no analytics dependencies",
+    "CONTRIBUTING.md:9-13"
+   ],
+   "note": "Red line decision: not triggered. No product telemetry was found. Hub downloads go through huggingface_hub, whose own request metadata is neither disclosed nor disabled by laya.",
+   "source": "review"
+  },
+  "PRV-2": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    "CONTRIBUTING.md:9-13",
+    "compose.yaml:26 (HF_HUB_OFFLINE)",
+    "docker/prefetch_modelscope.py",
+    "compose.modelscope.yaml",
+    "laya/mcp/server.py:33"
+   ],
+   "note": "Inference is local by default, an offline mode and a ModelScope mirror are supported, and remote serving is opt-in.",
+   "source": "review"
+  },
+  "PRV-3": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "LICENSE (Apache-2.0)",
+    "pyproject.toml:10",
+    "laya-ts/LICENSE",
+    "sdk/python/LICENSE",
+    "sdk/typescript/LICENSE",
+    "research/benchmarks/feishu_zh/README.md:95 (MIT sub-licence disclosed)",
+    "probe meta.notices: found=false",
+    "README.md:1508 (weights 'Apache 2.0' stated only in a comparison table)",
+    "research/results/t4_colab_benchmark.json (caveats.training_overlap: ag_news and boolq in the training mix; no dataset licences anywhere)",
+    "Hugging Face model cards: not reachable from this environment"
+   ],
+   "note": "Red line decision: not triggered (a licence is present). The code licence is clear with SPDX identifiers. The weights' licence is asserted only in a README comparison table, and the licence chain of the base encoders and training data (which includes AG News and BoolQ) is not documented in the repository; no third-party notices file.",
+   "source": "review"
+  },
+  "PRV-4": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": [
+    "probe meta.compliance: 0 compliance documents",
+    "docs/use-cases.md:238-262"
+   ],
+   "note": "No position on the EU CRA or AI Act although the docs show clinical and HIPAA routing use cases.",
+   "source": "review"
+  },
+  "SUS-1": {
+   "level": 1,
+   "confidence": "inferred",
+   "evidence": [
+    "SECURITY.md:28-31",
+    "probe meta.codeowners: found=false",
+    "probe meta.governance: CODE_OF_CONDUCT.md only",
+    "git: 1 author in 1 commit (shallow)"
+   ],
+   "note": "One named maintainer, no CODEOWNERS or governance document, for a project shipping seven implementations.",
+   "source": "review"
+  },
+  "SUS-2": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": [
+    ".github/ISSUE_TEMPLATE/bug_report.yml",
+    ".github/ISSUE_TEMPLATE/feature_request.yml",
+    ".github/PULL_REQUEST_TEMPLATE.md",
+    ".github/workflows/ci.yml:3-6"
+   ],
+   "note": "Issue and PR templates (with verification commands) and CI on every PR. Whether checks and review are required before merge (branch protection) is not visible in the repository, so the meets anchor cannot be confirmed.",
+   "source": "review"
+  },
+  "SUS-3": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": [
+    "AGENTS.md:1-40",
+    "git log -1: 'Co-Authored-By: Claude Opus 5'",
+    "research/benchmarks/feishu_zh/README.md:95",
+    "research/benchmarks/zh_short_commands/README.md:151"
+   ],
+   "note": "AGENTS.md sets rules for coding agents and states that the maintainer verifies changes against real checkpoints; the visible commit carries an AI co-author trailer and community contributions disclose AI assistance.",
+   "source": "review"
+  }
+ },
+ "gaps": [
+  {
+   "lens": "G1",
+   "title": "Agent-facing descriptions claim calibrated probabilities the shipped checkpoints do not have",
+   "case": "laya/mcp/server.py:95-101 tells every MCP client 'noul (calibrated P(true))' and 'No text generation, so no hallucination'; pyproject.toml:8 says 'with calibrated probabilities'. README.md:1578-1580 and research/results/t4_colab_benchmark.json (calibration_repair.mean_ece_shipped 0.4656 for laya, 0.3135 for laya-multilingual, which ships all-1.0 temperatures) show both checkpoints over-confident as shipped.",
+   "impact": "Agents and integrators that read tool descriptions, not the README, act on raw probabilities as if calibrated (OWASP LLM09 misinformation); confident wrong answers are framed as impossible.",
+   "fix": "Reword the descriptions and package metadata to 'probabilities; fit temperatures before thresholding', ship fitted temperatures for laya-multilingual, and add a test that fails when a description claims calibration that the checkpoint's evidence state (laya/evidence.py) does not show.",
+   "severity": "high",
+   "evidence": [
+    "laya/mcp/server.py:95-101",
+    "pyproject.toml:8",
+    "README.md:1578-1580",
+    "research/results/t4_colab_benchmark.json"
+   ]
+  },
+  {
+   "lens": "G9",
+   "title": "Checkpoints, datasets and the regression baseline are unpinned by default",
+   "case": "laya/revisions.py:77-79 returns no revision unless the caller or LAYA_REVISION asks; docs/security.md:3-6 confirms the Hub default revision is used. The weekly gate runs research/eval/laya_eval.py --model convaiinnovations/laya with no revision (.github/workflows/evals.yml:54-58), datasets load without a revision (research/eval/laya_eval.py:104), and the baseline research/results/eval_english_51_languages.json records no model revision.",
+   "impact": "A changed or compromised Hub repository changes every default deployment's decisions (including guardrail presets), and the regression gate silently compares against a moving target.",
+   "fix": "Default the published checkpoints to PINNED_REVISIONS with an explicit opt-out, pin dataset revisions in the harnesses, and write model and dataset revisions into every report and baseline.",
+   "severity": "medium",
+   "evidence": [
+    "laya/revisions.py:77-79",
+    "docs/security.md:3-6",
+    ".github/workflows/evals.yml:54-58",
+    "research/eval/laya_eval.py:104"
+   ]
+  },
+  {
+   "lens": "G10",
+   "title": "laya-serve listens on all interfaces without authentication by default",
+   "case": "laya/serve.py:23 and laya/serve.py:1593 default LAYA_HOST to 0.0.0.0; laya/serve.py:39 leaves LAYA_API_KEY unset, which disables authentication; SECURITY.md:64-66 documents this as a warning rather than changing it.",
+   "impact": "Unauthenticated network access to inference and server metadata on any host where laya-serve is started without extra configuration; conflicts with the CRA secure-by-default obligation from Dec 2027.",
+   "fix": "Default to 127.0.0.1, and refuse to bind a non-loopback address without LAYA_API_KEY unless an explicit opt-out flag is set; test both in tests/test_serve.py.",
+   "severity": "medium",
+   "evidence": [
+    "laya/serve.py:23",
+    "laya/serve.py:39",
+    "laya/serve.py:1593",
+    "SECURITY.md:60-72"
+   ]
+  },
+  {
+   "lens": "G1",
+   "title": "Headline accuracy and throughput claims without committed results",
+   "case": "README.md:89 presents 0.766 (fine-tuned) against 0.362 with no caveat; tests/test_doc_tables.py:362-367 lists 'README.md typed-decisions rows: no committed artifact for the fine-tuned checkpoint' and 'README.md / BENCHMARKS.md 103-332 q/s throughput: hand-picked from a range spanning 55-553'.",
+   "impact": "The most prominent accuracy claim and the throughput claim cannot be reproduced from the repository.",
+   "fix": "Commit the fine-tuning evaluation output (seed, n, checkpoint revision) and generate the README cells from it; replace the throughput range with the measured distribution from a committed file.",
+   "severity": "medium",
+   "evidence": [
+    "README.md:89",
+    "README.md:1486",
+    "tests/test_doc_tables.py:362-367"
+   ]
+  },
+  {
+   "lens": "G1",
+   "title": "Calibration comparison with Jev is not on matched data",
+   "case": "README.md:1505 claims ECE 0.081 vs 0.246, '3x better'. 0.081 is the mean over 49 suites after a per-suite refit (t4_colab_benchmark.json calibration_repair.laya.mean_ece_refit 0.0812); 0.246 comes from a different third-party study (research/README.md:176-177). On the one shared benchmark Jev's published ECE 0.144 is lower than laya-typed-decisions' 0.213 (README.md:1526-1531).",
+   "impact": "Readers and tool-selecting agents take a cross-study number as a head-to-head result.",
+   "fix": "Compare only on matched data, or mark the row as non-comparable and move it out of the headline table.",
+   "severity": "medium",
+   "evidence": [
+    "README.md:1505",
+    "README.md:1526-1531",
+    "research/README.md:168-178"
+   ]
+  },
+  {
+   "lens": "G10",
+   "title": "Supported-versions table is stale and no regulatory position exists",
+   "case": "SECURITY.md:13-15 lists 0.3.x as the current line while pyproject.toml:7 ships 0.4.12; no compliance document exists (probe meta.compliance: 0 documents) although docs/use-cases.md:238-262 shows clinical/HIPAA routing.",
+   "impact": "Users cannot tell whether 0.4.x receives security fixes; CRA vulnerability-reporting duties (from 11 Sep 2026) and support-period declarations are unaddressed.",
+   "fix": "Generate the support table at release time (test it against pyproject), declare a support period, and add a short CRA/AI Act position for the library and the HTTP server.",
+   "severity": "medium",
+   "evidence": [
+    "SECURITY.md:9-15",
+    "pyproject.toml:7",
+    "docs/use-cases.md:238-262"
+   ]
+  },
+  {
+   "lens": "G4",
+   "title": "Batch scoring and training cannot resume after a crash",
+   "case": "laya/cli.py:361-404 builds every request, makes one predict_batch call (line 398) and prints only after it returns; laya/train.py:1125-1130 saves checkpoint_latest per epoch but 'rg -n -i resume laya/' finds no resume path.",
+   "impact": "A kill during a large batch loses all results; a killed training run repeats the partial epoch and loses optimizer state.",
+   "fix": "Stream results per chunk as JSONL with a skip-completed option, and add --resume from checkpoint_latest with optimizer state.",
+   "severity": "low",
+   "evidence": [
+    "laya/cli.py:361-404",
+    "laya/train.py:1125-1130"
+   ]
+  },
+  {
+   "lens": "G9",
+   "title": "No SBOM and no lock for the Python package and image",
+   "case": "probe ci.sbom: found=false; probe deps.lockfiles lists only TypeScript, Rust, Go and Nix locks; pyproject.toml:27-33 uses ranges and Dockerfile:30 runs pip install \".[serve]\" unpinned.",
+   "impact": "Container builds are not reproducible and SBOM obligations (CRA, Dec 2027) are unprepared.",
+   "fix": "Lock the Python dependencies used by the image, generate a CycloneDX SBOM per release, and publish verify/checkpoints.json as the model part of an AI-BOM.",
+   "severity": "low",
+   "evidence": [
+    "pyproject.toml:27-33",
+    "Dockerfile:30",
+    "verify/checkpoints.json"
+   ]
+  },
+  {
+   "lens": "G11",
+   "title": "Agents get a prose-only HTTP contract and a repetitive MCP catalog",
+   "case": "laya/serve.py:1331-1332 and 1428-1429 read raw Request bodies, so OpenAPI has no request schema; laya/mcp/server.py declares no tool annotations, and its descriptions total at least 12,613 bytes with _GUARDRAILS (378 B) repeated 9 times and _CONTROLS_DOC (1,151 B) 5 times (AST measurement).",
+   "impact": "Agents pay several thousand tokens per catalog load, cannot validate HTTP calls against a schema, and hosts cannot auto-approve the read-only tools.",
+   "fix": "Declare pydantic request and response models for both routes, add readOnlyHint annotations, and move shared guidance into one MCP resource or the laya_status tool.",
+   "severity": "low",
+   "evidence": [
+    "laya/serve.py:1331-1332",
+    "laya/serve.py:1428-1429",
+    "laya/mcp/server.py:95-130"
+   ]
+  },
+  {
+   "lens": "G13",
+   "title": "Single maintainer for seven implementations",
+   "case": "SECURITY.md:27-31 names one maintainer; no CODEOWNERS or governance document (probes meta.codeowners, meta.governance); the repository ships Python, TypeScript, Rust, Go, Java and .NET implementations and two SDKs.",
+   "impact": "Security fixes and parity work stall if the maintainer is unavailable; port lanes are already advisory.",
+   "fix": "Add CODEOWNERS per port, a governance and succession note, and a second maintainer with release rights.",
+   "severity": "medium",
+   "evidence": [
+    "SECURITY.md:28-31",
+    ".github/workflows/dotnet.yml:8-13"
+   ]
+  }
+ ],
+ "opportunities": [
+  {
+   "lens": "O9",
+   "criterion": "OPP-6",
+   "title": "Publish the typed-decision record as a versioned JSON Schema",
+   "description": "The answer object (choice/score/noul, probabilities, answer_confidence, abstention state and threshold, usage with truncation and collapsed options, routing) is consistent across the Python host, its ports and laya-coreml, but exists only in code and prose. A published schema lets REA/rex evidence records, strix-style coverage ledgers and agent harnesses (orca, t3code, pandacode, pi) consume decisions without reading prose, and lets contract drift fail CI.",
+   "value": 4,
+   "reach": 4,
+   "confidence": "derived",
+   "horizon_fit": 1.3,
+   "effort": 2,
+   "action": "re-cut-interface",
+   "evidence": [
+    "README.md:1076-1084",
+    "laya/agent.py:1549-1566",
+    "docs/http-api.md:163-247",
+    "laya/serve.py:1331-1332",
+    "mizorewww__laya-coreml/laya_coreml/runtime.py:721-731"
+   ]
+  },
+  {
+   "lens": "O1",
+   "criterion": "OPP-1",
+   "title": "Extract a torch-free calibration and abstention kernel",
+   "description": "Temperature fitting, binning, per-bucket abstention thresholds at a target error and the confidence gate are numpy logic, but laya/calibrate.py imports torch at module scope, so laya's own evidence module cannot import it and laya-coreml carries a modified copy with lazy imports. my-jev's bench.py and RE4exa rex's epistemics.calibrate (Wilson intervals, target-error advice) reimplement the same metrics. One small package would serve all four and add the per-class intervals laya lacks.",
+   "value": 4,
+   "reach": 4,
+   "confidence": "derived",
+   "horizon_fit": 1.2,
+   "effort": 2,
+   "action": "extract",
+   "evidence": [
+    "laya/calibrate.py:25-26",
+    "laya/calibrate.py:442-509",
+    "laya/evidence.py:62",
+    "mizorewww__laya-coreml/laya_coreml/calibrate.py:22-27",
+    "PromptEngineer48__my-jev/bench.py:167-174",
+    "RE4exa tools/rex/rex/epistemics.py:99-130"
+   ]
+  },
+  {
+   "lens": "O7",
+   "criterion": "OPP-6",
+   "title": "Cut the MCP catalog and make its claims honest",
+   "description": "Move the repeated guardrail, model and controls text into one resource, add readOnly annotations and replace 'calibrated P(true)' and 'no hallucination' with measured wording. The same server is copied byte-for-byte into laya-coreml, so the fix reaches both.",
+   "value": 2,
+   "reach": 3,
+   "confidence": "observed",
+   "horizon_fit": 1.1,
+   "effort": 1,
+   "action": "re-cut-interface",
+   "evidence": [
+    "laya/mcp/server.py:95-130",
+    "AST measurement: >=12,613 description bytes, ~10 KB repeated",
+    "mizorewww__laya-coreml/laya_coreml/mcp/server.py:95-101"
+   ]
+  },
+  {
+   "lens": "O2",
+   "criterion": "OPP-2",
+   "title": "One array-based backend contract for every host",
+   "description": "The backend contract hands torch tensors to a backend, so the ONNX path is a second host class and the Core ML and MLX ports copy the whole host (router, serve, MCP, evals, hooks) and re-sync it by hand. An array-in/array-out contract would let ONNX, Core ML, MLX and future runtimes plug in without duplicating host semantics.",
+   "value": 4,
+   "reach": 3,
+   "confidence": "derived",
+   "horizon_fit": 1.1,
+   "effort": 4,
+   "action": "consolidate",
+   "evidence": [
+    "laya/backends/base.py:1-12",
+    "laya/onnx_agent.py (891 lines)",
+    "mizorewww__laya-coreml/NOTICE",
+    "mizorewww__laya-coreml/tests/test_official_contract.py:45-56"
+   ]
+  },
+  {
+   "lens": "O3",
+   "criterion": "OPP-3",
+   "title": "Guard-plus-abstention screen for agent harnesses, measured on their own fixtures",
+   "description": "agent-sandbox-lockdown already has human approval for writes, a JSONL tool-call log and a planted document-shaped prompt injection. laya's guard preset with abstention could screen tool outputs before they reach the LLM and route low-confidence cases to the existing approval step. #781 shows the guard misses document-shaped injections, so the composition should start as a held-out benchmark on that fixture, not as a safety claim.",
+   "value": 3,
+   "reach": 3,
+   "confidence": "inferred",
+   "horizon_fit": 1.3,
+   "effort": 2,
+   "action": "keep",
+   "evidence": [
+    "laya/presets.py:105",
+    "docs/guardrail-limitations.md:1-30",
+    "tests/test_guard_document_781.py:1-14",
+    "PromptEngineer48__agent-sandbox-lockdown/README.md:3",
+    "PromptEngineer48__agent-sandbox-lockdown/README.md:17-20"
+   ]
+  },
+  {
+   "lens": "O14",
+   "criterion": "OPP-7",
+   "title": "Offline, on-device typed decisions with declared cost per decision",
+   "description": "laya already runs offline (HF_HUB_OFFLINE, ModelScope mirror), in the browser through ONNX Runtime Web, and on Apple Silicon through laya-coreml, which measures joules per decision. Publishing latency and energy per checkpoint and runtime would let the Router pick the cheapest adequate path as on-device inference and energy pricing become requirements.",
+   "value": 3,
+   "reach": 3,
+   "confidence": "derived",
+   "horizon_fit": 1.5,
+   "effort": 3,
+   "action": "keep",
+   "evidence": [
+    "laya-ts/src/providers.ts:1-2",
+    "docker/prefetch_modelscope.py",
+    "compose.modelscope.yaml",
+    "mizorewww__laya-coreml/benchmarks/results/ane-energy-summary.json"
+   ]
+  }
+ ],
+ "reengineering": [
+  {
+   "action": "harden",
+   "component": "laya-serve defaults (laya/serve.py main and create_app)",
+   "gain": "No unauthenticated network exposure by default; OPS-3 from 2 to 3",
+   "measure": "Tests asserting the default bind is 127.0.0.1 and that a non-loopback bind without LAYA_API_KEY refuses to start; SECURITY.md hardening section updated"
+  },
+  {
+   "action": "harden",
+   "component": "Evaluation lane (research/eval/laya_eval.py, .github/workflows/evals.yml, research/results baselines)",
+   "gain": "Headline accuracy and calibration claims reproducible from the repository for all three checkpoints",
+   "measure": "Unbacked-claim list in tests/test_doc_tables.py goes from 4 to 0; every report records checkpoint and dataset revisions; the weekly gate covers 3 checkpoints instead of 1"
+  },
+  {
+   "action": "extract",
+   "component": "Calibration and abstention kernel (laya/calibrate.py, laya/confidence.py, metric code in laya/evals.py)",
+   "gain": "One torch-free implementation shared by laya, laya-coreml, my-jev and rex, with per-class intervals added",
+   "measure": "Importing the kernel with torch blocked succeeds (tests/test_lazy_import.py pattern); laya-coreml's calibrate.py diff against upstream drops to 0 lines"
+  },
+  {
+   "action": "re-cut-interface",
+   "component": "HTTP and MCP contracts (laya/serve.py routes, laya/mcp/server.py)",
+   "gain": "Machine-readable request and response schemas and a smaller, annotated tool catalog",
+   "measure": "OpenAPI lists request schemas for both /v1/systemone routes; tools/list size from at least 12.6 KB to under 6 KB; readOnlyHint on all 10 tools"
+  }
+ ],
+ "questions": [
+  "Are laya's accuracy and calibration claims backed by reproducible evaluations? Mostly: harnesses, seeds, n and dates are committed and a CI test checks table cells against result files, and the 0.466 -> 0.081 ECE refit is out of sample. Exceptions: the fine-tuned 0.766 headline and the 103-332 q/s range have no committed result, and the 'ECE 3x better than Jev' row compares different studies.",
+  "Do shipped probabilities support abstention without refitting? No. Both checkpoints ship over-confident and laya-multilingual has no fitted temperatures; abstention is opt-in. The tooling to fit temperatures and target-error thresholds is present and tested.",
+  "Are code, weights and data licences clear? Code is Apache-2.0 with SPDX identifiers. The weights' Apache-2.0 licence is asserted only in a README table, and the base-encoder and training-data licences (training mix includes AG News and BoolQ) are not documented in the repository; Hugging Face model cards were not reachable."
+ ],
+ "not_examined": [
+  "Model weights, Hugging Face model cards and dataset cards (huggingface.co not reachable); no benchmark or evaluation was rerun.",
+  "Git history (shallow clone, 1 commit): contributor count, release cadence, and whether the PyPI token mentioned in security.yml was revoked.",
+  "Internals of laya-dotnet, laya-java, laya-go and laya-rust beyond parity tests and CI wiring; notebooks/*.ipynb.",
+  "Runtime behaviour of laya-serve and the MCP server (not run); the MCP catalog size is a static lower bound (3 of 10 descriptions not resolvable without import).",
+  "Accessibility of the examples/server.py web playground; Docker image contents.",
+  "Branch protection and required-review settings (not visible in the repository)."
+ ],
+ "time_minutes": 70,
+ "scope_notes": "Profile ml-system: three checkpoints plus their inference runtimes, ports and evaluation harness. uses_llm=true because laya ships an MCP server and agent-framework integrations executed by agents (it calls no LLM); executes_code=false because the shipped package is CI-gated against subprocess/eval and only dev scripts spawn processes; has_ui=false because the web playground is an example outside the published package; network_service (laya-serve), parses_untrusted (HTTP bodies, Hub model files), heavy_compute (GPU training and inference) and distributed (PyPI, npm, Maven) are true; uses_crypto=false because cryptography is limited to SHA-256 integrity digests and constant-time token comparison, with no signing, encryption or key exchange for SEC-9 to assess. Static review at ffc1420 (shallow clone); weights on Hugging Face were not reachable, so behaviour claims were checked against committed result files, not reruns."
+}

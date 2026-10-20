@@ -1,0 +1,836 @@
+{
+ "rqs_review": 1,
+ "target": {
+  "path": "/home/user/GitHub_Repos_Dump/morluto__rea",
+  "name": "rea",
+  "head": "b4938aed58737293a6987630476632619713f5cd",
+  "shallow": true
+ },
+ "profile": "agent-harness",
+ "flags": {
+  "uses_llm": true,
+  "has_ui": true,
+  "executes_code": true,
+  "network_service": true,
+  "parses_untrusted": true,
+  "uses_crypto": true,
+  "heavy_compute": false,
+  "distributed": true
+ },
+ "reviewer": {
+  "id": "",
+  "kind": "agent",
+  "conflicts": ""
+ },
+ "date": "2026-10-20",
+ "scores": {
+  "PUR-1": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    "README.md:61-66 (problem; agent and terminal users; local analysis with evidence and limitations)",
+    "README.md:172-206 (per-target outputs and host requirements)",
+    "README.md:369-377 and DISCLAIMER.md:1-27 (lawful-use scope and excluded uses)",
+    ".agents/skills/reverse-engineer-anything/SKILL.md:3 (routing rule: skip REA for source-repository analysis)",
+    "scripts/lib/product-catalog.mjs:8-52 (machine-readable tools, providers, setup clients and CLI inventory)",
+    "package.json scripts.docs:check:built (generate-product-catalog --check), run by the CI docs job .github/workflows/ci.yml:829-847"
+   ],
+   "note": "Problem, users (agents and terminal), quick start, per-target requirements and scope exclusions are explicit; a generated product catalog with tools, providers and CLI inventory is drift-checked in CI. It carries no cost or latency figures, so not 5.",
+   "source": "review"
+  },
+  "PUR-2": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "docs/verification/javascript-module-references-2026-10-15.md:1-60 (base revision, artifact SHA-256, baseline vs new arm, three alternating samples, tokenizer, stated limits)",
+    "docs/verification/javascript-module-references-2026-10-15.json (machine-readable results with executed source hashes)",
+    "experiments/analysis-efficiency/README.md:1-47 (harness scripts, corpus.json, negative results kept)",
+    "README.md:233-235 (showcase numbers attributed to an external reconstruction repository)",
+    "probe claims.harness: 19 harness files; generated results/ ignored"
+   ],
+   "note": "Dated measurement records with method, baseline, sample size, revision and negative results exist in the repo, with rerunnable scripts. No confidence intervals, nothing runs in CI, inputs are external downloads pinned by SHA-256.",
+   "source": "review"
+  },
+  "PUR-3": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": [
+    "src/contracts/toolEffects.ts:55 (208 audited MCP tools at b4938ae)",
+    "src/cliCommandNames.ts (155 CLI command names)",
+    "knip.json:16-27 (unused files, dependencies and exports fail CI)",
+    "docs/roadmap.md:20-27 (admission criteria in prose)",
+    "scripts/bundle-runtime.mjs:6-9 and package.json files['dist'] (bundles and the full per-module tree both ship)",
+    "research/rea-self-analysis/results/findings.jsonl L-ponytail-1 (6.7.0 package: 15.7 MB bundles plus 10.2 MB / 1,505 per-module files; 163 files, 694 KB statically unreachable)"
+   ],
+   "note": "Dependencies and source files are gated by knip and jscpd, and admission criteria exist in prose. The surface (208 tools, 155 commands) has no measured use, and the package ships bundled and unbundled copies of the runtime.",
+   "source": "review"
+  },
+  "COR-1": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    "vitest.config.ts:163-182 (coverage thresholds 65/60/60/68 overall, 80/75/75/80 src/domain, 85/80/80/85 src/contracts)",
+    ".github/workflows/ci.yml:409-430 (merged coverage report in full qualification)",
+    ".github/workflows/ci.yml:478-489 (shard success required)",
+    ".github/workflows/ci.yml:928-940 (CI required gate)",
+    "probe test.ratio: 2,004 test files; test/source lines 1.14 (526,143 / 461,706)",
+    "vitest.config.ts:148 (retry: 0; no flaky-test quarantine found)"
+   ],
+   "note": "Tests gate every change through lane selection, and full qualification enforces coverage thresholds that are higher for domain and contract code. The portable suite runs on Linux only, and no flaky-test tracking or quarantine exists.",
+   "source": "review"
+  },
+  "COR-2": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "experiments/analysis-efficiency/packet-oracle.py:1-6 (independent PCAP oracle reading header bytes, not TShark output)",
+    "docs/client-verification.md:490-497 (closed fixture claims; golden values withheld from prompts; checked against a fixture oracle)",
+    ".github/workflows/real-*.yml (16 real-tool lanes: Ghidra Windows, Hopper, Cutter, browser, Go, EVM, packets, signals, recorded crashes and others)",
+    "docs/verification/javascript-module-references-2026-10-15.md:22-24 (record states producer-fact consistency, not independent extractor correctness)",
+    "research/rea-self-analysis/results/e3-e5-live.json (an independent answer key exposed three JS-graph blind spots on 6.7.0)"
+   ],
+   "note": "Independent oracles and real-tool lanes exist for captures, EVM, Flutter, managed code and native engines. The JavaScript application graph, the central capability, is checked mainly for self-consistency; an external answer key found blind spots.",
+   "source": "review"
+  },
+  "COR-3": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "stryker.config.mjs:20 (thresholds.break: null)",
+    ".github/workflows/mutation.yml:3-5 (daily, non-blocking sweep)",
+    "stryker.config.mjs, stryker.semantics.config.mjs (mutation scope: 9 source files in reverse-tools, gdb, rizin, cutter and process paths)",
+    "rg fast-check: property tests in 6 test files (src/domain/evidence.test.ts, src/domain/canonicalDigest.test.ts, src/domain/canonicalJsonDigestSteps.test.ts, src/dotnet/ManagedMemberOwnership.test.ts, src/domain/javascript/javascriptSemanticAnalysis.rejection.test.ts, tests/boundary/filesystem/ciTestSequencer.test.ts)",
+    "probe test.fuzz: 0 fuzz targets"
+   ],
+   "note": "Mutation testing runs daily on a narrow slice without a threshold, and property tests cover canonical digests and a few domain modules. The many binary and archive parsers (Mach-O, PE, ELF, CIL, ASAR, ZIP, plist) have no fuzzing or property tests.",
+   "source": "review"
+  },
+  "COR-4": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "docs/verification/javascript-module-references-2026-10-15.md:9-16 (real Obsidian 1.14.4 ASAR pinned by SHA-256)",
+    "experiments/analysis-efficiency/README.md:1-47 (real LocalSend, QGIS, Uniswap and Fiddler inputs)",
+    "research/rea-self-analysis/results/findings.jsonl E2-1 (6.7.0 refuses its own npm .tgz; the package directory is refused by open_binary)",
+    "src/domain/zipPackageFormat.ts:2-11 and src/domain/evidence.ts:45-70 (no tar or gzip package format at b4938ae)",
+    ".github/workflows/release.yml:307-333 (release rehearsal installs and exercises the tarball; it does not analyze it)"
+   ],
+   "note": "Realistic third-party inputs are used extensively with recorded results. REA has not been run on its own shipped package; when an external study did that on 6.7.0 it refused the npm tarball, and the source still has no tar reader.",
+   "source": "review"
+  },
+  "COR-5": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "src/domain/evidence.ts:250-278 (Evidence ID = digest of a canonical semantic projection)",
+    "docs/verification/javascript-module-references-2026-10-15.md:22-23 (CLI inline and MCP retained input produced the same view and Evidence ID)",
+    "src/domain/process/processObservation.ts:10-14 (terminal frames compared with at_ms)",
+    "src/domain/process/processComparison.ts:416-424 (exit comparison includes settlement timing)",
+    "docs/process-capture.md:392-394 (timing data takes part in exit comparison)",
+    "research/rea-self-analysis/results/e8-process-compare.json (two runs of a deterministic command: frames identical ignoring time, status changed)"
+   ],
+   "note": "Static outputs are deterministic and content-addressed. Process-capture comparison treats timing as behaviour by documented design, so identical deterministic runs report changed.",
+   "source": "review"
+  },
+  "REL-1": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "src/application/investigation/EvidenceLedger.ts:44-47 (records and unknowns held in in-memory Maps)",
+    "docs/cli.md:177-215 (explicit snapshot save; exact-key result reuse)",
+    "docs/mcp-contracts.md:104-105 (bundle exports stream into an atomically published file)",
+    "research/rea-self-analysis/results/prototype-crash-test.json (baseline: 3 ledger records before SIGKILL, 0 after restart)",
+    "research/rea-self-analysis/results/findings.jsonl D-1"
+   ],
+   "note": "Snapshots and bundle exports are atomic and allow manual checkpoints with exact-key reuse. Nothing checkpoints automatically; a kill loses the session ledger, and no kill-and-resume test exists.",
+   "source": "review"
+  },
+  "REL-2": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "docs/mcp-contracts.md:94-118 (10 MiB response budget; typed resource_constraint before building the string)",
+    "src/evm/EvmoleInterfaceProvider.ts:284 and src/sqlite/SqliteDatabaseWorkerExecution.ts:143 (heap-capped workers)",
+    "research/rea-self-analysis/results/e3-bundle-reimport-attempt.json (889,074,095-byte export; import failed with 'Invalid string length', 5.56 GB peak RSS)",
+    "research/rea-self-analysis/results/e3-e5-live.json (feature trace and version comparison exceeded a 64 MiB budget after 86.6 s and 153.2 s)",
+    "research/rea-self-analysis/results/e10-epistemics.json ledger_growth (records 3 to 853 without bound; RSS plateau about 930 MB)",
+    "src/application/JsonInputFile.ts:256-280 (streaming JSON reader at b4938ae; not re-tested on the 889 MB case)"
+   ],
+   "note": "Limits exist and are documented, and they fail with typed errors. Measured on 6.7.0, the largest sessions cannot be re-imported, and the two largest results can be reached only through an export that cannot be read back in.",
+   "source": "review"
+  },
+  "REL-3": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    "research/rea-self-analysis/results/e3-e5-live.json (resource_constraint states the result was not truncated, retryable false, names the exact Evidence reference and recovery path)",
+    "docs/mcp-contracts.md:25-35 (coverage scope and status; missing members yield truncated)",
+    "docs/mcp-contracts.md:550-560 (cleanup_incomplete; partial_observation kept on failure)",
+    "docs/error-contract.schema.json (20 error codes, 10 categories)",
+    "docs/user-visible-errors.csv (117 audited failure messages with harm rank and verification status)"
+   ],
+   "note": "Partial results and failures are labelled with what is missing, and failure modes are enumerated in a generated schema and an audited message list. Retries use fixed-interval polling within deadlines rather than backoff.",
+   "source": "review"
+  },
+  "REL-4": {
+   "level": 5,
+   "confidence": "derived",
+   "evidence": [
+    "src/process/ProviderProcess.ts:225 (providers spawned in an owned Windows job or a dedicated POSIX process group)",
+    "native/windows/src/process.cc:25-31 (JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE)",
+    "docs/mcp-contracts.md:602-606 (SIGINT/SIGTERM become the AbortSignal; REA never kills a process it cannot prove it owns)",
+    "docs/testing.md:1553-1554 (CI lane requires owned cleanup and empty verifier descendants)",
+    "tests/processOwnershipRunner.ts:1-18",
+    "research/rea-self-analysis/results/e8-process-compare.json (settlement and cleanup_outcome recorded per run)"
+   ],
+   "note": "Ownership is proven with process groups, job objects and run tokens, cleanup failures stay owned and reported, and CI lanes check for leftover descendants.",
+   "source": "review"
+  },
+  "PERF-1": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": [
+    "docs/verification/javascript-module-references-2026-10-15.md:26-36 (first and later query latencies, e.g. 363.03 ms vs 14.90 ms)",
+    "research/rea-self-analysis/results/e6-timings.tsv (REA CLI 1.3-2.3 s per call vs 4-26 ms for objdump/nm/strings)",
+    ".github/workflows/ci-timings.yml (CI timing collection only)",
+    "AGENTS.md:54-58 (before/after measurement rule for cost changes)"
+   ],
+   "note": "Latency is measured in dated experiments, and CI collects test timings. No per-operation budgets, percentiles or performance gates exist.",
+   "source": "review"
+  },
+  "PERF-2": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": [
+    "research/rea-self-analysis/results/e1-contract.json (default tools/list 3,158,368 bytes; output schemas 2,353,893 = 74.5%; opt-in compact 219,226 bytes)",
+    "research/rea-self-analysis/results/lens-caveman/catalog-json.report.json (832,930 o200k tokens for the default catalog)",
+    "src/config/mcpInputSchemaProfile.ts:24 and docs/mcp-contracts.md:959-962 (full profiles are the default at b4938ae)",
+    "docs/mcp-contracts.md:12-13 (each result returned twice, as text and structuredContent)",
+    "src/domain/javascript/javascriptFeatureTrace.ts:151-154 and research/rea-self-analysis/results/e3-e5-live.json (a 3-node trace is 1,424,753 bytes, 98.8% copied parent limitations)",
+    "docs/client-configuration.md:114-117 (a 172-tool input catalog measured about 496 KB, roughly 120k o200k tokens)"
+   ],
+   "note": "The default catalog is a megabyte-scale payload and results carry duplicated content. Summary, paging and compact profiles exist but are opt-in.",
+   "source": "review"
+  },
+  "SEC-1": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "SECURITY.md:3-23 (supported version, private reporting through the GitHub Security tab, acknowledgement and coordinated disclosure)",
+    "SECURITY.md:25-50 (trust boundary: bridge capability tokens, not a sandbox, Ghidra isolation, Hopper download checks)"
+   ],
+   "note": "Private reporting and a trust-boundary section exist. There are no response timelines, and advisories could not be checked from a static clone.",
+   "source": "review"
+  },
+  "SEC-2": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "package-lock.json (750 locked packages)",
+    "probe deps.pinning: 63 exact npm pins, 0 ranges",
+    "package.json:400-402 (allowScripts: frida only)",
+    "scripts/verify-package-install.mjs:18 (package installs with --ignore-scripts)",
+    "probe deps.update_bot: none; probe ci.security_scans: none"
+   ],
+   "note": "The lockfile is committed, pins are exact and install scripts are restricted. No automated update PRs and no known-vulnerability scanning exist for 40 runtime dependencies.",
+   "source": "review"
+  },
+  "SEC-3": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": [
+    ".github/workflows/release.yml:293-333 (qualification at the exact release SHA; clean-runner rehearsal of the same tarball)",
+    ".github/workflows/release.yml:335-388 (publish job: id-token: write, no npm token, publishes the qualified tarball, verifies published bytes and dist-tag)",
+    "docs/releasing.md:248-255 (npm provenance records the release commit)",
+    ".github/actions/prepare-release-package/action.yml (tarball digest validated before publish)"
+   ],
+   "note": "Releases are built and published from CI through OIDC trusted publishing, which generates npm provenance. Attestations were not checked on the registry. There are no user verification instructions and no SLSA L3 claim.",
+   "source": "review"
+  },
+  "SEC-4": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "probe ci.sbom: no SBOM or VEX step",
+    "THIRD_PARTY_NOTICES.md:14-20 (inventory of every package-lock entry plus runtime notices)",
+    "licenses/npm-dependencies.txt (3,757 lines)",
+    "package.json scripts.docs:check:built (licenses:check in the CI docs job)"
+   ],
+   "note": "Third-party notices are complete and drift-checked, but no SPDX or CycloneDX SBOM and no VEX are produced.",
+   "source": "review"
+  },
+  "SEC-5": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    "probe ci.pinned_actions: 158/158 third-party action references SHA-pinned",
+    "tests/boundary/filesystem/workflowActionPinning.test.ts:20-37 (unpinned references fail tests)",
+    ".github/workflows/ci.yml:18-19 (contents: read default)",
+    ".github/workflows/pr-readiness.yml:4,22-40 (pull_request_target runs default-branch code, persist-credentials false, statuses: write only)",
+    ".github/workflows/ci.yml:140-142 (actionlint on workflow changes)"
+   ],
+   "note": "Pinning is enforced by a test, permissions are minimal and job-scoped, and the one privileged trigger does not run PR code. There is no Scorecard gate, no signed tags and no CODEOWNERS review for workflow changes.",
+   "source": "review"
+  },
+  "SEC-6": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": [
+    "probe risk.secrets: 0 secret patterns outside tests",
+    "probe ci.security_scans: no secret scanner in CI",
+    "src/server/toolLogging.ts:4-20 (tool logs record duration and status, never caller input)",
+    "docs/web-network-captures.md:217-223 (authorization and cookie values and URL userinfo excluded structurally)",
+    "AGENTS.md:13 (redact transport credentials and explicitly marked sensitive values)",
+    ".github/workflows/release.yml:342-344 (OIDC publishing; no long-lived npm token)"
+   ],
+   "note": "Red line decided: not triggered. No secrets were found, and redaction is designed into logs and capture outputs. No secret scanner runs in CI; GitHub-side scanning is not visible statically.",
+   "source": "review"
+  },
+  "SEC-7": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": [
+    "probe risk.patterns: shell_true 0, sh_c 0, os_system 0; 8 Python exec() sites",
+    "bridge/pwntools/layout.py:25 and bridge/pwndbg/launch_impl.py:9 (exec of REA's own packaged bridge files)",
+    "bridge/pwndbg/core_context.py:29 (exec of an operator-configured gdbinit)",
+    "src/artifacts/ArtifactPaths.ts:24-42 (absolute, '..' and non-normalized archive paths rejected)",
+    "src/contracts/toolEffects.ts (gdb_console, execute_rizin_command, rizin_debug_command declared executesForeignCode, so destructiveHint is true)",
+    "probe risk.tls_off: 0; risk.unsafe_deser: 0"
+   ],
+   "note": "Red line decided: not triggered. No shell strings, eval or unsafe deserialization in production paths. The Python exec calls load package-owned files, and raw debugger-console tools are deliberate, declared-destructive capabilities. No SAST gate exists, so not 4.",
+   "source": "review"
+  },
+  "SEC-8": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": [
+    "SECURITY.md:33-43 (native providers parse with the user's permissions; not a sandbox)",
+    "src/evm/EvmoleInterfaceProvider.ts:284 and src/sqlite/SqliteDatabaseWorkerExecution.ts:143 (heap-capped workers)",
+    "src/captures/TsharkCaptureProvider.ts and src/signals/SigrokRecordingProvider.ts (prlimit-bounded external parsers)",
+    "docs/javascript-artifact-reconstruction.md:519 (nesting walks stop at 256 levels)",
+    "probe test.fuzz: 0"
+   ],
+   "note": "First-party parsers are TypeScript with size, recursion and heap limits, and some run in bounded worker processes. Delegated native engines run unsandboxed, and nothing is fuzzed.",
+   "source": "review"
+  },
+  "SEC-9": {
+   "level": 1,
+   "confidence": "derived",
+   "evidence": [
+    "src/cutter/CutterBridgeClient.ts:888-968 (HMAC-SHA256 challenge with random nonces)",
+    "src/process/DetachedPgpSignature.ts:15-80 (OpenPGP verification against a pinned publisher fingerprint)",
+    "src/application/LinuxHopperPublisher.ts:209 (SHA-1 used as a corruption check only)",
+    "probe crypto.pqc: none; no algorithm inventory document found"
+   ],
+   "note": "Hashing, HMAC and signature checks call node:crypto and openpgp directly. There is no inventory, no abstraction layer and no post-quantum plan. The exposure is small: only third-party signatures are verified.",
+   "source": "review"
+  },
+  "AGT-1": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "src/server/toolResultEncoding.ts:25-33 (server instructions: treat target content as data; _meta.provenance.untrusted_content)",
+    "src/contracts/toolEffects.ts:743-765 (marker on by default; unknown tool names treated as untrusted)",
+    "docs/mcp-contracts.md:158-196",
+    "tests/boundary/mcp/targetContentFramingMcp.test.ts:46-60 (asserts marker and instructions)",
+    "src/evaluation/AgentEvaluationFixtures.ts (no scenario with directives embedded in target content)"
+   ],
+   "note": "Target content is labelled fail-closed on success and error paths, and the labelling is tested. No injection cases are tested: no adversarial corpus and no agent scenario where target content carries instructions.",
+   "source": "review"
+  },
+  "AGT-2": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "src/contracts/toolEffects.ts:1-22 (audited effect vocabulary for every tool)",
+    "src/contracts/toolEffects.ts:720-741 (annotations derived only from effects)",
+    "research/rea-self-analysis/results/e1-contract.json annotation_hints (readOnlyHint true 5/207; destructiveHint true 31/207)",
+    "src/contracts/toolEffects.ts (81 of 208 tools non-read-only only because they record Evidence: 67 'evidence' and 14 'sessionEvidence' entries)",
+    "docs/mcp-contracts.md:617-619 (no permission grants or per-call approval; hosts confirm)",
+    "rg toolset/enabledTools in src: no server-side tool scoping"
+   ],
+   "note": "Effect hints are derived from per-tool audits and are accurate. There is no scoped permission model or read-only mode; all 208 tools run with the user's privileges; destructive runtime tools rely on host confirmation; and 202 of 207 tools are non-read-only.",
+   "source": "review"
+  },
+  "AGT-3": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": [
+    "docs/mcp-contracts.md:537-560 (cancellation with typed partial results)",
+    "docs/mcp-contracts.md:576-582 (raw partial observations not recorded; an empty bundle does not prove no side effect occurred)",
+    "src/application/investigation/EvidenceLedger.ts:44-47 (log held in memory)",
+    "AGENTS.md:11 and docs/installation.md:367 (setup plan, approval and backups; uninstall)"
+   ],
+   "note": "A stop control, an exportable Evidence log and approved, reversible setup exist. The action log omits failed or cancelled calls and is lost on a crash; approval for runtime actions rests with the host.",
+   "source": "review"
+  },
+  "AGT-4": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "docs/client-verification.md:446-560 (npm run verify:agent: real Codex CLI, closed-claim fixtures, negative routing scenario)",
+    "src/evaluation/KnownAnswerEvaluation.ts:1-60",
+    "rg verify:agent in .github: not run in CI or in the release workflow",
+    "experiments/analysis-efficiency/javascript-facts-agent-history.json (ad hoc model trials)"
+   ],
+   "note": "A good evaluation harness with expected outcomes exists for the skill and tool routing. It runs manually, not before releases, and no results history is recorded in the repository.",
+   "source": "review"
+  },
+  "AGT-5": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": [
+    "README.md:311-315 (analysis is local; tool results go to the agent's model provider)",
+    "SECURITY.md:33-48 (provider data handling and user-managed installations)",
+    "src/domain/evidence.ts:112-118 (authority classes including analyst-inference)",
+    "probe agent.llm_usage: 0 LLM SDK imports"
+   ],
+   "note": "REA calls no models. The data flows to the agent's provider are documented, and agent-supplied inferences carry an analyst-inference authority. No AI-BOM exists for the shipped skill and prompts.",
+   "source": "review"
+  },
+  "AGT-6": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": [
+    "docs/mcp-contracts.md:94-118 (10 MiB response budget; REA_MCP_MAX_RESPONSE_BYTES)",
+    "README.md:221-222 (provider startup deadlines)",
+    "src/application/javascript/JavaScriptArtifactReconstruction.ts:164 (caller-selectable max_heap_mb)",
+    "docs/mcp-contracts.md:537-549 (progress reports elapsed time and observed work)"
+   ],
+   "note": "Output size, time and memory are bounded per call. Results do not report bytes, tokens or cost, and there is no per-task budget across calls.",
+   "source": "review"
+  },
+  "INT-1": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    "docs/mcp-contracts.md:447-460 (stdio default; opt-in streamable HTTP)",
+    "research/rea-self-analysis/results/e0-mcp-doctor.json (protocol_version 2025-11-25; package and catalog digest identity checks)",
+    "server.json (MCP Registry entry, version 6.7.0)",
+    "README.md:107 (CLI --json)",
+    "docs/releasing.md:151-158 (supported public surface)",
+    ".github/workflows/release.yml:379-388 (published CLI and MCP verified after publish)"
+   ],
+   "note": "MCP and a JSON CLI are documented and version-identified with catalog digests, and both are verified on release. Only one protocol is supported, and old clients are not kept working across breaking minor releases.",
+   "source": "review"
+  },
+  "INT-2": {
+   "level": 4,
+   "confidence": "derived",
+   "evidence": [
+    "research/rea-self-analysis/results/e1-contract.json (207/207 tools advertise an outputSchema)",
+    "docs/mcp-contracts.md:348-372 (binary_session tool_availability with reasons and client requirements)",
+    "docs/error-contract.schema.json (generated error contract)",
+    "package.json scripts.docs:check:built and mcp-catalog:check:built (generated catalogs fail CI on drift)",
+    "scripts/lib/release-package-canary.mjs:53 (--help and --llms exercised on the release package)",
+    "docs/mcp-contracts.md:877-883 (advertised input schemas may accept inputs the canonical contract rejects)"
+   ],
+   "note": "Inputs, outputs, effects, availability and errors are discoverable as data, and generated contracts are drift-checked. The advertised input schemas are relaxed projections of the canonical contract, and the catalog is not published as a per-release artifact.",
+   "source": "review"
+  },
+  "INT-3": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": [
+    "src/contracts/toolEffects.ts:55 (208 tools: 48 inspect_*, 21 list_*, 11 compare_*, 10 trace_*)",
+    "src/cliCommandNames.ts (155 CLI commands)",
+    "research/rea-self-analysis/results/e1-contract.json (207 tools, 3,158,368 bytes)",
+    "rg in src: no server-side toolsets or lazy-loaded extensions"
+   ],
+   "note": "The surface is in the hundreds of tools, with per-format and per-engine variants. Counts are measured, but there is no lazy-loaded core set.",
+   "source": "review"
+  },
+  "INT-4": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "docs/error-contract.schema.json (20 codes with category, retryable and remediation)",
+    "src/domain/analysisErrorProjection.ts:569-576 (invalid_request always retryable)",
+    "research/rea-self-analysis/results/e1-contract.json error_reply_missing_file (ENOENT returned with retryable: true)",
+    "src/application/investigation/EvidenceLedger.ts:436 with src/domain/analysisErrorPresentation.ts:274-275 (validator cause replaced by 'Evidence state changed ... try again')",
+    "research/rea-self-analysis/results/e10-epistemics.json batch2.resolve_static",
+    "research/rea-self-analysis/results/e3-bundle-reimport-attempt.json (a string-length limit reported as evidence_integrity_mismatch)",
+    "docs/installation.md:360-363 (same prerequisite yields caller-dependent codes)"
+   ],
+   "note": "The schema, codes and remediation are good. Retryable is true for every invalid input; some causes are masked behind misleading retry advice; and equivalent mistakes get different codes across tools.",
+   "source": "review"
+  },
+  "INT-5": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    "src/domain/evidence.ts:250-278 (Evidence ID = sha256 over a canonical semantic projection that excludes the display path)",
+    "docs/mcp-contracts.md:130-135 (offset/limit/next_offset paging in stable ID order)",
+    "research/rea-self-analysis/results/e1-contract.json (idempotentHint true on 167/207 tools)",
+    "docs/cli.md:228 (exports keep an existing destination unless --overwrite)",
+    "research/rea-self-analysis/results/prototype-crash-test.json (same Evidence IDs in crashed and uncrashed runs)"
+   ],
+   "note": "Identifiers are content-addressed and reproduced across runs, and paging is stable. Retained references are bound to one connection and do not survive a restart.",
+   "source": "review"
+  },
+  "INT-6": {
+   "level": 4,
+   "confidence": "derived",
+   "evidence": [
+    "README.md:69-157 (quick start for agents and terminal; updates)",
+    "README.md:3-4 (README in 21 languages)",
+    "tests/conformance/readmeConsistency.test.ts:32-66 (onboarding commands aligned across translations)",
+    ".github/workflows/release.yml:329-333 and scripts/lib/release-package-canary.mjs:53 (CLI help and discovery exercised on the release tarball)",
+    "flag has_ui=false: accessibility of the documentation website not assessed"
+   ],
+   "note": "The quickstart and help are exercised on the release artifact, and onboarding is translated and drift-tested. There is no product GUI; accessibility of the documentation website was not assessed.",
+   "source": "review"
+  },
+  "INT-7": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "docs/cli.md:216-232 (import and export of canonical JSON evidence bundles)",
+    "docs/mcp-contracts.md:104-105 (streamed export to an atomically published file)",
+    "CHANGELOG.md:79 (6.6.0: saved Evidence and snapshots not migrated across a minor release)"
+   ],
+   "note": "Export and import use documented canonical JSON. The saved format changes in minor releases without migration, which raises the cost of leaving or staying.",
+   "source": "review"
+  },
+  "EPI-1": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    "src/domain/evidence.ts:127-145 (subject digest, provider id and version, analysis profile, operation, parameters, raw and normalized result, confidence, authority, environment, limitations, coverage, links)",
+    "src/domain/evidence.ts:250-278 (content-addressed ID)",
+    "src/domain/evidence.test.ts (property tests on identity)",
+    "research/rea-self-analysis/results/findings.jsonl E10-1 (artifact comparison matched an independent answer key with linked Evidence)"
+   ],
+   "note": "Each result is a content-addressed record with input identity, provider version, parameters and links. Records are not signed for exchange.",
+   "source": "review"
+  },
+  "EPI-2": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "src/domain/evidence.ts:137 (confidence: observed | derived | inferred)",
+    "research/rea-self-analysis/results/e3-e5-live.json (traces separate observed, inferred, unknown and unavailable facts)",
+    "docs/reconstruction-coverage.md:8-12 (inferred Evidence cannot be promoted to a replay observation)",
+    "research/rea-self-analysis/README.md:136 (external calibration on 6.7.0: observed 9/9, derived 3/4, below a 10-claim floor)"
+   ],
+   "note": "Claims carry confidence and authority classes, and weak claims stay unknown. REA does not measure calibration itself.",
+   "source": "review"
+  },
+  "EPI-3": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    "docs/mcp-contracts.md:25-35 (coverage complete or unknown; static equality does not establish runtime behaviour)",
+    "docs/mcp-contracts.md:84-88 (an empty call list under partial coverage is not proof)",
+    "research/rea-self-analysis/results/findings.jsonl E6-1 (absence labelled unknown for Go, Rust and fuse checks)",
+    "research/rea-self-analysis/results/findings.jsonl E3-4 (native_addon_bindings: 0 reported under partial coverage)"
+   ],
+   "note": "Absence is reported as unknown within declared coverage, and coverage is machine-readable. Some summary counts still read as zero when coverage is partial.",
+   "source": "review"
+  },
+  "EPI-4": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    "docs/mcp-contracts.md:42-45 (inventory Evidence requires scoped coverage)",
+    "docs/reconstruction-obligation-ledgers.md:1-20 (declared obligations reconciled with verifier outcomes)",
+    "docs/process-capture.md:395-420 (truncation_details per stream)",
+    "research/rea-self-analysis/results/findings.jsonl L-strix-1 (no session-level completeness accounting)"
+   ],
+   "note": "Per-result coverage and reconstruction obligation ledgers reconcile what was declared with what was found. Investigation-level completeness depends on the agent recording unknowns.",
+   "source": "review"
+  },
+  "EPI-5": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": [
+    "README.md:233-235 (showcase numbers attributed to an external reconstruction repository)",
+    "README.md:357 ('300,000 GitHub stars' without a source; not a capability claim)",
+    "docs/verification/javascript-module-references-2026-10-15.md:38-56 (claims bounded: no whole-agent speedup or catalog-size claim)",
+    "research/rea-self-analysis/results/findings.jsonl (36 findings on 6.7.0; none contradicts a README capability claim)"
+   ],
+   "note": "Red line decided: not triggered. No headline capability claim was found contradicted by measurement, and internal measurement records state their limits. The README carries an unsourced star count and a 'Reverse Engineer Anything' slogan.",
+   "source": "review"
+  },
+  "MNT-1": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    "docs/architecture.mermaid",
+    "AGENTS.md:17 (dependencies flow inward)",
+    "scripts/lib/module-boundaries.mjs:6-21, 58-104 (pure-layer, composition and provider-construction rules)",
+    "package.json scripts.lint (verify:module-boundaries) and scripts.check:ci (verify:architecture-guards)"
+   ],
+   "note": "Boundary rules run in the CI lint step and block merges. They cover the pure layers and 14 migrated provider roots, not every directory.",
+   "source": "review"
+  },
+  "MNT-2": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": [
+    ".jscpd.json and docs/testing.md:76-80 (3% duplication limit in CI)",
+    "knip.json:16-27 (unused files and exports are errors)",
+    "probe size.largest: bridge/ghidra/ReaGhidraBridge.java 4,911 lines; src/adb/AdbProvider.ts 3,232 lines",
+    ".oxlintrc.json:6-23 (size and complexity rules are warnings only)",
+    "research/rea-self-analysis/results/findings.jsonl L-ponytail-1 (duplicate runtime trees and 163 unreachable files in the 6.7.0 package)"
+   ],
+   "note": "Duplication and dead-code checks are enforced on source. Large outlier files are unexplained, and the shipped package duplicates the runtime.",
+   "source": "review"
+  },
+  "MNT-3": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    "tsconfig.json:2-20 (strict, noUncheckedIndexedAccess, exactOptionalPropertyTypes)",
+    "package.json scripts.check:ci (typecheck, lint, format:check and knip in the CI static job)",
+    ".husky/pre-commit (lint-staged) and .husky/pre-push (check:fast)",
+    "rg suppressions in src: 4, each with a stated reason",
+    "probe static.types: no Python checker for 4,927 lines of Python bridges"
+   ],
+   "note": "TypeScript is strict, checks run in CI and in commit hooks, and suppressions are explained. The Python bridges have no lint or type configuration.",
+   "source": "review"
+  },
+  "MNT-4": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    "CONTRIBUTING.md (development, scope, PR ownership, generated files)",
+    "AGENTS.md:1-112",
+    "docs/tool-design.md",
+    ".agents/skills (5 maintainer and user skills)",
+    "package.json scripts.docs:check:built and tests/conformance/readmeConsistency.test.ts (doc drift checks)",
+    "probe meta.docs: 132 pages, 0 decision records"
+   ],
+   "note": "Contributor, architecture and agent documentation is extensive and drift-checked in CI. No decision records are kept.",
+   "source": "review"
+  },
+  "MNT-5": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": [
+    "scripts/scan-todos.mjs:46-52 (CI fails on TODO/FIXME/HACK markers)",
+    "docs/roadmap.md:1-9 (tracker issues #32, #48, #39)",
+    "docs/mcp-contracts.md:581-583 (open retention decision tracked as #4276)",
+    "rg: 24 issue references in docs/*.md"
+   ],
+   "note": "Markers are banned, so debt lives in GitHub issues, which a static review cannot see. No in-repo ledger with owners or repayment triggers exists.",
+   "source": "review"
+  },
+  "EVO-1": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": [
+    "docs/releasing.md:145-160 (always-bump-minor: a minor increment does not promise compatibility; breaking-change criteria)",
+    "CHANGELOG.md (12 BREAKING CHANGES sections; 6 in minor releases 6.1.0-6.6.0, each with migration actions)",
+    ".github/workflows/release.yml:275-283 (migration notes validated for breaking markers)",
+    "docs/migration-6.2.md"
+   ],
+   "note": "There is an explicit policy, and breaking notes with migration steps are machine-checked. The policy removes the version signal: six breaking releases shipped as minors.",
+   "source": "review"
+  },
+  "EVO-2": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    ".github/workflows/release.yml:293-388 (exact-SHA qualification, clean-runner rehearsal, byte and dist-tag verification, post-publish canary)",
+    ".github/workflows/release-recovery.yml",
+    "CHANGELOG.md dates (38 releases 2026-07-12..2026-10-18; 14 releases 2026-10-03..2026-10-18, 9 with breaking changes)",
+    "CHANGELOG.md:11 (6.6.0 tagged but not published to npm)"
+   ],
+   "note": "Release qualification is automated end to end, with latest/next channels. A cadence of about 2.7 releases a week, mostly breaking in October, is more than downstream users can absorb.",
+   "source": "review"
+  },
+  "EVO-3": {
+   "level": 4,
+   "confidence": "derived",
+   "evidence": [
+    "README.md:174-206 (Node 22.19+/24.11+/26+ and per-target host requirements)",
+    "scripts/ci/plan.mjs:254-268 (package lanes: linux x64/arm64, macOS arm64; macOS x64 in full tier)",
+    ".github/workflows/ci.yml windows-curated job (windows-latest) and .github/workflows/real-ghidra-windows.yml (self-hosted Windows)",
+    ".github/workflows/sqlite-runtime.yml:19-23 (Node 22.x, 24.15.0, 24.x, 26.x for SQLite only)",
+    "install.sh:55-65 (fail_node_version message on unsupported Node)"
+   ],
+   "note": "A support matrix is stated, and CI covers Linux and macOS on x64 and ARM plus Windows. The full suite runs on Node 24 only; Node 22 and 26 are tested for SQLite only.",
+   "source": "review"
+  },
+  "EVO-4": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "SECURITY.md:5 (security fixes for the latest published version only)"
+   ],
+   "note": "Supported versions are stated, but there is no support period or end-of-life dates. At the current cadence each version is supported for days.",
+   "source": "review"
+  },
+  "OPS-1": {
+   "level": 5,
+   "confidence": "derived",
+   "evidence": [
+    "docs/installation.md:313-345 (read-only rea doctor with scoped --json checks)",
+    "src/application/Doctor.ts:193 (every failed check carries remediation)",
+    "research/rea-self-analysis/results/e0-mcp-doctor.json (structured mcp doctor checks and identity)",
+    ".agents/skills/reverse-engineer-anything/SKILL.md:28-58 (doctor, then setup --dry-run --json plan, then approved apply)"
+   ],
+   "note": "Diagnostics are machine-readable with per-check remediation, and repairs go through a reviewable dry-run plan before anything changes.",
+   "source": "review"
+  },
+  "OPS-2": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "src/logger.ts:31-39 (pino JSON logs on stderr; REA_LOG_LEVEL)",
+    "src/server/toolLogging.ts:4-20 (per-tool duration and status)",
+    "probe obs.otel: 1 reference in a verifier script; no tracing"
+   ],
+   "note": "Logs are structured and levels are configurable. There is no tracing or metrics export.",
+   "source": "review"
+  },
+  "OPS-3": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": [
+    "src/config/environment.ts:24-47 (zod-validated settings at startup)",
+    "src/config/mcpInputSchemaProfile.ts:24 (invalid values fail with a stated constraint)",
+    "docs/mcp-contracts.md:447-463 (stdio default; HTTP opt-in on loopback by default)",
+    "src/server/http/serveStreamableHttp.ts:589-593 (non-loopback bind relaxes Host checks with a warning)",
+    "rg: REA_* settings documented across topic guides; no single configuration reference"
+   ],
+   "note": "Core settings are validated at startup and the defaults are safe. Documentation is scattered across guides; unknown settings do not fail; the opt-in HTTP mode has no authentication.",
+   "source": "review"
+  },
+  "OPS-4": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": [
+    "docs/installation.md:1214 (setup registers an exact pinned version)",
+    "install.sh:1-10, 107-111 (truncation guard; exact version; post-install identity check)",
+    "docs/installation.md:1295-1307 (curl wrapper optional; npm is the primary path)",
+    "src/application/LinuxHopperPublisher.ts:209-260 (Hopper package checked against a pinned PGP publisher key)"
+   ],
+   "note": "Installs go through npm with exact versions, and the optional wrapper is guarded. Signatures are not verified by default for REA itself.",
+   "source": "review"
+  },
+  "PRV-1": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    "probe priv.telemetry: no telemetry dependency; hits are prompt text and CI opt-out variables (src/contracts/promptContracts.ts:268, .github/workflows/nativeaot-fixtures.yml:18, scripts/verify-repository-skill.mjs:61)",
+    "rg fetch/https in src: task-scoped calls only (src/application/HopperDownload.ts:24, src/browser/WebSourceMapFetcher.ts:380, src/ida/IdaMcpConnection.ts:290)",
+    "AGENTS.md:5 (local-only tool)",
+    "README.md:313-314"
+   ],
+   "note": "Red line decided: not triggered. No telemetry exists. There is no explicit no-telemetry statement, so not 5.",
+   "source": "review"
+  },
+  "PRV-2": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": [
+    "README.md:313-314 (local analysis)",
+    "docs/cli.md:182 (snapshots use owner-only permissions)",
+    "docs/installation.md:367 (uninstall --purge-data removes cache and state)",
+    "docs/cli.md:216-232 (export)"
+   ],
+   "note": "Data stays local by default, with export and deletion. Data flows are documented per guide rather than in one place, and there is no declared offline mode.",
+   "source": "review"
+  },
+  "PRV-3": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    "LICENSE (MIT); package.json license MIT",
+    "THIRD_PARTY_NOTICES.md:1-40 (complete npm inventory, derived code, GPL and LGPL components documented)",
+    "licenses/ (19 license and notice files)",
+    "package.json scripts.licenses:check (in docs:check:built, run by the CI docs job)",
+    "probe meta.license: 0 files with SPDX headers"
+   ],
+   "note": "Red line decided: not triggered. The license and notices are complete and drift-checked in CI, and copyleft runtime components are documented. There is no per-file REUSE and no SBOM license data.",
+   "source": "review"
+  },
+  "PRV-4": {
+   "level": 1,
+   "confidence": "derived",
+   "evidence": [
+    "probe meta.compliance: 0 documents, 0 regulation mentions",
+    "DISCLAIMER.md:1-60 (user-side legality only)",
+    "SECURITY.md:5 (no support period)"
+   ],
+   "note": "No position on the EU CRA or the AI Act for a distributed package. The disclaimer covers only user-side legality of reverse engineering.",
+   "source": "review"
+  },
+  "SUS-1": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": [
+    "probe meta.codeowners: none; meta.governance: none",
+    "docs/releases/6.5.0.contributions.json (893 commits, 537 by morluto = 60%; 529 PRs from many authors)",
+    "docs/releases/6.6.0.contributions.json (571 commits, 339 by morluto = 59%)",
+    "SECURITY.md:21 ('The maintainer')"
+   ],
+   "note": "Contributions are broad, but one maintainer authors about 60% of commits and is the only named security contact. There is no CODEOWNERS file and no governance document.",
+   "source": "review"
+  },
+  "SUS-2": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": [
+    ".github/ISSUE_TEMPLATE (5 forms)",
+    ".github/pull_request_template.md",
+    ".github/workflows/pr-readiness.yml and .github/workflows/pr-title.yml",
+    ".github/workflows/ci.yml:928-940 (CI required gate)",
+    "CONTRIBUTING.md:95-101 (readiness status added to required checks)"
+   ],
+   "note": "Templates, required checks and a human-readiness status exist. Branch protection, required review and response times are not visible from a static clone.",
+   "source": "review"
+  },
+  "SUS-3": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    "CONTRIBUTING.md:51-104 (AI-assisted PRs need a human owner who reviews the final diff)",
+    "AGENTS.md:94-112 (agents must not attest human review)",
+    ".github/workflows/pr-readiness.yml (declaration enforced as a commit status)",
+    "docs/releases/6.5.0.contributions.json (174 of 893 commits carry AI co-author trailers)"
+   ],
+   "note": "The agent policy is explicit and enforced by a check, and attribution trailers are kept. Agent contributions are not evaluated over time.",
+   "source": "review"
+  }
+ },
+ "gaps": [],
+ "opportunities": [],
+ "reengineering": [],
+ "questions": [],
+ "not_examined": [],
+ "time_minutes": null,
+ "_help": {
+  "scores": "Set level (0-5, U, NA), confidence (observed|derived|inferred), evidence (path:line, command, measurement) and change source to \"review\". Entries left with source \"auto\" count as unreviewed suggestions.",
+  "gap": {
+   "lens": "G1-G14",
+   "title": "",
+   "case": "concrete reproduction or file:line",
+   "impact": "",
+   "fix": "",
+   "severity": "critical|high|medium|low",
+   "evidence": []
+  },
+  "opportunity": {
+   "lens": "O1-O14",
+   "criterion": "OPP-1..7",
+   "title": "",
+   "description": "",
+   "value": "1-5",
+   "reach": "1-5",
+   "confidence": "observed|derived|inferred",
+   "horizon_fit": "1.0-1.5",
+   "effort": "1-5",
+   "action": "keep|harden|refactor|extract|consolidate|re-platform|re-cut-interface|rewrite|replace|retire",
+   "evidence": []
+  },
+  "reengineering": {
+   "action": "",
+   "component": "",
+   "gain": "",
+   "measure": ""
+  }
+ }
+}

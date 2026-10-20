@@ -1,0 +1,1009 @@
+{
+ "rqs_review": 1,
+ "target": {
+  "path": "/home/user/RE4exa",
+  "name": "re4exa",
+  "head": "0bdc987676d629d8d3580e966784cdc980f96432",
+  "shallow": false
+ },
+ "profile": "agent-tool",
+ "flags": {
+  "uses_llm": true,
+  "has_ui": false,
+  "executes_code": true,
+  "network_service": false,
+  "parses_untrusted": true,
+  "uses_crypto": true,
+  "heavy_compute": false,
+  "distributed": false
+ },
+ "reviewer": {
+  "id": "reviewer-re4exa-adversarial",
+  "kind": "agent",
+  "conflicts": "RE4exa was produced by the same AI system that commissioned this review; this is the adversarial check"
+ },
+ "date": "2026-10-20",
+ "scores": {
+  "PUR-1": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "README.md:1-13 (root entry point: no quick start, no limits, no row for standard/ or tools/rqs, skills row says 'rex and dissect')",
+    "tools/README.md:3-11,34-50 (problem, intended users, quick start)",
+    "tools/rqs/README.md:39-47 (the only README with limits: 'known blind spots')",
+    "tools/rex/rex/cli.py:52-59, tools/dissect/dissect/cli.py:218-229, tools/rqs/rqs/cli.py:108-117 (machine-readable describe commands)"
+   ],
+   "note": "tools/README.md states the problem, users and a quick start and every tool has a describe command; the root README is stale since 0bdc987 and no tool README states limits or non-goals except rqs.",
+   "source": "review"
+  },
+  "PUR-2": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "research/rea-self-analysis/scripts/answer-key.mjs:1-3 and scripts/product-eval.py:1-9 (harness with an independent answer key)",
+    "research/rea-self-analysis/results/product-eval.json:2 elapsed_seconds 4.48 vs research/rea-self-analysis/README.md:155 and research/dissection/README.md:152 '4.0 s'",
+    "research/dissection/README.md:110-114 ('Measured fixes': no result measures the 889 MB re-import fix or the bench-hygiene fix)",
+    "research/dissection/README.md:18,148,150,156,175 (about 50 s, 0.42 s, 52-70 ms, 4,607 bytes, 24 vs 18: no committed result)",
+    "research/rea-self-analysis/results/findings.jsonl:1,5,8,12,14,19 (evidence pointers to 'scratch out/...' files that are not in the repository)",
+    "research/rea-self-analysis/results/e6-timings.tsv (single runs, no repetitions or intervals)"
+   ],
+   "note": "REA-side numbers are backed by committed scripts and results and recompute exactly where checked (E1 bytes, E3 timings, 889,074,095-byte export, 94,731/271,843 graph counts); rex's own headline numbers are untraceable or differ from the cited file, timings are single runs without uncertainty, and nothing reruns them.",
+   "source": "review"
+  },
+  "PUR-3": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "tools/README.md:7-11 (one stated question per tool)",
+    "tools/rex/rex/gate.py:15-49 (necessity ladder exists as a command)",
+    "tools/dissect/dissect/extract.py:34-63 vs tools/rqs/rqs/scan.py:18-40 (two repository walkers with separate skip lists, language maps and test-path rules)",
+    "tools/rex/rex/mcp.py:66-100, tools/dissect/dissect/mcp.py:47-84, tools/rqs/rqs/mcp.py:57-96 (three hand-written MCP stdio loops)",
+    "tools/rex/tests/test_rex.py:195, tools/rqs/tests/test_rqs.py:239 (catalog size bounded in tests)"
+   ],
+   "note": "Each tool has a stated reason and rex ships a necessity gate, but the repository duplicates its own subsystems (two scanners, three MCP loops, three error conventions) without justification; RQS-2030 step 2 pairs dissect with rqs, yet rqs re-implements scanning.",
+   "source": "review"
+  },
+  "COR-1": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": [
+    "cd tools/rex && python3 -m unittest discover -s tests -> Ran 14 tests in 0.401s OK",
+    "cd tools/dissect && ... -> Ran 7 tests OK; cd tools/rqs && ... -> Ran 19 tests OK (checkout, Python 3.13.16)",
+    "git archive 0bdc987 into a clean directory: dissect -> Ran 7 tests, FAILED (failures=3, errors=1) because @babel/parser is not installed; rex 14 OK; rqs 19 OK",
+    "rqs probe ci.workflows: 0 CI files; test.ratio 0.104 (706/6820 lines)",
+    "tools/dissect/tests/test_dissect.py:97-101 (JS/TS assertions do not skip when the helper is missing)"
+   ],
+   "note": "40 tests cover the main paths and pass in the prepared checkout, but nothing runs them on change and the dissect suite fails on a clean checkout; by the anchor, tests that are not run in CI fail.",
+   "source": "review"
+  },
+  "COR-2": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "research/rea-self-analysis/scripts/answer-key.mjs:1-3 (ground truth from bytes and a Babel parse; never calls REA)",
+    "research/rea-self-analysis/scripts/product-eval.py:76-87 and results/product-eval.json:6-14 (rex answers adjudicated against the key: 7 of 7 true)",
+    "tools/rex/tests/test_rex.py:87-94 (NEEDED list compared with readelf)",
+    "tools/rqs/tests/test_rqs.py:19-79 (signals checked only against examples written by the same author; no negative examples)",
+    "tools/dissect/tests/test_dissect.py:17-63 (author-written fixture only)"
+   ],
+   "note": "rex has an independent answer key (one package, 7 questions) and one differential check against readelf; dissect and rqs are tested only against fixtures by the same author, and nothing measures rqs probe accuracy on labelled repositories.",
+   "source": "review"
+  },
+  "COR-3": {
+   "level": 0,
+   "confidence": "observed",
+   "evidence": [
+    "git grep -i -E 'hypothesis|atheris|fuzz|mutmut|stryker|fast-check|@given' over tools/*/tests, prototypes, research scripts at 0bdc987 -> only the example string at tools/rqs/tests/test_rqs.py:40",
+    "tools/rex/tests/test_rex.py (no malformed-input case for formats.py)",
+    "tools/rqs/rqs/suggest.py:119-120 (the automatic level 4 counted mentions in standard/RQS-2030.md:184-190)"
+   ],
+   "note": "No mutation, property or fuzz testing exists, although all three tools parse untrusted input; the automatic suggestion of 4 came from the standard's own prose.",
+   "source": "review"
+  },
+  "COR-4": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "research/rea-self-analysis/results/product-eval.json (rex on REA's published 1,775-file package)",
+    "research/dissection/scan-result.json and dissection.db.gz (dissect on 10 real repositories; sqlite3 count: 94,731 nodes, 271,843 edges, 10,955 files)",
+    "prototypes/rea-durable-evidence/test/crash-test.sh with research/rea-self-analysis/results/prototype-crash-test.json (pass: true)",
+    "no run of rqs or dissect on RE4exa itself is recorded at 0bdc987"
+   ],
+   "note": "Documented trials on realistic third-party inputs with recorded results; rqs and dissect were not applied to RE4exa before release, and doing so now exposes many false positives (gap G14).",
+   "source": "review"
+  },
+  "COR-5": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "tools/rex/rex/store.py:113-127 (id = sha256 over canonical identity; created_at excluded)",
+    "tools/rex/tests/test_rex.py:70-77 (same evidence id in two separate stores)",
+    "research/rea-self-analysis/results/prototype-crash-test.json (same_evidence_ids_as_control: true)",
+    "tools/dissect/dissect/db.py:105-109 (node ids are SQLite row ids; they change on rebuild)",
+    "git diff 0bdc987 82e1713 -- tools/rqs/rqs/score.py (compensated summation added after the reviewed commit because float sum() differs across Python versions)"
+   ],
+   "note": "rex outputs are content-addressed and tested across stores; dissect ids are positional and rqs float sums were Python-version dependent at the reviewed commit; no reproducibility check runs automatically.",
+   "source": "review"
+  },
+  "REL-1": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "tools/rex/rex/store.py:148-172 (durable steps keyed by operation, args and subject digest; parked after 3 attempts)",
+    "tools/rex/tests/test_rex.py:167-177 (kill -9 after step 2, resume: 2 reused, 2 executed) - passes",
+    "prototypes/rea-durable-evidence/src/durable-rea.mjs:27-70 and research/rea-self-analysis/results/prototype-crash-test.json (Absurd steps with leases; SIGKILL after 3 of 6 steps; 0 repeated calls)",
+    "research/dissection/README.md:172 (G5: one writer per store; no leases in rex)"
+   ],
+   "note": "Checkpoints, idempotent replay, crash-loop parking and a kill-and-resume test exist; leases exist only in the prototype and the fault-injection test is not run automatically.",
+   "source": "review"
+  },
+  "REL-2": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "tools/rex/rex/formats.py:84,115,152,200,251 (whole-file reads)",
+    "tools/rex/rex/formats.py:97,107 (zip and tar entries decompressed fully into memory); :303 (zlib.decompress bufsize is an initial buffer, not an output cap)",
+    "tools/rex/rex/formats.py:258-265 (Mach-O load-command loop trusts ncmds and cmdsize)",
+    "tools/rex/rex/probes.py:182-190 (external tool stdout captured whole, truncated afterwards)",
+    "tools/dissect/dissect/cli.py:24-38,238 and tools/rqs/rqs/scan.py:43-45 (output budgets and per-file limits exist)"
+   ],
+   "note": "Output paging and per-file limits exist in dissect and rqs, and rex pages evidence by handle, but rex's readers of untrusted artifacts have no memory, decompression or loop bounds and nothing is tested at scale.",
+   "source": "review"
+  },
+  "REL-3": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "tools/rex/rex/formats.py:142 and tools/rex/rex/probes.py:165 (truncated flags)",
+    "tools/rex/rex/probes.py:153-154 (files over 256 MiB skipped without being listed)",
+    "tools/rex/rex/cli.py:161-165 (only RexError becomes JSON; parser exceptions surface as tracebacks)",
+    "tools/dissect/dissect/extract.py:151-155 (helper exit status ignored) -> on the clean export every JS/TS symbol was lost and no error was recorded",
+    "tools/rqs/rqs/probes.py:920-929 (probe errors reported, never fatal)"
+   ],
+   "note": "Partial results are labelled in several places, but some are silent (skipped large files, missing JS/TS helper) and some failures are unlabelled tracebacks; retries are manual.",
+   "source": "review"
+  },
+  "REL-4": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "tools/dissect/dissect/extract.py:151-153 (Popen + communicate(timeout=3600); the child is not killed on timeout)",
+    "tools/dissect/dissect/db.py:65-77 (cached read-only connections never closed) -> 'ResourceWarning: unclosed database' in the dissect test run",
+    "tools/rex/rex/probes.py:178,182 (subprocess.run with timeouts)",
+    "prototypes/rea-durable-evidence/src/worker.mjs:15 (SIGINT/SIGTERM close) and test/crash-test.sh:11 (trap kills background jobs)"
+   ],
+   "note": "Short-lived CLIs mostly clean up; there is a helper-timeout leak path and unclosed connections, and no test checks for leftovers.",
+   "source": "review"
+  },
+  "PERF-1": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": [
+    "research/rea-self-analysis/results/e6-timings.tsv (single-run timings)",
+    "research/rea-self-analysis/results/product-eval.json:2 (one 4.48 s run)",
+    "rqs probe test.bench: no benchmark directory",
+    "no latency budget declared for any rex, dissect or rqs operation"
+   ],
+   "note": "Only ad hoc single-run timings; no benchmark harness for the tools' own operations, no percentiles, no budgets.",
+   "source": "review"
+  },
+  "PERF-2": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "tools/rex/rex/budget.py:30-50 (summary-first view with bytes, token estimate and a fetch command)",
+    "tools/rex/rex/mcp.py:20-34 (10 tools, input schemas only) and tools/rex/tests/test_rex.py:195 (catalog asserted < 12,000 bytes)",
+    "tools/rqs/tests/test_rqs.py:239 (rqs catalog < 6,000 bytes) and tools/rqs/rqs/mcp.py:43 (probe returns the brief view)",
+    "tools/dissect/dissect/cli.py:238 (default output budget 200,000 bytes per call, roughly 50k tokens)",
+    "tools/rex/rex/cli.py:128-129,139-140 (evidence list and coverage outputs carry no cost block)"
+   ],
+   "note": "rex is close to the horizon (cost per evidence view, handles, one payload copy) and catalogs are small and bounded in tests; dissect's default budget is large, rqs and rex's non-probe outputs state no cost, and nothing enforces the bounds automatically.",
+   "source": "review"
+  },
+  "SEC-1": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": [
+    "git ls-files at 0bdc987: no SECURITY.md or security contact (rqs probe meta.security_policy found=false)",
+    "tools/README.md:29 (inert-by-default statement)",
+    "research/dissection/README.md:173 (G6: runtime probes need isolation the product does not provide)"
+   ],
+   "note": "No vulnerability reporting route; trust boundaries are stated only informally.",
+   "source": "review"
+  },
+  "SEC-2": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "tools/dissect/helpers/package.json:6 and package-lock.json (@babel/parser 7.28.5, exact and locked)",
+    "prototypes/rea-durable-evidence/package.json:14-19 and package-lock.json (4 exact dependencies)",
+    "tools/dissect/dissect/extract.py:21 and standard/build.py:14 (import yaml: PyYAML declared nowhere)",
+    "rqs probes deps.update_bot and ci.security_scans: none",
+    "prototypes/rea-durable-evidence/README.md:44 (npm install --ignore-scripts)"
+   ],
+   "note": "Few dependencies, npm ones locked and exact, install scripts disabled for the prototype; PyYAML is an undeclared runtime dependency and there is no update or vulnerability-scan process.",
+   "source": "review"
+  },
+  "SEC-5": {
+   "level": "NA",
+   "confidence": "observed",
+   "evidence": [
+    "git ls-files at 0bdc987: no .github/workflows or other CI files (rqs probe ci.workflows: 0)"
+   ],
+   "note": "NA: there are no CI or automation workflows to harden; the absence of CI is scored under COR-1, EVO-2 and SUS-2.",
+   "source": "review"
+  },
+  "SEC-6": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "rqs probe risk.secrets: no secret patterns outside tests",
+    "git grep -I -E for AWS, GitHub, Slack, Stripe, Google and LLM keys and private-key headers over 0bdc987 -> 0 hits; the same patterns over the decompressed research/dissection/dissection.db -> 0 hits",
+    "tools/rqs/rqs/scan.py:257-258,541-547 (secret values masked in rqs output)",
+    "tools/rex/rex/probes.py:190 (external tool stdout and stderr stored unredacted)",
+    "prototypes/rea-durable-evidence/src/rea.mjs:15 (REA started with a minimal environment)"
+   ],
+   "note": "Red line not met: two independent scans found no secrets. No scanner runs automatically and rex and dissect store target text unredacted, so 2 rather than 3.",
+   "source": "review"
+  },
+  "SEC-7": {
+   "level": 0,
+   "confidence": "derived",
+   "evidence": [
+    "tools/rex/rex/store.py:221-225 (table and column names taken from bundle records are formatted into the INSERT statement)",
+    "tools/rex/rex/store.py:209-215 (only evidence records are checked; the code anticipates tampered records)",
+    "tools/rex/rex/cli.py:107,151-152 (rex import <bundle>)",
+    "tools/README.md:22 and skills/rex/SKILL.md:50-51 (bundles are meant to move between agents and machines)",
+    "tools/dissect/dissect/cli.py:151-157 (user SQL is constrained: SELECT-only prefix, read-only connection, query_only) - justified",
+    "the rqs probe hits for risk.tls_off and risk.unsafe_deser are all rqs's own pattern table (tools/rqs/rqs/scan.py:57-63)"
+   ],
+   "note": "Red line RL-4 confirmed: SQL identifiers built from bundle content on the import path for bundles from other parties. The impact looks bounded (one statement per call; writes to tables outside the three bundle tables roll back on a KeyError) and was not demonstrated, per the defensive rules. No eval, shell strings, unsafe deserialization or TLS bypass exist in product code.",
+   "source": "review"
+  },
+  "SEC-8": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "tools/rex/rex/formats.py (standard-library Python readers: memory-safe)",
+    "tools/rex/rex/formats.py:97,107,115,258-265,303 (no decompression, size, recursion or loop bounds)",
+    "tools/dissect/helpers/js_extract.mjs:9,42 and tools/dissect/dissect/extract.py:35,151 (2 MB cap; JS and Go parsed in separate processes)",
+    "tools/dissect/dissect/extract.py:175-179 (ast.parse: only SyntaxError handled)",
+    "no malformed-input or fuzz tests in tools/*/tests"
+   ],
+   "note": "Memory-safe languages and process separation for the JS and Go parsers; rex's artifact readers have no size or recursion limits and nothing tests malformed input.",
+   "source": "review"
+  },
+  "SEC-9": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "tools/rex/rex/store.py:59-68,116-119 (SHA-256 over canonical JSON; ids 'ev_<hex>' carry no algorithm tag)",
+    "tools/rex/rex/probes.py:26-36, tools/rex/rex/formats.py:77-86, tools/dissect/dissect/extract.py:424 (hashlib.sha256 called directly in several modules)",
+    "research/dissection/README.md:171 (G4: evidence unsigned; signing planned with no algorithm or post-quantum plan)",
+    "rqs probe crypto.classical: all 22 references are rqs pattern-table lines; no public-key cryptography in product code"
+   ],
+   "note": "One non-deprecated algorithm, documented as ev_<sha256>; it is hard-coded across modules, identifiers are not algorithm-agile, and the planned bundle signing has no algorithm or migration plan.",
+   "source": "review"
+  },
+  "AGT-1": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": [
+    "tools/rex/rex/probes.py:133,159-160 (source samples and byte slices from targets returned to the agent)",
+    "tools/dissect/dissect/cli.py:111 (doc text from scanned repositories in search results)",
+    "tools/rqs/rqs/scan.py:345-346 (snippets from scanned repositories)",
+    "tools/rex/rex/mcp.py:79, tools/dissect/dissect/mcp.py:61, tools/rqs/rqs/mcp.py:71 (server instructions say nothing about untrusted content)",
+    "no injection test in tools/*/tests"
+   ],
+   "note": "Target-derived text reaches agents with provenance labels (authority, limitations) but no untrusted-content marker or instruction/data separation, and no injection tests.",
+   "source": "review"
+  },
+  "AGT-2": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "tools/rex/rex/mcp.py:20-34 (ext, run and import are not exposed over MCP)",
+    "tools/rex/rex/mcp.py:19,33 with tools/rex/rex/store.py:197 (rex_export declared destructiveHint false, but os.replace overwrites any existing path)",
+    "tools/rqs/rqs/mcp.py:19,25-30 with tools/rqs/rqs/cli.py:35-37 ('out' paths overwritten; destructiveHint false)",
+    "tools/dissect/dissect/mcp.py:63 with tools/dissect/dissect/db.py:73-74 (read-only hints backed by a read-only connection)"
+   ],
+   "note": "Least agency over MCP is good (no command execution exposed) and dissect's hints are accurate; rex_export and the rqs out-path tools overwrite arbitrary files while declared non-destructive, with no path scoping.",
+   "source": "review"
+  },
+  "AGT-3": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "tools/rex/rex/store.py:32-48 (step log; hash-chained answer revisions)",
+    "tools/rex/rex/store.py:183-198 (export to JSONL)",
+    "no approval or confirmation before overwriting writes (rex export, rqs --out)",
+    "dissect and rqs keep no action record"
+   ],
+   "note": "rex keeps an append-only, exportable record of steps and answers; consequential writes need no approval, there is no documented rollback, and dissect and rqs record nothing.",
+   "source": "review"
+  },
+  "AGT-4": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": [
+    "skills/rex/SKILL.md, skills/dissect/SKILL.md, skills/rqs/SKILL.md (model-facing instructions)",
+    "research/rea-self-analysis/scripts/product-eval.py (scripted calls, not an agent following the skill)",
+    "no evaluation of agents following the skills or MCP instructions anywhere in the repository"
+   ],
+   "note": "The model-dependent behaviour (agents following skills and server instructions) ships without an evaluation; the answer-key harness could serve but is driven by a script.",
+   "source": "review"
+  },
+  "AGT-5": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "tools/README.md:3-5 (offline, no telemetry)",
+    "git log c1cd3c6 0bdc987: Co-Authored-By: Claude Opus 5.5 trailers and Claude-Session links",
+    "README.md, tools/README.md and standard/RQS-2030.md:1-11 do not state that the code, research and standard were generated by an AI agent"
+   ],
+   "note": "No models or providers are used at runtime and data stays local; the AI generation of the whole repository is disclosed only in commit trailers, not in the artefacts.",
+   "source": "review"
+  },
+  "AGT-6": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "tools/rex/rex/budget.py:46-49 (cost block per evidence view)",
+    "tools/dissect/dissect/cli.py:24-38 (byte budget with truncated and next_offset)",
+    "tools/rex/rex/probes.py:178,182 (external tool timeouts 30 s and 600 s)",
+    "no per-task budget for tokens, calls or time in rex plans or any MCP server"
+   ],
+   "note": "Per-call output bounds and cost reporting exist; there are no per-task limits.",
+   "source": "review"
+  },
+  "INT-1": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "tools/rex/rex/cli.py:1-6, tools/dissect/dissect/cli.py:1-6, tools/rqs/rqs/cli.py:1-6 (CLIs printing one JSON document)",
+    "tools/rex/rex/mcp.py:78, tools/dissect/dissect/mcp.py:14,59, tools/rqs/rqs/mcp.py:70 (MCP stdio; protocolVersion always 2025-06-18, no negotiation)",
+    "tools/rex/rex/__init__.py:3, tools/dissect/dissect/__init__.py:3, tools/rqs/rqs/__init__.py:3 (versions 0.1.0, 0.1.0, 1.0.0)",
+    "tools/rex/rex/store.py:187, tools/dissect/dissect/db.py:9, tools/rqs/rqs/cli.py:64,95 (format version fields)"
+   ],
+   "note": "Documented CLI with JSON and MCP, versions stated; no compatibility policy and no protocol negotiation.",
+   "source": "review"
+  },
+  "INT-2": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "tools/rex/rex/cli.py:52-59 (describe: commands, evidence fields, rules, routes)",
+    "tools/dissect/dissect/cli.py:218-229 (describe with the SQL schema)",
+    "tools/rqs/rqs/cli.py:108-117 (describe: commands, probes, workflow, rules)",
+    "sqlite3 on research/dissection/dissection.db: node kinds component/gap/principle and edge kinds fixes/motivates/satisfies are absent from dissect describe (cli.py:223-224)"
+   ],
+   "note": "Each tool describes itself with stable field names and input schemas; output schemas are informal field lists, the contract is not versioned separately, and dissect's contract has drifted from its shipped database.",
+   "source": "review"
+  },
+  "INT-3": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "tools/rex/rex/mcp.py:20-34 (10 tools; one parameterised rex_probe)",
+    "tools/dissect/dissect/mcp.py:16-30 (8 tools)",
+    "tools/rqs/rqs/mcp.py:20-34 (8 tools)",
+    "tools/rex/tests/test_rex.py:194-195 and tools/rqs/tests/test_rqs.py:238-239 (tool count and catalog bytes asserted)"
+   ],
+   "note": "26 tools across three servers, related operations parameterised, sizes measured in tests; tool-selection accuracy is not measured.",
+   "source": "review"
+  },
+  "INT-4": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "tools/rex/rex/store.py:82-90 and tools/rqs/rqs/standard.py:12-18 ({error: {code, message, fix}})",
+    "tools/dissect/dissect/cli.py:77,142,154,178 ({error: 'not_found', hint} and other ad hoc shapes) vs tools/README.md:25",
+    "tools/rex/rex/cli.py:161-165 and tools/dissect/dissect/cli.py:272-279 (other exceptions print tracebacks)",
+    "tools/rex/rex/mcp.py:89-90 and tools/dissect/dissect/mcp.py:74-75 (Python exception class names used as codes)",
+    "no retryable flag in any of the three tools"
+   ],
+   "note": "rex and rqs have typed codes with a fix; dissect uses another shape, no tool sets a retryable flag, and unexpected errors are tracebacks or class names.",
+   "source": "review"
+  },
+  "INT-5": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "tools/rex/rex/store.py:113-127 (content-addressed evidence ids, insert-or-ignore)",
+    "tools/rex/rex/epistemics.py:25 (question id = digest of the normalised text)",
+    "tools/rex/tests/test_rex.py:70-77 (identical ids across stores)",
+    "tools/rex/rex/store.py:138-145 and tools/dissect/dissect/cli.py:111-114 (offset paging, not cursors)",
+    "tools/dissect/dissect/db.py:105-109 (row ids change on rebuild; qualnames stay stable)"
+   ],
+   "note": "rex reaches the horizon idea (identical ids for identical observations across machines); paging is offset-based and dissect ids are positional.",
+   "source": "review"
+  },
+  "INT-6": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "tools/README.md:34-50 (quick start; dissect needs npm install and go build)",
+    "git archive 0bdc987 clean export: dissect tests 3 failures + 1 error without npm install",
+    "tools/dissect/dissect/extract.py:453 (node called unconditionally: FileNotFoundError when absent) vs tools/README.md:48-50 (file-level fallback promised)",
+    "README.md:1-13 (no quick start at the root)"
+   ],
+   "note": "CLIs are consistent and self-describing; the quick start is untested and the documented fallback without node does not hold. There is no UI, so accessibility does not apply.",
+   "source": "review"
+  },
+  "INT-7": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "tools/rex/rex/store.py:183-226 (JSONL bundle export and import with a header)",
+    "tools/dissect/dissect/db.py:11-62 (SQLite schema, returned by describe)",
+    "tools/rqs/rqs/cli.py:64-67,95-97 (JSON probe and review documents with version fields) and tools/rqs/rqs/report.py (Markdown)"
+   ],
+   "note": "Open formats with version fields; no formal specification.",
+   "source": "review"
+  },
+  "EPI-1": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "tools/rex/rex/store.py:17-30 (subject sha256, params, links, limitations)",
+    "tools/rex/rex/probes.py:51,67,91,136,165 (built-in probes store tool_version null)",
+    "tools/dissect/dissect/db.py:12-18,84 (repository commit recorded; dissect's own version is not)",
+    "tools/rqs/rqs/cli.py:64-67 (tool and standard versions, head recorded) and tools/rqs/rqs/scan.py:369-399 (a dirty working tree is not recorded)",
+    "research/rea-self-analysis/results/findings.jsonl:1,5,8,9,12,14,15,19 (evidence pointers to scratch files that were not committed)"
+   ],
+   "note": "Input identity and parameters are recorded and rex links derived evidence; the tool version is missing from every built-in rex record and from dissect output, and many research findings point to evidence outside the repository.",
+   "source": "review"
+  },
+  "EPI-2": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "tools/rex/rex/store.py:25 (confidence class on every record)",
+    "tools/rex/rex/epistemics.py:48-56 (a claim is capped by the strongest cited evidence)",
+    "tools/rex/rex/epistemics.py:99-131 (Wilson intervals, ECE, min_n 10, abstention advice)",
+    "research/rea-self-analysis/results/product-eval.json:101-152 (5/1/1 adjudications reported as insufficient-data)",
+    "tools/rqs/rqs/suggest.py:119-120,202-203 (rqs 'derived' suggestions such as COR-3=4 and MNT-1=4 are wrong on this repository; rqs confidence is not calibrated)"
+   ],
+   "note": "Confidence classes everywhere and real calibration code in rex, honestly reported as insufficient data; rqs's confidence labels are uncalibrated and overconfident on this repository.",
+   "source": "review"
+  },
+  "EPI-3": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "tools/rex/rex/probes.py:88-90 and tools/rex/rex/formats.py:4,272 (absence labelled unknown)",
+    "tools/rqs/rqs/probes.py:4 (found false = not found in the scanned files)",
+    "tools/rex/rex/gate.py:33,47 (a missing DISSECT_DB path yields 'nothing-similar-indexed' without any search)",
+    "tools/dissect/dissect/extract.py:151-155 (nothing recorded when the JS helper produces no output; seen on the clean export)",
+    "tools/rex/rex/probes.py:153-154 (skipped files over 256 MiB not reported)"
+   ],
+   "note": "Mostly honest about absence, but the necessity gate gives an absence verdict when no index was read, and dissect and rex find can return empty results without stating their gaps.",
+   "source": "review"
+  },
+  "EPI-4": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "tools/rex/rex/epistemics.py:69-85 (answered, partial, unknown, unaccounted; failed-step caveats; complete flag)",
+    "tools/rqs/rqs/score.py:77-89,106-110 (coverage per dimension and overall; provisional gate)",
+    "research/rea-self-analysis/README.md:102 and results/findings.jsonl:25 (untestable stages recorded)",
+    "tools/dissect/dissect/cli.py:91-99 (stats: no per-language parse coverage)"
+   ],
+   "note": "rex and rqs reconcile declared items with outcomes; dissect has no coverage accounting.",
+   "source": "review"
+  },
+  "EPI-5": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": [
+    "research/rea-self-analysis/README.md:155, research/dissection/README.md:152, results/findings.jsonl:36 ('4.0 s') vs results/product-eval.json:2 (elapsed_seconds 4.48)",
+    "research/dissection/README.md:110-114 ('Measured fixes': the 889 MB re-import fix and the bench-hygiene fix are not measured; the prototype restores through import_evidence_bundle, prototypes/rea-durable-evidence/src/durable-rea.mjs:34-40)",
+    "tools/README.md:3 ('All are standard-library Python') vs tools/dissect/dissect/extract.py:21 (import yaml)",
+    "tools/README.md:10 and tools/rqs/README.md:4 ('84 probes') vs 85 probes implemented and cited by standard/rqs-2030.json",
+    "research/rea-self-analysis/README.md:92 ('REA CLI ... 2-3 KB') vs results/e6-timings.tsv:8,13,17,19 (1,391,979, 351, 481 and 45,163 bytes)",
+    "tools/rqs/rqs/score.py:1-2 ('Every weight, band and gate is read from the standard') vs literals at score.py:15,79-80,106,111"
+   ],
+   "note": "Red line RL-5 not confirmed: claims are tagged run or source and most REA numbers recompute exactly, so no headline conclusion is reversed; but several claims differ from the repository's own results or code and unmeasured fixes are labelled measured. Numbers are copied by hand, which is level 1.",
+   "source": "review"
+  },
+  "MNT-1": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "tools/rex/rex/*.py, tools/dissect/dissect/*.py, tools/rqs/rqs/*.py (one concern per module; module docstrings)",
+    "research/dissection/README.md:129-140 (component map C1-C8)",
+    "tools/rex/rex/gate.py:34-46 (queries dissect's tables directly; schema_version is not checked)",
+    "rqs probe static.arch_guards hits are rqs's own pattern table (tools/rqs/rqs/scan.py:167-168, tools/rqs/rqs/probes.py:588); no boundary rule exists"
+   ],
+   "note": "Clear module boundaries and a documented component map; no automated boundary rules, and rex gate couples to dissect's schema without a version check.",
+   "source": "review"
+  },
+  "MNT-2": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "rqs probe size.largest: largest source file 930 lines (tools/rqs/rqs/probes.py)",
+    "rqs probe size.duplicates: no identical files of 1 KB or more",
+    "tools/dissect/dissect/extract.py:34-63 vs tools/rqs/rqs/scan.py:18-40; tools/rex/rex/mcp.py:66-100, tools/dissect/dissect/mcp.py:47-84, tools/rqs/rqs/mcp.py:57-96 (parallel implementations)",
+    "tools/rex/rex/probes.py:199-205 (no route for the 'macho-fat' format that formats.py:19 can return)",
+    "no duplication or dead-code tooling"
+   ],
+   "note": "File sizes are reasonable and no file is duplicated, but parallel implementations exist and no duplication or dead-code check runs.",
+   "source": "review"
+  },
+  "MNT-3": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": [
+    "git ls-files: no pyproject, ruff, mypy, pyright or eslint configuration (rqs probes static.lint and static.format: none)",
+    "type hints across tools/*/ (from __future__ import annotations) with no checker",
+    "tools/dissect/helpers/go_extract.go (compiled Go)"
+   ],
+   "note": "Type hints without a checker; no linter or formatter; nothing runs in CI.",
+   "source": "review"
+  },
+  "MNT-4": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "git ls-files: no CONTRIBUTING, AGENTS.md, CLAUDE.md or decision-record files",
+    "tools/README.md:18-30 (design-choices table)",
+    "research/dissection/README.md:116-140 (principles and component design)",
+    "skills/*/SKILL.md (usage instructions for agents, not rules for changing the code)"
+   ],
+   "note": "Architecture and design decisions are written down in research READMEs; there are no contributor rules or agent instructions for changing the code, in a repository written by an agent.",
+   "source": "review"
+  },
+  "MNT-5": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "git grep -E 'TODO|FIXME|HACK|XXX' at 0bdc987: only rqs's debt-detection lines (tools/rqs/rqs/scan.py:166, tools/rqs/rqs/probes.py:614-615) and test strings",
+    "research/dissection/README.md:164-175 (remaining gaps G1-G8 with next steps)",
+    "prototypes/rea-durable-evidence/README.md:36-39 (limits)",
+    "tools/rqs/README.md:45-46 (known blind spots)"
+   ],
+   "note": "Known debts are listed with next steps but without owners or repayment triggers.",
+   "source": "review"
+  },
+  "EVO-1": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": [
+    "tools/rex/rex/__init__.py:3 (0.1.0), tools/dissect/dissect/__init__.py:3 (0.1.0), tools/rqs/rqs/__init__.py:3 (1.0.0), standard/rqs-2030.json standard.version 1.0.0",
+    "no CHANGELOG, no tags (rqs probe evo.semver: 0 tags), no versioning policy"
+   ],
+   "note": "Version numbers exist (rqs and the standard start at 1.0.0) but there is no policy, changelog or migration note.",
+   "source": "review"
+  },
+  "EVO-2": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": [
+    "git log main -> c3c15ca only; the reviewed work is on the unmerged branch claude/admiring-volta-uc87nj",
+    "no tags or release automation (rqs probe ci.release_automation: none)",
+    "standard/RQS-2030.md:7 (marked 'Release for use' at 1.0.0 in its first commit, with no recorded external review or validation)"
+   ],
+   "note": "There is no release process: users take a branch head that no CI qualifies.",
+   "source": "review"
+  },
+  "EVO-3": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": [
+    "tools/rex/README.md:14 and tools/rqs/README.md:24 (Python 3.11+ stated)",
+    "prototypes/rea-durable-evidence/package.json:8 (node >=22.19); tools/dissect/helpers/go.mod:3 (go 1.22)",
+    "tools/rex/rex.sh, tools/dissect/dissect.sh, tools/rqs/rqs.sh (bash launchers using readlink -f; no Windows path)",
+    "tests exercised here on Linux with Python 3.13.16 only; no OS matrix"
+   ],
+   "note": "Runtime versions are stated; operating systems are not, and only one platform has been exercised.",
+   "source": "review"
+  },
+  "OPS-1": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": [
+    "no doctor or health command in tools/rex/rex/cli.py:76-110, tools/dissect/dissect/cli.py:248-268, tools/rqs/rqs/cli.py:179-211",
+    "tools/dissect/dissect/extract.py:453 (no prerequisite check for node or @babel/parser)",
+    "tools/rex/rex/cli.py:161-165 (unexpected failures surface as tracebacks)",
+    "rqs probe obs.doctor hits are REA's 'mcp doctor', the standard's text and pattern tables"
+   ],
+   "note": "No diagnostic command; missing prerequisites show up as crashes or silently missing data.",
+   "source": "review"
+  },
+  "OPS-2": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": [
+    "tools/dissect/dissect/cli.py:64 (scan progress printed to stderr)",
+    "no logging module, levels or tracing in tools/*",
+    "rqs probe obs.otel hits are standard/rqs-2030.* and rqs pattern tables; the obs.logging hit is REA's REA_LOG_LEVEL (prototypes/rea-durable-evidence/src/rea.mjs:15)"
+   ],
+   "note": "Ad hoc prints only; the automatic level 4 came from the standard's text about OpenTelemetry and rqs's own patterns.",
+   "source": "review"
+  },
+  "OPS-3": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "skills/rex/SKILL.md:14,61 (REX_STORE and DISSECT_DB documented); tools/rqs/README.md:25 (RQS_STANDARD documented)",
+    "tools/rex/rex/cli.py:34,45-46 (undocumented REX_CRASH_AFTER test hook in the product path; parsed with int() without validation; SIGKILLs the process)",
+    "tools/rex/rex/cli.py:23 and tools/dissect/dissect/cli.py:21 (stores created in the working directory by default)",
+    "rqs probe obs.env_vars: 20 names, most from test fixtures (tools/rqs/rqs/scan.py:535-536 counts test files)"
+   ],
+   "note": "Real settings are few and mostly documented and defaults are inert; one hidden test hook that kills the process stays in production code.",
+   "source": "review"
+  },
+  "OPS-4": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "tools/dissect/helpers/package-lock.json (integrity hashes) and prototypes/rea-durable-evidence/README.md:44 (npm install --ignore-scripts)",
+    "prototypes/rea-durable-evidence/scripts/pg-up.sh:20-23 (schema fetched at a pinned commit)",
+    "tools/dissect/dissect/extract.py:21 (PyYAML required, with no install instruction or pin)",
+    "research/rea-self-analysis/scripts/setup.sh:37 (sha256sum printed, not compared)",
+    "rqs probe risk.remote_script: both pipe-to-shell hits are rqs test fixtures (tools/rqs/tests/test_rqs.py:23,58)"
+   ],
+   "note": "npm paths are pinned with lockfile integrity; the Python dependency has no install path and the research setup prints rather than verifies digests. No pipe-to-shell installs exist.",
+   "source": "review"
+  },
+  "PRV-1": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "tools/README.md:3-5 ('work offline, send no telemetry'); tools/rex/README.md:14; tools/rqs/README.md:24",
+    "git grep for network calls in product code: only rqs pattern-table lines (tools/rqs/rqs/scan.py:133-134)",
+    "rqs probe priv.telemetry hits are dissect's concept regex (tools/dissect/dissect/concepts.py:48) and rqs's own tables (tools/rqs/rqs/probes.py:873-879)",
+    "research/rea-self-analysis/scripts/lens-caveman.sh:8 (DO_NOT_TRACK set for third-party tools)"
+   ],
+   "note": "Red line not met: no telemetry exists and the docs say so; 3 rather than higher because nothing prevents telemetry from being added (no test or CI).",
+   "source": "review"
+  },
+  "PRV-2": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "tools/rex/rex/cli.py:23 (local SQLite store) and tools/rex/rex/store.py:183-226 (export and import)",
+    "tools/dissect/dissect/db.py (local SQLite)",
+    "no network calls in product code (see PRV-1)",
+    "research/rea-self-analysis/results/e2-e3-stages.json and results/e6/*.json (the author's local session paths committed)"
+   ],
+   "note": "Local-only by design with export; deletion means deleting the file; committed research results leak local session paths.",
+   "source": "review"
+  },
+  "PRV-3": {
+   "level": 0,
+   "confidence": "observed",
+   "evidence": [
+    "git ls-files at 0bdc987: no LICENSE, COPYING or LICENSES/ file (rqs probe meta.license: no LICENSE file)",
+    "no SPDX headers: the 2 matches are tools/rqs/rqs/scan.py:165 and tools/rqs/tests/test_rqs.py:37 (a pattern and an example)",
+    "prototypes/rea-durable-evidence/package.json:3,7 (private package declaring MIT for the prototype only)",
+    "research/rea-self-analysis/NOTICE.md:10-26 (licenses of the studied projects listed)"
+   ],
+   "note": "Red line RL-1 confirmed: the tools, standard, research and skills carry no license grant, so nobody may legally reuse them; one private manifest declares MIT for the prototype alone.",
+   "source": "review"
+  },
+  "SUS-1": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": [
+    "git log --format='%h %an': c3c15ca A.Olivier (2-line README); c1cd3c6 and 0bdc987 Claude (all code, research and the standard)",
+    "no CODEOWNERS, GOVERNANCE or MAINTAINERS file"
+   ],
+   "note": "One human account and one AI agent; no governance or ownership.",
+   "source": "review"
+  },
+  "SUS-2": {
+   "level": 1,
+   "confidence": "derived",
+   "evidence": [
+    "git log main -> c3c15ca only; all work sits on the unmerged branch claude/admiring-volta-uc87nj",
+    "no issue or PR templates (rqs probe meta.issue_templates: none)",
+    "no CI checks that could be required (ci.workflows: 0)"
+   ],
+   "note": "Commits go straight onto an agent branch with no checks or templates; whether a review happens before merge is not visible from the checkout.",
+   "source": "review"
+  },
+  "SUS-3": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "git log c1cd3c6 0bdc987: Co-Authored-By: Claude Opus 5.5 and Claude-Session trailers",
+    "no AGENTS.md or CONTRIBUTING describing how agent changes are made and reviewed",
+    "README.md and tools/README.md do not say the repository is AI-written"
+   ],
+   "note": "Attribution trailers are kept; there is no agent policy or review standard.",
+   "source": "review"
+  }
+ },
+ "gaps": [
+  {
+   "lens": "G13",
+   "title": "No license, and no ownership beyond one human account and one agent",
+   "case": "git ls-files at 0bdc987 has no LICENSE, COPYING or LICENSES/ file and no SPDX header; only the private prototypes/rea-durable-evidence/package.json:3,7 says MIT. git log: c3c15ca (A.Olivier, README stub) and c1cd3c6, 0bdc987 (Claude) add every other file; main still points at c3c15ca; no CODEOWNERS, governance, CONTRIBUTING or AGENTS.md.",
+   "impact": "Red line RL-1: nobody may legally reuse, fork or redistribute rex, dissect, rqs, the standard or the research. Continuity depends on one person directing one agent, and RQS-2030's own PRV-3, SUS-1 and SUS-2 fail.",
+   "fix": "Add a LICENSE with an SPDX identifier (plus REUSE headers or REUSE.toml), state it in README.md, add CODEOWNERS and a CONTRIBUTING or AGENTS.md that says how agent changes are reviewed before merge.",
+   "severity": "critical",
+   "evidence": [
+    "git ls-files",
+    "prototypes/rea-durable-evidence/package.json:3,7",
+    "git log --format='%h %an %s'"
+   ]
+  },
+  {
+   "lens": "G2",
+   "title": "Bundle import builds SQL from file content and accepts unverified answers",
+   "case": "tools/rex/rex/store.py:221-225 formats the table name and the column names of every non-evidence bundle record into the INSERT statement. Only evidence records are checked against their content address (store.py:209-215); answer revisions are inserted without recomputing digest or previous_digest (the chain is built on write only, tools/rex/rex/epistemics.py:57-66). Reachable through `rex import <bundle>` (tools/rex/rex/cli.py:107,151-152); bundles are meant to move between agents and machines (tools/README.md:22, skills/rex/SKILL.md:50-51, research/dissection/README.md:171-172).",
+   "impact": "Injection-prone construct on an untrusted-input path (red line RL-4, SEC-7 level 0). A bundle can also add or rewrite answers and adjudications, which drive `rex coverage` and the trust or abstain advice of `rex calibrate`, without detection; 'tampered records are rejected' (skills/rex/SKILL.md:51) holds only for evidence rows. Exploitation was not attempted.",
+   "fix": "Allowlist the three table names and their columns and bind values only; recompute and verify answer digests and chains on import; reject unknown keys; add malicious-bundle tests; sign bundles before cross-machine use (research gap G4).",
+   "severity": "high",
+   "evidence": [
+    "tools/rex/rex/store.py:209-225",
+    "tools/rex/rex/epistemics.py:57-66",
+    "tools/rex/rex/cli.py:107,151-152"
+   ]
+  },
+  {
+   "lens": "G1",
+   "title": "Headline and 'measured' claims disagree with the repository's own results",
+   "case": "'7/7 ... in 4.0 s' (research/rea-self-analysis/README.md:155, research/dissection/README.md:152, results/findings.jsonl:36, commit c1cd3c6) cites results/product-eval.json, which records elapsed_seconds 4.48 (line 2). research/dissection/README.md:110-114 lists under 'Measured fixes' that durable steps fix the 889 MB re-import and that bench hygiene fixes leanrea's benchmark; no result measures either, and the prototype restores through the same whole-bundle import_evidence_bundle call and stores a full bundle copy per step (prototypes/rea-durable-evidence/src/durable-rea.mjs:34-40,57-62). 'All are standard-library Python' (tools/README.md:3) vs `import yaml` (tools/dissect/dissect/extract.py:21). '84 probes' (tools/README.md:10, tools/rqs/README.md:4) vs 85 implemented and cited. 'REA CLI ... 2-3 KB' (research/rea-self-analysis/README.md:92) vs 351 B to 1,391,979 B in results/e6-timings.tsv. 'Every weight, band and gate is read from the standard' (tools/rqs/rqs/score.py:1-2) vs literals at score.py:15,79-80,106,111. 'Every output states its byte and token cost' (tools/README.md:24) holds only for evidence views. No committed result exists for 0.42 s, 52-70 ms, 4,607 bytes, about 50 s and 24 vs 18 (research/dissection/README.md:148,150,156,18,175) or for the 6.3 GB worker RSS (research/rea-self-analysis/README.md:86).",
+   "impact": "Readers and tool-selecting agents get numbers that cannot be rechecked or that differ from the measurements: EPI-5 sits in the fail band and PUR-2 at 2. The study that faults REA for weak claims repeats the pattern for rex.",
+   "fix": "Render README number tables from results/*.json with a script and fail on drift; commit a result for every quoted number; correct 4.0 s to 4.5 s; move unmeasured items out of 'Measured fixes'; declare PyYAML; correct the probe count.",
+   "severity": "high",
+   "evidence": [
+    "research/rea-self-analysis/results/product-eval.json:2",
+    "research/dissection/README.md:110-114,148-156",
+    "tools/README.md:3,10,24",
+    "tools/dissect/dissect/extract.py:21"
+   ]
+  },
+  {
+   "lens": "G14",
+   "title": "rqs pointed at RE4exa scores its own pattern tables and the standard's prose; not fixed",
+   "case": "In the probe document for 0bdc987 (85 probes run), 19 probes report found=true and every location they cite is in standard/ or tools/rqs/: e.g. risk.tls_off and risk.unsafe_deser -> tools/rqs/rqs/scan.py:57-63; static.arch_guards -> scan.py:167, probes.py:588; static.debt_markers -> probes.py:614-615, scan.py:166; test.fuzz, crypto.pqc, perf.energy -> standard/RQS-2030.md. 9 of the 39 levelled suggestions rest only on such lines (MNT-1=4, SEC-8=3, SEC-9=3, SEC-7=1, AGT-1=2, PERF-3=2, EPI-5=1, MNT-5=2, SUS-3=2) and 10 more partly (COR-3=4 with 5 of 6, OPS-2=4, OPS-4=3, PRV-1=2). The suggested flags network_service (scan.py:151-153 is the only match) and heavy_compute are wrong and come from the same tables, uses_crypto is right only by coincidence (its 22 classical-crypto hits are rqs pattern lines), and the profile workflow-engine came from the word 'durable' (tools/rqs/rqs/suggest.py:61-63). Mentions count as presence (suggest.py:119-120,167-170,202-203,233-235). Neither 0bdc987 nor 82e1713 addresses it. This review changed 17 of the 39 automatic levels, removed PERF-3 by correcting heavy_compute, and kept some whose basis was self-referential but whose level holds on other evidence (EPI-5=1, MNT-5=2, SUS-3=2, INT-2=3).",
+   "impact": "The review tool cannot review its own repository, or any repository that contains detection rules or quality documentation: an untouched template would have given RE4exa COR-3=4, MNT-1=4 and OPS-2=4, and SEC-7=1 for the wrong reason while missing the real construct.",
+   "fix": "Exclude the tool's own detection tables and the standard from scans (or honour an ignore marker); count prose mentions separately from configuration and code use; add a regression test that probes RE4exa itself and asserts these false positives stay absent.",
+   "severity": "high",
+   "evidence": [
+    "tools/rqs/rqs/scan.py:48-235",
+    "tools/rqs/rqs/suggest.py:61-63,119-120,163-170,202-203,233-235",
+    "scratchpad probes/re4exa.json"
+   ]
+  },
+  {
+   "lens": "G8",
+   "title": "rqs misses real evidence on RE4exa",
+   "case": "claims.count finds 0 numeric claims because claims_numeric requires a comparative word (tools/rqs/rqs/scan.py:226-229), although research/rea-self-analysis/README.md:78-101 is a table of numeric claims. claims.harness finds 0 harness and 0 result files because test.bench only recognises bench or eval directories (tools/rqs/rqs/probes.py:539), while research/rea-self-analysis/ holds 12 scripts and 31 result files. agent.describe misses all three describe subcommands (tools/rex/rex/cli.py:108, tools/dissect/dissect/cli.py:267, tools/rqs/rqs/cli.py:179) because the pattern expects add_parser(\"describe\") (scan.py:85-86). test.golden misses the answer key (probes.py:508 wants an answer-key directory). The SEC-7 rule ignores risk.patterns (suggest.py:163-166) and no probe looks for SQL built from strings (tools/rex/rex/store.py:221-225). obs.env_vars counts names from test fixtures (scan.py:535-536); risk.remote_script counts test fixtures (probes.py:685) and treats a printed sha256sum (research/rea-self-analysis/scripts/setup.sh:37) as verification.",
+   "impact": "Suggestions are right or wrong for the wrong reasons (EPI-5 would be 3 if no claim were found; OPS-4=3 rests on a printed digest), and reviewers who trust found=false miss the evidence that matters most.",
+   "fix": "Build an answer key of labelled repositories (start with this review's corrections) and measure probe precision and recall; widen claims, harness and describe detection; use risk.patterns in the SEC-7 rule; add a dynamic-SQL signal; exclude test fixtures from env-var and pipe-to-shell counts.",
+   "severity": "medium",
+   "evidence": [
+    "tools/rqs/rqs/scan.py:85-86,226-229,535-536",
+    "tools/rqs/rqs/probes.py:508,539,685",
+    "tools/rqs/rqs/suggest.py:163-166"
+   ]
+  },
+  {
+   "lens": "G9",
+   "title": "No CI, an undeclared dependency, and a suite that fails on a clean checkout",
+   "case": "No CI configuration exists (rqs probe ci.workflows: 0). The 40 tests pass in the prepared checkout (rex 14, dissect 7, rqs 19) but on `git archive 0bdc987` the dissect suite fails with 3 failures and 1 error because @babel/parser is not installed and the tests do not skip. PyYAML is imported by tools/dissect/dissect/extract.py:21 and standard/build.py:14 but declared nowhere. There is no SECURITY.md, update bot or vulnerability scan.",
+   "impact": "Nothing stops a regression, the documented quick start breaks on a fresh machine, and COR-1, SEC-1 and SEC-2 cannot improve without a pipeline.",
+   "fix": "Add a CI workflow (actions pinned by SHA, read-only permissions) that installs the helper and runs the three suites and standard/build.py --check on Linux and macOS; add a pinned requirements file for PyYAML; add SECURITY.md and Dependabot.",
+   "severity": "high",
+   "evidence": [
+    "git ls-files",
+    "tools/dissect/tests/test_dissect.py:97-118",
+    "tools/dissect/dissect/extract.py:21",
+    "standard/build.py:14"
+   ]
+  },
+  {
+   "lens": "G3",
+   "title": "rex's readers of untrusted artifacts have no resource bounds",
+   "case": "tools/rex/rex/formats.py reads whole files (84,115,152,200,251), decompresses whole zip and tar entries into memory (97,107), decompresses Rust .dep-v0 without an output cap (303: bufsize is an initial buffer size) and walks Mach-O load commands trusting ncmds and cmdsize (258-265). probes.external captures all stdout before truncating (tools/rex/rex/probes.py:182-190); find skips files over 256 MiB without listing them (probes.py:153-154). There are no malformed-input or fuzz tests (tools/rex/tests/test_rex.py).",
+   "impact": "Crafted or very large artifacts, which are rex's stated inputs, can exhaust memory or CPU on the analyst's host (the size-cliff class the research faults REA for), and scans can be partial without saying so.",
+   "fix": "Stream digests in chunks; cap per-entry decompression (decompressobj with max_length); validate load-command sizes and bound counts; cap external output while reading; list skipped files in limitations; add a malformed-input corpus and a fuzz target for formats.py.",
+   "severity": "medium",
+   "evidence": [
+    "tools/rex/rex/formats.py:84-115,258-265,303",
+    "tools/rex/rex/probes.py:153-154,182-190"
+   ]
+  },
+  {
+   "lens": "G5",
+   "title": "Silent absence in the necessity gate and in dissect",
+   "case": "tools/rex/rex/gate.py:33,47: when DISSECT_DB names a missing file, no query runs and the verdict is 'nothing-similar-indexed' rather than 'no-index'. tools/dissect/dissect/extract.py:151-155 ignores the JS helper's exit status: on the clean export of 0bdc987 the dissect tests lost every JS/TS symbol (startWorker, helper) and the scan recorded no error. extract.py:453 calls node unconditionally while Go is guarded (:455), contradicting tools/README.md:48-50.",
+   "impact": "An agent asking the gate whether a capability exists is told nothing similar is indexed when nothing was searched, and dissect graphs can silently lack whole languages: the 'absence is not a negative' rule rex is built around.",
+   "fix": "Return no-index with an error for a missing database; record the helper's exit status and per-language parse coverage in the scan stats; guard node as go is guarded; make the dissect tests skip JS assertions when the helper is missing.",
+   "severity": "medium",
+   "evidence": [
+    "tools/rex/rex/gate.py:33,47",
+    "tools/dissect/dissect/extract.py:151-155,453-456",
+    "tools/README.md:48-50"
+   ]
+  },
+  {
+   "lens": "G4",
+   "title": "Durable step reuse survives tool upgrades, and evidence carries no tool version",
+   "case": "Step keys are digest(operation, args, subject) (tools/rex/rex/store.py:153) and built-in probes pass no tool_version to store.put (tools/rex/rex/probes.py:51,67,91,136,165). After a rex upgrade, a re-run returns evidence produced by the old parser marked reused: true, and no record says which rex produced it, although describe lists tool_version as a field (tools/rex/rex/cli.py:55). dissect records no tool version either (tools/dissect/dissect/db.py:84).",
+   "impact": "Parser fixes never reach existing stores, provenance cannot tell old results from new (EPI-1 at 2), and stores shared between machines with different rex versions converge on whatever was cached first.",
+   "fix": "Include rex's version, or a digest of each probe's implementation, in step keys and evidence identity; record dissect's version in meta and repo rows.",
+   "severity": "medium",
+   "evidence": [
+    "tools/rex/rex/store.py:153",
+    "tools/rex/rex/probes.py:51,67,91,136,165",
+    "tools/dissect/dissect/db.py:84"
+   ]
+  },
+  {
+   "lens": "G7",
+   "title": "Three tools, three error contracts and three MCP loops",
+   "case": "rex and rqs return {error: {code, message, fix}} (tools/rex/rex/store.py:89-90, tools/rqs/rqs/standard.py:17-18); dissect returns {error: 'not_found', hint} or {error: 'read_only', message} (tools/dissect/dissect/cli.py:77,142,154,178), contrary to the design table (tools/README.md:25). No tool sets a retryable flag. Unexpected exceptions become tracebacks in the rex and dissect CLIs (tools/rex/rex/cli.py:161-165, tools/dissect/dissect/cli.py:272-279) and Python class names as codes over MCP (tools/rex/rex/mcp.py:89-90, tools/dissect/dissect/mcp.py:74-75). The three MCP loops (rex/mcp.py:66-100, dissect/mcp.py:47-84, rqs/mcp.py:57-96) all answer protocolVersion 2025-06-18 whatever the client asks and drop malformed JSON without a parse-error reply.",
+   "impact": "Agents need per-tool error handling, the same mistake yields different shapes, and every protocol change has to be made three times.",
+   "fix": "One shared error type with code, message, fix and retryable; a catch-all JSON error in every CLI; one MCP stdio module with version negotiation and -32700 replies; a contract test that sends equivalent invalid inputs to all three tools.",
+   "severity": "medium",
+   "evidence": [
+    "tools/dissect/dissect/cli.py:77,142,154,178",
+    "tools/rex/rex/cli.py:161-165",
+    "tools/rex/rex/mcp.py:66-100"
+   ]
+  },
+  {
+   "lens": "G11",
+   "title": "MCP hints under-declare file overwrites, and target text reaches agents unmarked",
+   "case": "rex_export is annotated destructiveHint false (tools/rex/rex/mcp.py:19,33) yet replaces any existing file at the given path (tools/rex/rex/store.py:197); rqs_probe, rqs_template and rqs_score write any 'out' path with Path.write_text (tools/rqs/rqs/mcp.py:19,25-30; tools/rqs/rqs/cli.py:35-37). Byte slices, JS samples, doc lines and snippets from targets are returned without an untrusted-content marker, and no server instruction says to treat them as data (tools/rex/rex/mcp.py:79, tools/dissect/dissect/mcp.py:61, tools/rqs/rqs/mcp.py:71).",
+   "impact": "Hosts that auto-approve non-destructive tools let an agent, possibly steered by text injected into a scanned target, overwrite arbitrary files; injected instructions reach the model unlabelled (AGT-1 at 1, AGT-2 at 2).",
+   "fix": "Declare write tools destructive or refuse existing paths without an explicit overwrite flag; confine writes to a working directory; label target-derived text as untrusted data in outputs and server instructions; add injection fixtures to the tests.",
+   "severity": "medium",
+   "evidence": [
+    "tools/rex/rex/mcp.py:19,33",
+    "tools/rex/rex/store.py:197",
+    "tools/rqs/rqs/mcp.py:19,25-30"
+   ]
+  },
+  {
+   "lens": "G12",
+   "title": "Entry-point documentation and contracts are out of date",
+   "case": "README.md:6-13 has no row for standard/ or tools/rqs and says the skills cover 'rex and dissect' although skills/rqs exists (0bdc987 did not touch README.md). dissect describe (tools/dissect/dissect/cli.py:223-224) omits the node kinds component, gap and principle and the edge kinds fixes, motivates and satisfies that research/dissection/dissection.db contains. tools/rqs/README.md:47 says automatic red-line suspicions do not cap a grade until a reviewer confirms them, while tools/rqs/rqs/score.py:98 also confirms any automatic level with observed confidence.",
+   "impact": "A new human or agent at the root misses the standard and half of the tooling, and agents that query dissect by its contract miss the curated relations.",
+   "fix": "Update README.md with every top-level component, a quick start and limits; generate dissect describe's kind lists from the database; align the rqs README with score.py.",
+   "severity": "low",
+   "evidence": [
+    "README.md:6-13",
+    "tools/dissect/dissect/cli.py:223-224",
+    "tools/rqs/README.md:47",
+    "tools/rqs/rqs/score.py:98"
+   ]
+  }
+ ],
+ "opportunities": [
+  {
+   "lens": "O9",
+   "criterion": "OPP-6",
+   "title": "Publish the evidence record and bundle as a versioned format",
+   "description": "rex's ev_<sha256> record (tools/rex/rex/store.py:17-30,113-127) and streamed JSONL bundle (store.py:183-226) are what the prototype already keeps for REA (prototypes/rea-durable-evidence/src/durable-rea.mjs:53-56) and what research/dissection/README.md:108 names as the tie between REA, caveman's retrieval handles and Absurd steps. rqs and dissect use their own ad hoc evidence shapes (path:line strings, row ids). A specified, versioned record with an algorithm-tagged id, verified import and optional signatures would let rex, dissect, rqs and REA exchange evidence.",
+   "value": 4,
+   "reach": 4,
+   "confidence": "derived",
+   "horizon_fit": 1.4,
+   "effort": 3,
+   "action": "extract",
+   "evidence": [
+    "tools/rex/rex/store.py:17-30,113-127,183-226",
+    "prototypes/rea-durable-evidence/src/durable-rea.mjs:53-56",
+    "research/dissection/README.md:108,171"
+   ]
+  },
+  {
+   "lens": "O3",
+   "criterion": "OPP-3",
+   "title": "Calibrate rqs suggestions with rex's calibration",
+   "description": "rqs labels each suggestion observed, derived or inferred without measuring it (tools/rqs/rqs/suggest.py), and this review shows overconfident 'derived' levels. rex already records answers and adjudications and reports Wilson intervals, ECE and abstention advice (tools/rex/rex/epistemics.py:88-131). Recording each automatic level as a rex answer and adjudicating it with the reviewed level (a campaign of 15 reviews gives several hundred pairs) turns rqs's labels into measured precision per rule and lets weak rules abstain to U.",
+   "value": 4,
+   "reach": 4,
+   "confidence": "derived",
+   "horizon_fit": 1.3,
+   "effort": 2,
+   "action": "harden",
+   "evidence": [
+    "tools/rqs/rqs/suggest.py:77-270",
+    "tools/rex/rex/epistemics.py:88-131"
+   ]
+  },
+  {
+   "lens": "O2",
+   "criterion": "OPP-2",
+   "title": "One repository scanner and one MCP and error core for the three tools",
+   "description": "dissect (tools/dissect/dissect/extract.py) and rqs (tools/rqs/rqs/scan.py) each walk repositories with their own skip lists, language maps and test-path rules, and each tool has its own MCP stdio loop and error convention. RQS-2030 step 2 already pairs `dissect scan` with `rqs probe`; rqs could read inventory and symbols from a dissect database, and the three servers could share one loop and one error type.",
+   "value": 3,
+   "reach": 3,
+   "confidence": "observed",
+   "horizon_fit": 1.1,
+   "effort": 3,
+   "action": "consolidate",
+   "evidence": [
+    "tools/dissect/dissect/extract.py:34-63",
+    "tools/rqs/rqs/scan.py:18-40",
+    "tools/rex/rex/mcp.py:66-100",
+    "tools/dissect/dissect/mcp.py:47-84",
+    "tools/rqs/rqs/mcp.py:57-96",
+    "standard/RQS-2030.md:37"
+   ]
+  },
+  {
+   "lens": "O12",
+   "criterion": "OPP-6",
+   "title": "Scoring parameters as data in the standard",
+   "description": "The core weight, coverage gate, blocking thresholds, grade caps and opportunity confidence weights are prose in standard/rqs-2030.yaml and literals in tools/rqs/rqs/score.py:15,79-80,106,111. Moving them into the YAML as numbers makes the score.py docstring true, lets other implementations score identically, and lets a revision of the standard change scoring without a code change.",
+   "value": 3,
+   "reach": 3,
+   "confidence": "observed",
+   "horizon_fit": 1.2,
+   "effort": 1,
+   "action": "refactor",
+   "evidence": [
+    "tools/rqs/rqs/score.py:1-2,15,79-80,106,111",
+    "standard/rqs-2030.json scoring section"
+   ]
+  },
+  {
+   "lens": "O1",
+   "criterion": "OPP-1",
+   "title": "A bounded, dependency-free artifact reader",
+   "description": "tools/rex/rex/formats.py reads ELF, PE, Mach-O, ZIP, npm tgz, ASAR, Go build info and Rust .dep-v0 in 310 lines of standard-library Python, and the research shows it answering questions REA refused (research/dissection/README.md:146-156). Once bounded and fuzzed (gap G3) it is useful on its own to other agent tools; today the missing limits make it unsafe to reuse.",
+   "value": 3,
+   "reach": 3,
+   "confidence": "inferred",
+   "horizon_fit": 1.2,
+   "effort": 3,
+   "action": "harden",
+   "evidence": [
+    "tools/rex/rex/formats.py:1-310",
+    "research/dissection/README.md:146-156"
+   ]
+  }
+ ],
+ "reengineering": [
+  {
+   "action": "harden",
+   "component": "rex bundle import and artifact readers (tools/rex/rex/store.py, formats.py, probes.py)",
+   "gain": "Clears red line RL-4 and the SEC-8 and REL-2 gaps; 'tampered records are rejected' becomes true for every bundle row.",
+   "measure": "A malicious-bundle and malformed-artifact corpus in tools/rex/tests passes; a fuzz run over formats.py finds no unhandled exception over a stated number of CPU-hours; peak RSS on a 10x-size input stays under a stated cap."
+  },
+  {
+   "action": "harden",
+   "component": "rqs probes and suggestion rules (tools/rqs/rqs/scan.py, probes.py, suggest.py)",
+   "gain": "Suggestions stop resting on rqs's own tables and the standard's prose, and the evidence they miss today is found.",
+   "measure": "Probing RE4exa yields no found=true probe whose evidence lies only in standard/ or tools/rqs/; on the reviewed set, the share of automatic levels that reviewers keep (rqs agree between template and review) rises against the baseline measured in this campaign."
+  },
+  {
+   "action": "consolidate",
+   "component": "Shared core for MCP stdio, errors and repository inventory used by rex, dissect and rqs",
+   "gain": "One error contract and one protocol implementation instead of three hand-written loops of 35-40 lines each.",
+   "measure": "A contract test sending equivalent invalid inputs to all three tools gets the same error shape; line count of the three mcp.py files before and after."
+  },
+  {
+   "action": "harden",
+   "component": "Repository pipeline: LICENSE, CI and generated claims",
+   "gain": "PRV-3 red line cleared; COR-1 from 1 to 3; EPI-5 from 1 to 3.",
+   "measure": "rqs probe meta.license detects an SPDX license; CI runs the 40 tests and standard/build.py --check on every push on two operating systems; a script regenerates README number tables from results/ and CI fails on any diff."
+  }
+ ],
+ "questions": [
+  "Does RE4exa meet its own RQS-2030 bar? No: grade D (QI 38.1, coverage 100%), capped by two confirmed red lines (RL-1 no license, RL-4 injection-prone bundle import); its strengths are rex's evidence model, durable steps and small catalogs, its weaknesses the absence of CI, policies, test strength and agent-safety controls.",
+  "Do the README claims match the results they cite? For REA's numbers mostly yes (exact matches on catalog bytes, timings, export size, graph counts); for rex's own several do not (4.0 s vs 4.48 s; 'measured fixes' that were not measured; 0.42 s, 52-70 ms and 4,607 bytes with no committed result; 'standard-library Python' vs PyYAML).",
+  "How accurate is rqs on its own repository (G14)? Poor: 19 of 85 probes report found=true on rqs's pattern tables or the standard's prose alone, 9 of 39 levelled suggestions rest only on such lines, 2 of 8 suggested flags and the suggested profile are wrong, 17 of the 39 automatic levels had to change, and the real evidence (numeric claims, harness and results, describe commands, the dynamic SQL in rex) is missed."
+ ],
+ "not_examined": [
+  "The research harnesses were not re-run (REA package, Postgres crash test, caveman and leanrea lenses, product-eval.py); their committed outputs were checked against the READMEs instead.",
+  "Exploitability of the rex import SQL construct and of the parser resource limits was not demonstrated (defensive review rules).",
+  "Whether the git subcommands dissect runs inside scanned repositories (tools/dissect/dissect/extract.py:66-70, without the hardening rqs applies at scan.py:372) honour repository configuration that starts programs was not tested.",
+  "The exact size of rex's MCP catalog (4,607 bytes claimed) was not recomputed; only the test bound of 12,000 bytes was run.",
+  "The dissection database was checked for counts, kinds and secrets only; the 603 claim nodes and the curated layer were not audited one by one.",
+  "macOS, Windows and Python 3.11-3.12 behaviour (only Linux with Python 3.13.16 was used).",
+  "GitHub-side settings (branch protection, pull-request review) are not visible from the checkout.",
+  "The standard's regulatory dates and references were not checked against primary sources (no web access)."
+ ],
+ "time_minutes": 150,
+ "scope_notes": "Profile agent-tool: RE4exa ships three agent-first CLIs and MCP servers (rex, dissect, rqs) with skills, and the standard itself names rex and dissect as agent-tool examples (standard/RQS-2030.md:94); the suggested workflow-engine came from the word 'durable' (tools/rqs/rqs/suggest.py:61-63). Flags: uses_llm (MCP servers and skills), executes_code (rex ext and run start external programs; dissect runs node, go and git), parses_untrusted (binaries, archives, repositories, bundles), uses_crypto (SHA-256 content addresses verified on import, tools/rex/rex/store.py:209-215); network_service and heavy_compute are off because every probe hit for them is rqs's own pattern table (tools/rqs/rqs/scan.py:151-159), distributed is off (no package, release or tag). Reviewed commit 0bdc987 via git show and git archive; HEAD moved to 82e1713 during the review (review files plus compensated summation in score.py), and validation used that rqs."
+}
