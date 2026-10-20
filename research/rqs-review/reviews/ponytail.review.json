@@ -77,7 +77,7 @@
   "COR-5": {
    "level": 3,
    "confidence": "observed",
-   "evidence": ["hooks/ponytail-map.js:276-280 (deterministic file order)", "hooks/ponytail-instructions.js:11-41 (pure filter)", "benchmarks/results/2026-10-07-agentic.md:23,32-34 (5 runs, medians and intervals for model nondeterminism)"],
+   "evidence": ["hooks/ponytail-map.js:75-79 (deterministic file order)", "hooks/ponytail-instructions.js:11-41 (pure filter)", "benchmarks/results/2026-10-07-agentic.md:23,32-34 (5 runs, medians and intervals for model nondeterminism)"],
    "note": "Hook output is deterministic; model nondeterminism is handled by repeated runs; no double-run check in CI.",
    "source": "review"
   },
@@ -91,21 +91,21 @@
   "REL-2": {
    "level": 3,
    "confidence": "observed",
-   "evidence": ["hooks/ponytail-map.js:217-218,243,287 (2,000-character budget, 4,000 files, 64 KiB per file, 3 s)", "hooks/ponytail-activate.js:66-69 (map dropped after 3 s, 64 KiB buffer)", "hooks/ponytail-band-import.js:68-101 (JSONL streamed in 1 MiB chunks, records slimmed)", "hooks/band/register.tsx:114-121 (grep because fs.read refuses files over 4 MiB)", "hooks/band/register.tsx:325 (per-turn cost history capped at 20)"],
+   "evidence": ["hooks/ponytail-map.js:16-17,42,86 (2,000-character budget, 4,000 files, 3 s git listing, 64 KiB per file)", "hooks/ponytail-activate.js:66-69 (map dropped after 3 s, 64 KiB buffer)", "hooks/ponytail-band-import.js:68-101 (JSONL streamed in 1 MiB chunks, records slimmed)", "hooks/band/register.tsx:114-121 (grep because fs.read refuses files over 4 MiB)", "hooks/band/register.tsx:325 (per-turn cost history capped at 20)"],
    "note": "Limits are explicit and commented; the board embeds every ledger row with no paging or retention.",
    "source": "review"
   },
   "REL-3": {
    "level": 3,
    "confidence": "observed",
-   "evidence": ["hooks/ponytail-map.js:301-307 ('(N more folders not listed)')", "hooks/band/register.tsx:155-163,334 (webhook and ledger failures shown in the status line)", "hooks/ponytail-band-import.js:16-19 (no price: empty cost, not a guess)", "hooks/ponytail-activate.js:66-71,165-167 (silent fail-open)"],
+   "evidence": ["hooks/ponytail-map.js:100-106 ('(N more folders not listed)')", "hooks/band/register.tsx:155-163,334 (webhook and ledger failures shown in the status line)", "hooks/ponytail-band-import.js:16-19 (no price: empty cost, not a guess)", "hooks/ponytail-activate.js:66-71,165-167 (silent fail-open)"],
    "note": "Partial output is labelled and a session is never blocked; some hook failures are silent by design.",
    "source": "review"
   },
   "REL-4": {
    "level": 3,
    "confidence": "observed",
-   "evidence": ["hooks/ponytail-activate.js:118-131 (temp file plus rename, cleanup in finally)", "hooks/ponytail-mode-tracker.js:296-314 (explicit exit, ref'd fallback timer)", "benchmarks/agentic/run.py:267-275 (self-test that tree-kill ends a timed-out cell)", "git log -1 09c434a: 'wait for the killed todo server before the workdir cleanup (#1116)'"],
+   "evidence": ["hooks/ponytail-activate.js:118-131 (temp file plus rename, cleanup in finally)", "hooks/ponytail-mode-tracker.js:198-216 (explicit exit, ref'd fallback timer)", "benchmarks/agentic/run.py:267-275 (self-test that tree-kill ends a timed-out cell)", "git log -1 09c434a: 'wait for the killed todo server before the workdir cleanup (#1116)'"],
    "note": "Cleanup and process ownership are handled and partly tested; the detached importer is not tracked.",
    "source": "review"
   },

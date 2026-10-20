@@ -58,7 +58,7 @@
    "level": 3,
    "confidence": "observed",
    "evidence": [".github/workflows/test.yml:3-5", ".github/workflows/test.yml:52-53", "Makefile:39", "probe test.ratio: 0.687 (15588/22680 lines), 55 test files", "habitat/internal/server/handlers_tasks_test.go, prefix_test.go, internal/config/config_test.go: 13 Go tests not reached by make test (Makefile:39) or any workflow"],
-   "note": "SQL core tests (pytest, 23 files) and the TypeScript, Python and Go SDK suites run on every push and PR against real Postgres. Habitat's 13 Go tests never run in CI; only Ubuntu, Python 3.12, Node 24 and Postgres 16 are exercised; no coverage measurement.",
+   "note": "SQL core tests (pytest, 20 files) and the TypeScript, Python and Go SDK suites run on every push and PR against real Postgres. Habitat's 13 Go tests never run in CI; only Ubuntu, Python 3.12, Node 24 and Postgres 16 are exercised; no coverage measurement.",
    "source": "review"
   },
   "COR-2": {
@@ -204,7 +204,7 @@
   "INT-3": {
    "level": 3,
    "confidence": "derived",
-   "evidence": ["absurdctl:2914-2940 (18 commands)", "docs/comparison.md:12-22", "sql/absurd.sql (about 40 functions)"],
+   "evidence": ["absurdctl:2914-2940 (18 commands)", "docs/comparison.md:12-22", "sql/absurd.sql (39 create function statements, rg count)"],
    "note": "A small set of composable primitives (tasks, steps, sleep, events, retry) by stated design; surface size is not measured.",
    "source": "review"
   },
@@ -212,7 +212,7 @@
    "level": 2,
    "confidence": "observed",
    "evidence": ["rg -c 'raise exception' sql/absurd.sql: 80", "rg -c \"sqlstate 'AB\" sql/absurd.sql: 16", "sdks/typescript/src/index.ts:1392-1400", "habitat/internal/server/handlers.go:1056-1063", "rg AB00[0-9] docs README.md CONTRIBUTING.md skills: no matches"],
-   "note": "Three SQLSTATE codes (AB001 cancelled, AB002 already failed, AB003 bad retry strategy) are mapped to typed SDK errors; the other 64 raise sites use free text, the codes are undocumented, and habitat returns plain-text errors.",
+   "note": "Three SQLSTATE codes (AB001 cancelled, AB002 already failed, AB003 bad retry strategy) are mapped to typed SDK errors and one concurrency case raises 40001 with a retry hint (sql/absurd.sql:851); the other 63 raise sites use free text, the codes are undocumented, and habitat returns plain-text errors.",
    "source": "review"
   },
   "INT-5": {
@@ -488,7 +488,7 @@
   {
    "lens": "G11",
    "title": "Agents must parse text output and cannot match errors by code",
-   "case": "absurdctl has no JSON output mode (probe agent.json_output); dump-task prints formatted text and full JSON blobs without a size bound (absurdctl:2401-2440); 16 of the 80 SQL raise sites carry an SQLSTATE code (rg counts in sql/absurd.sql) and none of the codes are documented in docs, README, CONTRIBUTING or the skill.",
+   "case": "absurdctl has no JSON output mode (probe agent.json_output); dump-task prints formatted text and full JSON blobs without a size bound (absurdctl:2401-2440); 17 of the 80 SQL raise sites carry an SQLSTATE code (16 AB codes and one 40001, rg counts in sql/absurd.sql) and none of the codes are documented in docs, README, CONTRIBUTING or the skill.",
    "impact": "The skill's agent users pay unbounded tokens per dump-task and must parse tables; errors cannot be handled by stable code.",
    "fix": "Add --json and --max-bytes to list and dump commands, document an error-code table, and give the remaining raise sites stable codes.",
    "severity": "low",
@@ -616,7 +616,7 @@
    "action": "re-cut-interface",
    "component": "absurdctl output and SQL error codes",
    "gain": "Agents read state through bounded JSON and handle errors by stable code.",
-   "measure": "Bytes printed by dump-task for a 100-checkpoint task before and after --json --max-bytes; share of raise sites with documented SQLSTATE codes (16 of 80 today)."
+   "measure": "Bytes printed by dump-task for a 100-checkpoint task before and after --json --max-bytes; share of raise sites with documented SQLSTATE codes (17 of 80 carry a code today, none documented)."
   }
  ],
  "questions": [
