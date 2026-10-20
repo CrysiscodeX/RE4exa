@@ -1,0 +1,35 @@
+name: tests
+
+# Runs the three tool test suites and checks that the standard's generated files are current.
+# No third-party actions: the checkout is a plain git fetch of this commit with the job token.
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out this commit
+        env:
+          TOKEN: ${{ github.token }}
+        run: |
+          git init -q .
+          git remote add origin "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git fetch -q --depth 1 origin "${GITHUB_SHA}"
+          git checkout -q FETCH_HEAD
+      - name: rex
+        run: cd tools/rex && python3 -m unittest discover -s tests
+      - name: dissect (optional parser helpers not installed)
+        run: cd tools/dissect && python3 -m unittest discover -s tests
+      - name: rqs
+        run: cd tools/rqs && python3 -m unittest discover -s tests
+      - name: standard/build.py --check
+        run: |
+          python3 -m venv /tmp/venv
+          /tmp/venv/bin/pip install --quiet pyyaml==6.0.2
+          /tmp/venv/bin/python standard/build.py --check
