@@ -176,7 +176,7 @@
   "SEC-7": {
    "level": 3,
    "confidence": "derived",
-   "evidence": ["src/env/index.ts:360-364", "src/env/node.ts:676-693", "^/packages/chord/src/sqlite/schema.ts:2-9", "README.md:353-366", "^/SECURITY.md:50"],
+   "evidence": ["src/env/index.ts:360-364", "src/env/node.ts:673-689", "^/packages/chord/src/sqlite/schema.ts:2-9", "README.md:353-366", "^/SECURITY.md:50"],
    "note": "Red line not triggered. Shell strings and JavaScript execution are the declared purpose of the bash and code-mode tools (code mode in a QuickJS sandbox); hosts get an argv form that bypasses the shell; SQL table prefixes are allow-listed. No SAST gate.",
    "source": "review"
   },

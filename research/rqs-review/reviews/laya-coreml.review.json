@@ -479,15 +479,16 @@
    "source": "review"
   },
   "EPI-3": {
-   "level": 4,
+   "level": 3,
    "confidence": "observed",
    "evidence": [
     "docs/ANE_BENCHMARKS.md:160-163",
     "docs/RELEASE.md:56-78 (fitting subsets explicit)",
     "README.md:88-92",
-    "README.md:267-272"
+    "README.md:267-272",
+    "laya_coreml/runtime.py (abstention 'unevaluated' state, as upstream)"
    ],
-   "note": "Absence is handled explicitly: zero or missing counters are not read as zero energy or absent ANE work, fixture subsets that do not fit are named, and over-capacity inputs are refused rather than shortened.",
+   "note": "Measurement reports handle absence explicitly (zero or missing counters are not read as zero energy or absent ANE work; fixture subsets that do not fit are named) and over-capacity inputs are refused rather than shortened. At run time the port is the same forced-choice classifier as upstream, so unreadable input still gets a confident answer.",
    "source": "review"
   },
   "EPI-4": {

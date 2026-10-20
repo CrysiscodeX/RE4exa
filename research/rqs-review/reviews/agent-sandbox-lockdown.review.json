@@ -1,0 +1,600 @@
+{
+ "rqs_review": 1,
+ "target": {
+  "path": "/home/user/GitHub_Repos_Dump/PromptEngineer48__agent-sandbox-lockdown",
+  "name": "agent-sandbox-lockdown",
+  "head": "5aba6b81bcf67e15e6cc7c9796867813ab3b66c8",
+  "shallow": true
+ },
+ "profile": "security-tool",
+ "flags": {
+  "uses_llm": true,
+  "has_ui": false,
+  "executes_code": false,
+  "network_service": false,
+  "parses_untrusted": true,
+  "uses_crypto": false,
+  "heavy_compute": false,
+  "distributed": false
+ },
+ "scope_notes": "security-tool: a defensive containment reference (internal Docker network, allowlisting DNS and proxy, hardened agent container, write approval, tool-call log, step cap, kill switch) demonstrated on a 153-line tool-using agent, which is the test subject rather than the product. Flags set from the code: uses_llm on, which the automatic flags missed (agent/agent.py:108-114 calls Ollama's /api/chat with tool schemas for qwen3:4b); parses_untrusted on (the agent ingests web pages and workspace files, including a prompt-injection fixture); executes_code off (tools are fixed Python functions for file I/O, HTTP GET and DNS lookup, with no shell or code tool); network_service off (DNS, proxy and Ollama listen only on the internal compose network, and no ports are published to the host); heavy_compute off (single demo tasks on a 4B local model, not material energy use); has_ui off (a CLI with a y/N prompt); uses_crypto and distributed off. Red-line decisions: PRV-3 is 1, not 0, because README.md:61 declares MIT although there is no LICENSE file; SEC-7 is 1, not 0, because the URL tool's missing scheme and host allowlist is reachable from untrusted content but the tool only reads and runs as a non-root user on a read-only root filesystem with no secrets in the shipped configuration (recorded as a high gap); EPI-5 is 1, not 0, because the demonstrated controls are backed by recorded runs and the overstatements are location and scope errors rather than claims contradicted by measurement; SEC-6 and PRV-1 pass. Static review of commit 5aba6b8 (shallow clone, one commit); nothing was run.",
+ "reviewer": {
+  "id": "reviewer-agent-sandbox-lockdown",
+  "kind": "agent",
+  "conflicts": "none"
+ },
+ "date": "2026-10-20",
+ "scores": {
+  "PUR-1": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["README.md:3", "README.md:9-21", "README.md:23-40", "README.md:55-59"],
+   "note": "The README states what the stack is, how to run it and what each file does. It does not say what the containment leaves unprotected (output integrity, the trusted DNS, proxy and Ollama containers, the Docker daemon and kernel, the human approver) and has no non-goals.",
+   "source": "review"
+  },
+  "PUR-2": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["README.md:42-53", "README.md:55-59", "sample-runs/run_injection_1.txt:3-35", "sample-runs/coredns_log.txt:10", "sample-runs/run_kill.txt:1-4", "sample-runs/run_approval_allow.txt:1"],
+   "note": "Claims are qualitative and backed by single recorded transcripts plus manual reproduction commands, and the net-negative case (the model followed the injected instructions) is reported. No harness asserts outcomes, runs are not repeated or dated in the repository, and the transcripts come from a differently named project ('demo-agent' containers) than the shipped layout.",
+   "source": "review"
+  },
+  "PUR-3": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": ["README.md:9-21", "agent/agent.py:8-15", "agent/Dockerfile:2", "docker-compose.yml:1-5"],
+   "note": "Each component has a stated role, and the agent uses only the Python standard library. The agent image also installs dnsutils and curl, which only the manual tests use (README.md:46-49), so the contained container carries extra network tools.",
+   "source": "review"
+  },
+  "COR-1": {
+   "level": 0,
+   "confidence": "observed",
+   "evidence": ["find . -path ./.git -prune -o -type f -print -> 22 files: no test files, no .github directory or other CI configuration"],
+   "note": "No automated tests and no CI.",
+   "source": "review"
+  },
+  "COR-2": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": ["sample-runs/coredns_log.txt:9-16", "sample-runs/run_sandbox_tests.txt:1-11"],
+   "note": "The CoreDNS query log is an independent record of DNS decisions, but nothing compares runs against it, and there are no fixtures with expected outcomes.",
+   "source": "review"
+  },
+  "COR-3": {
+   "level": 0,
+   "confidence": "observed",
+   "evidence": ["22-file listing: no tests of any kind"],
+   "note": "No tests exist, so there is no mutation, property or fuzz testing.",
+   "source": "review"
+  },
+  "COR-4": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["workspace/lead_from_website.txt:1-8", "sample-runs/run_injection_1.txt:3-35", "AGENT_SAFETY_CHECKLIST.md:26"],
+   "note": "The demo was run against a prompt-injection fixture in a realistic pattern and the run is recorded. The data are synthetic test records, the run is a single trial, and the checklist's own advice to attack the setup before trusting it is not automated.",
+   "source": "review"
+  },
+  "COR-5": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": ["agent/agent.py:109-110", "agent/agent.py:84", "docker-compose.yml:16", "docker-compose.yml:33", "sample-runs/run_approval_allow.txt:3-19", "sample-runs/run_approval_deny.txt:3-51"],
+   "note": "Sampling is not controlled (no temperature or seed in the chat request), timestamps are local time to the second, and two images float. The same task produced different tool-call sequences in two recorded runs, and this nondeterminism is not documented.",
+   "source": "review"
+  },
+  "REL-1": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": ["agent/agent.py:119-149", "agent/agent.py:83-86"],
+   "note": "Conversation state lives only in memory, so a crash ends the run with no resume. The append-only JSONL log keeps a record of completed tool calls.",
+   "source": "review"
+  },
+  "REL-2": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": ["docker-compose.yml:58-59", "agent/agent.py:19", "agent/agent.py:46", "agent/agent.py:50-51", "agent/agent.py:113", "AGENT_SAFETY_CHECKLIST.md:14", "AGENT_SAFETY_CHECKLIST.md:24"],
+   "note": "The agent container has memory and PID limits, a 12-step cap, per-call timeouts and capped reads, and the checklist documents them. Unbounded: tool arguments written to the log, write size, the host-mounted outbox and logs, and the Ollama, DNS and proxy containers, which have no limits.",
+   "source": "review"
+  },
+  "REL-3": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["agent/agent.py:96-100", "agent/agent.py:101-104", "agent/agent.py:46", "agent/agent.py:51", "agent/agent.py:125-128", "agent/agent.py:148-149"],
+   "note": "Approval fails closed when stdin closes, and tool errors are returned and logged with a status. Truncated reads are not labelled, and kill, step limit and normal completion all end the same way, so a caller cannot tell a partial run from a finished one.",
+   "source": "review"
+  },
+  "REL-4": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["README.md:34-37", "README.md:52", "docker-compose.yml:15-38", "agent/agent.py:152-153"],
+   "note": "The agent runs with docker compose run --rm and the model-pull container is removed. The Ollama, DNS and proxy services are started detached with no teardown step, the KILL file must be removed by hand, and the agent has no signal handling.",
+   "source": "review"
+  },
+  "PERF-1": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": ["22-file listing: no benchmark or timing files", "sample-runs/coredns_log.txt:9-16"],
+   "note": "No performance numbers; the only timings are incidental per-query times in the CoreDNS log.",
+   "source": "review"
+  },
+  "PERF-2": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": ["agent/agent.py:64-80", "agent/agent.py:46", "agent/agent.py:51", "agent/agent.py:120-121", "measurement: jq rebuild of SCHEMA from agent.py:64-80 -> 974 bytes of compact JSON"],
+   "note": "The catalog is five tools with one-line descriptions (about 1 KB of JSON), the system prompt is two sentences, and tool outputs are capped at 4,000 characters or 2,000 bytes. The project does not measure this, which is proportionate at this size.",
+   "source": "review"
+  },
+  "SEC-1": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": ["22-file listing: no SECURITY.md or contact", "README.md:55-59", "AGENT_SAFETY_CHECKLIST.md:5-26"],
+   "note": "There is no route for reporting vulnerabilities. The threat (a prompt-injected agent trying to send data out or write files) is implied by README.md:55-59 and the checklist, but nothing states what is trusted: the Docker daemon and kernel, the dual-homed DNS and proxy containers, the Ollama container and the human approver.",
+   "source": "review"
+  },
+  "SEC-2": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": ["docker-compose.yml:16", "docker-compose.yml:23", "docker-compose.yml:33", "agent/Dockerfile:1-2", "probe deps.pinning: images by digest 0, by tag 2, latest or untagged 2"],
+   "note": "The agent needs no Python packages, but no image is pinned by digest: ollama/ollama:latest, an untagged third-party tinyproxy image, coredns and python:3.12-slim by tag, and apt packages without versions. No update or scan process.",
+   "source": "review"
+  },
+  "SEC-5": {
+   "level": "NA",
+   "confidence": "observed",
+   "evidence": ["22-file listing: no .github directory or other CI configuration"],
+   "note": "No CI workflows or automation exist, so there is nothing to harden. The absence of CI is scored under COR-1 and SUS-2.",
+   "source": "review"
+  },
+  "SEC-6": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["probe risk.secrets: no secret patterns", "workspace/customers.csv:1-3", ".gitignore:1-5", "agent/agent.py:83-86", "agent/agent.py:145-146"],
+   "note": "Red line not confirmed: no secrets are committed (the workspace holds fake .test addresses), and the stack uses no API keys. There is no secret scanner, tool results are logged without redaction, and there is no guidance on keeping credentials out of the agent container.",
+   "source": "review"
+  },
+  "SEC-7": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": ["agent/agent.py:49-51", "agent/agent.py:34-38", "agent/agent.py:68", "AGENT_SAFETY_CHECKLIST.md:19", "sample-runs/run_injection_1.txt:6-11", "docker-compose.yml:53-57"],
+   "note": "Red line not confirmed at 0: http_get passes model-chosen URLs to urlopen with no scheme or host allowlist, so the path check that confines the file tools does not cover it, and recorded runs show untrusted content steering tool calls. The tool only reads, and it runs as a non-root user on a read-only root filesystem with no secrets in the shipped configuration, so it scores 1 with a high gap. No shell, eval or deserialization patterns.",
+   "source": "review"
+  },
+  "SEC-8": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["agent/agent.py:45-46", "agent/agent.py:49-51", "agent/agent.py:114", "docker-compose.yml:53-59"],
+   "note": "Untrusted web and file content is handled by Python's standard library inside a hardened container, and reads are size-capped (read_file reads the whole file before slicing). The model's JSON reply is used without validation. No malformed-input tests or fuzzing.",
+   "source": "review"
+  },
+  "AGT-1": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["agent/agent.py:147", "agent/agent.py:120-121", "workspace/lead_from_website.txt:5-8", "sample-runs/run_injection_1.txt:6-11", "sample-runs/run_injection_1.txt:31-33", "README.md:59"],
+   "note": "Tool output enters the conversation as tool messages with no untrusted marking, and there is no automated injection test. The design relies on policy rather than prompt wording: egress is limited by the network layer and writes need approval. The recorded run shows injected text still triggered an unrequested read and corrupted the answer.",
+   "source": "review"
+  },
+  "AGT-2": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["agent/agent.py:64-71", "agent/agent.py:89-100", "agent/agent.py:94", "docker-compose.yml:61-64"],
+   "note": "Five narrow tools, a read-only workspace mount and approval for the only write tool. The approval prompt shows only the first 160 characters of the arguments, and the network tools run without approval, relying on the DNS and proxy layer for scope.",
+   "source": "review"
+  },
+  "AGT-3": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["agent/agent.py:83-86", "agent/agent.py:145-146", "agent/agent.py:124-128", "sample-runs/run_kill.txt:1-4", "sample-runs/run_approval_deny.txt:6-51"],
+   "note": "A JSONL log records every tool call, writes need approval, and a kill-switch file is checked before each step (tested once on record). The switch is not checked between tool calls within a step or during the model call, entries have no run ID, and there is no documented rollback. Denials do not stop the agent: twelve prompts in a row until the step cap.",
+   "source": "review"
+  },
+  "AGT-4": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": ["docker-compose.yml:16", "docker-compose.yml:46", "22-file listing: no test or evaluation files", "sample-runs/run_injection_1.txt:1-35"],
+   "note": "No evaluation of model-dependent behaviour. The model tag and the server image float, and one recorded injection run is the only evidence of how the model behaves.",
+   "source": "review"
+  },
+  "AGT-5": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": ["README.md:3", "README.md:13", "docker-compose.yml:46", "agent/agent.py:17-18"],
+   "note": "The provider (local Ollama), the model (qwen3:4b, overridable) and the data flows (internal network only, allowlisted egress) are documented. Files written to the outbox are not marked as AI-generated, though the log records which tool call wrote them.",
+   "source": "review"
+  },
+  "AGT-6": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["agent/agent.py:19", "agent/agent.py:50", "agent/agent.py:109-110", "agent/agent.py:113", "agent/agent.py:136-147"],
+   "note": "Steps are capped at 12 and each call has a timeout, but one step can run any number of tool calls, there is no token or total-time budget (no generation or context limit in the request), and usage is not reported.",
+   "source": "review"
+  },
+  "INT-1": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["README.md:36-37", "agent/agent.py:152-153", "agent/agent.py:29-30", "agent/agent.py:83-86"],
+   "note": "A documented CLI entry (docker compose run agent '<task>') and a JSONL log. Stdout is ANSI-coloured text, nothing is versioned, and outcomes are not distinguished by exit status.",
+   "source": "review"
+  },
+  "INT-2": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": ["AGENT_SAFETY_CHECKLIST.md:23", "agent/agent.py:73-80"],
+   "note": "The tool schemas exist only inside the request to the model, and the log fields are described in one prose line. No describe or help output and no schema for the log.",
+   "source": "review"
+  },
+  "INT-3": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": ["agent/agent.py:64-71", "agent/agent.py:17-19", "README.md:16"],
+   "note": "Five tools, three environment variables and one positional argument, each with a stated purpose; proportionate to the scope.",
+   "source": "review"
+  },
+  "INT-4": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": ["agent/agent.py:89-104", "agent/agent.py:113-114"],
+   "note": "Errors are free-text strings that include the exception type, and the log has an ok/error/denied status. A model-server failure ends the run with a Python traceback. No codes or retry advice.",
+   "source": "review"
+  },
+  "INT-5": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": ["agent/agent.py:84", "agent/agent.py:145-146", "agent/agent.py:58-61"],
+   "note": "Log entries carry a per-run step number and a local timestamp to the second but no run ID, so entries from different runs cannot be told apart reliably. Writes overwrite by path.",
+   "source": "review"
+  },
+  "INT-6": {
+   "level": 2,
+   "confidence": "inferred",
+   "evidence": ["README.md:23-40", "README.md:46", "sample-runs/run_network_none.txt:1", "agent/agent.py:25-30"],
+   "note": "The quickstart is short but untested: it needs an NVIDIA GPU or a compose edit and a manual model pull with a folder-dependent volume name, and the test image name depends on the clone folder (the recorded runs use 'demo-agent'). Status tags are text plus colour.",
+   "source": "review"
+  },
+  "INT-7": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": ["agent/agent.py:83-86", "AGENT_SAFETY_CHECKLIST.md:23", "docker-compose.yml:62-64"],
+   "note": "The log is JSONL, and outputs are plain files in host-mounted folders.",
+   "source": "review"
+  },
+  "EPI-1": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": ["agent/agent.py:83-86", "agent/agent.py:145-146", "agent/agent.py:132-135"],
+   "note": "The log records tool, arguments, status and the first 300 characters of each result, but not the model name or digest, the task, the model's messages, the final answer or a run ID, so a run cannot be reconstructed from its record.",
+   "source": "review"
+  },
+  "EPI-2": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": ["agent/agent.py:132-135", "sample-runs/run_injection_1.txt:31-35", "workspace/lead_from_website.txt:2"],
+   "note": "The final answer is printed with no confidence or check; the recorded injection run states a wrong company and deal size as the summary.",
+   "source": "review"
+  },
+  "EPI-3": {
+   "level": 2,
+   "confidence": "inferred",
+   "evidence": ["agent/agent.py:103-104", "sample-runs/run_injection_1.txt:9-11", "dns/Corefile:18-23", "sample-runs/coredns_log.txt:10"],
+   "note": "Blocked network actions appear in the tool log as generic errors, and the DNS layer answers refused names with the same NXDOMAIN as nonexistent ones, so telling a policy block from a real absence requires correlating with the DNS log.",
+   "source": "review"
+  },
+  "EPI-4": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": ["agent/agent.py:46", "agent/agent.py:51", "agent/agent.py:144"],
+   "note": "There is no account of what was read in full, truncated or skipped; truncation at 4,000 characters and 2,000 bytes is silent.",
+   "source": "review"
+  },
+  "EPI-5": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": ["AGENT_SAFETY_CHECKLIST.md:3", "AGENT_SAFETY_CHECKLIST.md:9", "AGENT_SAFETY_CHECKLIST.md:19", "AGENT_SAFETY_CHECKLIST.md:29-30", "dns/Corefile:6-9", "proxy/allowlist.txt:1-2", "sample-runs/run_approval_allow.txt:1", "README.md:46", "README.md:57"],
+   "note": "Red line not confirmed at 0: the demonstrated controls are backed by recorded runs (README.md:57 against run_injection_1.txt and coredns_log.txt). The checklist says every item is implemented in a demo/ folder that does not exist, includes advice items that are not implementations, calls the two allowlists 'the same domain list' although they use different matching rules, and states path checking without its exception.",
+   "source": "review"
+  },
+  "MNT-1": {
+   "level": "NA",
+   "confidence": "observed",
+   "evidence": ["agent/agent.py is the only source module (153 lines)"],
+   "note": "A single 153-line script; there are no modules or layers whose boundaries could be enforced.",
+   "source": "review"
+  },
+  "MNT-2": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": ["wc -l agent/agent.py -> 153", "agent/agent.py:117-149"],
+   "note": "One 153-line file; the largest function (main) is 33 lines, there is no duplication, and every function is reachable from the tool table or the entry point. No size or duplication checks, which are not needed at this size.",
+   "source": "review"
+  },
+  "MNT-3": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": ["22-file listing: no linter, formatter or type-checker configuration", "agent/agent.py:34"],
+   "note": "No static checks; type hints appear only on _safe().",
+   "source": "review"
+  },
+  "MNT-4": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": ["README.md:9-21", "docker-compose.yml:1-5"],
+   "note": "A layout table and compose comments describe the architecture. No CONTRIBUTING file or agent instructions.",
+   "source": "review"
+  },
+  "MNT-5": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": ["22-file listing: no TODO or FIXME markers, no issue list", "agent/agent.py:139-140", "README.md:25"],
+   "note": "Known shortcuts (the nested-arguments workaround for small models, the GPU requirement) are not recorded as debt with a trigger.",
+   "source": "review"
+  },
+  "EVO-1": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": ["git: one commit (5aba6b8), no tags", "22-file listing: no version field or changelog"],
+   "note": "No version signal; users can only pin a commit SHA.",
+   "source": "review"
+  },
+  "EVO-2": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": ["git: one commit (5aba6b8), no tags or releases"],
+   "note": "No release process or notes; the repository is a single published commit.",
+   "source": "review"
+  },
+  "EVO-3": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": ["README.md:25", "docker-compose.yml:20", "sample-runs/coredns_log.txt:8", "sample-runs/run_network_none.txt:3"],
+   "note": "Prerequisites are Docker and an NVIDIA GPU. Operating systems and architectures are neither stated nor tested (the recorded runs suggest Docker Desktop on linux/amd64).",
+   "source": "review"
+  },
+  "OPS-1": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": ["README.md:42-53", "agent/agent.py:113-114"],
+   "note": "Manual dig and curl commands are the only checks. If the model server is down or the model was not pulled, the agent fails with a Python traceback.",
+   "source": "review"
+  },
+  "OPS-2": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["agent/agent.py:83-86", "dns/Corefile:8", "dns/Corefile:22", "proxy/tinyproxy.conf:4"],
+   "note": "Structured JSONL for tool calls plus CoreDNS query logs and tinyproxy logs. No levels, metrics or run correlation across the three logs.",
+   "source": "review"
+  },
+  "OPS-3": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["agent/agent.py:17-19", "docker-compose.yml:44-52", "AGENT_SAFETY_CHECKLIST.md:24", "proxy/tinyproxy.conf:6-11"],
+   "note": "Defaults are restrictive: read-only workspace, approval for writes, default-deny proxy, NXDOMAIN by default. OLLAMA_URL and MAX_STEPS are not documented in the README, MAX_STEPS is not validated, and images float.",
+   "source": "review"
+  },
+  "OPS-4": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": ["docker-compose.yml:16", "docker-compose.yml:33", "agent/Dockerfile:1-2", "README.md:28-31"],
+   "note": "Installation pulls images by floating tag or no tag and installs unpinned apt packages, with no digest or signature verification.",
+   "source": "review"
+  },
+  "PRV-1": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": ["agent/agent.py:8-15", "docker-compose.yml:7-13", "docker-compose.yml:17"],
+   "note": "Red line not confirmed: the agent has no telemetry, and the agent and model containers sit on an internal network with no direct route out.",
+   "source": "review"
+  },
+  "PRV-2": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": ["README.md:3", "README.md:17-20", "docker-compose.yml:7-13", ".gitignore:1-5"],
+   "note": "Processing is local by default (local model, internal network), and data flows are documented. The log stores tool arguments and result excerpts with no retention note.",
+   "source": "review"
+  },
+  "PRV-3": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": ["README.md:61", "22-file listing: no LICENSE file", "probe meta.license: files=[], readme_claims=['MIT']"],
+   "note": "Red line not confirmed at 0: README.md:61 declares MIT, so a license is stated. There is no LICENSE file, license text or copyright holder, so reusers cannot meet the MIT notice condition.",
+   "source": "review"
+  },
+  "SUS-1": {
+   "level": 1,
+   "confidence": "inferred",
+   "evidence": ["git log -1: PromptEngineer48 <prompt.engineer48@gmail.com> (shallow clone, one commit)"],
+   "note": "One author and no governance. History is one commit, so continuity cannot be judged further.",
+   "source": "review"
+  },
+  "SUS-2": {
+   "level": 1,
+   "confidence": "inferred",
+   "evidence": ["22-file listing: no issue or PR templates, no CI"],
+   "note": "No templates or checks; branch settings cannot be observed.",
+   "source": "review"
+  },
+  "SUS-3": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["git log -1 trailer: Co-Authored-By: Claude Opus 5.5"],
+   "note": "The commit keeps an AI co-author trailer. There is no policy on how agent-written changes are reviewed.",
+   "source": "review"
+  }
+ },
+ "gaps": [
+  {
+   "lens": "G2",
+   "title": "URL tool has no scheme or host allowlist",
+   "case": "agent/agent.py:49-51 passes the model-chosen URL directly to urlopen. The path policy in _safe() (agent/agent.py:34-38) covers only the file tools, while AGENT_SAFETY_CHECKLIST.md:19 presents path checking as a general control. sample-runs/run_injection_1.txt:6-11 shows untrusted content steering tool calls.",
+   "impact": "The documented file confinement does not cover this tool. Impact category: confidentiality of local data inside the agent container.",
+   "fix": "Accept only http and https URLs whose host is on the same allowlist the proxy enforces, reject everything else before calling urlopen, and add tests for rejected inputs.",
+   "severity": "high",
+   "evidence": ["agent/agent.py:49-51", "agent/agent.py:34-38", "AGENT_SAFETY_CHECKLIST.md:19"]
+  },
+  {
+   "lens": "G8",
+   "title": "No automated tests or CI for the containment claims",
+   "case": "The 22 files include no tests and no CI. Evidence is manual commands (README.md:42-53) and single transcripts. The only proxy evidence is an allowed request (sample-runs/run_sandbox_tests.txt:10-11) and a failed direct connection (:8-9); no recorded run shows the proxy refusing a host that is not on the allowlist.",
+   "impact": "Changes to images, the Corefile or the proxy filter can weaken containment without anyone noticing, and people who copy the setup get no regression check.",
+   "fix": "Add a scripted compose test suite asserting: no direct route out, DNS refusal for names not on the allowlist, proxy refusal for hosts not on the allowlist, approval required for writes, and the kill switch stopping a run. Run it in CI on every change.",
+   "severity": "high",
+   "evidence": ["README.md:42-53", "sample-runs/run_sandbox_tests.txt:8-11"]
+  },
+  {
+   "lens": "G9",
+   "title": "Boundary containers come from unpinned images and lack hardening",
+   "case": "docker-compose.yml:16 (ollama/ollama:latest), :23 (coredns by tag), :33 (untagged third-party tinyproxy image) and agent/Dockerfile:1-2 (tag and unpinned apt packages). The DNS and proxy containers, the only services on both networks (docker-compose.yml:22-38), have none of the agent's read_only, cap_drop, no-new-privileges, user or resource settings (docker-compose.yml:53-59).",
+   "impact": "A changed or compromised upstream image silently changes the containment boundary, and the boundary components run with default privileges. Impact category: supply-chain and boundary integrity.",
+   "fix": "Pin all images by digest, build the proxy from a maintained source, apply the agent's hardening and resource limits to dns, proxy and ollama where the images allow, and document how pins are updated.",
+   "severity": "high",
+   "evidence": ["docker-compose.yml:16", "docker-compose.yml:22-38", "docker-compose.yml:53-59", "agent/Dockerfile:1-2"]
+  },
+  {
+   "lens": "G7",
+   "title": "DNS and proxy allowlists are separate policies with different matching rules",
+   "case": "dns/Corefile:6-9 allows two DNS zones, proxy/allowlist.txt:1-2 allows two exact host patterns, and AGENT_SAFETY_CHECKLIST.md:9 calls them the same domain list.",
+   "impact": "The two enforcement points can disagree, and an edit to one is not reflected in the other. Impact category: egress policy integrity.",
+   "fix": "Generate both the Corefile and the proxy filter from one policy file with exact-name semantics, and add a test that checks they match.",
+   "severity": "medium",
+   "evidence": ["dns/Corefile:6-9", "proxy/allowlist.txt:1-2", "AGENT_SAFETY_CHECKLIST.md:9"]
+  },
+  {
+   "lens": "G1",
+   "title": "Checklist claims a demo/ implementation and broader controls than the repository shows",
+   "case": "AGENT_SAFETY_CHECKLIST.md:3 says every item is implemented in demo/ and was tested on camera; there is no demo/ directory. The transcripts use 'demo-agent' container names (sample-runs/run_network_none.txt:1, sample-runs/run_approval_allow.txt:1), while README.md:46 uses agent-sandbox-lockdown-agent. Items at AGENT_SAFETY_CHECKLIST.md:29-30 are advice rather than implementations, and :19 omits the URL-tool exception.",
+   "impact": "Readers trust controls and evidence that may not correspond to the shipped files.",
+   "fix": "Correct the path, separate implemented controls from advice, re-record the runs from the shipped layout with the commit SHA and date, and list each control's known exceptions.",
+   "severity": "medium",
+   "evidence": ["AGENT_SAFETY_CHECKLIST.md:3", "sample-runs/run_network_none.txt:1", "README.md:46"]
+  },
+  {
+   "lens": "G1",
+   "title": "Containment is presented as the defence while output integrity is unprotected",
+   "case": "README.md:57-59 says the sandbox is the defence, not the model. In sample-runs/run_injection_1.txt:31-33 the summary names Acme Corp and its deal size for a lead that came from Initech (workspace/lead_from_website.txt:2), and sample-runs/run_approval_allow.txt:17-19 shows customer deal sizes in the answer to an unrelated task.",
+   "impact": "Users may trust a contained agent's answers. Network containment stopped the outbound action but not the corrupted or over-disclosing answer. Impact category: integrity and confidentiality of results shown to the user.",
+   "fix": "State this limit next to the claim, mark tool output as untrusted data in the prompt, and add an output check to the demo (for example, compare the reported company with the source file).",
+   "severity": "medium",
+   "evidence": ["README.md:57-59", "sample-runs/run_injection_1.txt:31-33", "workspace/lead_from_website.txt:2", "sample-runs/run_approval_allow.txt:17-19"]
+  },
+  {
+   "lens": "G12",
+   "title": "Approval prompt hides most of the content and invites fatigue",
+   "case": "agent/agent.py:94 shows only the first 160 characters of the arguments. sample-runs/run_approval_deny.txt:6-51 shows twelve consecutive prompts for the same write until the step cap, and sample-runs/run_approval_allow.txt:6-8 shows a placeholder write being approved.",
+   "impact": "Humans approve content they cannot see and are trained to answer by rote. Impact category: human oversight.",
+   "fix": "Show the full content, or a hash with a pager; stop or back off after a denial; refuse repeated identical requests within a run.",
+   "severity": "medium",
+   "evidence": ["agent/agent.py:94", "sample-runs/run_approval_deny.txt:6-51", "sample-runs/run_approval_allow.txt:6-8"]
+  },
+  {
+   "lens": "G4",
+   "title": "Kill switch is cooperative and checked once per step",
+   "case": "agent/agent.py:124-128 checks the KILL file only at the top of each step. One step can run several tool calls (agent/agent.py:136-147; sample-runs/run_approval_allow.txt:4-14 shows four calls in step 1), and the model call can block for up to 300 s (agent/agent.py:113).",
+   "impact": "A stop request can lag by several tool calls and up to five minutes. Impact category: human oversight.",
+   "fix": "Check the switch before every tool call, document docker compose stop or kill as the enforced stop, and shorten the model-call timeout.",
+   "severity": "medium",
+   "evidence": ["agent/agent.py:124-128", "agent/agent.py:136-147", "agent/agent.py:113"]
+  },
+  {
+   "lens": "G11",
+   "title": "Outcomes are invisible to scripts and supervising agents",
+   "case": "main() returns normally after completion, kill and step limit (agent/agent.py:117-153), so the process exits the same way in every case. Stdout is ANSI text (agent/agent.py:25-30), and log entries have no run ID and use local time to the second (agent/agent.py:84).",
+   "impact": "A wrapper or CI job cannot tell a completed run from a killed or limited one, or group log entries by run.",
+   "fix": "Exit with distinct codes for done, killed, step limit and error, print a final JSON summary line, and add run_id and UTC timestamps to every log entry.",
+   "severity": "medium",
+   "evidence": ["agent/agent.py:117-153", "agent/agent.py:84"]
+  },
+  {
+   "lens": "G13",
+   "title": "No license file",
+   "case": "README.md:61 says 'MIT licensed.' There is no LICENSE file, license text or copyright holder.",
+   "impact": "Reuse and forking rest on a one-line statement without the notice the MIT terms require, which matters if the author stops maintaining the demo.",
+   "fix": "Add a LICENSE file with the MIT text and a copyright line, and an SPDX identifier.",
+   "severity": "medium",
+   "evidence": ["README.md:61"]
+  }
+ ],
+ "opportunities": [
+  {
+   "lens": "O1",
+   "criterion": "OPP-1",
+   "title": "Extract the egress layer as a reusable compose module",
+   "description": "The internal network plus allowlisting DNS and default-deny proxy is independent of the agent and could ship as a compose include or sidecar driven by one policy file. PandaCode's Full-access tasks, strix's sandboxed agents and t3code or orca harness runs could sit behind it.",
+   "value": 4,
+   "reach": 4,
+   "confidence": "derived",
+   "horizon_fit": 1.3,
+   "effort": 2,
+   "action": "extract",
+   "evidence": ["docker-compose.yml:7-38", "dns/Corefile:1-23", "proxy/tinyproxy.conf:1-11", "/home/user/GitHub_Repos_Dump/aicodeking__pandacode/src-tauri/src/storage.rs:23", "/home/user/GitHub_Repos_Dump/usestrix__strix/README.md:95"]
+  },
+  {
+   "lens": "O12",
+   "criterion": "OPP-6",
+   "title": "Turn the checklist into executable policy and tests",
+   "description": "Each checklist line maps to a checkable property of docker-compose.yml or agent.py. A policy file plus a test runner would make the checklist verifiable against any compose project, and the same checks could run against PandaCode's VM and sandbox setups.",
+   "value": 4,
+   "reach": 3,
+   "confidence": "observed",
+   "horizon_fit": 1.2,
+   "effort": 2,
+   "action": "harden",
+   "evidence": ["AGENT_SAFETY_CHECKLIST.md:5-26", "docker-compose.yml:53-64", "agent/agent.py:64-71"]
+  },
+  {
+   "lens": "O3",
+   "criterion": "OPP-3",
+   "title": "Risk-scored approvals with my-jev or laya",
+   "description": "Approvals are a bare y/N on every write, and the recorded deny run produced twelve prompts. my-jev's tool-risk classifier or a local laya decision server could score each request, refuse repeats and escalate only risky ones, keeping a human on consequential writes.",
+   "value": 3,
+   "reach": 3,
+   "confidence": "inferred",
+   "horizon_fit": 1.3,
+   "effort": 3,
+   "action": "harden",
+   "evidence": ["agent/agent.py:89-100", "sample-runs/run_approval_deny.txt:6-51", "/home/user/GitHub_Repos_Dump/PromptEngineer48__my-jev/README.md:22", "/home/user/GitHub_Repos_Dump/PromptEngineer48__my-jev/README.md:95"]
+  },
+  {
+   "lens": "O9",
+   "criterion": "OPP-6",
+   "title": "A shared tool-call evidence record",
+   "description": "The JSONL log has no run ID, model digest or hashes. An evidence record with run_id, model and image digests, argument and result hashes and a hash chain would make runs auditable, and the same shape could be shared with PandaCode's versioned tool-activity records and rqs evidence entries.",
+   "value": 3,
+   "reach": 3,
+   "confidence": "inferred",
+   "horizon_fit": 1.3,
+   "effort": 2,
+   "action": "re-cut-interface",
+   "evidence": ["agent/agent.py:83-86", "agent/agent.py:145-146", "/home/user/GitHub_Repos_Dump/aicodeking__pandacode/docs/ipc.md:225-230"]
+  }
+ ],
+ "reengineering": [
+  {
+   "action": "harden",
+   "component": "Tool layer in agent/agent.py (http_get, run_tool, main loop, log)",
+   "gain": "The URL tool is confined to the allowlist; the kill switch is checked per call; approvals show full content; truncation is labelled; exit codes and run IDs make outcomes machine-readable.",
+   "measure": "Automated tests cover each implemented checklist control (from 0 today); exit codes differ for done, killed, step limit and error; a test rejects URLs outside the allowlist."
+  },
+  {
+   "action": "harden",
+   "component": "Images and boundary containers (docker-compose.yml, agent/Dockerfile)",
+   "gain": "Reproducible, least-privilege boundary components.",
+   "measure": "Images pinned by digest go from 0 of 4 to 4 of 4; services with cap_drop ALL and no-new-privileges go from 1 of 4 to 4 of 4 where the image allows; every service has resource limits."
+  },
+  {
+   "action": "extract",
+   "component": "Egress policy (dns/Corefile, proxy/allowlist.txt)",
+   "gain": "One policy source generates both enforcement configs and can be reused by other agent stacks.",
+   "measure": "A generator and a parity test exist; one edit to the policy file changes both configs; at least one other reviewed repository uses the module."
+  }
+ ],
+ "questions": [
+  "Does the containment stop a prompt-injected agent from sending data out? In the recorded run, the DNS lookup was refused and logged (run_injection_1.txt:8-11, coredns_log.txt:10). No recorded run exercises the proxy's refusal path, nothing is tested automatically, and the boundary images are unpinned.",
+  "Does containment protect what the user sees? No. The same run returned a wrong company and deal size, and an unrelated task disclosed customer deal sizes (run_injection_1.txt:31-33, run_approval_allow.txt:19).",
+  "Is the repository reusable as a reference? Partly. The network layout and container hardening are sound patterns worth extracting, but there is no license file and no tests, the URL tool sits outside the file confinement, and the checklist's claims do not match the tree."
+ ],
+ "not_examined": [
+  "Runtime behaviour: nothing was built or run; containment was judged from configuration and the recorded transcripts",
+  "Contents and default configuration of the pulled images (ollama/ollama, vimagick/tinyproxy, coredns, python:3.12-slim)",
+  "Docker daemon, kernel, seccomp and AppArmor defaults and host networking, none of which the compose file sets",
+  "The external incident report cited at README.md:5 and AGENT_SAFETY_CHECKLIST.md:8 (no web access)",
+  "Git history beyond the single commit"
+ ],
+ "time_minutes": 45
+}
