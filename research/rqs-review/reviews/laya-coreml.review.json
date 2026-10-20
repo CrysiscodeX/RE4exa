@@ -1,0 +1,986 @@
+{
+ "rqs_review": 1,
+ "target": {
+  "path": "/home/user/GitHub_Repos_Dump/mizorewww__laya-coreml",
+  "name": "laya-coreml",
+  "head": "7b363344ffe8da77cc50da056181be1a3c5c405c",
+  "shallow": true
+ },
+ "profile": "ml-system",
+ "flags": {
+  "uses_llm": true,
+  "has_ui": true,
+  "executes_code": false,
+  "network_service": true,
+  "parses_untrusted": true,
+  "uses_crypto": false,
+  "heavy_compute": true,
+  "distributed": true
+ },
+ "reviewer": {
+  "id": "reviewer-laya-coreml",
+  "kind": "agent",
+  "conflicts": "none"
+ },
+ "date": "2026-10-20",
+ "scores": {
+  "PUR-1": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "README.md:12-16",
+    "README.md:33-49",
+    "README.md:51-92",
+    "README.md:137-158",
+    "README.md:175-178"
+   ],
+   "note": "States what it is (laya typed decisions on Apple Silicon via Core ML and the Neural Engine), how to start, the 96-token ANE limit, that fidelity is not task accuracy, and that it is not an official release. Agent use (MCP) is mentioned only in passing (README.md:1-6); no machine-readable capability statement.",
+   "source": "review"
+  },
+  "PUR-2": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "benchmarks/results/ane-energy-finalists.json (environment: 2026-09-20, Apple M3 Max, macOS-27.2, package versions, source_sha256)",
+    "benchmarks/results/ane-energy-summary.json (65,598 decisions; p50/p95/p99; cycle-bootstrap 95% intervals)",
+    "README.md:94-120",
+    "BENCHMARKS.md:1-22",
+    "README.md:26-31",
+    "docs/ANE_BENCHMARKS.md:139-145"
+   ],
+   "note": "Every headline number checked (4.98/5.31 ms, 0.1540 J, 2.78x, 3.19x, 65,598 calls) matches the committed results, which carry method (alternating ABBA blocks), baseline (compiled MLX FP16), n, date, environment and bootstrap intervals; net-negatives are reported (10x target missed, ordinary export slower than MLX, L1024 at 91.7 ms, an anomalous energy run rejected and kept). Not run in CI; one machine; no independent reproduction.",
+   "source": "review"
+  },
+  "PUR-3": {
+   "level": 2,
+   "confidence": "inferred",
+   "evidence": [
+    "laya_coreml/ (26,058 Python lines)",
+    "diff vs NandhaKishorM__laya at ffc1420: router.py 676 changed lines (2,177 vs 1,905), serve.py 298 (1,705 vs 1,601), mcp/tools.py 241 (1,622 vs 1,527), evals.py 428 (1,511 vs 1,365)",
+    "laya_coreml/integrations/ (agno, crewai, langchain, llamaindex)",
+    "laya_coreml/snake/ (game in the wheel)",
+    "NOTICE (three upstream sync rounds)",
+    "AGENTS.md:1-12"
+   ],
+   "note": "The duplicated host layer is justified in AGENTS.md and NOTICE (no PyTorch at runtime, upstream as the source of truth), but about 20k lines mirrored from upstream must be re-synced by hand on every upstream release, and the wheel also carries a game demo and four framework integrations.",
+   "source": "review"
+  },
+  "COR-1": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    ".github/workflows/ci.yml:10-45 (ubuntu-latest and macos-26; ruff; pytest; build; twine)",
+    "tests/test_official_contract.py:140-180 (25 upstream suites run against the port)",
+    ".github/workflows/release.yml:15-17 (release reuses CI)",
+    "docs/RELEASE_0_5_1.md:20 (337 tests)"
+   ],
+   "note": "Tests run on every push and PR on Linux and on macOS with real Core ML conversion and inference of tiny models, including upstream's own assertion suites; the release workflow reuses this gate. Python 3.12 only, no coverage measurement, and the real-bundle fidelity checks run only on the maintainer's machine.",
+   "source": "review"
+  },
+  "COR-2": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    ".github/workflows/ci.yml:21-27 (pinned upstream checkout ffc1420)",
+    "tests/test_official_contract.py:45-56 (AST identity of 13 host methods)",
+    "tests/test_official_contract.py:118-125 (predict_batch output equality with upstream)",
+    "benchmarks/release_validate.py",
+    "benchmarks/results/reference-v0412-fp32.json",
+    "docs/RELEASE.md:56-78 (0.02 probability-drift gate)"
+   ],
+   "note": "The reference implementation is the oracle: CI checks host code and outputs against pinned upstream laya, and real bundles are compared with golden outputs from the official FP32 PyTorch model under an explicit 0.02 drift gate (observed maximum 0.014393 for W8). Real-bundle comparisons are refreshed per upstream version but run locally, not in CI.",
+   "source": "review"
+  },
+  "COR-3": {
+   "level": 1,
+   "confidence": "derived",
+   "evidence": [
+    "probe test.mutation: found=false",
+    "probe test.property: found=false",
+    "probe test.fuzz: found=false",
+    "README.md:256-259 (24 permutations, example-based)"
+   ],
+   "note": "No mutation, property-based or fuzz testing; the option-permutation sweep is an exhaustive example test.",
+   "source": "review"
+  },
+  "COR-4": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "benchmarks/results/pypi-install-smoke.json",
+    "benchmarks/results/wheel-runtime-smoke.json",
+    "benchmarks/results/hub-v051-public-smoke.json",
+    "docs/RELEASE.md:78-94 (public wheel and pinned Hub snapshot exercised with sockets blocked)",
+    "docs/RELEASE.md:96-101 (855-move recording replayed)"
+   ],
+   "note": "The published wheel and Hub bundles were installed from the public indexes and exercised offline, and the published game recording is replayed in tests; these trials are recorded receipts rather than CI jobs.",
+   "source": "review"
+  },
+  "COR-5": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    "docs/RELEASE.md:56-78 (100 repeated calls per bundle)",
+    "laya_coreml/agent.py:95-103 (RangeDim + CPU_AND_GPU refused after repeatability failures)",
+    "tests/test_snake.py",
+    "benchmarks/results/ane-energy-summary.json (telemetry_audit.all_blocks_check_rounded_output_stability)"
+   ],
+   "note": "Repeated-call stability is measured per bundle, a nondeterministic export configuration is refused by default, and exact replay of a recorded game runs in CI. Outputs are not content-addressed.",
+   "source": "review"
+  },
+  "REL-1": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": [
+    "laya_coreml/artifacts.py:29-60 (content-addressed cache: temp dir, digest check, rename)",
+    "laya_coreml/router_cli.py:420-466 (batch: one predict_batch call)",
+    "no resume option in laya_coreml/convert.py or benchmarks/campaign.py"
+   ],
+   "note": "The native-package cache is written atomically and integrity-checked, but conversion, benchmark campaigns and CLI batches cannot resume, and a batch keeps all results in memory until the end.",
+   "source": "review"
+  },
+  "REL-2": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "laya_coreml/serve.py:91-94",
+    "README.md:88-92 (96-token ANE limit; oversized heads fail)",
+    "laya_coreml/agent.py:50 (shape_cache_size=4)",
+    "docs/RELEASE_0_5_1.md:20 (memory cost documented)"
+   ],
+   "note": "Server limits are copied from upstream, fixed-capacity bundles refuse over-capacity input, and the shape cache is bounded with its memory cost documented. No tests at 10x expected size.",
+   "source": "review"
+  },
+  "REL-3": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "laya_coreml/agent.py:50-66",
+    "laya_coreml/agent.py:95-103",
+    "README.md:81-92"
+   ],
+   "note": "Unsupported backend options and unvalidated GPU shapes fail explicitly, over-capacity prompts are refused rather than silently shortened, and clamped temperatures raise a warning naming each bucket.",
+   "source": "review"
+  },
+  "REL-4": {
+   "level": 3,
+   "confidence": "inferred",
+   "evidence": [
+    "laya_coreml/artifacts.py:55-59 (temporary directory removed in finally)",
+    "laya_coreml/snake/replay.py:202-218 (child killed on error)",
+    "docs/RELEASE_0_5_1.md:7-12 (instance cleanup ordering fix)",
+    "tests/test_router_lifecycle.py (11 tests)",
+    "probe obs.signals: none outside tests"
+   ],
+   "note": "Temporary directories, child processes and native model instances are cleaned up, and router lifecycle is tested; no explicit signal handling and no leftover-check tests.",
+   "source": "review"
+  },
+  "PERF-1": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "BENCHMARKS.md:9-22 (P50/P95 per model and backend, 100 calls)",
+    "docs/QUALIFICATION_0_5_1.md (18 paired workloads)",
+    "benchmarks/results/ane-energy-summary.json (p50/p95/p99)"
+   ],
+   "note": "Main operations are benchmarked with percentiles and paired comparisons per release. No CI performance gate, and the MCP descriptions still advertise upstream latencies.",
+   "source": "review"
+  },
+  "PERF-2": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": [
+    "AST measurement of laya_coreml/mcp/server.py: >=12,613 bytes of tool descriptions across 10 tools, the same repeated fragments as upstream (_GUARDRAILS 378 B x9, _CONTROLS_DOC 1,151 B x5)"
+   ],
+   "note": "The MCP catalog is copied from upstream with about 10 KB of repeated text and pretty-printed JSON outputs; its size is not measured.",
+   "source": "review"
+  },
+  "PERF-3": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    "benchmarks/energy.py:1",
+    "benchmarks/pstr_sampler/",
+    "benchmarks/results/ane-energy-summary.json (J/decision 0.1540 FP16 and 0.1344 W8 vs 0.4288 compiled MLX; bootstrap intervals)",
+    "README.md:94-120",
+    "docs/ANE_BENCHMARKS.md:120-166",
+    "laya_coreml/artifacts.py:29-60 (compiled-package reuse)"
+   ],
+   "note": "Whole-system energy per decision is measured with an unprivileged sensor sampler, anomaly rejection, idle subtraction and intervals, and low-energy variants (ANE FP16, W8) are offered. The user picks the variant; nothing selects the low-energy path automatically, and no carbon intensity is reported.",
+   "source": "review"
+  },
+  "SEC-1": {
+   "level": 0,
+   "confidence": "observed",
+   "evidence": [
+    "probe meta.security_policy: found=false",
+    "rg -i 'security|vulnerab|threat' -g '*.md' . -> no matches"
+   ],
+   "note": "No SECURITY.md, no vulnerability contact and no statement of trust boundaries, although the package ships an HTTP server and loads downloaded model bundles.",
+   "source": "review"
+  },
+  "SEC-2": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "uv.lock (committed)",
+    "pyproject.toml:21",
+    "probe deps.update_bot: found=false",
+    "probe ci.security_scans: none",
+    ".github/workflows/ci.yml:31 (pip install from pyproject ranges, not the lock)"
+   ],
+   "note": "A lockfile is committed but CI resolves fresh from ranges; there is no update bot and no known-vulnerability scanning.",
+   "source": "review"
+  },
+  "SEC-3": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    ".github/workflows/release.yml:57-72 (publish job: contents: write, password: secrets.PYPI_API_TOKEN, attestations: false)",
+    "docs/RELEASE.md:84-94 (wheel digests compared after upload)",
+    "scripts/prepare_hub.py",
+    "scripts/publish_adaptive_hub.py"
+   ],
+   "note": "Distributions are built in CI after the test gate, but PyPI publishing uses a long-lived API token with attestations explicitly disabled, and model bundles are prepared and uploaded outside CI (with recorded validation receipts and immutable revisions).",
+   "source": "review"
+  },
+  "SEC-4": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "probe ci.sbom: found=false",
+    "NOTICE",
+    "benchmarks/results/hub-release.json",
+    "benchmarks/results/distribution-files.json",
+    "uv.lock"
+   ],
+   "note": "No SBOM or VEX; third-party components are recorded in NOTICE (with upstream revisions), the lockfile and artifact inventories with SHA-256.",
+   "source": "review"
+  },
+  "SEC-5": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "probe ci.pinned_actions: all action references SHA-pinned",
+    ".github/workflows/ci.yml:7-8",
+    ".github/workflows/release.yml:8-9",
+    ".github/workflows/release.yml:57-72"
+   ],
+   "note": "Actions are SHA-pinned and both workflows default to contents: read, with no pull_request_target. The publish job combines contents: write with the PyPI token and has no protected environment.",
+   "source": "review"
+  },
+  "SEC-6": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": [
+    "probe risk.secrets: 0 outside tests",
+    "probe ci.security_scans: no secret scanner",
+    ".github/workflows/release.yml:71",
+    "AGENTS.md:19-20"
+   ],
+   "note": "Red line decision: not triggered. No secrets found in the tree, but no secret scanner runs and releases depend on a long-lived PyPI token.",
+   "source": "review"
+  },
+  "SEC-7": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "laya_coreml/snake/policy.py:43",
+    "laya_coreml/snake/replay.py:202",
+    "scripts/run_official_test.py:265",
+    "laya_coreml/torch_model.py:272",
+    "rg 'pickle|torch.load|eval(|shell=True' laya_coreml/ -> no matches"
+   ],
+   "note": "Red line decision: not triggered. subprocess calls use fixed argument lists without a shell (sysctl, ffmpeg), the only exec() runs pinned upstream test files inside the test harness, and weights load through safetensors. Upstream's CI gate for these classes is not ported.",
+   "source": "review"
+  },
+  "SEC-8": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "laya_coreml/hub.py:41-49 (built-in bundles unpinned unless a revision is requested)",
+    "laya_coreml/agent.py:82 (digest check only with expected_sha256 or LAYA_SHA256_DIGESTS)",
+    "scripts/prepare_hub.py:155-160 (per-file SHA-256 recorded in coreml_config.json)",
+    "laya_coreml/batching.py:38 (recorded checksums verified only when assembling bundles)",
+    "laya_coreml/batching.py:87-111 (manifest path containment)",
+    "probe test.fuzz: found=false"
+   ],
+   "note": "Downloaded .mlpackage graphs are compiled by native Core ML code without sandboxing or fuzzing; the per-file checksums the bundles carry are not verified on a default load, and the default revision is unpinned. Manifest paths are validated.",
+   "source": "review"
+  },
+  "AGT-1": {
+   "level": 2,
+   "confidence": "inferred",
+   "evidence": [
+    "laya_coreml/presets.py:115",
+    "laya_coreml/mcp/server.py:95-101",
+    "rg -i inject tests/ -> no matches"
+   ],
+   "note": "Same design as upstream: instructions and state are separate and outputs are bounded to declared labels. The port adds no injection tests and inherits the guard preset's documented weakness on document-shaped injections.",
+   "source": "review"
+  },
+  "AGT-2": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "laya_coreml/mcp/server.py (10 tools, no annotations)"
+   ],
+   "note": "Read-only inference tools with no readOnly/destructive/idempotent hints.",
+   "source": "review"
+  },
+  "AGT-3": {
+   "level": 2,
+   "confidence": "inferred",
+   "evidence": [
+    "README.md:215-222",
+    "laya_coreml/hooks.py"
+   ],
+   "note": "Abstention flags and hooks support a human-escalation pattern; the port takes no actions and keeps no decision log.",
+   "source": "review"
+  },
+  "AGT-4": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "benchmarks/release_validate.py",
+    "benchmarks/results/v051-laya-float16-validation.json",
+    "benchmarks/results/v051-laya-multilingual-float32-validation.json",
+    "docs/QUALIFICATION_0_5_1.md:1-12",
+    "AGENTS.md:15-18"
+   ],
+   "note": "Every release is qualified on 3 checkpoints x FP16/FP32 x 63 fixture questions plus 100 stability calls, with results recorded. It measures fidelity to upstream, not task accuracy, and runs locally rather than in CI.",
+   "source": "review"
+  },
+  "AGT-5": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "scripts/prepare_hub.py:60-150 (model card: license, base_model, source revision, weights SHA-256, limits)",
+    "NOTICE",
+    "README.md:51-80",
+    "Hugging Face model cards: not reachable from this environment"
+   ],
+   "note": "Each bundle gets a model card with provenance and limits, attribution is in NOTICE, and data flows are stated (download once, then local). Training-data documentation is deferred to upstream, which does not provide it in its repository.",
+   "source": "review"
+  },
+  "AGT-6": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "laya_coreml/runtime.py:721-731",
+    "laya_coreml/serve.py:91-94",
+    "laya_coreml/serve.py:20-60 (LAYA_MAX_* variables)",
+    "README.md:88-92"
+   ],
+   "note": "Per-result token usage and truncation, server caps on budgets and concurrency, and fixed bundle capacities.",
+   "source": "review"
+  },
+  "INT-1": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    "laya_coreml/mcp/server.py",
+    "laya_coreml/serve.py:1-16",
+    "docs/UPSTREAM_0412_API_AUDIT.json (341 public entries vs upstream)",
+    "tests/test_official_contract.py:45-125",
+    "AGENTS.md:1-12",
+    "docs/MIGRATION_0_4.md"
+   ],
+   "note": "MCP, the documented Jev-compatible HTTP protocol and a CLI, with the public API kept identical to pinned upstream by a documented policy and CI tests. No declared compatibility window of its own.",
+   "source": "review"
+  },
+  "INT-2": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "laya_coreml/serve.py (raw Request handlers, as upstream)",
+    "laya_coreml/agent.py:84-86 (coreml_config.json format_version 1)",
+    "probe agent.describe: 0 describe/schema commands"
+   ],
+   "note": "Bundles have a versioned manifest, but request and response contracts are prose and MCP schemas are signature-derived; no describe command.",
+   "source": "review"
+  },
+  "INT-3": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": [
+    "laya_coreml/mcp/server.py (10 tools)",
+    "pyproject.toml:41-47 (6 console scripts)"
+   ],
+   "note": "Small tool and command set; not measured by the project.",
+   "source": "review"
+  },
+  "INT-4": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "laya_coreml/mcp/tools.py:14 (ToolError codes copied from upstream)",
+    "laya_coreml/integrations/_errors.py:6-8",
+    "docs/USAGE.md:17-147 (sections: model, Python API, offline, CLI, convert, compatibility; no error reference)"
+   ],
+   "note": "MCP errors carry codes, but the port documents no error contract for its HTTP server or CLI.",
+   "source": "review"
+  },
+  "INT-5": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": [
+    "laya_coreml/runtime.py:721-735 (results carry no id or digest)",
+    "laya_coreml/artifacts.py:19-29 (content-addressed package cache)",
+    "docs/RELEASE_0_5_1.md:26-37 (immutable bundle revisions)"
+   ],
+   "note": "Inference is read-only and bundles have immutable revisions, but individual results carry no identifier or input digest.",
+   "source": "review"
+  },
+  "INT-6": {
+   "level": 2,
+   "confidence": "inferred",
+   "evidence": [
+    "README.zh-CN.md",
+    "README.md:42-46 (terminal needs 104x35; keyboard controls)",
+    "benchmarks/results/pypi-install-smoke.json"
+   ],
+   "note": "The README is localised and its example was run after publication, but the shipped terminal UI has a fixed 104x35 layout and visual-only board with no accessibility notes, and the quickstart is not tested in CI.",
+   "source": "review"
+  },
+  "INT-7": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "laya_coreml/agent.py:84-86",
+    "scripts/prepare_hub.py:155-160",
+    "host_weights.safetensors (bundle layout in laya_coreml/hub.py:67-78)"
+   ],
+   "note": "Versioned JSON manifests with per-file checksums, safetensors host weights and JSON outputs; Core ML packages need Apple runtimes, and the original weights stay available upstream.",
+   "source": "review"
+  },
+  "EPI-1": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "benchmarks/results/release-validation.json (source_weights_sha256, package_sha256, reference_sha256, environment)",
+    "benchmarks/results/ane-energy-summary.json (input_sha256)",
+    "benchmarks/results/ane-energy-finalists.json (environment.source_sha256)",
+    "laya_coreml/runtime.py:721-735"
+   ],
+   "note": "Measurement and validation records carry input digests, tool versions and parameters; prediction results carry routing and usage but no per-result digest.",
+   "source": "review"
+  },
+  "EPI-2": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "README.md:215-222",
+    "laya_coreml/calibrate.py",
+    "benchmarks/results/v0412-coreml-calibration.json (target_source: synthetic labels, compatibility only)",
+    "README.md:81-86"
+   ],
+   "note": "Probabilities, per-bucket abstention and the fitting tools are carried over and verified to match upstream exactly; the port measures no calibration against real outcomes and says shipped confidences need held-out calibration.",
+   "source": "review"
+  },
+  "EPI-3": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    "docs/ANE_BENCHMARKS.md:160-163",
+    "docs/RELEASE.md:56-78 (fitting subsets explicit)",
+    "README.md:88-92",
+    "README.md:267-272"
+   ],
+   "note": "Absence is handled explicitly: zero or missing counters are not read as zero energy or absent ANE work, fixture subsets that do not fit are named, and over-capacity inputs are refused rather than shortened.",
+   "source": "review"
+  },
+  "EPI-4": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    "laya_coreml/runtime.py:721-731",
+    "benchmarks/results/release-validation.json (cases, passed, questions)",
+    "README.md:267-272"
+   ],
+   "note": "Results carry truncation accounting and validation records state cases examined, passed and excluded.",
+   "source": "review"
+  },
+  "EPI-5": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "README.md:26-31",
+    "README.md:137-158",
+    "BENCHMARKS.md:1-7",
+    "docs/ANE_BENCHMARKS.md:139-145",
+    "laya_coreml/mcp/server.py:95-101 ('~33ms (GPU) / ~200ms (CPU)', 'calibrated P(true)') vs BENCHMARKS.md:15-22 and README.md:220-222"
+   ],
+   "note": "Red line decision: not triggered. README and benchmark claims link to dated results and sit next to their limits and net-negatives. The exception is the MCP description copied from upstream, which gives agents upstream latencies and a calibration claim the port's own README contradicts.",
+   "source": "review"
+  },
+  "MNT-1": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    "AGENTS.md:8-12",
+    "tests/test_official_contract.py:23-56",
+    "docs/MIGRATION_0_4.md:93-118"
+   ],
+   "note": "The boundary (host semantics identical to upstream, adaptations only at tensor, artifact, device and resource edges) is documented and enforced in CI by AST-identity and output-equality tests.",
+   "source": "review"
+  },
+  "MNT-2": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": [
+    "probe size.largest: laya_coreml/router.py 2,178 lines",
+    "probe size.duplicates: 257,227 bytes (0.67%, mostly media)",
+    "no duplication or dead-code tooling",
+    "upstream diff counts (see PUR-3)"
+   ],
+   "note": "Internal duplication is low, but large modules are mirrored from upstream and there are no duplication or dead-code checks.",
+   "source": "review"
+  },
+  "MNT-3": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "pyproject.toml:65-68 (ruff select E4, E7, E9, F, I)",
+    ".github/workflows/ci.yml:32-33 (ruff check, ruff format --check)"
+   ],
+   "note": "Lint and format are enforced in CI; there is no type checking.",
+   "source": "review"
+  },
+  "MNT-4": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "AGENTS.md",
+    "docs/ (18 files)",
+    "probe meta.contributing: found=false",
+    "docs/RELEASE.md:1 (titled for 0.1.0)"
+   ],
+   "note": "Agent instructions and extensive engineering docs exist, but no CONTRIBUTING, no architecture overview, and some docs are stale.",
+   "source": "review"
+  },
+  "MNT-5": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "docs/RELEASE_0_5_1.md:20",
+    "docs/MIGRATION_0_4.md",
+    "README.md:146-151",
+    "probe static.debt_markers: 0"
+   ],
+   "note": "Known regressions, incompatibilities and unmet targets are recorded per release.",
+   "source": "review"
+  },
+  "EVO-1": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "docs/RELEASE_0_5_0.md",
+    "docs/RELEASE_0_5_1.md:1-5",
+    "docs/MIGRATION_0_4.md",
+    "pyproject.toml:8"
+   ],
+   "note": "Per-release notes and a migration guide; a failed 0.5.0 tag was kept and superseded by 0.5.1. Pre-1.0 SemVer without a written policy.",
+   "source": "review"
+  },
+  "EVO-2": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    ".github/workflows/release.yml:15-56 (CI gate, tag/runtime/lock version checks, build, strict twine)",
+    "docs/RELEASE_0_5_1.md:1-20"
+   ],
+   "note": "Automated, qualified releases with notes; model bundles follow a separate manual process with receipts.",
+   "source": "review"
+  },
+  "EVO-3": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "README.md:35 (macOS 15+, Python 3.11-3.13)",
+    ".github/workflows/ci.yml:14 (ubuntu-latest, macos-26)",
+    ".github/workflows/ci.yml:29 (Python 3.12 only)"
+   ],
+   "note": "The declared matrix (macOS 15+, Python 3.11-3.13) is tested only on macOS 26 and Python 3.12.",
+   "source": "review"
+  },
+  "EVO-4": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": [
+    "probe evo.support: none"
+   ],
+   "note": "No support period or end-of-life statement.",
+   "source": "review"
+  },
+  "OPS-1": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": [
+    "laya_coreml/mcp/server.py (laya_status)",
+    "laya_coreml/serve.py (/health)",
+    "laya_coreml/snake/policy.py:30-38"
+   ],
+   "note": "Status and health endpoints and some errors with fix instructions; no diagnostic command.",
+   "source": "review"
+  },
+  "OPS-2": {
+   "level": 2,
+   "confidence": "inferred",
+   "evidence": [
+    "laya_coreml/serve.py (logging, LAYA_LOG_LEVEL)",
+    "scripts/real_integration_smoke.py:18 (only disables OpenTelemetry)"
+   ],
+   "note": "Plain logging; hooks expose a run_id but the port documents no tracing.",
+   "source": "review"
+  },
+  "OPS-3": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": [
+    "laya_coreml/serve.py:23",
+    "laya_coreml/serve.py:39",
+    "laya_coreml/serve.py:1697",
+    "rg LAYA_ -g '*.md' -> 6 variables documented; rg environ in laya_coreml/ -> about 25 read"
+   ],
+   "note": "laya-coreml-serve binds 0.0.0.0 with authentication off by default, and LAYA_API_KEY and most other settings are documented only in a module docstring.",
+   "source": "review"
+  },
+  "OPS-4": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "README.md:37-41",
+    "docs/RELEASE.md:14-54",
+    "laya_coreml/hub.py:41-49",
+    "laya_coreml/agent.py:82",
+    "laya_coreml/artifacts.py:29-60"
+   ],
+   "note": "Pinned revisions are documented, but the default download is unpinned and recorded checksums are not verified on load; the materialized cache is integrity-checked.",
+   "source": "review"
+  },
+  "PRV-1": {
+   "level": 4,
+   "confidence": "derived",
+   "evidence": [
+    "rg -i telemetry laya_coreml -> comments only",
+    "laya_coreml/snake/policy.py:23-24 (HF_HUB_OFFLINE, HF_HUB_DISABLE_TELEMETRY)",
+    "pyproject.toml:21"
+   ],
+   "note": "Red line decision: not triggered. No product telemetry; the demo also disables Hugging Face Hub telemetry, but the general loader does not.",
+   "source": "review"
+  },
+  "PRV-2": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    "README.md:51-80",
+    "docs/RELEASE.md:78-94",
+    "laya_coreml/snake/policy.py:20-38"
+   ],
+   "note": "Local inference after a one-time download, documented offline use and offline checks with network sockets blocked.",
+   "source": "review"
+  },
+  "PRV-3": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "LICENSE (Apache-2.0)",
+    "pyproject.toml:19",
+    "NOTICE",
+    "scripts/prepare_hub.py:60-70",
+    "scripts/prepare_hub.py:141-150"
+   ],
+   "note": "Red line decision: not triggered. Apache-2.0 with an SPDX identifier, a NOTICE crediting upstream laya and laya-mlx with revisions, and bundle cards stating licence and provenance. The training-data licence chain is inherited from upstream and undocumented there.",
+   "source": "review"
+  },
+  "PRV-4": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": [
+    "probe meta.compliance: 0 documents, 0 regulation mentions"
+   ],
+   "note": "No regulatory position for a distributed product.",
+   "source": "review"
+  },
+  "SUS-1": {
+   "level": 1,
+   "confidence": "inferred",
+   "evidence": [
+    "git: 1 author (mizorewww) in the shallow history",
+    "probe meta.codeowners: found=false",
+    "probe meta.governance: found=false"
+   ],
+   "note": "Single maintainer, no governance or code ownership.",
+   "source": "review"
+  },
+  "SUS-2": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": [
+    "probe meta.issue_templates: found=false",
+    ".github/workflows/ci.yml:2-6"
+   ],
+   "note": "CI on every push and PR, no issue or PR templates, review requirements not visible.",
+   "source": "review"
+  },
+  "SUS-3": {
+   "level": 2,
+   "confidence": "inferred",
+   "evidence": [
+    "AGENTS.md:1-20",
+    "git log -1: no trailers"
+   ],
+   "note": "AGENTS.md gives agents a compatibility and release policy, but there is no disclosure of AI assistance and no attribution trailers.",
+   "source": "review"
+  }
+ },
+ "gaps": [
+  {
+   "lens": "G9",
+   "title": "PyPI releases use a long-lived token with attestations disabled",
+   "case": ".github/workflows/release.yml:57-72: the publish job holds contents: write and authenticates with password: ${{ secrets.PYPI_API_TOKEN }} with attestations: false, in the same job and without a protected environment.",
+   "impact": "Users cannot verify that a wheel was built from this repository, and a leaked token allows publishing arbitrary releases.",
+   "fix": "Switch to PyPI trusted publishing (id-token: write) with attestations on, split the GitHub-release step into its own job, and add a protected environment.",
+   "severity": "high",
+   "evidence": [
+    ".github/workflows/release.yml:57-72"
+   ]
+  },
+  {
+   "lens": "G10",
+   "title": "No security policy or vulnerability contact",
+   "case": "No SECURITY.md (probe meta.security_policy found=false) and no security, vulnerability or threat text in any Markdown file, although the wheel ships an HTTP server and loads downloaded model packages.",
+   "impact": "Reporters have no private channel; CRA vulnerability-reporting duties apply from 11 Sep 2026.",
+   "fix": "Add SECURITY.md with a private reporting channel, response targets and trust boundaries (Hub bundles, HTTP server, MCP server).",
+   "severity": "high",
+   "evidence": [
+    "probe meta.security_policy",
+    "laya_coreml/serve.py:1-60"
+   ]
+  },
+  {
+   "lens": "G10",
+   "title": "HTTP server is open on all interfaces by default and its controls are undocumented",
+   "case": "laya_coreml/serve.py:23 and laya_coreml/serve.py:1697 default LAYA_HOST to 0.0.0.0; laya_coreml/serve.py:39 leaves authentication off unless LAYA_API_KEY is set; the Markdown docs mention 6 LAYA_* variables while the package reads about 25.",
+   "impact": "Starting laya-coreml-serve on a shared network exposes unauthenticated inference.",
+   "fix": "Default to 127.0.0.1, refuse non-loopback binds without LAYA_API_KEY, and document every variable in docs/USAGE.md.",
+   "severity": "medium",
+   "evidence": [
+    "laya_coreml/serve.py:23",
+    "laya_coreml/serve.py:39",
+    "laya_coreml/serve.py:1697",
+    "docs/USAGE.md"
+   ]
+  },
+  {
+   "lens": "G9",
+   "title": "Bundle checksums are recorded but not verified, and default revisions are unpinned",
+   "case": "scripts/prepare_hub.py:155-160 writes per-file SHA-256 into coreml_config.json, but laya_coreml/agent.py:82 verifies digests only when expected_sha256 or LAYA_SHA256_DIGESTS is given, and laya_coreml/hub.py:41-49 applies BUNDLE_REVISIONS only when a revision is requested.",
+   "impact": "A swapped or corrupted Hub bundle reaches the native Core ML compiler unverified.",
+   "fix": "Verify the manifest's recorded checksums on every load and pin BUNDLE_REVISIONS for built-in bundles by default, with an explicit opt-out.",
+   "severity": "medium",
+   "evidence": [
+    "scripts/prepare_hub.py:155-160",
+    "laya_coreml/agent.py:82",
+    "laya_coreml/hub.py:41-49"
+   ]
+  },
+  {
+   "lens": "G1",
+   "title": "Agent-facing MCP descriptions state upstream latency and a calibration claim the port contradicts",
+   "case": "laya_coreml/mcp/server.py:95-101 tells MCP clients 'One forward pass ~33ms (GPU) / ~200ms (CPU)' and 'noul (calibrated P(true))'; BENCHMARKS.md:15-22 measures 11.28-13.71 ms on CPU+GPU and 82.54 ms on CPU for this runtime, and README.md:220-222 says shipped confidences need held-out calibration.",
+   "impact": "Agents budget time and set thresholds on numbers that do not describe this runtime.",
+   "fix": "Generate the description's latency line from the port's measured results and reword the calibration claim.",
+   "severity": "medium",
+   "evidence": [
+    "laya_coreml/mcp/server.py:95-101",
+    "BENCHMARKS.md:15-22",
+    "README.md:220-222"
+   ]
+  },
+  {
+   "lens": "G1",
+   "title": "Real-bundle fidelity and performance are validated only on the maintainer's machine",
+   "case": "docs/UPSTREAM_0412_PROGRESS.json points to local /tmp logs; benchmarks/results/release-validation.json and v051-*-validation.json are produced locally; .github/workflows/ci.yml runs only tiny-model and host tests.",
+   "impact": "A fidelity regression between qualification runs goes unnoticed, and no third party has reproduced the speed or energy figures.",
+   "fix": "Add a macOS CI job that downloads one small pinned bundle (for example the ANE L96 package) and runs benchmarks/release_validate.py with the 0.02 drift gate.",
+   "severity": "medium",
+   "evidence": [
+    "docs/UPSTREAM_0412_PROGRESS.json",
+    "benchmarks/results/release-validation.json",
+    ".github/workflows/ci.yml:10-45"
+   ]
+  },
+  {
+   "lens": "G9",
+   "title": "No dependency updates, vulnerability scanning or secret scanning",
+   "case": "Probes deps.update_bot and ci.security_scans find nothing; .github/workflows/ci.yml:31 installs from pyproject ranges rather than the committed uv.lock.",
+   "impact": "Known vulnerabilities in coremltools, FastAPI, uvicorn or mcp go unnoticed, and CI does not test the locked set users of the lock would get.",
+   "fix": "Add Dependabot, pip-audit and gitleaks jobs, and install from uv.lock in CI.",
+   "severity": "medium",
+   "evidence": [
+    ".github/workflows/ci.yml:31",
+    "uv.lock"
+   ]
+  },
+  {
+   "lens": "G12",
+   "title": "Declared platform matrix is not tested",
+   "case": "README.md:35 declares macOS 15+ and Python 3.11-3.13; .github/workflows/ci.yml:14 and :29 test macos-26 and Python 3.12 only.",
+   "impact": "Breakage on macOS 15 or Python 3.11/3.13 ships undetected.",
+   "fix": "Add macos-15 and Python 3.11/3.13 to the matrix, or narrow the declared support.",
+   "severity": "low",
+   "evidence": [
+    "README.md:35",
+    ".github/workflows/ci.yml:14",
+    ".github/workflows/ci.yml:29"
+   ]
+  },
+  {
+   "lens": "G13",
+   "title": "Single maintainer hand-syncs a mirrored upstream host",
+   "case": "NOTICE records three manual synchronisation rounds with upstream (4aa6761, 1adc59f, v0.4.12); one git author; no CODEOWNERS or governance.",
+   "impact": "Upstream security and behaviour fixes reach the port only when the maintainer re-syncs.",
+   "fix": "Add a scheduled CI job that compares the pinned upstream commit with the latest upstream tag and opens an issue, plus a governance and succession note.",
+   "severity": "low",
+   "evidence": [
+    "NOTICE",
+    "AGENTS.md:6-7"
+   ]
+  }
+ ],
+ "opportunities": [
+  {
+   "lens": "O1",
+   "criterion": "OPP-1",
+   "title": "Extract the Apple Silicon energy-measurement harness",
+   "description": "The unprivileged PSTR sampler, alternating-block campaign, idle subtraction, anomaly rejection and cycle bootstrap are independent of laya and would serve any on-device inference project (laya-mlx, MLX or Core ML models) that needs joules per functional unit.",
+   "value": 3,
+   "reach": 3,
+   "confidence": "observed",
+   "horizon_fit": 1.4,
+   "effort": 2,
+   "action": "extract",
+   "evidence": [
+    "benchmarks/energy.py:1",
+    "benchmarks/pstr_sampler/",
+    "benchmarks/energy_summary.py",
+    "docs/ANE_BENCHMARKS.md:120-166",
+    "benchmarks/results/ane-energy-summary.json"
+   ]
+  },
+  {
+   "lens": "O3",
+   "criterion": "OPP-3",
+   "title": "Carry upstream weight digests into every decision for cross-repo evidence",
+   "description": "The port records the upstream weights' SHA-256 (891102d3... for the English checkpoint), the same digest laya's verify/checkpoints.json lists. Emitting source_weights_sha256 and package_sha256 in each result's routing block would let REA/rex evidence records cite exactly which weights and graph produced a decision, across both runtimes.",
+   "value": 3,
+   "reach": 3,
+   "confidence": "observed",
+   "horizon_fit": 1.2,
+   "effort": 2,
+   "action": "re-cut-interface",
+   "evidence": [
+    "benchmarks/results/release-validation.json (source_weights_sha256)",
+    "NandhaKishorM__laya/verify/checkpoints.json:13",
+    "laya_coreml/runtime.py:721-735"
+   ]
+  },
+  {
+   "lens": "O14",
+   "criterion": "OPP-7",
+   "title": "Declared cost per decision for automatic low-energy routing",
+   "description": "Latency and joules per decision are measured per bundle but live only in result files. Publishing them in each bundle manifest would let Router choose the cheapest bundle that fits an input, as on-device inference and energy pricing become procurement requirements.",
+   "value": 4,
+   "reach": 3,
+   "confidence": "derived",
+   "horizon_fit": 1.5,
+   "effort": 3,
+   "action": "re-cut-interface",
+   "evidence": [
+    "README.md:94-120",
+    "benchmarks/results/ane-energy-summary.json",
+    "README.md:199-205"
+   ]
+  },
+  {
+   "lens": "O11",
+   "criterion": "OPP-1",
+   "title": "Port-qualification kit for every laya runtime",
+   "description": "AST-identity and output-equality tests against pinned upstream, golden comparisons from the official FP32 model with a drift gate, repeated-call stability and running upstream's own suites under a rewritten namespace together form a qualification kit. Upstream maintains six ports with their own golden tooling; one shared kit would qualify ONNX, TypeScript, Rust, Go, Java, .NET, MLX and Ascend ports the same way.",
+   "value": 4,
+   "reach": 3,
+   "confidence": "derived",
+   "horizon_fit": 1.2,
+   "effort": 3,
+   "action": "extract",
+   "evidence": [
+    "tests/test_official_contract.py:45-180",
+    "scripts/run_official_test.py:1-60",
+    "benchmarks/release_validate.py",
+    "docs/RELEASE.md:56-78",
+    "NandhaKishorM__laya/.github/workflows/go.yml:97-128"
+   ]
+  },
+  {
+   "lens": "O2",
+   "criterion": "OPP-2",
+   "title": "Fold the mirrored host into upstream behind an array backend",
+   "description": "About 20k lines of router, server, MCP, evaluation, hooks and integrations mirror upstream and are re-synced by hand; the AST-identity tests show they are meant to be identical. If upstream's backend contract accepted arrays instead of torch tensors, the port could ship only its Core ML runtime and artefact handling.",
+   "value": 4,
+   "reach": 3,
+   "confidence": "observed",
+   "horizon_fit": 1.1,
+   "effort": 4,
+   "action": "consolidate",
+   "evidence": [
+    "diff vs NandhaKishorM__laya: router.py 676, serve.py 298, mcp/tools.py 241, evals.py 428 changed lines",
+    "NOTICE",
+    "tests/test_official_contract.py:45-56",
+    "NandhaKishorM__laya/laya/backends/base.py:1-12"
+   ]
+  }
+ ],
+ "reengineering": [
+  {
+   "action": "harden",
+   "component": "Release pipeline (.github/workflows/release.yml) and Hub bundle publication",
+   "gain": "Verifiable provenance for wheels and no long-lived publishing secret",
+   "measure": "PEP 740 attestations present on the next PyPI release; no PYPI_API_TOKEN referenced in workflows; bundles uploaded from CI or with signed manifests"
+  },
+  {
+   "action": "harden",
+   "component": "Security baseline (SECURITY.md, laya_coreml/serve.py defaults, CI scanners)",
+   "gain": "A reporting channel, safe server defaults and dependency and secret scanning",
+   "measure": "Probes meta.security_policy, deps.update_bot and ci.security_scans report found=true; a test asserts the default bind is 127.0.0.1"
+  },
+  {
+   "action": "harden",
+   "component": "Bundle loading (laya_coreml/hub.py, laya_coreml/agent.py)",
+   "gain": "Tampered or swapped bundles are rejected before native compilation",
+   "measure": "A test with one modified file in a bundle fails to load; load-time overhead in ms recorded for the 1024-token bundle"
+  },
+  {
+   "action": "consolidate",
+   "component": "Host layer shared with upstream laya (router, serve, mcp, evals, hooks, integrations)",
+   "gain": "No manual re-sync per upstream release and a much smaller port",
+   "measure": "Changed lines against upstream for router/serve/mcp/evals fall from 676/298/241/428 towards zero; manual sync rounds per upstream release fall to 0"
+  }
+ ],
+ "questions": [
+  "Does the port preserve upstream decisions, and is that checked independently of the port? Yes on fixtures: 189/189 selected answers on the general bundles, 59/59 fitting questions on ANE L96 with maximum drift 0.002925 (W8 0.014393) under a 0.02 gate, and CI checks host code and outputs against pinned upstream. Real-bundle checks run only on the maintainer's machine; fidelity is not task accuracy, as the README says.",
+  "Are the speed and energy claims reproducible and honestly scoped? Yes within limits: every headline figure matches committed results with environment, sample size, bootstrap intervals and net-negatives (10x target missed, ordinary export slower than MLX). One machine, not CI, not independently reproduced.",
+  "Can users verify what they install? Partially: pinned bundle revisions and checksums are documented and the cache is integrity-checked, but default loads are unpinned and unverified, and PyPI releases carry no attestations."
+ ],
+ "not_examined": [
+  "Hugging Face bundles and their published model cards (not reachable); no conversion, inference or energy run (no Apple hardware).",
+  "Git history (shallow clone): release cadence and contributor count.",
+  "experiments/ane_engineering scripts and the Rust pstr_sampler internals beyond their README and provenance fields.",
+  "Runtime behaviour of laya-coreml-serve, the MCP server and the Snake terminal UI (not run).",
+  "The laya-mlx sibling project (not in the reviewed set).",
+  "PyPI project settings, branch protection and whether GitHub private vulnerability reporting is enabled."
+ ],
+ "time_minutes": 45,
+ "scope_notes": "Profile ml-system: a Core ML conversion and inference runtime for laya checkpoints plus six published bundles. uses_llm=true (MCP server and agent-framework integrations executed by agents; no LLM is called); has_ui=true because the wheel ships the Rich terminal Snake demo (laya-coreml-snake); executes_code=false (only fixed helper commands such as sysctl and ffmpeg); network_service (laya-coreml-serve), parses_untrusted (HTTP bodies, downloaded .mlpackage graphs compiled by native Core ML), heavy_compute (conversion and on-device inference with measured energy) and distributed (PyPI, Hugging Face) are true; uses_crypto=false (SHA-256 integrity checks and a content-addressed cache only, no signing, encryption or key exchange). Static review at 7b36334 (shallow clone); Hugging Face bundles and cards were not reachable and no Apple hardware was available, so speed, energy and fidelity claims were checked against committed result files."
+}

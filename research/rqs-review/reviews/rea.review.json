@@ -6,10 +6,10 @@
   "head": "b4938aed58737293a6987630476632619713f5cd",
   "shallow": true
  },
- "profile": "agent-harness",
+ "profile": "agent-tool",
  "flags": {
   "uses_llm": true,
-  "has_ui": true,
+  "has_ui": false,
   "executes_code": true,
   "network_service": true,
   "parses_untrusted": true,
@@ -18,9 +18,9 @@
   "distributed": true
  },
  "reviewer": {
-  "id": "",
+  "id": "reviewer-rea",
   "kind": "agent",
-  "conflicts": ""
+  "conflicts": "none"
  },
  "date": "2026-10-20",
  "scores": {
@@ -57,7 +57,7 @@
    "evidence": [
     "src/contracts/toolEffects.ts:55 (208 audited MCP tools at b4938ae)",
     "src/cliCommandNames.ts (155 CLI command names)",
-    "knip.json:16-27 (unused files, dependencies and exports fail CI)",
+    "knip.json:28-39 (unused files, dependencies and exports fail CI)",
     "docs/roadmap.md:20-27 (admission criteria in prose)",
     "scripts/bundle-runtime.mjs:6-9 and package.json files['dist'] (bundles and the full per-module tree both ship)",
     "research/rea-self-analysis/results/findings.jsonl L-ponytail-1 (6.7.0 package: 15.7 MB bundles plus 10.2 MB / 1,505 per-module files; 163 files, 694 KB statically unreachable)"
@@ -568,10 +568,10 @@
    "level": 3,
    "confidence": "derived",
    "evidence": [
-    ".jscpd.json and docs/testing.md:76-80 (3% duplication limit in CI)",
-    "knip.json:16-27 (unused files and exports are errors)",
+    ".jscpd.json and docs/testing.md:74-77 (3% duplication limit in CI)",
+    "knip.json:28-39 (unused files and exports are errors)",
     "probe size.largest: bridge/ghidra/ReaGhidraBridge.java 4,911 lines; src/adb/AdbProvider.ts 3,232 lines",
-    ".oxlintrc.json:6-23 (size and complexity rules are warnings only)",
+    ".oxlintrc.json:5-23 (size and complexity rules are warnings only)",
     "research/rea-self-analysis/results/findings.jsonl L-ponytail-1 (duplicate runtime trees and 163 unreachable files in the 6.7.0 package)"
    ],
    "note": "Duplication and dead-code checks are enforced on source. Large outlier files are unexplained, and the shipped package duplicates the runtime.",
@@ -648,7 +648,7 @@
     "scripts/ci/plan.mjs:254-268 (package lanes: linux x64/arm64, macOS arm64; macOS x64 in full tier)",
     ".github/workflows/ci.yml windows-curated job (windows-latest) and .github/workflows/real-ghidra-windows.yml (self-hosted Windows)",
     ".github/workflows/sqlite-runtime.yml:19-23 (Node 22.x, 24.15.0, 24.x, 26.x for SQLite only)",
-    "install.sh:55-65 (fail_node_version message on unsupported Node)"
+    "install.sh:56-66, 123 (fail_node_version message on unsupported Node)"
    ],
    "note": "A support matrix is stated, and CI covers Linux and macOS on x64 and ARM plus Windows. The full suite runs on Node 24 only; Node 22 and 26 are tested for SQLite only.",
    "source": "review"
@@ -796,41 +796,386 @@
    "source": "review"
   }
  },
- "gaps": [],
- "opportunities": [],
- "reengineering": [],
- "questions": [],
- "not_examined": [],
- "time_minutes": null,
- "_help": {
-  "scores": "Set level (0-5, U, NA), confidence (observed|derived|inferred), evidence (path:line, command, measurement) and change source to \"review\". Entries left with source \"auto\" count as unreviewed suggestions.",
-  "gap": {
-   "lens": "G1-G14",
-   "title": "",
-   "case": "concrete reproduction or file:line",
-   "impact": "",
-   "fix": "",
-   "severity": "critical|high|medium|low",
-   "evidence": []
+ "gaps": [
+  {
+   "lens": "G6",
+   "title": "Default MCP catalog costs about 833k tokens and results are sent twice",
+   "case": "Default tools/list for 6.7.0 is 3,158,368 bytes (832,930 o200k tokens), and output schemas are 2,353,893 bytes of it (74.5%). At b4938ae both schema profiles still default to full (src/config/mcpInputSchemaProfile.ts:24; docs/mcp-contracts.md:959-962). Each result is returned as both text and structuredContent (docs/mcp-contracts.md:12-13). Traces copy all parent-graph limitations (src/domain/javascript/javascriptFeatureTrace.ts:151-154): a 3-node trace was 1,424,753 bytes, 98.8% of it limitations.",
+   "impact": "Hosts that load tools eagerly pay the catalog on every request, and some reject it outright (issues #1484, #2512, #2813, #2999 cited in docs/mcp-contracts.md). Repeated payloads exhaust the response budget sooner and waste agent context.",
+   "fix": "Make the measured compact input profile and omitted or lazily served output schemas the default; reference parent limitations by digest; return a short text pointer next to structuredContent; fail CI when tools/list bytes exceed a budget.",
+   "severity": "high",
+   "evidence": [
+    "research/rea-self-analysis/results/e1-contract.json",
+    "research/rea-self-analysis/results/lens-caveman/catalog-json.report.json",
+    "research/rea-self-analysis/results/e3-e5-live.json",
+    "src/config/mcpInputSchemaProfile.ts:24",
+    "src/domain/javascript/javascriptFeatureTrace.ts:151-154"
+   ]
   },
-  "opportunity": {
-   "lens": "O1-O14",
-   "criterion": "OPP-1..7",
-   "title": "",
-   "description": "",
-   "value": "1-5",
-   "reach": "1-5",
-   "confidence": "observed|derived|inferred",
-   "horizon_fit": "1.0-1.5",
-   "effort": "1-5",
-   "action": "keep|harden|refactor|extract|consolidate|re-platform|re-cut-interface|rewrite|replace|retire",
-   "evidence": []
+  {
+   "lens": "G3",
+   "title": "Large sessions cannot be re-imported and the largest results are unreachable over MCP",
+   "case": "On 6.7.0, export_evidence_bundle wrote 889,074,095 bytes, and import_evidence_bundle failed after 107 s with 'Invalid string length' at 5.56 GB peak RSS. trace_application_feature and compare_application_versions exceeded a 64 MiB response budget (86.6 s and 153.2 s). b4938ae adds a streaming JSON reader (src/application/JsonInputFile.ts:256-280); whether it fixes this case was not verified.",
+   "impact": "Complete results of large analyses (about 1,000 s each) cannot be consumed by an agent or carried to another connection, though they were computed.",
+   "fix": "Use a record-streamed bundle format (JSONL) validated record by record; page traces and version comparisons; add a round-trip test at 10x the largest observed bundle.",
+   "severity": "high",
+   "evidence": [
+    "research/rea-self-analysis/results/e3-bundle-reimport-attempt.json",
+    "research/rea-self-analysis/results/e3-e5-live.json",
+    "src/application/JsonInputFile.ts:256-280"
+   ]
   },
-  "reengineering": {
-   "action": "",
-   "component": "",
-   "gain": "",
-   "measure": ""
+  {
+   "lens": "G4",
+   "title": "The Evidence ledger is lost when the process dies",
+   "case": "EvidenceLedger keeps records and unknowns in in-memory Maps (src/application/investigation/EvidenceLedger.ts:44-47). After SIGKILL the ledger fell from 3 records to 0; an Absurd-backed prototype restored all 6 Evidence IDs with 0 repeated calls (prototype-crash-test.json).",
+   "impact": "A crash or client restart discards all analysis in the session and every retained reference, so long analyses (1,000 s, 6.3 GB worker) must be repeated.",
+   "fix": "Append every Evidence record and unknown revision to a durable per-session log (JSONL or SQLite WAL) and replay it at start; add a CI kill-and-resume test that compares Evidence IDs with an uncrashed control.",
+   "severity": "high",
+   "evidence": [
+    "src/application/investigation/EvidenceLedger.ts:44-47",
+    "research/rea-self-analysis/results/prototype-crash-test.json",
+    "research/rea-self-analysis/results/findings.jsonl D-1"
+   ]
+  },
+  {
+   "lens": "G7",
+   "title": "Errors give wrong retry advice, hide causes and differ for the same mistake",
+   "case": "invalid_request is always retryable (src/domain/analysisErrorProjection.ts:569-576), so a missing file returns retryable: true. A rejected unknown resolution ('no qualifying resolution evidence', src/domain/evidenceBundle.ts:409-412) is wrapped as an integrity error (src/application/investigation/EvidenceLedger.ts:436) and shown as 'Evidence state changed ... try again' (src/domain/analysisErrorPresentation.ts:274-275). A string-length limit on import surfaced as evidence_integrity_mismatch. The same wrong-format input returns invalid_request/retryable:true from inspect_pe_resources and capability_unavailable/retryable:false from inspect_managed_artifact; docs/installation.md:360-363 notes caller-dependent codes.",
+   "impact": "Agents retry calls that cannot succeed or misdiagnose the cause, which wastes calls and context.",
+   "fix": "Derive retryable from the failure cause; carry the validator reason in details.reason; map resource limits to resource_constraint; add a table-driven test that sends equivalent invalid inputs to sibling tools and asserts one code and retry flag.",
+   "severity": "medium",
+   "evidence": [
+    "src/domain/analysisErrorProjection.ts:569-576",
+    "src/application/investigation/EvidenceLedger.ts:436",
+    "src/domain/analysisErrorPresentation.ts:274-275",
+    "research/rea-self-analysis/results/e1-contract.json",
+    "research/rea-self-analysis/results/e10-epistemics.json",
+    "research/rea-self-analysis/results/e3-bundle-reimport-attempt.json",
+    "research/rea-self-analysis/results/findings.jsonl E6-2"
+   ]
+  },
+  {
+   "lens": "G14",
+   "title": "REA cannot inventory its own distribution format, and no lane runs it on itself",
+   "case": "6.7.0 rejected its own npm .tgz ('unsupported binary format'), and open_binary refused the unpacked package directory (findings.jsonl E2-1; e2-e3-stages.json). At b4938ae the ZIP-family formats and Evidence subject formats include no tar or gzip format (src/domain/zipPackageFormat.ts:2-11; src/domain/evidence.ts:45-70). No CI lane analyzes the release tarball.",
+   "impact": "npm packages, the main distribution form in REA's JavaScript target ecosystem, have to be repacked by hand, and self-application regressions go unnoticed.",
+   "fix": "Add a tar/gzip reader with the same path, size and identity controls as the ZIP reader; add a release lane that inventories and analyzes the qualified tarball and diffs it against the previous release.",
+   "severity": "medium",
+   "evidence": [
+    "research/rea-self-analysis/results/findings.jsonl E2-1",
+    "research/rea-self-analysis/results/e2-e3-stages.json",
+    "src/domain/zipPackageFormat.ts:2-11"
+   ]
+  },
+  {
+   "lens": "G8",
+   "title": "The JavaScript application graph misses modern Node loading forms",
+   "case": "On REA's own 6.7.0 package, native_addon_bindings was 0 although the package loads rea-windows-x64.node through createRequire(...)(fileURLToPath(new URL(...))) (E3-4). The worker loaded through import.meta.resolve('#javascript-analysis-worker') had no incoming reference edge (E4-1). Bridges referenced through new URL(..., import.meta.url) matched no graph entity (E4-2). No import.meta.resolve handling exists in src/domain/javascript at b4938ae (rg).",
+   "impact": "Reported relationships and counts are incomplete for packages that use subpath imports and URL-relative loading, and an agent can conclude that no native addon exists.",
+   "fix": "Resolve the literal forms import.meta.resolve, new URL(literal, import.meta.url) and createRequire(new URL(...)) through package imports and exports maps; add fixtures for each form; report unresolved dynamic loads as unknown in summary counts.",
+   "severity": "medium",
+   "evidence": [
+    "research/rea-self-analysis/results/e3-e5-live.json",
+    "research/rea-self-analysis/results/findings.jsonl E3-4, E4-1, E4-2"
+   ]
+  },
+  {
+   "lens": "G8",
+   "title": "Process comparison counts timing as behaviour",
+   "case": "Terminal frames are compared together with at_ms (src/domain/process/processObservation.ts:10-14), and exit comparison includes settlement timing (src/domain/process/processComparison.ts:416-424; docs/process-capture.md:392-394). Two runs of a deterministic command with identical frames and exit codes 0/0 returned status changed (e8-process-compare.json).",
+   "impact": "Behavioural diffs and reconstruction checks report changes that did not happen, so agents chase timing jitter.",
+   "fix": "Compare content and ordering separately from timing; report timing as its own dimension with a stated tolerance; keep strict timing comparison as an explicit option.",
+   "severity": "medium",
+   "evidence": [
+    "src/domain/process/processObservation.ts:10-14",
+    "src/domain/process/processComparison.ts:416-424",
+    "research/rea-self-analysis/results/e8-process-compare.json"
+   ]
+  },
+  {
+   "lens": "G9",
+   "title": "No dependency updates, vulnerability or secret scanning, or SBOM",
+   "case": "There is no Dependabot or Renovate configuration (probe deps.update_bot), no scanner in any of the 30 workflows (probe ci.security_scans) and no SBOM step (probe ci.sbom), for 40 runtime dependencies and 750 locked packages (package.json; package-lock.json).",
+   "impact": "Known-vulnerable dependencies or committed credentials can ship unnoticed, and downstream users cannot answer SBOM requests.",
+   "fix": "Add automated update PRs, an OSV or npm audit job, secret scanning, and a CycloneDX SBOM attached to each release next to the npm provenance.",
+   "severity": "medium",
+   "evidence": [
+    "probe deps.update_bot",
+    "probe ci.security_scans",
+    "probe ci.sbom",
+    "package.json dependencies"
+   ]
+  },
+  {
+   "lens": "G9",
+   "title": "The opt-in HTTP transport has no client authentication",
+   "case": "rea mcp --http serves the full tool catalog over plain HTTP without client authentication (docs/mcp-contracts.md:459-463). Loopback binds check Host and Origin, but a non-loopback bind relaxes both with only a log warning (src/server/http/serveStreamableHttp.ts:98-108, 589-593). The Hopper and Ghidra bridges already use per-session capability tokens (SECURITY.md:27-32).",
+   "impact": "Missing access control: on a shared host or an exposed bind, other users or network peers can invoke process-launching and device-changing tools with the REA user's privileges.",
+   "fix": "Require a per-instance bearer token generated at startup, as the bridges do, and refuse non-loopback binds unless an explicit unsafe flag is given.",
+   "severity": "medium",
+   "evidence": [
+    "docs/mcp-contracts.md:459-463",
+    "src/server/http/serveStreamableHttp.ts:98-108",
+    "src/server/http/serveStreamableHttp.ts:589-593",
+    "SECURITY.md:27-32"
+   ]
+  },
+  {
+   "lens": "G13",
+   "title": "Breaking-change churn and maintainer concentration",
+   "case": "There were 14 releases between 2026-10-03 and 2026-10-18, 9 with breaking changes; six breaking releases shipped as minors under always-bump-minor (CHANGELOG.md; docs/releasing.md:145-152), and 6.6.0 was tagged but never published (CHANGELOG.md:11). One maintainer authored 537 of 893 commits in 6.5.0 (docs/releases/6.5.0.contributions.json); there is no CODEOWNERS or governance file.",
+   "impact": "Agents and pipelines that follow @latest (as README.md:107 shows) or caret ranges get breaking contract changes with no version signal, and continuity depends on one person.",
+   "fix": "Use major versions for breaking changes, or publish a stable line with a declared support window; add CODEOWNERS and a short governance and succession note.",
+   "severity": "medium",
+   "evidence": [
+    "CHANGELOG.md",
+    "docs/releasing.md:145-152",
+    "docs/releases/6.5.0.contributions.json",
+    "probe meta.codeowners"
+   ]
+  },
+  {
+   "lens": "G11",
+   "title": "Injection resistance is untested and read-only hints are rarely set",
+   "case": "Untrusted-content framing is tested only for the marker's presence (tests/boundary/mcp/targetContentFramingMcp.test.ts:46-60), and no agent evaluation scenario puts directives in target content (src/evaluation/AgentEvaluationFixtures.ts). readOnlyHint is true for 5 of 207 tools; 81 of 208 tools are non-read-only only because they record Evidence in REA's own in-memory session (src/contracts/toolEffects.ts).",
+   "impact": "Prompt-injection regressions go undetected, and hosts that auto-approve read-only tools must prompt for almost every call, which weakens human review of the 31 destructive tools.",
+   "fix": "Add an adversarial corpus (strings, pseudocode and page text with embedded directives) to the agent evaluation and assert that no tool call follows them; set readOnlyHint for tools whose only effect is in-process session recording, since MCP defines it as not modifying the environment.",
+   "severity": "medium",
+   "evidence": [
+    "tests/boundary/mcp/targetContentFramingMcp.test.ts:46-60",
+    "src/contracts/toolEffects.ts:720-741",
+    "research/rea-self-analysis/results/e1-contract.json"
+   ]
+  },
+  {
+   "lens": "G10",
+   "title": "No regulatory position for a distributed package",
+   "case": "No document mentions the EU CRA or the AI Act (probe meta.compliance); the support policy is latest-only (SECURITY.md:5); no SBOM is produced.",
+   "impact": "CRA vulnerability reporting (from 11 Sep 2026) and its main obligations (from 11 Dec 2027) may apply, depending on how REA is distributed, and users cannot judge their own obligations.",
+   "fix": "Publish a short compliance note on the project's role (open-source steward or manufacturer), support period, vulnerability handling and SBOM plan.",
+   "severity": "low",
+   "evidence": [
+    "probe meta.compliance",
+    "SECURITY.md:5",
+    "DISCLAIMER.md:1-60"
+   ]
   }
+ ],
+ "opportunities": [
+  {
+   "lens": "O7",
+   "criterion": "OPP-6",
+   "title": "Compact catalog by default, with output schemas on request",
+   "description": "REA already ships a compact input profile and an output-schema-off profile that cut the 6.7.0 catalog from 3,158,368 to 219,226 bytes (-93%) while the server keeps canonical validation. Making them the default, with full schemas available through binary_session or resources, removes most of the per-session catalog cost in every host.",
+   "value": 5,
+   "reach": 5,
+   "confidence": "observed",
+   "horizon_fit": 1.3,
+   "effort": 2,
+   "action": "re-cut-interface",
+   "evidence": [
+    "research/rea-self-analysis/results/e1-contract.json",
+    "docs/mcp-contracts.md:890-968",
+    "src/config/mcpInputSchemaProfile.ts:24"
+   ]
+  },
+  {
+   "lens": "O12",
+   "criterion": "OPP-7",
+   "title": "Publish the effect vocabulary and untrusted marker as host policy",
+   "description": "REA's per-tool effect audit (executesForeignCode, mutatesDevice, accessesNetwork and others) and the _meta.provenance.untrusted_content marker are machine-readable. Harnesses in the reviewed set (orca, t3code, pandacode, agent-sandbox-lockdown, which already gates writes and logs tool calls) could enforce rules such as approval for executesForeignCode after untrusted content was read. That moves AGT-1 and AGT-2 controls from prompt wording to policy.",
+   "value": 4,
+   "reach": 4,
+   "confidence": "derived",
+   "horizon_fit": 1.4,
+   "effort": 2,
+   "action": "extract",
+   "evidence": [
+    "src/contracts/toolEffects.ts:1-22",
+    "src/contracts/toolEffects.ts:720-765",
+    "docs/mcp-contracts.md:188-196",
+    "/home/user/GitHub_Repos_Dump/PromptEngineer48__agent-sandbox-lockdown/README.md:3"
+   ]
+  },
+  {
+   "lens": "O6",
+   "criterion": "OPP-5",
+   "title": "Durable Evidence ledger on absurd or pi durable steps",
+   "description": "Move EvidenceLedger from in-memory Maps to durable steps. The Absurd-backed prototype restored a SIGKILLed session with 0 repeated calls and the same 6 Evidence IDs, and REA's content-addressed IDs make replay idempotent by construction. absurd (Postgres) or pi durable fit hosted use; a local SQLite WAL log is the lighter option for desktops.",
+   "value": 4,
+   "reach": 4,
+   "confidence": "observed",
+   "horizon_fit": 1.3,
+   "effort": 3,
+   "action": "re-platform",
+   "evidence": [
+    "research/rea-self-analysis/results/prototype-crash-test.json",
+    "src/application/investigation/EvidenceLedger.ts:44-47",
+    "src/domain/evidence.ts:250-278"
+   ]
+  },
+  {
+   "lens": "O1",
+   "criterion": "OPP-1",
+   "title": "Extract the Evidence record and unknown ledger as a standalone format",
+   "description": "The Evidence schema (subject digest, provider version, analysis profile, parameters, confidence, authority, environment, coverage, links, content-addressed ID over RFC 8785 JSON) and the residual-unknown ledger do not depend on REA's providers. A versioned JSON Schema with a small library would let strix findings, leanrea answers and caveman measurements exchange citable observations.",
+   "value": 4,
+   "reach": 3,
+   "confidence": "derived",
+   "horizon_fit": 1.4,
+   "effort": 3,
+   "action": "extract",
+   "evidence": [
+    "src/domain/evidence.ts:112-145",
+    "src/domain/evidence.ts:250-278",
+    "docs/mcp-contracts.md:10-45"
+   ]
+  },
+  {
+   "lens": "O4",
+   "criterion": "OPP-4",
+   "title": "Route cheap questions to direct tool calls",
+   "description": "For header, symbol and string questions, a REA CLI call costs 1.3-2.3 s and 2-3 KB, against 4-26 ms for objdump, nm or strings. leanrea's recipe answered the 7 self-analysis questions in 219 ms and 2.5 KB, and leanrea's own benchmark reports 38% less wall time and 35% lower cost than REA 6.5.0, at 74/75 against 75/75. A routing table in the skill, plus Evidence recording for raw tool output, keeps provenance while removing most of the cost of simple questions.",
+   "value": 3,
+   "reach": 4,
+   "confidence": "observed",
+   "horizon_fit": 1.1,
+   "effort": 2,
+   "action": "re-cut-interface",
+   "evidence": [
+    "research/rea-self-analysis/results/e6-timings.tsv",
+    "research/rea-self-analysis/results/findings.jsonl L-leanrea-1",
+    "/home/user/GitHub_Repos_Dump/aicodeking__leanrea/README.md:14-25"
+   ]
+  },
+  {
+   "lens": "O3",
+   "criterion": "OPP-3",
+   "title": "Investigation-level coverage document modelled on strix",
+   "description": "REA declares coverage for each result but not for a whole investigation. strix writes a run-level coverage.json that separates unaccounted classes from tested-and-nothing-found and marks partial runs. Pairing that document with REA's unknown and obligation ledgers would reconcile the questions asked with the outcomes for whole investigations (the EPI-4 horizon).",
+   "value": 3,
+   "reach": 3,
+   "confidence": "derived",
+   "horizon_fit": 1.3,
+   "effort": 2,
+   "action": "harden",
+   "evidence": [
+    "research/rea-self-analysis/results/findings.jsonl L-strix-1",
+    "docs/reconstruction-obligation-ledgers.md:1-20"
+   ]
+  },
+  {
+   "lens": "O8",
+   "criterion": "OPP-3",
+   "title": "Calibrate confidence classes with the my-jev and laya method",
+   "description": "No one checks the observed, derived and inferred classes against outcomes. The agent-evaluation fixtures already grade closed claims against oracles (src/evaluation/KnownAnswerEvaluation.ts). Feeding those results into a per-class precision report with Wilson intervals, as the earlier study did with the my-jev and laya method (observed 9/9, derived 3/4, below a 10-claim floor), yields the EPI-2 horizon measurement.",
+   "value": 3,
+   "reach": 3,
+   "confidence": "derived",
+   "horizon_fit": 1.4,
+   "effort": 3,
+   "action": "harden",
+   "evidence": [
+    "src/evaluation/KnownAnswerEvaluation.ts:1-60",
+    "research/rea-self-analysis/README.md:136"
+   ]
+  },
+  {
+   "lens": "O5",
+   "criterion": "OPP-4",
+   "title": "Drop the duplicate per-module runtime tree from the package",
+   "description": "The package ships rolldown bundles and the complete per-module tsc output that workers load by path (scripts/bundle-runtime.mjs:6-9; package.json files['dist']). On 6.7.0 that was 15.7 MB of bundles plus 10.2 MB in 1,505 module files, with 163 files (694 KB) statically unreachable. Bundling the worker entry points as well removes the duplicate tree.",
+   "value": 2,
+   "reach": 3,
+   "confidence": "derived",
+   "horizon_fit": 1.0,
+   "effort": 2,
+   "action": "retire",
+   "evidence": [
+    "scripts/bundle-runtime.mjs:6-9",
+    "research/rea-self-analysis/results/findings.jsonl L-ponytail-1"
+   ]
+  }
+ ],
+ "reengineering": [
+  {
+   "action": "re-cut-interface",
+   "component": "MCP catalog advertisement (src/contracts/compactInputSchema.ts, src/config/mcpInputSchemaProfile.ts, src/config/mcpOutputSchemaProfile.ts)",
+   "gain": "Default tools/list falls from 3,158,368 to about 219,226 bytes (-93%, measured on 6.7.0), with no change to server-side validation.",
+   "measure": "tools/list bytes and o200k tokens recorded per release in CI against a failing budget; the existing host lanes (Kimi, Gemini, pi-web-ui) stay green."
+  },
+  {
+   "action": "re-platform",
+   "component": "EvidenceLedger (src/application/investigation/EvidenceLedger.ts) and bundle import and export (src/application/EvidenceBundleFiles.ts)",
+   "gain": "No Evidence lost on crash, and bundles larger than the V8 string limit round-trip.",
+   "measure": "A CI kill -9 test gives the same Evidence IDs and 0 repeated provider calls as an uncrashed control; a 2 GB synthetic bundle imports successfully."
+  },
+  {
+   "action": "harden",
+   "component": "Error projection (src/domain/analysisErrorProjection.ts, src/domain/analysisErrorPresentation.ts, src/application/investigation/EvidenceLedger.ts)",
+   "gain": "Correct retryable flags, preserved causes, and one code for each equivalent mistake.",
+   "measure": "A table-driven sibling-tool test over invalid path, missing file, wrong format and unqualified resolution asserts code, retryable and details.reason; retry counts in verify:agent reports go down."
+  },
+  {
+   "action": "harden",
+   "component": "Supply chain (.github/workflows, package.json)",
+   "gain": "Coverage of known vulnerabilities, secrets and dependency updates, plus an SBOM for every release.",
+   "measure": "OpenSSF Scorecard result; a CycloneDX SBOM attached to each release that matches package-lock.json; days from advisory to dependency bump."
+  },
+  {
+   "action": "retire",
+   "component": "Per-module dist tree in the npm package (scripts/bundle-runtime.mjs, package.json files)",
+   "gain": "About 10 MB and 1,500 fewer files in the package (6.7.0 figures).",
+   "measure": "npm pack --json size and file count in the release rehearsal against a budget; worker start-up tests still pass."
+  }
+ ],
+ "questions": [
+  {
+   "question": "Can an agent host register REA by default without excessive context cost?",
+   "answer": "Not with the defaults. The 6.7.0 catalog is 3,158,368 bytes, about 833k o200k tokens. It becomes practical when the host defers tool loading, or with REA_MCP_INPUT_SCHEMA_PROFILE=compact and REA_MCP_OUTPUT_SCHEMA_PROFILE=off (219,226 bytes).",
+   "evidence": [
+    "research/rea-self-analysis/results/e1-contract.json",
+    "research/rea-self-analysis/results/lens-caveman/catalog-json.report.json"
+   ]
+  },
+  {
+   "question": "Are REA's conclusions auditable and reproducible?",
+   "answer": "Within one connection, yes: results are content-addressed Evidence records carrying provider version, parameters, confidence, authority and coverage. Across crashes and very large sessions, no: the ledger lives in memory, and an 889 MB export could not be re-imported on 6.7.0.",
+   "evidence": [
+    "src/domain/evidence.ts:127-145",
+    "src/domain/evidence.ts:250-278",
+    "research/rea-self-analysis/results/prototype-crash-test.json",
+    "research/rea-self-analysis/results/e3-bundle-reimport-attempt.json"
+   ]
+  },
+  {
+   "question": "Is REA safe to point an agent at untrusted targets?",
+   "answer": "Partly. Target content is marked untrusted on every path, and effect hints are accurate. But native engines parse with the user's privileges and no sandbox, no prompt-injection tests exist, and the opt-in HTTP transport has no authentication. Run runtime workflows in an isolated environment.",
+   "evidence": [
+    "src/contracts/toolEffects.ts:720-765",
+    "SECURITY.md:33-36",
+    "docs/mcp-contracts.md:459-463"
+   ]
+  }
+ ],
+ "not_examined": [
+  "Runtime behaviour at b4938ae: nothing was built or run. Runtime evidence comes from the earlier study of the 6.7.0 package, and fixes after 6.7.0 (for example the streaming JSON reader) are unverified.",
+  "Results of the 16 real-tool CI lanes and full qualification runs (GitHub Actions history not available).",
+  "GitHub settings: branch protection, required reviews, secret scanning, published security advisories, and npm provenance attestations on the registry.",
+  "Internals of the Java (Ghidra, JADX), Python (pwntools, pwndbg, LLDB, mitmproxy), Swift and C++ bridges beyond the exec and pattern sites.",
+  "Accessibility of the rea.tools website and accuracy of the 20 README translations.",
+  "Git history (shallow clone with 1 commit): contributor and cadence figures come from docs/releases/*.contributions.json and CHANGELOG.md.",
+  "Most of the 2,004 test files and 132 documentation pages were sampled, not read in full."
+ ],
+ "time_minutes": 150,
+ "scope_notes": "Profile agent-tool, not the suggested agent-harness: REA is an MCP server and CLI that agents call to inspect shipped artifacts (the standard names REA as its agent-tool example), and the harness suggestion came from 23 website HTML files; has_ui=false because those files are the docs website and one test fixture; uses_llm=true (run by agents, ships a skill and 6 prompts, calls no model); executes_code, parses_untrusted, network_service (opt-in HTTP), uses_crypto (HMAC bridge auth, OpenPGP checks) and distributed (npm, MCP Registry) are true; heavy_compute=false (single analyses reach about 1,000 s, no training or inference). Static evidence is from b4938ae; runtime evidence is from the earlier study of the published 6.7.0 package and is labelled as such.",
+ "red_line_decisions": {
+  "SEC-6": "Not triggered (level 2): no secret patterns outside tests; redaction designed into logs and capture outputs; no CI secret scanner.",
+  "SEC-7": "Not triggered (level 3): no shell strings, eval or unsafe deserialization in production paths; Python exec loads package-owned files; raw debugger tools are declared destructive capabilities.",
+  "EPI-5": "Not triggered (level 3): no README capability claim is contradicted by the 6.7.0 measurements; one unsourced star-count line.",
+  "PRV-1": "Not triggered (level 4): no telemetry code or dependency.",
+  "PRV-3": "Not triggered (level 4): MIT license with complete, CI-checked third-party notices.",
+  "suspected_red_lines": "The automatic scorecard listed none."
  }
 }

@@ -1,0 +1,902 @@
+{
+ "rqs_review": 1,
+ "target": {
+  "path": "/home/user/GitHub_Repos_Dump/JuliusBrussee__caveman",
+  "name": "caveman",
+  "head": "bad48a0e1df55e05e3f52249afa35ecc1909ee76",
+  "shallow": true
+ },
+ "profile": "agent-tool",
+ "flags": {
+  "uses_llm": true,
+  "has_ui": false,
+  "executes_code": true,
+  "network_service": true,
+  "parses_untrusted": true,
+  "uses_crypto": true,
+  "heavy_compute": false,
+  "distributed": true
+ },
+ "scope_notes": "agent-tool profile: a token-compression engine, CLI, proxy and MCP server that agents call; uses_crypto true (SigV4, OIDC JWT, TLS, AES) and parses_untrusted true (compresses tool/web payloads); has_ui false (CLI/engine, no GUI); heavy_compute false.",
+ "reviewer": {
+  "id": "reviewer-caveman",
+  "kind": "agent",
+  "conflicts": "none"
+ },
+ "date": "2026-10-20",
+ "scores": {
+  "PUR-1": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "README.md:5",
+    "INSTALL.md",
+    "docs/HONEST-NUMBERS.md:1"
+   ],
+   "note": "README states the problem, users, one-command install, measured results and explicit non-goals ('never touches your prompt'); INSTALL.md is a 30+ agent matrix. No machine-readable capability statement (SKILL.md is prose).",
+   "source": "review"
+  },
+  "PUR-2": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": [
+    "evals/snapshots/results.json",
+    "docs/HONEST-NUMBERS.md:14",
+    "benchmarks/run.py"
+   ],
+   "note": "A 3-arm eval harness and snapshot are committed with stated limits (n=10, single run); HONEST-NUMBERS reports method and net-negative cases. The flagship 33.2% session number is an older-engine run with no committed raw result (benchmarks/results/.gitkeep).",
+   "source": "review"
+  },
+  "PUR-3": {
+   "level": 3,
+   "confidence": "inferred",
+   "evidence": [
+    "CLAUDE.md:48",
+    "CLAUDE.md:27",
+    "README.md:90"
+   ],
+   "note": "Six 'rocks' and several packages, each with a documented purpose and ownership routing in CLAUDE.md; browse/ is a declared consumer copy and skills are CI-mirrored into plugins/. No necessity gate on new components.",
+   "source": "review"
+  },
+  "COR-1": {
+   "level": 4,
+   "confidence": "derived",
+   "evidence": [
+    ".github/workflows/engine-ci.yml:30",
+    ".github/workflows/ci.yml:196",
+    "test.ratio"
+   ],
+   "note": "697 test files, test/source 1.137; CI runs go test (-race on store/middleware), npm test and pytest across an OS matrix with conformance lanes, gated before merge. No coverage threshold (so not horizon).",
+   "source": "review"
+  },
+  "COR-2": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "engine/compressors/toon_roundtrip_test.go",
+    "packages/sdk/parity/fixtures.json",
+    "engine/compressors/testdata/toolschema_constraints_catalog.golden.json"
+   ],
+   "note": "112 golden/fixture files, TOON encode/decode round-trip, byte-safe invariants and SDK/middleware parity fixtures exercised against a real proxy in CI. Not full differential-vs-reference-tool.",
+   "source": "review"
+  },
+  "COR-3": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": [
+    "engine/compressors/toon_roundtrip_test.go",
+    "proxy/internal/gateway/cache_prefix_invariant_test.go",
+    "test.property"
+   ],
+   "note": "Go fuzz targets with committed corpora cover the parsers and cache/translate invariants (TOON round-trip, axtree, cache-prefix, responses/messages, scan-string) plus property-style invariants; no mutation testing and no per-release fuzz thresholds.",
+   "source": "review"
+  },
+  "COR-4": {
+   "level": 3,
+   "confidence": "inferred",
+   "evidence": [
+    "skills/caveman-compress/scripts/benchmark.py",
+    ".blocks/release-smoke.py:116",
+    "docs/HONEST-NUMBERS.md:23"
+   ],
+   "note": "caveman-compress is benchmarked on its own memory-file fixtures, release-smoke exercises the shipped binary, and Blocks scans the repo's own agent history; realistic inputs including the tool's own artifacts.",
+   "source": "review"
+  },
+  "COR-5": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "engine/ccr/store.go:6",
+    "engine/compressors/toon_roundtrip_test.go",
+    ".github/workflows/release-packages.yml:342"
+   ],
+   "note": "Core transforms are deterministic: CCR handles are content-addressed (sha256) and idempotent, TOON round-trips, and SBOMs are generated reproducibly. LLM routing is nondeterministic but isolated behind the proxy.",
+   "source": "review"
+  },
+  "REL-1": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "engine/ccr/store_sqlite.go:81",
+    "engine/ccr/store_generation.go:103",
+    "engine/ccr/store.go:35"
+   ],
+   "note": "The CCR recovery store is SQLite in WAL mode with busy_timeout, atomic rename, PERSIST_WAL and reopen-race handling, and fails closed with ErrStorageChanged when the DB identity changes; content-addressed handles make re-processing idempotent. Requests are the unit of work, so there is no long-task resume concept.",
+   "source": "review"
+  },
+  "REL-2": {
+   "level": 3,
+   "confidence": "inferred",
+   "evidence": [
+    "mcp/server.go:28",
+    "engine/ccr/store.go:33",
+    "README.md:171"
+   ],
+   "note": "MCP inbound and result payloads are capped at 16 MiB, the CCR store enforces a payload budget (ErrBudgetExceeded) and compressors stream/bound output; large inputs degrade to byte-safe passthrough rather than failing.",
+   "source": "review"
+  },
+  "REL-3": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "CONTRIBUTING.md:40",
+    "engine/compressors/invariants.go:17",
+    "mcp/server.go:347"
+   ],
+   "note": "On any parse problem the engine passes bytes through untouched (documented contract); elision markers state the facts computed from dropped units rather than hiding them; MCP tool errors fail closed.",
+   "source": "review"
+  },
+  "REL-4": {
+   "level": 3,
+   "confidence": "inferred",
+   "evidence": [
+    "agents/delegate/portable-process.mjs:132",
+    "proxy/cmd/caveman-proxy/main.go:357",
+    "obs.signals"
+   ],
+   "note": "80 signal/shutdown references across 67 files, including proxy graceful shutdown and portable child-process management.",
+   "source": "review"
+  },
+  "PERF-1": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": [
+    "browse/BENCHMARK.md",
+    "benchmarks/run.py"
+   ],
+   "note": "Benchmarks measure token reduction and a browse page benchmark, but there are no p50/p99 latency budgets for the proxy/engine, which sit on every request.",
+   "source": "review"
+  },
+  "PERF-2": {
+   "level": 4,
+   "confidence": "derived",
+   "evidence": [
+    "README.md:90",
+    "docs/HONEST-NUMBERS.md:14",
+    "mcp/server.go:28"
+   ],
+   "note": "Attention economy is the product: token reduction is measured per file type and per session with tiktoken o200k, outputs are summary-first with CCR retrieval handles for detail, and caveman stats reports token cost. Not fully 'every output states its cost' at the API layer.",
+   "source": "review"
+  },
+  "SEC-1": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "SECURITY.md:1",
+    "SECURITY.md:29",
+    "SECURITY.md:38"
+   ],
+   "note": "SECURITY.md gives supported-version lines, a response policy (3-day ack, 30-day critical-fix target), private vulnerability reporting and a per-surface data-flow/threat summary. Disclosure timelines are stated as targets, not measured, so not horizon.",
+   "source": "review"
+  },
+  "SEC-2": {
+   "level": 4,
+   "confidence": "derived",
+   "evidence": [
+    ".github/workflows/supply-chain.yml:30",
+    "pnpm-lock.yaml",
+    "go.sum",
+    ".github/dependabot.yml"
+   ],
+   "note": "Lockfiles for pnpm/go/npm/python, dependabot, and CI known-vulnerability scanning via govulncheck (reachability-based) + pip-audit + npm audit + CodeQL, with certified vs experimental gating.",
+   "source": "review"
+  },
+  "SEC-3": {
+   "level": 4,
+   "confidence": "derived",
+   "evidence": [
+    ".github/workflows/release-packages.yml:161",
+    ".github/workflows/release-binaries.yml:24",
+    ".github/workflows/release-binaries.yml:294"
+   ],
+   "note": "npm/PyPI trusted-publishing provenance, keyless cosign signatures for the GHCR image, docker buildx --provenance --sbom, optional platform code-signing, all from SHA-pinned CI. Short of a documented SLSA L3 / reproducible-build claim.",
+   "source": "review"
+  },
+  "SEC-4": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": [
+    ".github/workflows/release-packages.yml:318",
+    ".github/workflows/release-binaries.yml:294",
+    "NOTICE"
+   ],
+   "note": "CycloneDX SBOMs generated per release for npm and PyPI and a docker --sbom, with NOTICE and LICENSING.md present. No VEX statements for known CVEs.",
+   "source": "review"
+  },
+  "SEC-5": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    ".github/workflows/scorecard.yml:16",
+    ".github/workflows/scorecard.yml:13",
+    "ci.pinned_actions"
+   ],
+   "note": "Actions pinned by full SHA, least-privilege permissions, OpenSSF Scorecard with publish_results and CodeQL; the scorecard workflow is kept minimal (no top-level env, read-all) per its own guidance.",
+   "source": "review"
+  },
+  "SEC-6": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": [
+    "risk.secrets",
+    "shared/platform/redact/redact.go:128",
+    "proxy/providers/bedrock/bedrock_test.go:318"
+   ],
+   "note": "RED LINE: not triggered. The 39 secret-like strings are all in tests (well-known AWS doc example keys such as AKIAIOSFODNN7EXAMPLE) or are secret-prefix allowlists in detection/redaction code (redact.go, residual.go, repointel/index.go) - independently confirmed, none real. A dedicated redact module scrubs payloads. Below meets: no secret scanner gate in repo CI.",
+   "source": "review"
+  },
+  "SEC-7": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": [
+    "risk.patterns",
+    "proxy/internal/identity/oidc.go:31",
+    "proxy/internal/standalone"
+   ],
+   "note": "RED LINE: not triggered. Go/TS code is free of TLS-off and unsafe-deserialization outside tests; OIDC verification rejects alg=none and HMAC with a public key set, and the wallet npx runs with --ignore-scripts and isolated config. No injection-prone operation on an untrusted path.",
+   "source": "review"
+  },
+  "SEC-8": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": [
+    "engine/compressors/invariants.go",
+    "mcp/server.go:28",
+    "engine/compressors/toon_roundtrip_test.go"
+   ],
+   "note": "Untrusted payloads are parsed in memory-safe Go with byte-safe passthrough on any parse error, 16 MiB size caps and committed fuzz corpora on the parsers. Not clearly continuous fuzzing or least-privilege-isolated, so not horizon.",
+   "source": "review"
+  },
+  "SEC-9": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "proxy/internal/identity/oidc.go:46",
+    "shared/platform/awssig/awssig.go:31",
+    "proxy/internal/identity/tls.go"
+   ],
+   "note": "Standard-library crypto only (sha256/hmac/tls/ecdsa/rsa/aes/subtle), correct current algorithms (RS256/ES256, AWS4-HMAC-SHA256, constant-time compares) and no deprecated algorithms, but no documented algorithm inventory, replaceable abstraction layer or post-quantum plan.",
+   "source": "review"
+  },
+  "AGT-1": {
+   "level": 2,
+   "confidence": "inferred",
+   "evidence": [
+    "engine/compressors/toon_decode.go:172",
+    "README.md:266",
+    "SECURITY.md:38"
+   ],
+   "note": "caveman compresses tool output and web pages and never executes them, and the voice 'never touches your prompt', so instruction-following risk is low; but browse/compress and Auto ingest untrusted content with no untrusted-channel marking or injection regression test.",
+   "source": "review"
+  },
+  "AGT-2": {
+   "level": 2,
+   "confidence": "inferred",
+   "evidence": [
+    "README.md:214",
+    "README.md:266",
+    "INSTALL.md:31"
+   ],
+   "note": "Blocks 'never denies or rewrites a command' and routing only changes model/effort, so agency is modest; but there are no machine-checkable per-tool effect declarations and wallet/topup is the only action with an explicit approval.",
+   "source": "review"
+  },
+  "AGT-3": {
+   "level": 3,
+   "confidence": "inferred",
+   "evidence": [
+    "README.md:266",
+    "README.md:214",
+    "SECURITY.md:52"
+   ],
+   "note": "'caveman learn implement' applies fixes only on an explicit yes, telemetry/routing have off switches, and caveman stats makes token/warm-cache activity visible; readable controls and approvals, though no central action log.",
+   "source": "review"
+  },
+  "AGT-4": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": [
+    "evals/README.md:1",
+    "evals/score_fidelity.py",
+    "evals/snapshots/results.json"
+   ],
+   "note": "A 3-arm eval harness plus a fidelity eval (fixed cases, kept-numbers/negation/safety checks for every arm) exist with a committed snapshot and Cloud autopilot evals; no committed fidelity snapshot, so quality-equivalence is not yet published.",
+   "source": "review"
+  },
+  "AGT-5": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "SECURITY.md:52",
+    "shared/provider-catalog",
+    "README.md:322"
+   ],
+   "note": "SECURITY.md documents, field by field, exactly what Auto/routing/managed modes send to Caveman Cloud and which providers requests go to; providers are catalogued. No model card (caveman ships no model) and no AI-BOM.",
+   "source": "review"
+  },
+  "AGT-6": {
+   "level": 3,
+   "confidence": "inferred",
+   "evidence": [
+    "README.md:112",
+    "README.md:171",
+    "docs/HONEST-NUMBERS.md:1"
+   ],
+   "note": "Token accounting is the product: caveman stats reports usage, Auto trades effort for cost per ask and the engine bounds payloads; per-task hard budgets are not enforced by caveman itself (it is a proxy/engine).",
+   "source": "review"
+  },
+  "INT-1": {
+   "level": 3,
+   "confidence": "inferred",
+   "evidence": [
+    "mcp/server.go:1",
+    "packages/sdk/typescript/src/index.ts:208",
+    "INT-openapi"
+   ],
+   "note": "An MCP stdio server, a CLI with JSON output, TypeScript and Python SDKs and framework middleware adapters; multiple open interfaces, though no stated version/compatibility policy for the CLI surface.",
+   "source": "review"
+  },
+  "INT-2": {
+   "level": 3,
+   "confidence": "inferred",
+   "evidence": [
+    "mcp/engine_tools.go:44",
+    "mcp/server.go:34",
+    "packages/cli/src/agent-mcp.ts:650"
+   ],
+   "note": "MCP tools carry name/description/InputSchema and the CLI has --json output and 28 SKILL.md packs; stable field names via a declarative contract. No describe --json manifest of the whole CLI and no contract-drift gate.",
+   "source": "review"
+  },
+  "INT-3": {
+   "level": 3,
+   "confidence": "inferred",
+   "evidence": [
+    "mcp/engine_tools.go:44",
+    "README.md:189"
+   ],
+   "note": "The MCP surface is five composable engine tools (compress/retrieve/stats/toon_encode/toon_decode) with 16 MiB caps, and Blocks ships eight primitives; small and parameterised rather than one tool per case.",
+   "source": "review"
+  },
+  "INT-4": {
+   "level": 3,
+   "confidence": "inferred",
+   "evidence": [
+    "mcp/server.go:330",
+    "proxy/internal/gateway/...",
+    "packages/sdk/python/caveman_cloud/core.py:48"
+   ],
+   "note": "MCP uses stable cave_* snake-case error codes, fails closed on panics/oversize, and the SDK surfaces typed errors; retryable classification exists. Not a single documented cross-surface error schema.",
+   "source": "review"
+  },
+  "INT-5": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "engine/ccr/store.go:6",
+    "engine/ccr/store.go:35"
+   ],
+   "note": "CCR recovery handles are content-addressed sha256 (idempotent, stored once), scope state carries epochs/receipts/grants, and TOON is deterministic, so results are stable and retriable by handle.",
+   "source": "review"
+  },
+  "INT-6": {
+   "level": 3,
+   "confidence": "inferred",
+   "evidence": [
+    "README.md:78",
+    "README.md:251",
+    "INSTALL.md"
+   ],
+   "note": "One-command npx quickstart, a 30+ agent install matrix and a caveman doctor make the CLI ergonomic; there is no GUI to audit for WCAG and no localisation need stated.",
+   "source": "review"
+  },
+  "INT-7": {
+   "level": 3,
+   "confidence": "inferred",
+   "evidence": [
+    "engine/toon.go",
+    "README.md:338",
+    ".github/workflows/release-packages.yml:318"
+   ],
+   "note": "Open, documented outputs: TOON, JSON, CycloneDX SBOM, local CCR store and markdown; data is portable and the originals always stay on disk.",
+   "source": "review"
+  },
+  "EPI-1": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "engine/ccr/store.go:6",
+    "README.md:322",
+    "engine/ccr/store.go:35"
+   ],
+   "note": "Compression outputs are recoverable to the exact original bytes via content-addressed CCR handles, and Cloud 'Proof' marks each number measured/inferred/verified with receipts; every lossy transform records its original.",
+   "source": "review"
+  },
+  "EPI-2": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "docs/HONEST-NUMBERS.md:14",
+    "engine/compressors/invariants.go:17",
+    "README.md:112"
+   ],
+   "note": "HONEST-NUMBERS labels each number measured/inferred/'not measured yet'; elision markers state computed facts rather than guesses; Cloud distinguishes measured from inferred savings.",
+   "source": "review"
+  },
+  "EPI-3": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "engine/compressors/invariants.go:30",
+    "CONTRIBUTING.md:40",
+    "docs/HONEST-NUMBERS.md"
+   ],
+   "note": "Elision markers enumerate even absent fields as absent-count buckets so counts reconcile, any parse failure is passed through rather than silently dropped, and caveman stats reports savings as unknown rather than zero when there is no comparison.",
+   "source": "review"
+  },
+  "EPI-4": {
+   "level": 3,
+   "confidence": "inferred",
+   "evidence": [
+    "docs/HONEST-NUMBERS.md:1",
+    "evals/README.md:21",
+    "docs/HONEST-NUMBERS.md:25"
+   ],
+   "note": "HONEST-NUMBERS separates when-it-wins from net-negative cases and per-file vs whole-session scope, and the evals README states what each snapshot does and does not cover; coverage is narrated rather than machine-reconciled.",
+   "source": "review"
+  },
+  "EPI-5": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "docs/HONEST-NUMBERS.md:1",
+    "README.md:82",
+    "CLAUDE.md:14"
+   ],
+   "note": "RED LINE: not triggered. Headline numbers link to method docs/benchmarks, limitations sit beside the claims (HTML row marked worse, stale snapshots flagged, net-negative issues cited), and CLAUDE.md forbids publishing an unreviewed percentage. Not auto-generated/CI-gated, so not horizon.",
+   "source": "review"
+  },
+  "MNT-1": {
+   "level": 3,
+   "confidence": "inferred",
+   "evidence": [
+    "CLAUDE.md:48",
+    "engine/safety/safety.go:7",
+    "AGENTS.md:1"
+   ],
+   "note": "CLAUDE.md documents the layout and ownership routing and the engine uses leaf packages (e.g. safety has no engine dependency) to avoid import cycles; boundaries are documented but not CI-enforced.",
+   "source": "review"
+  },
+  "MNT-2": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": [
+    "size.duplicates",
+    "CLAUDE.md:27",
+    "size.largest"
+   ],
+   "note": "Largest source 2840 lines and only 0.71% duplicated bytes by the probe, but skills are mirrored into plugins/caveman/skills, browse/ is a consumer copy and the Apache text is repeated across many directories (~86 duplicate files), so intentional mirrors can drift.",
+   "source": "review"
+  },
+  "MNT-3": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": [
+    "packages/cli/package.json:32",
+    ".github/workflows/engine-ci.yml:29",
+    ".editorconfig"
+   ],
+   "note": "TypeScript type-checking (tsc --noEmit) and go vet run, with .editorconfig for format, but there is no golangci-lint/staticcheck, no gofmt gate, no ESLint and no Python linter or type checker across 93k lines of Go, 41k TS and 22k Py.",
+   "source": "review"
+  },
+  "MNT-4": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": [
+    "CLAUDE.md:1",
+    "AGENTS.md:1",
+    "docs/"
+   ],
+   "note": "An extensive CLAUDE.md (plus per-directory CLAUDE/AGENTS), AGENTS.md, GEMINI.md, CONTRIBUTING and a docs site document the repo for maintainers and agents; no architecture decision records.",
+   "source": "review"
+  },
+  "MNT-5": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": [
+    "static.debt_markers",
+    "CLAUDE.md:27"
+   ],
+   "note": "Only two TODO markers in the probe and CLAUDE.md records structural debt (the browse consumer copy, mirrored skills) in prose, but there is no debt ledger with repayment triggers.",
+   "source": "review"
+  },
+  "EVO-1": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": [
+    "package.json",
+    "SECURITY.md:17",
+    "meta.changelog"
+   ],
+   "note": "Ten independently-versioned packages with a stated SemVer policy for the SDK/middleware 1.x line, but no top-level CHANGELOG or migration guides and version meaning across the monorepo is not uniform.",
+   "source": "review"
+  },
+  "EVO-2": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": [
+    ".blocks/release-smoke.py:116",
+    ".github/workflows/release-packages.yml:529",
+    "shared/provider-catalog/CHANGELOG.md"
+   ],
+   "note": "Releases are automated with SBOMs, signing, digest-checked artifacts and a release-smoke qualification; release notes are generated per tag and a provider-catalog changelog exists, though there is no single product changelog.",
+   "source": "review"
+  },
+  "EVO-3": {
+   "level": 4,
+   "confidence": "derived",
+   "evidence": [
+    ".github/workflows/ci.yml",
+    "evo.platforms",
+    "README.md:78"
+   ],
+   "note": "CI and release matrices cover macOS/linux (x86_64+arm64)/windows with many OS variants, Go cross-compilation and a stated Node 22.13+ floor, all built and tested.",
+   "source": "review"
+  },
+  "EVO-4": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": [
+    "SECURITY.md:7",
+    "docs/technical/security-and-privacy.md:160"
+   ],
+   "note": "SECURITY.md declares supported lines, which get security fixes and an explicit EOL for the 0.x middleware alphas; LTS guarantees and dated EOLs are not published, so not horizon.",
+   "source": "review"
+  },
+  "OPS-1": {
+   "level": 3,
+   "confidence": "inferred",
+   "evidence": [
+    "README.md:268",
+    "SECURITY.md:325",
+    "INSTALL.md:502"
+   ],
+   "note": "caveman doctor reports one problem per line with its fix and release-smoke self-checks the build; a machine-readable repair plan is not offered, so not horizon.",
+   "source": "review"
+  },
+  "OPS-2": {
+   "level": 3,
+   "confidence": "inferred",
+   "evidence": [
+    "browse/cmd/caveman-browse/main.go:28",
+    "obs.logging",
+    "obs.otel"
+   ],
+   "note": "Structured logging and OpenTelemetry are present (browse/proxy), and Cloud ingests OTEL/logs for observability; not uniformly wired with GenAI semantic conventions, so not horizon.",
+   "source": "review"
+  },
+  "OPS-3": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": [
+    "obs.env_vars",
+    ".codex/codex-sessionstart.js:96",
+    "README.md:112"
+   ],
+   "note": "255 environment variables are read and only ~108 appear in docs, and there is no single validated config schema, so a large configuration surface is undocumented; defaults (local-first, telemetry disclosed opt-out) are mostly safe.",
+   "source": "review"
+  },
+  "OPS-4": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": [
+    "INSTALL.md:12",
+    "risk.remote_script",
+    "README.md:154"
+   ],
+   "note": "Install is curl|bash / irm|iex / npx but one-liners are version-pinned (v4.0.1) and the probe finds 30 checksum/signature-verification references; binaries are cosign-signed. Not verified-by-default across every path, so not horizon.",
+   "source": "review"
+  },
+  "PRV-1": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "packages/cli/src/index.ts:905",
+    "SECURITY.md:52",
+    "README.md:322"
+   ],
+   "note": "RED LINE: not triggered. Telemetry is opt-out and content-free (counts/labels/install-id/OS/IP, never prompts/code/paths), defaults off in CI/non-TTY, honours DO_NOT_TRACK and CAVEMAN_TELEMETRY=0, prints a first-run disclosure and documents every field; IPs cleared after 90 days.",
+   "source": "review"
+  },
+  "PRV-2": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "SECURITY.md:38",
+    "README.md:318",
+    "SECURITY.md:52"
+   ],
+   "note": "Local-first by default: the skill/engine/proxy send nothing, originals stay in local CCR, Auto/Cloud are opt-in and fully disclosed, and telemetry deletion is documented; no fully-offline residency guarantee for the managed path.",
+   "source": "review"
+  },
+  "PRV-3": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "LICENSE",
+    "NOTICE",
+    "LICENSING.md"
+   ],
+   "note": "RED LINE: not triggered. Apache-2.0 LICENSE plus LICENSE-MIT, a complete NOTICE, LICENSING.md and TRADEMARKS.md; third-party notices present. Not REUSE per-file, so not horizon.",
+   "source": "review"
+  },
+  "PRV-4": {
+   "level": 2,
+   "confidence": "inferred",
+   "evidence": [
+    "extension/PRIVACY.md",
+    "SECURITY.md:1",
+    "meta.compliance"
+   ],
+   "note": "SECURITY.md and extension/PRIVACY.md address privacy and data flows thoroughly, but there is no stated position on the EU CRA or AI Act for this distributed product.",
+   "source": "review"
+  },
+  "SUS-1": {
+   "level": 1,
+   "confidence": "derived",
+   "evidence": [
+    "README.md:318",
+    "CODE_OF_CONDUCT.md",
+    "meta.codeowners"
+   ],
+   "note": "Single maintainer by the project's own statement ('One person maintains this for free'), with only a Code of Conduct and no CODEOWNERS or governance/succession process for a widely-installed CLI.",
+   "source": "review"
+  },
+  "SUS-2": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": [
+    ".github/ISSUE_TEMPLATE/bug_report.md",
+    ".github/workflows/ci.yml",
+    "CONTRIBUTING.md:13"
+   ],
+   "note": "Issue templates, CI gates and conformance lanes, required DCO sign-off and a documented review process ('a maintainer checks license scope, tests, generated artifacts, and security boundaries').",
+   "source": "review"
+  },
+  "SUS-3": {
+   "level": 3,
+   "confidence": "inferred",
+   "evidence": [
+    "CLAUDE.md:1",
+    "AGENTS.md:1",
+    "CONTRIBUTING.md:13"
+   ],
+   "note": "CLAUDE.md/AGENTS.md/GEMINI.md and per-directory agent files give detailed instructions for agents working in the repo, and DCO sign-off plus maintainer review cover contributions; agent-change attribution is not separately evaluated over time.",
+   "source": "review"
+  }
+ },
+ "gaps": [
+  {
+   "lens": "G13",
+   "title": "Single-maintainer project with no governance",
+   "severity": "high",
+   "case": "README.md:318 states 'One person maintains this for free'; there is no CODEOWNERS or governance doc (meta.codeowners/meta.governance), only CODE_OF_CONDUCT.md, across a six-product polyglot monorepo installed widely.",
+   "impact": "sustainability / supply chain: bus-factor and continuity risk for a CLI with a very large install base.",
+   "fix": "Add CODEOWNERS, recruit a second maintainer and publish a governance/succession process.",
+   "evidence": [
+    "README.md:318",
+    "CODE_OF_CONDUCT.md"
+   ]
+  },
+  {
+   "lens": "G8",
+   "title": "Static analysis is uneven across the largest languages",
+   "severity": "medium",
+   "case": "CI runs only tsc --noEmit (TS types) and go vet (packages/cli/package.json:32, engine-ci.yml:29); there is no golangci-lint/staticcheck, no gofmt gate, no ESLint and no Python linter or type checker, over 93k lines of Go, 41k TS and 22k Py.",
+   "impact": "maintainability: the cheapest defect filter is applied inconsistently to the bulk of the code.",
+   "fix": "Add golangci-lint + gofmt gate, ruff + mypy for Python and ESLint for TS to CI.",
+   "evidence": [
+    "packages/cli/package.json:32",
+    ".github/workflows/engine-ci.yml:29"
+   ]
+  },
+  {
+   "lens": "G12",
+   "title": "Large undocumented configuration surface",
+   "severity": "medium",
+   "case": "The probe reads 255 environment variables of which only ~108 appear in docs (obs.env_vars), and there is no single validated config schema.",
+   "impact": "operability: operators of the proxy/runtime face hidden settings and no schema to validate against.",
+   "fix": "Document and validate every environment variable at startup and publish a config schema.",
+   "evidence": [
+    "obs.env_vars",
+    ".codex/codex-sessionstart.js:96"
+   ]
+  },
+  {
+   "lens": "G1",
+   "title": "Flagship session number not reproducible at this commit",
+   "severity": "medium",
+   "case": "The headline '33.2% fewer input tokens' session result is, per docs/HONEST-NUMBERS.md, an August-2026 older-engine run with no committed raw pairs (benchmarks/results/.gitkeep), and the evals snapshot is n=10 single-run.",
+   "impact": "epistemic/reproducibility: the flagship number cannot be reproduced on the shipped engine (the doc discloses this, which lowers severity).",
+   "fix": "Commit raw session pairs and re-run the session benchmark on the current engine, dated.",
+   "evidence": [
+    "docs/HONEST-NUMBERS.md:1",
+    "benchmarks/run.py"
+   ]
+  },
+  {
+   "lens": "G10",
+   "title": "Cryptography has no inventory, abstraction or PQC plan",
+   "severity": "low",
+   "case": "The gateway uses TLS, OIDC JWT (RS256/ES256), AWS SigV4 and AES directly (proxy/internal/identity, shared/platform/awssig) with no algorithm inventory, replaceable layer or post-quantum plan.",
+   "impact": "horizon/compliance: CNSA 2.0 and the NIST 2030-35 transition are unprepared for the gateway's signing/TLS.",
+   "fix": "Document a crypto inventory, route crypto through one abstraction and publish a dated ML-KEM/ML-DSA plan.",
+   "evidence": [
+    "proxy/internal/identity/oidc.go:46",
+    "shared/platform/awssig/awssig.go:31"
+   ]
+  },
+  {
+   "lens": "G8",
+   "title": "Mirrored source trees can drift",
+   "severity": "low",
+   "case": "skills/ is mirrored into plugins/caveman/skills, browse/ is a declared consumer copy of another repo, and the Apache text is repeated across many directories (~86 duplicate files per the cross-repo dissection).",
+   "impact": "maintainability: two copies of a skill or doc can diverge and an agent may read the stale one.",
+   "fix": "Generate the mirrors at build time and assert byte-equality in CI, or single-source them.",
+   "evidence": [
+    "CLAUDE.md:27",
+    "plugins/caveman/skills"
+   ]
+  },
+  {
+   "lens": "G10",
+   "title": "SBOMs shipped but no VEX",
+   "severity": "low",
+   "case": "Releases attach CycloneDX SBOMs (release-packages.yml:318) but emit no VEX statements for known CVEs (SEC-4).",
+   "impact": "compliance: buyers cannot see which SBOM-listed CVEs are exploitable vs not-affected.",
+   "fix": "Emit OpenVEX alongside each release SBOM.",
+   "evidence": [
+    ".github/workflows/release-packages.yml:318"
+   ]
+  }
+ ],
+ "opportunities": [
+  {
+   "lens": "O1",
+   "criterion": "OPP-1",
+   "title": "Extract the CCR recovery store as a standalone package",
+   "description": "The Context Recovery store (content-addressed sha256 handles, SQLite WAL, atomic/fail-closed, idempotent, byte-exact recovery) is a self-contained hub (dissection score 18). Extracted, it is a reusable recovery substrate for REA Evidence, Absurd steps and strix tool-output spill.",
+   "value": 5,
+   "reach": 4,
+   "confidence": "observed",
+   "horizon_fit": 1.3,
+   "effort": 2,
+   "action": "extract",
+   "evidence": [
+    "engine/ccr/store.go:6",
+    "engine/ccr/store_sqlite.go:81"
+   ]
+  },
+  {
+   "lens": "O3",
+   "criterion": "OPP-3",
+   "title": "Share one content-addressed retrieval handle with REA and strix",
+   "description": "caveman's CCR handle, REA's evidence_id and strix's tool-output spill are all content-addressed. A single retrieval-handle standard lets a compressed view, an evidence record and an agent tool result interoperate so summaries never lose the original.",
+   "value": 4,
+   "reach": 4,
+   "confidence": "derived",
+   "horizon_fit": 1.3,
+   "effort": 3,
+   "action": "consolidate",
+   "evidence": [
+    "engine/ccr/store.go:35",
+    "engine/compressors/invariants.go:17"
+   ]
+  },
+  {
+   "lens": "O2",
+   "criterion": "OPP-2",
+   "title": "Consolidate token accounting into one measured budget library",
+   "description": "Offline token accounting (tiktoken o200k, honest-numbers method) is implemented here and conceptually duplicated in leanrea's context-budget, strix's context_budget and pi's compaction. One measured budget library would serve all of them.",
+   "value": 4,
+   "reach": 4,
+   "confidence": "inferred",
+   "horizon_fit": 1.2,
+   "effort": 3,
+   "action": "consolidate",
+   "evidence": [
+    "docs/HONEST-NUMBERS.md:14",
+    "README.md:112"
+   ]
+  },
+  {
+   "lens": "O9",
+   "criterion": "OPP-6",
+   "title": "Publish the S0-S4 safety-class ladder as a transform-honesty standard",
+   "description": "The engine's S0-S4 registry (byte-safe vs model-visible, requires-CCR, reversible) plus the byte-safe passthrough contract is a reusable honesty standard any transform tool could declare against, composable with ponytail's necessity ladder as policy-as-code.",
+   "value": 4,
+   "reach": 3,
+   "confidence": "observed",
+   "horizon_fit": 1.3,
+   "effort": 3,
+   "action": "extract",
+   "evidence": [
+    "engine/safety/safety.go:7",
+    "CONTRIBUTING.md:40"
+   ]
+  },
+  {
+   "lens": "O13",
+   "criterion": "OPP-7",
+   "title": "Add VEX to become a CRA-complete reference for the set",
+   "description": "caveman already ships provenance, SBOMs, cosign signatures and OpenSSF Scorecard; adding OpenVEX closes the last gap and makes it a dated-obligation-ready supply-chain reference the other reviewed repos can copy.",
+   "value": 3,
+   "reach": 3,
+   "confidence": "derived",
+   "horizon_fit": 1.4,
+   "effort": 2,
+   "action": "harden",
+   "evidence": [
+    ".github/workflows/release-packages.yml:318",
+    ".github/workflows/scorecard.yml:16"
+   ]
+  }
+ ],
+ "reengineering": [
+  {
+   "action": "harden",
+   "component": "CI static analysis across Go/TS/Python",
+   "gain": "a uniform defect filter over the whole codebase",
+   "measure": "golangci-lint + gofmt gate + ruff + mypy + ESLint run green in CI on every change"
+  },
+  {
+   "action": "harden",
+   "component": "project governance and bus-factor (CODEOWNERS, maintainers)",
+   "gain": "continuity for a widely-installed CLI",
+   "measure": "CODEOWNERS committed, at least two active maintainers and a governance/succession doc published"
+  },
+  {
+   "action": "extract",
+   "component": "engine/ccr recovery store",
+   "gain": "a reusable content-addressed recovery substrate for the reviewed set",
+   "measure": "a published package consumed by at least one other repo with a recovery round-trip parity test"
+  },
+  {
+   "action": "harden",
+   "component": "configuration surface (environment variables)",
+   "gain": "no hidden configuration for proxy/runtime operators",
+   "measure": "every environment variable documented and validated at startup and a config schema published"
+  }
+ ],
+ "questions": [
+  "Are any of the 39 secret-like strings real secrets outside tests (SEC-6 red line)? No: all are test fixtures (well-known AWS example keys) or secret-prefix allowlists in detection/redaction code (redact.go, residual.go, repointel/index.go), confirmed by reading each non-test match; SEC-6 is 3, not a red line.",
+  "Is telemetry a red line (on by default without disclosure or collecting user content, PRV-1)? No: it is opt-out, content-free, CI/non-TTY-off, DO_NOT_TRACK-respecting, first-run-disclosed and field-documented; PRV-1 is 3.",
+  "Are the headline token-reduction claims contradicted by measurement (EPI-5 red line)? No: HONEST-NUMBERS reports net-negative cases and labels unverified numbers, and claims link to method; EPI-5 is 3, not 0."
+ ],
+ "not_examined": [
+  "Runtime behaviour (static review only; nothing was executed)",
+  "The private caveman-agent-sdk, caveman-coding-agent and Caveman Cloud repositories referenced by routing",
+  "The external Adobe/JetBrains/Elastic sources cited for outside benchmarks",
+  "The browse/ consumer-copy upstream (caveman-browse)",
+  "Full pnpm-lock/go.sum dependency audit and git history beyond HEAD (shallow clone)"
+ ],
+ "time_minutes": 95
+}

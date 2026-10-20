@@ -485,7 +485,7 @@
    "confidence": "observed",
    "evidence": [
     "tools/rex/rex/epistemics.py:69-85 (answered, partial, unknown, unaccounted; failed-step caveats; complete flag)",
-    "tools/rqs/rqs/score.py:77-89,106-110 (coverage per dimension and overall; provisional gate)",
+    "tools/rqs/rqs/score.py:77-89,106-110 (at 0bdc987) (coverage per dimension and overall; provisional gate)",
     "research/rea-self-analysis/README.md:102 and results/findings.jsonl:25 (untestable stages recorded)",
     "tools/dissect/dissect/cli.py:91-99 (stats: no per-language parse coverage)"
    ],
@@ -501,7 +501,7 @@
     "tools/README.md:3 ('All are standard-library Python') vs tools/dissect/dissect/extract.py:21 (import yaml)",
     "tools/README.md:10 and tools/rqs/README.md:4 ('84 probes') vs 85 probes implemented and cited by standard/rqs-2030.json",
     "research/rea-self-analysis/README.md:92 ('REA CLI ... 2-3 KB') vs results/e6-timings.tsv:8,13,17,19 (1,391,979, 351, 481 and 45,163 bytes)",
-    "tools/rqs/rqs/score.py:1-2 ('Every weight, band and gate is read from the standard') vs literals at score.py:15,79-80,106,111"
+    "tools/rqs/rqs/score.py:1-2 (at 0bdc987) ('Every weight, band and gate is read from the standard') vs literals at score.py:15,79-80,106,111 (at 0bdc987)"
    ],
    "note": "Red line RL-5 not confirmed: claims are tagged run or source and most REA numbers recompute exactly, so no headline conclusion is reversed; but several claims differ from the repository's own results or code and unmeasured fixes are labelled measured. Numbers are copied by hand, which is level 1.",
    "source": "review"
@@ -746,7 +746,7 @@
   {
    "lens": "G1",
    "title": "Headline and 'measured' claims disagree with the repository's own results",
-   "case": "'7/7 ... in 4.0 s' (research/rea-self-analysis/README.md:155, research/dissection/README.md:152, results/findings.jsonl:36, commit c1cd3c6) cites results/product-eval.json, which records elapsed_seconds 4.48 (line 2). research/dissection/README.md:110-114 lists under 'Measured fixes' that durable steps fix the 889 MB re-import and that bench hygiene fixes leanrea's benchmark; no result measures either, and the prototype restores through the same whole-bundle import_evidence_bundle call and stores a full bundle copy per step (prototypes/rea-durable-evidence/src/durable-rea.mjs:34-40,57-62). 'All are standard-library Python' (tools/README.md:3) vs `import yaml` (tools/dissect/dissect/extract.py:21). '84 probes' (tools/README.md:10, tools/rqs/README.md:4) vs 85 implemented and cited. 'REA CLI ... 2-3 KB' (research/rea-self-analysis/README.md:92) vs 351 B to 1,391,979 B in results/e6-timings.tsv. 'Every weight, band and gate is read from the standard' (tools/rqs/rqs/score.py:1-2) vs literals at score.py:15,79-80,106,111. 'Every output states its byte and token cost' (tools/README.md:24) holds only for evidence views. No committed result exists for 0.42 s, 52-70 ms, 4,607 bytes, about 50 s and 24 vs 18 (research/dissection/README.md:148,150,156,18,175) or for the 6.3 GB worker RSS (research/rea-self-analysis/README.md:86).",
+   "case": "'7/7 ... in 4.0 s' (research/rea-self-analysis/README.md:155, research/dissection/README.md:152, results/findings.jsonl:36, commit c1cd3c6) cites results/product-eval.json, which records elapsed_seconds 4.48 (line 2). research/dissection/README.md:110-114 lists under 'Measured fixes' that durable steps fix the 889 MB re-import and that bench hygiene fixes leanrea's benchmark; no result measures either, and the prototype restores through the same whole-bundle import_evidence_bundle call and stores a full bundle copy per step (prototypes/rea-durable-evidence/src/durable-rea.mjs:34-40,57-62). 'All are standard-library Python' (tools/README.md:3) vs `import yaml` (tools/dissect/dissect/extract.py:21). '84 probes' (tools/README.md:10, tools/rqs/README.md:4) vs 85 implemented and cited. 'REA CLI ... 2-3 KB' (research/rea-self-analysis/README.md:92) vs 351 B to 1,391,979 B in results/e6-timings.tsv. 'Every weight, band and gate is read from the standard' (tools/rqs/rqs/score.py:1-2 (at 0bdc987)) vs literals at score.py:15,79-80,106,111 (at 0bdc987). 'Every output states its byte and token cost' (tools/README.md:24) holds only for evidence views. No committed result exists for 0.42 s, 52-70 ms, 4,607 bytes, about 50 s and 24 vs 18 (research/dissection/README.md:148,150,156,18,175) or for the 6.3 GB worker RSS (research/rea-self-analysis/README.md:86).",
    "impact": "Readers and tool-selecting agents get numbers that cannot be rechecked or that differ from the measurements: EPI-5 sits in the fail band and PUR-2 at 2. The study that faults REA for weak claims repeats the pattern for rex.",
    "fix": "Render README number tables from results/*.json with a script and fail on drift; commit a result for every quoted number; correct 4.0 s to 4.5 s; move unmeasured items out of 'Measured fixes'; declare PyYAML; correct the probe count.",
    "severity": "high",
@@ -864,7 +864,7 @@
   {
    "lens": "G12",
    "title": "Entry-point documentation and contracts are out of date",
-   "case": "README.md:6-13 has no row for standard/ or tools/rqs and says the skills cover 'rex and dissect' although skills/rqs exists (0bdc987 did not touch README.md). dissect describe (tools/dissect/dissect/cli.py:223-224) omits the node kinds component, gap and principle and the edge kinds fixes, motivates and satisfies that research/dissection/dissection.db contains. tools/rqs/README.md:47 says automatic red-line suspicions do not cap a grade until a reviewer confirms them, while tools/rqs/rqs/score.py:98 also confirms any automatic level with observed confidence.",
+   "case": "README.md:6-13 has no row for standard/ or tools/rqs and says the skills cover 'rex and dissect' although skills/rqs exists (0bdc987 did not touch README.md). dissect describe (tools/dissect/dissect/cli.py:223-224) omits the node kinds component, gap and principle and the edge kinds fixes, motivates and satisfies that research/dissection/dissection.db contains. tools/rqs/README.md:47 says automatic red-line suspicions do not cap a grade until a reviewer confirms them, while tools/rqs/rqs/score.py:98 (at 0bdc987) also confirms any automatic level with observed confidence.",
    "impact": "A new human or agent at the root misses the standard and half of the tooling, and agents that query dissect by its contract miss the curated relations.",
    "fix": "Update README.md with every top-level component, a quick start and limits; generate dissect describe's kind lists from the database; align the rqs README with score.py.",
    "severity": "low",
@@ -872,7 +872,7 @@
     "README.md:6-13",
     "tools/dissect/dissect/cli.py:223-224",
     "tools/rqs/README.md:47",
-    "tools/rqs/rqs/score.py:98"
+    "tools/rqs/rqs/score.py:98 (at 0bdc987)"
    ]
   }
  ],
@@ -934,7 +934,7 @@
    "lens": "O12",
    "criterion": "OPP-6",
    "title": "Scoring parameters as data in the standard",
-   "description": "The core weight, coverage gate, blocking thresholds, grade caps and opportunity confidence weights are prose in standard/rqs-2030.yaml and literals in tools/rqs/rqs/score.py:15,79-80,106,111. Moving them into the YAML as numbers makes the score.py docstring true, lets other implementations score identically, and lets a revision of the standard change scoring without a code change.",
+   "description": "The core weight, coverage gate, blocking thresholds, grade caps and opportunity confidence weights are prose in standard/rqs-2030.yaml and literals in tools/rqs/rqs/score.py:15,79-80,106,111 (at 0bdc987). Moving them into the YAML as numbers makes the score.py docstring true, lets other implementations score identically, and lets a revision of the standard change scoring without a code change.",
    "value": 3,
    "reach": 3,
    "confidence": "observed",
@@ -942,7 +942,7 @@
    "effort": 1,
    "action": "refactor",
    "evidence": [
-    "tools/rqs/rqs/score.py:1-2,15,79-80,106,111",
+    "tools/rqs/rqs/score.py:1-2,15,79-80,106,111 (at 0bdc987)",
     "standard/rqs-2030.json scoring section"
    ]
   },

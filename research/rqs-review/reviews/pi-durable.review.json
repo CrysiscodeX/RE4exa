@@ -1,0 +1,663 @@
+{
+ "rqs_review": 1,
+ "target": {
+  "path": "/home/user/GitHub_Repos_Dump/earendil-works__pi/packages/durable",
+  "name": "pi-durable",
+  "head": "fdce48eb404ec014adaf2ac10a3a53bc6b1740c2",
+  "shallow": true
+ },
+ "profile": "agent-harness",
+ "flags": {
+  "uses_llm": true,
+  "has_ui": false,
+  "executes_code": true,
+  "network_service": false,
+  "parses_untrusted": true,
+  "uses_crypto": false,
+  "heavy_compute": false,
+  "distributed": true
+ },
+ "scope_notes": "Profile agent-harness instead of the suggested workflow-engine: the package calls itself 'A durable agent harness' (README.md:5), runs model turns through pi-ai, executes bash/powershell, file-edit and QuickJS code-mode tools (README.md:243-366), and the standard lists durable agent runtimes under agent-harness. Flags: uses_llm=true (generation and compaction call models through @earendil-works/pi-ai, package.json:148; the probe missed it because it looks for third-party LLM SDKs); executes_code=true (src/tools/bash.ts, src/env/node.ts); parses_untrusted=true (read decodes arbitrary workspace files and image headers, src/images/exif.ts, src/tools/image.ts; model and tool output enter the context); has_ui=false and network_service=false (library, no listener found); uses_crypto=false (sha256 for change detection, random UUIDs for temp files); distributed=true (npm @earendil-works/pi-durable). Repository files (^/...) apply: license, SECURITY.md, CI, lockfile, AGENTS.md.",
+ "reviewer": {
+  "id": "reviewer-pi-durable",
+  "kind": "agent",
+  "conflicts": "none"
+ },
+ "date": "2026-10-20",
+ "red_line_decisions": {
+  "SEC-6": "Not triggered (level 2): no secrets in the package (rg for key patterns: no matches); telemetry is content-free; the shell tool passes the host environment to model-chosen commands by default, which is a redaction gap, not a committed or printed secret.",
+  "SEC-7": "Not triggered (level 3): shell and JavaScript execution are the declared tool features, an argv form without a shell exists, and SQL identifiers are allow-listed.",
+  "EPI-5": "Not triggered (level 3): numeric claims cite the bench command that reproduces them and sit next to stated limitations; nothing found contradicted by measurement.",
+  "PRV-1": "Not triggered (level 4): telemetry is a host-supplied context, a no-op when omitted, with a published content-free schema.",
+  "PRV-3": "Not triggered (level 2): MIT LICENSE at the repository root; the package tarball omits the license text.",
+  "suspected_red_lines": "The automatic scorecard listed none."
+ },
+ "scores": {
+  "PUR-1": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": ["README.md:1-8", "README.md:3", "README.md:46-89", "README.md:90-111", "README.md:757-783", "docs/spec.md:5460", "docs/spec.md:5604-5618"],
+   "note": "States what it is, for whom (hosts embedding durable agents), how to start, an experimental status, storage durability limits, API footguns and non-goals. No machine-readable capability statement; the 64 KB README is long for a two-minute orientation.",
+   "source": "review"
+  },
+  "PUR-2": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": ["CHANGELOG.md:87", "CHANGELOG.md:93-95", "README.md:810", "package.json:118-127", "test/document-append-bench.ts:1-7", "probe claims.harness: result files 0"],
+   "note": "Every quoted number has a bench script and a before/after baseline, but runs are single, with no environment, sample size, intervals or stored results, and none run in CI.",
+   "source": "review"
+  },
+  "PUR-3": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": ["package.json:146-154", "README.md:256", "README.md:810", "^/scripts/check-entry-graphs.mjs:1-12", "^/scripts/check-entry-graphs.mjs:60-75", "src/tools/edit-diff.ts vs ^/packages/coding-agent/src/core/tools/edit-diff.ts: 495 of 500 lines identical (diff)"],
+   "note": "Seven exact-pinned runtime dependencies (four internal), heavy parts loaded only on import with their cost documented, and per-entry import budgets enforced in CI. The coding tools are a near-copy of pi-coding-agent's.",
+   "source": "review"
+  },
+  "COR-1": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": ["^/.github/workflows/ci.yml:3-7", "^/.github/workflows/ci.yml:44-45", "package.json:116", "^/.github/workflows/env.yml:129-166", "probe test.ratio: 1.902 (44528/23412 lines), 129 test files"],
+   "note": "Vitest suites run on every PR and push to main, twice (document retention on and off) plus a workerd lane; environment and tool tests run on five OS/architecture combinations. No coverage measurement or flaky-test tracking.",
+   "source": "review"
+  },
+  "COR-2": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": ["test/tools-read-differential.test.ts:13-16", "test/tools-read-differential.test.ts:149-172", "test/sqlite-storage.test.ts:113-117", "test/jsonl-storage.test.ts:123-125", "test/memory-storage.test.ts:8", "test/sqlite-cloudflare.test.ts:10", "^/.github/workflows/env.yml:3-4"],
+   "note": "Differential tests against the previous read implementation, one storage conformance suite run against six backend configurations, and an environment conformance suite comparing NodeExecutionEnv with pi-env, all in CI. Harness semantics are checked against spec-derived expectations by the same authors.",
+   "source": "review"
+  },
+  "COR-3": {
+   "level": 1,
+   "confidence": "derived",
+   "evidence": ["probe test.mutation, test.property, test.fuzz: none found", "test/tools-images.test.ts:425-440"],
+   "note": "No property, fuzz or mutation testing, including for the hand-written EXIF parser, JSONL tail recovery and code-mode replay.",
+   "source": "review"
+  },
+  "COR-4": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": ["test/harness-tools-recovery.test.ts:338", "test/sqlite-storage.test.ts:117", "package.json:117", "test/examples/", "^/packages/env/package.json:49"],
+   "note": "Tests use real shell commands, real SQLite files across reopen and the Cloudflare workerd runtime; 32 product-style examples exist. The main pi coding agent does not run on pi-durable (only pi-env depends on it), so there is no dogfooding lane.",
+   "source": "review"
+  },
+  "COR-5": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": ["README.md:162", "README.md:366", "test/codemode-checkpoints.test.ts", "docs/spec.md:69"],
+   "note": "Clock and timers are injectable for fake-clock runs; code mode runs scripts deterministically (virtual clock, seeded randomness, UTC) and fails on replay divergence; ids are never reused. Not content-addressed.",
+   "source": "review"
+  },
+  "REL-1": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": ["src/harness/tool.ts:175", "src/harness/tool.ts:182-186", "src/harness/types.ts:303-304", "README.md:127-134", "README.md:212-214", "src/harness/agent.ts:57", "test/harness-tasks-recovery.test.ts:291-305", "test/harness-tools-recovery.test.ts:109-136", "README.md:783"],
+   "note": "Tool intent is committed before execution and an interrupted call reruns only when declared replay-safe; submissions are idempotent by requestId; a crash-loop guard parks tasks after 5 cut-off restarts; recovery is verified by fault injection at each commit stage. No lease or cross-process exclusion on a storage.",
+   "source": "review"
+  },
+  "REL-2": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": ["src/tools/bash.ts:146-151", "README.md:247", "README.md:361", "README.md:416-417", "README.md:498", "README.md:763", "README.md:329", "src/tools/bash.ts:12"],
+   "note": "Tool output is bounded with spill files, images and code-mode memory are capped, document and context caches expire, watch backlogs are bounded. Documented cliffs remain: JSONL keeps the whole history in memory, nested calls have no depth limit, and bash has no default timeout.",
+   "source": "review"
+  },
+  "REL-3": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": ["README.md:812-828", "README.md:212-220", "docs/spec.md:5282", "test/harness-storage-failure.test.ts:86-620", "test/harness-tools-recovery.test.ts:109", "test/harness-generation-recovery.test.ts:125"],
+   "note": "Failure modes and their reports are enumerated and tested: storage errors fail closed, interrupted tools answer with an 'interrupted' error carrying committed partial output, partial answers become aborted entries, retries back off with limits. Not every unsafe default fails closed (no bash timeout, unbounded nesting).",
+   "source": "review"
+  },
+  "REL-4": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": ["test/env-node.test.ts:738", "test/harness-lifecycle.test.ts:129-152", "test/harness-lifecycle.test.ts:339", "README.md:256", "README.md:828"],
+   "note": "Cleanup kills owned process trees, close joins handlers that ignore their signal, watches leave no subscriptions, and these are tested. Signal wiring is the host's job; spill files are not removed.",
+   "source": "review"
+  },
+  "PERF-1": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": ["package.json:118-127", "CHANGELOG.md:87", "CHANGELOG.md:93-95", "^/scripts/check-entry-graphs.mjs:1-12"],
+   "note": "Ten benchmark scripts cover storage, scheduler fan-out, tool output, nested calls, documents and code mode, and per-entry load budgets are gated in CI. No p50/p99 or latency budgets, and benchmarks are not in CI.",
+   "source": "review"
+  },
+  "PERF-2": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": ["src/tools/bash.ts:146-151", "README.md:293", "README.md:328", "README.md:347", "README.md:355", "README.md:364", "README.md:376", "README.md:548-586", "package.json:120"],
+   "note": "Tool output keeps a bounded tail with the full text behind a spill path, code mode returns only script output, prompt declarations fit a token budget, deferred tools load on search, unchanged prompt sections are not resent, and nested results are stored once. Outputs do not state their token cost.",
+   "source": "review"
+  },
+  "SEC-1": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": ["^/SECURITY.md:6-22", "^/SECURITY.md:24-40", "^/SECURITY.md:42-68"],
+   "note": "Private reporting by email or GitHub advisories and a written trust boundary with explicit out-of-scope cases; no response timeline, and the boundary is written for the coding agent rather than for hosts embedding pi-durable.",
+   "source": "review"
+  },
+  "SEC-2": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": ["^/package-lock.json", "package.json:146-154", "^/scripts/check-pinned-deps.mjs:1-5", "^/package.json:21-23", "^/.github/workflows/npm-audit.yml:3-31", "^/scripts/npm-audit.mjs:1-21", "^/.github/workflows/ci.yml:33", "probe deps.update_bot: none"],
+   "note": "Lockfile, exact pins enforced by a CI check, install scripts disabled in CI and publishing, a daily audit with reviewed exceptions and registry signature verification. No automated update PRs.",
+   "source": "review"
+  },
+  "SEC-3": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": ["^/.github/workflows/build-binaries.yml:18", "^/.github/workflows/build-binaries.yml:312-318", "^/.github/workflows/build-binaries.yml:372-387", "^/scripts/publish.mjs:54"],
+   "note": "Packages are published only from the tag workflow by npm trusted publishing with --provenance, after build, check, tests, an install smoke test and a dry run. No reproducible-build check or user verification instructions.",
+   "source": "review"
+  },
+  "SEC-4": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": ["probe ci.sbom: none", "^/scripts/npm-audit.mjs:12-21", "^/.github/workflows/npm-audit.yml:30-31"],
+   "note": "No SBOM; known advisories are triaged in a reviewed ledger with per-advisory justification, a VEX-like record that is not published as VEX.",
+   "source": "review"
+  },
+  "SEC-5": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": ["probe ci.pinned_actions: 59/59 pinned to a full SHA", "^/.github/workflows/build-binaries.yml:18", "^/.github/workflows/build-binaries.yml:39", "^/.github/workflows/pr-gate.yml:3-13", "^/.github/workflows/ci.yml:1-12"],
+   "note": "All actions SHA-pinned, release jobs start from permissions: {} with persist-credentials false, the pull_request_target gate does not check out PR code. ci.yml and six other workflows have no top-level permissions; no Scorecard gate.",
+   "source": "review"
+  },
+  "SEC-6": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": ["rg AWS/GitHub/OpenAI/Slack/private-key patterns over packages/durable: no matches", "src/tools/bash.ts:76", "src/env/node.ts:273-277", "README.md:57", "README.md:80"],
+   "note": "Red line not triggered. Nothing committed and telemetry is content-free, but model-chosen shell commands inherit the host process environment, where provider keys usually live, and their output returns to the model with no redaction layer.",
+   "source": "review"
+  },
+  "SEC-7": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": ["src/env/index.ts:360-364", "src/env/node.ts:676-693", "^/packages/chord/src/sqlite/schema.ts:2-9", "README.md:353-366", "^/SECURITY.md:50"],
+   "note": "Red line not triggered. Shell strings and JavaScript execution are the declared purpose of the bash and code-mode tools (code mode in a QuickJS sandbox); hosts get an argv form that bypasses the shell; SQL table prefixes are allow-listed. No SAST gate.",
+   "source": "review"
+  },
+  "SEC-8": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": ["src/images/exif.ts:4-27", "README.md:247", "README.md:256", "test/tools-images.test.ts:231-250", "test/tools-images.test.ts:425-440"],
+   "note": "Untrusted bytes are handled in TypeScript and a WebAssembly image decoder in a worker thread, with size and dimension limits checked from headers before reading, and malformed-input cases tested. No fuzzing.",
+   "source": "review"
+  },
+  "AGT-1": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": ["^/SECURITY.md:19-22", "^/SECURITY.md:56", "rg -i 'untrusted|injection' over packages/durable/src, docs/spec.md, README.md: no matches"],
+   "note": "File contents and tool results enter the model context unmarked, and no injection tests exist; the repository policy declares prompt injection out of scope. Hooks (beforeTool) and callers/modelTools narrowing are the only levers, left to hosts.",
+   "source": "review"
+  },
+  "AGT-2": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["README.md:241", "src/tools/bash.ts:12", "src/tools/bash.ts:76", "README.md:329", "README.md:331-345", "src/harness/types.ts:303-304", "README.md:233"],
+   "note": "Every installed extension is selected by default, bash inherits the host environment with no default timeout, nesting is unbounded, and approval exists only as a host-written hook. Effect declarations are partial: replay safe/unsafe is honest, but there are no read-only or destructive hints.",
+   "source": "review"
+  },
+  "AGT-3": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": ["README.md:472-500", "README.md:636", "README.md:704", "README.md:539-546", "README.md:625-632", "README.md:233"],
+   "note": "Everything is a readable committed transcript and task record, abort stops a conversation, abort handlers run bottom-up for compensation, and forks or resets rewind the model's view. No built-in approval or pause-for-approval flow and no rollback of file or command effects.",
+   "source": "review"
+  },
+  "AGT-4": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": ["test/provider-session-cache-e2e.test.ts:48", "test/system-order-cache-e2e.test.ts:133", "^/packages/evals/evals/ (no pi-durable evals; rg 'durable' finds nothing)"],
+   "note": "Model-dependent behaviour (compaction summaries, prompt sections, tool descriptions) is tested only with a faux provider; two real-provider tests skip without credentials and check cache metadata, not outcomes.",
+   "source": "review"
+  },
+  "AGT-5": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": ["^/packages/ai/src/types.ts:570-584", "README.md:125", "README.md:751", "README.md:80"],
+   "note": "Each assistant entry records api, provider, model, response model and usage; the provider session id sent for prompt caching is documented; entries are typed by origin. No shipped models, so no model cards are needed.",
+   "source": "review"
+  },
+  "AGT-6": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["README.md:749-755", "README.md:411-412", "README.md:364", "README.md:329", "src/tools/bash.ts:12"],
+   "note": "Token and cost totals are kept per conversation, model and tool, and stream timeouts, retry counts and code-mode deadlines exist. No per-run token, money or call budget, no nesting limit and no default command timeout.",
+   "source": "review"
+  },
+  "INT-1": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": ["README.md:3", "package.json:8-106", "docs/spec.md:1-45", "README.md:588-602", "CHANGELOG.md:5-12"],
+   "note": "A typed, documented library API with a normative specification and a JSON event stream. It is explicitly unstable ('changes without notice'), offers no standard protocol and has no compatibility window.",
+   "source": "review"
+  },
+  "INT-2": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": ["src/tools/bash.ts:10-26", "src/harness/types.ts:296-335", "src/harness/telemetry.ts:50-51", "README.md:364", "test/spec-usage.test.ts:1-5"],
+   "note": "Tools carry TypeBox input and output schemas, the telemetry vocabulary is a versioned schema object, scripts can describe tools at runtime, and spec examples are compile-checked. Drift between spec and code is checked only for copied examples.",
+   "source": "review"
+  },
+  "INT-3": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": ["package.json:8-106", "src/index.ts", "README.md:241", "^/scripts/check-entry-graphs.mjs:60-75"],
+   "note": "Fourteen subpath entries with load budgets; capabilities compose through extensions (tools, sections, hooks, wraps, tasks) and four built-in tools. The root API surface is broad and not measured.",
+   "source": "review"
+  },
+  "INT-4": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": ["src/errors.ts:16-57", "src/env/index.ts:45-75", "README.md:812-828", "README.md:293", "README.md:216"],
+   "note": "Typed errors with causes and remediation (SessionFailed says to reopen), typed file and execution error codes, diagnostic codes on tool results and enumerated report types, with documented rules. No retryable flags.",
+   "source": "review"
+  },
+  "INT-5": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": ["README.md:127-134", "README.md:326", "docs/spec.md:69", "CHANGELOG.md:108", "test/harness-submissions.test.ts"],
+   "note": "Idempotent submissions by requestId, keyed nested calls that reattach on replay, immutable never-reused ids and ordered cursor scans, all tested.",
+   "source": "review"
+  },
+  "INT-6": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": ["README.md:46-69", "README.md:830-859", "^/tsconfig.json:52"],
+   "note": "No UI or CLI. The quickstart needs a real OpenAI key and the 32 examples are type-checked in CI (root tsconfig includes packages/*/test) but never executed.",
+   "source": "review"
+  },
+  "INT-7": {
+   "level": 4,
+   "confidence": "derived",
+   "evidence": ["README.md:757-764", "docs/spec.md:5083", "docs/spec.md:5379-5460", "src/storage/sqlite/migrations.ts", "CHANGELOG.md:9"],
+   "note": "State lives in documented SQLite or append-only JSONL with a specified storage contract and versioned migrations. Upgrades are one-way (schema v2 cannot be opened by 1.3.0).",
+   "source": "review"
+  },
+  "EPI-1": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": ["^/packages/ai/src/types.ts:570-584", "CHANGELOG.md:109-111", "src/harness/tool.ts:175"],
+   "note": "Answers carry provider, model, thinking level, usage and duration; tool results link to calls whose arguments are recorded as durable intent; task definitions are versioned. Not content-addressed or signed.",
+   "source": "review"
+  },
+  "EPI-2": {
+   "level": "NA",
+   "confidence": "observed",
+   "evidence": ["README.md:90-111"],
+   "note": "Not applicable: the harness makes no analytic claims of its own; it persists and relays model output, and calibrating that output belongs to the host or model layer.",
+   "source": "review"
+  },
+  "EPI-3": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": ["src/errors.ts:24-34", "README.md:256", "README.md:454", "README.md:498"],
+   "note": "Unknown records raise StorageRequestError instead of empty results, a model without image input is told it sees a placeholder, truncated listings say so, and the watch contract states that nothing is replayed.",
+   "source": "review"
+  },
+  "EPI-4": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": ["README.md:293", "README.md:586", "README.md:214", "README.md:722"],
+   "note": "Tool results report truncation and where the full output is, compaction failures stay visible, and inspect() names why tasks are blocked.",
+   "source": "review"
+  },
+  "EPI-5": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": ["CHANGELOG.md:87", "CHANGELOG.md:93-95", "README.md:810", "README.md:762-763", "README.md:3"],
+   "note": "Red line not triggered. Numeric claims name the bench command that reproduces them and are dated by release; limitations (durability, memory growth, experimental API) sit next to the claims; no superlatives.",
+   "source": "review"
+  },
+  "MNT-1": {
+   "level": 5,
+   "confidence": "observed",
+   "evidence": ["^/scripts/check-entry-graphs.mjs:1-12", "^/scripts/check-entry-graphs.mjs:60-75", "test/storage-runtime-boundary.test.ts:25-31", "^/package.json:21", "docs/spec.md:1-80"],
+   "note": "The architecture is specified normatively, and boundaries are enforced in CI: per-entry import budgets with forbidden paths, a test that keeps Node built-ins out of the portable core, and declared-import checks.",
+   "source": "review"
+  },
+  "MNT-2": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": ["wc -l src/harness/scheduler.ts: 2507", "src/tools/edit-diff.ts vs ^/packages/coding-agent/src/core/tools/edit-diff.ts: 495 of 500 lines identical", "src/truncate.ts vs ^/packages/coding-agent/src/core/tools/truncate.ts: 141 of 174 lines identical", "probe size.duplicates: 0 within the package", "probe static.dupe_tools: none"],
+   "note": "No duplicates inside the package, but tool code is copied from pi-coding-agent without a duplication check, and the scheduler is a 2.5k-line file.",
+   "source": "review"
+  },
+  "MNT-3": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": ["^/package.json:21", "^/biome.json", "^/tsconfig.base.json:6", "^/.husky/pre-commit", "^/.github/workflows/ci.yml:38-39", "rg biome-ignore|@ts-ignore|@ts-expect-error|'as any' in src: 0"],
+   "note": "Biome lint with errors on warnings, formatter and strict tsc run in CI and in a pre-commit hook, with zero suppressions in the package. CI runs Biome with --write, so formatting drift is fixed rather than failed, and some rules are disabled repo-wide without stated reasons.",
+   "source": "review"
+  },
+  "MNT-4": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": ["^/CONTRIBUTING.md:1-102", "^/AGENTS.md:1-80", "docs/spec.md", "test/spec-usage.test.ts:1-5", "^/CONTRIBUTING.md:101-102"],
+   "note": "Contribution rules, detailed agent rules, a 5.6k-line normative spec and compile-checked spec examples; larger decisions go through RFCs hosted outside the repo.",
+   "source": "review"
+  },
+  "MNT-5": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": ["probe static.debt_markers: 0", "docs/spec.md:5460", "docs/spec.md:5604-5618", "README.md:783"],
+   "note": "Limits and hazards are documented (API footguns, non-goals, single-owner storage), but not as debts with owners or repayment triggers.",
+   "source": "review"
+  },
+  "EVO-1": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["CHANGELOG.md:123-170", "CHANGELOG.md:97-103", "CHANGELOG.md:57-66", "CHANGELOG.md:3-12", "README.md:3", "^/scripts/publish.mjs:34", "^/AGENTS.md:26"],
+   "note": "Breaking changes are documented in detail, but they ship in patch (1.0.3, 1.0.4) and minor (1.1.0, 1.2.0) releases of a 1.x package because of lockstep versioning; the only signal is the 'Experimental' label.",
+   "source": "review"
+  },
+  "EVO-2": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": ["^/.github/workflows/build-binaries.yml:312-387", "CHANGELOG.md:42", "CHANGELOG.md:123", "CHANGELOG.md:179"],
+   "note": "Release qualification is automated and strong (build, check, tests, packed-consumer smoke test, provenance dry run), but there were 8 releases in 15 days (1.0.0 on 2026-10-01 to 1.3.0 on 2026-10-15), four with breaking changes, and no release channels.",
+   "source": "review"
+  },
+  "EVO-3": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": ["package.json:143-145", "^/.github/workflows/ci.yml:20-23", "^/.github/workflows/env.yml:129-166", "package.json:117", "README.md:783"],
+   "note": "Node >=22.19 is stated; the full suite runs on Linux with Node 22, environment and tool tests on five OS/architecture combinations, storage on workerd. Bun is claimed as a target but not tested.",
+   "source": "review"
+  },
+  "EVO-4": {
+   "level": 1,
+   "confidence": "derived",
+   "evidence": ["README.md:3", "^/SECURITY.md:82-84", "probe evo.support: none"],
+   "note": "No support period; the experimental label and the request for reports against the latest release imply latest-only support.",
+   "source": "review"
+  },
+  "OPS-1": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": ["README.md:214", "README.md:216", "README.md:794-808", "README.md:452", "src/env/node.ts:252"],
+   "note": "For a library: inspect() and the task graph give machine-readable blocked reasons, typed reports explain failures, conformance kits let hosts check custom storage and environments, and environment errors print fixes.",
+   "source": "review"
+  },
+  "OPS-2": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": ["src/harness/telemetry.ts:50-51", "README.md:80-88", "^/packages/telemetry/README.md:3-15", "test/harness-telemetry.test.ts"],
+   "note": "Typed spans, events and metrics (phase duration, active tasks) with trace propagation and a published content-free schema, tested. Export to OpenTelemetry needs a host adapter; no generative-AI conventions.",
+   "source": "review"
+  },
+  "OPS-3": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": ["README.md:401-423", "src/env/node.ts:273-277", "src/tools/bash.ts:12", "README.md:241", "rg inheritEnv README.md docs/spec.md: no matches"],
+   "note": "Settings are typed and documented, but the riskiest defaults are permissive and partly undocumented: the shell inherits the full host environment (not mentioned in README or spec), commands have no default timeout and every installed extension is enabled.",
+   "source": "review"
+  },
+  "OPS-4": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": ["README.md:42-44", "package.json:113-129", "^/scripts/publish.mjs:54"],
+   "note": "Installed from npm with provenance and exact-pinned dependencies; the package has no install scripts. No signature verification by default and no offline install guide.",
+   "source": "review"
+  },
+  "PRV-1": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": ["README.md:80-88", "src/harness/telemetry.ts:49-51", "README.md:84"],
+   "note": "Red line not triggered. Telemetry is opt-in (host-supplied context, no-op when omitted), fields are documented in a schema and contain ids and control metadata only, except failure diagnostics of up to 500 characters that can include caller content.",
+   "source": "review"
+  },
+  "PRV-2": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": ["README.md:757-764", "docs/spec.md:262-265", "README.md:539-541", "README.md:550"],
+   "note": "Storage is local by default and the provider data flow is the model call itself, but transcripts are immutable: reset and compaction keep older entries, and there is no API to delete conversations or entries.",
+   "source": "review"
+  },
+  "PRV-3": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": ["^/LICENSE:1-3", "package.json:137", "package.json:108-112", "ls packages/durable: no LICENSE file", "^/scripts/package-artifacts.mjs:28"],
+   "note": "Red line not triggered. MIT at the repository root with an SPDX id in the manifest, but npm pack runs in a package directory without a LICENSE file, so the published tarball lacks the license text MIT requires.",
+   "source": "review"
+  },
+  "PRV-4": {
+   "level": 1,
+   "confidence": "derived",
+   "evidence": ["probe meta.compliance: none", "^/SECURITY.md:24-40"],
+   "note": "No stated position on the EU CRA or AI Act; only a vulnerability-reporting process exists.",
+   "source": "review"
+  },
+  "SUS-1": {
+   "level": 2,
+   "confidence": "inferred",
+   "evidence": ["probe meta.codeowners: none", "^/CONTRIBUTING.md:27-34", "^/CONTRIBUTING.md:101-102", "^/LICENSE:3", "^/.github/APPROVED_CONTRIBUTORS (407 lines)"],
+   "note": "Maintainers (plural) gate contributors and an RFC process exists, but there is no CODEOWNERS or governance document; contributor spread is not visible in the shallow clone.",
+   "source": "review"
+  },
+  "SUS-2": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": ["^/.github/ISSUE_TEMPLATE/", "^/.github/workflows/pr-gate.yml", "^/.github/workflows/ci.yml:3-7", "^/CONTRIBUTING.md:56-67", "^/CONTRIBUTING.md:93"],
+   "note": "Issue templates, an automated contributor gate, CI on PRs, mandatory local checks and human review as the final gate; branch protection cannot be confirmed from the repository.",
+   "source": "review"
+  },
+  "SUS-3": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": ["^/CONTRIBUTING.md:15-19", "^/AGENTS.md:1-80", "git log -1 at fdce48e: Co-authored-by: Claude Opus 5.5 trailer"],
+   "note": "Agent use is allowed under a written rule set and a 'you must understand your code' review standard, and attribution trailers are kept. Agent contributions are not evaluated over time.",
+   "source": "review"
+  }
+ },
+ "gaps": [
+  {
+   "lens": "G11",
+   "title": "Agent tool defaults grant broad agency",
+   "case": "Every installed extension is selected by default (README.md:241); bash takes an optional timeout with no default (src/tools/bash.ts:12) and passes inheritEnv: true (src/tools/bash.ts:76), which copies the whole host process environment into the command (src/env/node.ts:273-277); the quickstart reads the provider key from the environment (README.md:57); nested tool calls have no depth limit (README.md:329); approval exists only as a host-written hook (README.md:233).",
+   "impact": "Excessive agency and unbounded consumption (OWASP LLM06, LLM10): commands chosen by a manipulated model can read credentials from the environment and return them into the transcript and the provider request; runaway commands or recursive nested calls have no ceiling.",
+   "fix": "Default the shell environment to an allowlist (PATH, HOME, locale) with explicit opt-in for more, add a default command timeout and nesting depth limit, ship an opt-in approval extension for write and exec tools, and document these defaults.",
+   "severity": "high",
+   "evidence": ["README.md:241", "src/tools/bash.ts:12", "src/tools/bash.ts:76", "src/env/node.ts:273-277", "README.md:329", "README.md:233"]
+  },
+  {
+   "lens": "G4",
+   "title": "No cross-process exclusion on a storage",
+   "case": "README.md:783 states 'One process owns a storage at a time; there is no cross-process locking'. The SQLite adapter only sets WAL and synchronous=NORMAL (^/packages/chord/src/sqlite/node.ts:237-239), with no exclusive locking or owner lease, and resume() starts every pending task (README.md:122-125).",
+   "impact": "Two processes opening the same storage (overlapping restarts, a second replica) both resume pending work: replay-safe tools, generations and child tasks run twice, duplicating side effects and spend; concurrent JSONL appends can interleave.",
+   "fix": "Acquire an exclusive owner lease at open (a lease row with expiry and heartbeat, or an OS advisory lock), fail with a typed error when it is held, and add a two-process test.",
+   "severity": "medium",
+   "evidence": ["README.md:783", "^/packages/chord/src/sqlite/node.ts:237-239", "README.md:122-125"]
+  },
+  {
+   "lens": "G13",
+   "title": "Breaking changes ship in patch and minor releases of a 1.x package",
+   "case": "CHANGELOG.md lists Breaking Changes in 1.0.3 and 1.0.4 (both 2026-10-05, CHANGELOG.md:123-170), 1.1.0 (CHANGELOG.md:97-103), 1.2.0 (CHANGELOG.md:57-66) and Unreleased, whose SQLite schema v2 migration cannot be rolled back (CHANGELOG.md:9). Versions are lockstep across the monorepo (^/scripts/publish.mjs:34) and agents are told not to preserve backward compatibility (^/AGENTS.md:26); README.md:3 says the API changes without notice.",
+   "impact": "Consumers using normal caret ranges (^1.3.0) receive breaking API and storage changes automatically; databases migrated by a newer release block rollback; 8 releases in 15 days outpace downstream users.",
+   "fix": "Publish pi-durable as 0.x or under a 'next' dist-tag until stable, or bump the major version for breaking changes (decouple it from lockstep), and gate releases on an API report diff.",
+   "severity": "medium",
+   "evidence": ["CHANGELOG.md:9", "CHANGELOG.md:57-66", "CHANGELOG.md:97-103", "CHANGELOG.md:123-170", "^/scripts/publish.mjs:34", "^/AGENTS.md:26", "README.md:3"]
+  },
+  {
+   "lens": "G2",
+   "title": "Untrusted content is not separated from instructions and injection is untested",
+   "case": "^/SECURITY.md:19-22 says injection through repository files 'cannot be protected against' and ^/SECURITY.md:56 puts prompt injection out of scope; rg finds no untrusted-content handling in packages/durable/src, docs/spec.md or README.md; file contents and tool results enter the context as ordinary entries.",
+   "impact": "OWASP LLM01: instructions embedded in files, command output or subagent answers can steer tool calls, and hosts have no labelled channel or taint signal to build policy on.",
+   "fix": "Record provenance (model, user, tool, file) on context entries and expose it to beforeTool hooks, and add an injection regression corpus run with the faux provider in CI.",
+   "severity": "medium",
+   "evidence": ["^/SECURITY.md:19-22", "^/SECURITY.md:56", "README.md:620-621"]
+  },
+  {
+   "lens": "G9",
+   "title": "Published tarball lacks the license text and releases have no SBOM",
+   "case": "packages/durable contains no LICENSE file; package.json:108-112 ships dist, README.md and CHANGELOG.md; ^/scripts/package-artifacts.mjs:28 runs npm pack in the package directory; the MIT text is only at ^/LICENSE:1-3; no SBOM step exists in ^/.github/workflows/build-binaries.yml.",
+   "impact": "MIT requires the copyright and permission notice in copies; compliance scanners find no license file in the tarball; SBOM expectations under the EU CRA (from Dec 2027) are unmet.",
+   "fix": "Copy LICENSE into each package at pack time, generate a CycloneDX SBOM per release and attest it with the npm provenance, and publish the reviewed advisory ledger as VEX.",
+   "severity": "medium",
+   "evidence": ["package.json:108-112", "^/scripts/package-artifacts.mjs:28", "^/LICENSE:1-3", "^/scripts/npm-audit.mjs:12-21"]
+  },
+  {
+   "lens": "G8",
+   "title": "No property, fuzz or mutation testing for parsers and replay logic",
+   "case": "The probes found no property, fuzz or mutation testing; untested by generated inputs are the hand-written EXIF/TIFF parser (src/images/exif.ts:4-60), JSONL torn-tail recovery (docs/spec.md:5446-5448) and code-mode replay divergence detection (README.md:366).",
+   "impact": "Malformed images or torn JSONL files exercise paths covered only by a few hand-made cases; replay divergence bugs could resume a script on the wrong path.",
+   "fix": "Add fast-check properties for JSONL recovery and code-mode replay, a fuzz target for image header and EXIF parsing, and track a mutation score for scheduler state transitions.",
+   "severity": "low",
+   "evidence": ["src/images/exif.ts:4-60", "docs/spec.md:5446-5448", "README.md:366"]
+  },
+  {
+   "lens": "G1",
+   "title": "Benchmark numbers without environment, repetitions or stored results",
+   "case": "CHANGELOG.md:87 (32,000 appends: 1.4 s instead of 11.3 s), CHANGELOG.md:93 (500 owned tasks: 12 s to 50 ms; 8000 nested calls: 2.7 s instead of 18.8 s) and README.md:810 (about 23 MB peak RSS) come from single-run scripts (test/document-append-bench.ts:1-7) with no results files (probe claims.harness: result files 0) and no CI run.",
+   "impact": "The numbers cannot be checked on other machines or guarded against regression.",
+   "fix": "Record hardware, Node version, repetitions, medians and intervals in a results file per release, and run a reduced benchmark set in CI with thresholds.",
+   "severity": "low",
+   "evidence": ["CHANGELOG.md:87", "CHANGELOG.md:93", "README.md:810", "test/document-append-bench.ts:1-7"]
+  },
+  {
+   "lens": "G3",
+   "title": "JSONL storage keeps the whole history in memory and does not fsync by default",
+   "case": "README.md:763 says JSONL 'keeps the whole history in memory too, so memory grows with it'; fsync defaults to false (src/storage/jsonl/storage.ts:257), so acknowledged commits may be lost on power or host failure (docs/spec.md:5600-5602).",
+   "impact": "Long-running agents on JSONL storage grow memory without bound and can lose acknowledged commits on host failure.",
+   "fix": "Index and page JSONL reads instead of holding all records, and make the durability choice an explicit open option (or default fsync to on).",
+   "severity": "low",
+   "evidence": ["README.md:763", "src/storage/jsonl/storage.ts:257", "docs/spec.md:5600-5602"]
+  }
+ ],
+ "opportunities": [
+  {
+   "lens": "O12",
+   "criterion": "OPP-3",
+   "title": "A least-agency extension built from agent-sandbox-lockdown's controls",
+   "description": "pi-durable has the hook points (beforeTool, per-conversation ExecutionEnv, callers and modelTools) but no default policy; agent-sandbox-lockdown implements least-privilege tools, human approval for writes, a JSONL log of every tool call, a step cap, a kill switch and an egress allowlist, but around a small demo agent. Packaged as a pi-durable extension and environment, the pair gives hosts a tested safe default.",
+   "value": 4,
+   "reach": 4,
+   "confidence": "derived",
+   "horizon_fit": 1.4,
+   "effort": 3,
+   "action": "harden",
+   "evidence": ["README.md:233", "README.md:425-439", "/home/user/GitHub_Repos_Dump/PromptEngineer48__agent-sandbox-lockdown/README.md"]
+  },
+  {
+   "lens": "O3",
+   "criterion": "OPP-3",
+   "title": "Lease-backed multi-process storage through Absurd's Postgres claims",
+   "description": "pi-durable is single-owner with no cross-process locking; Absurd already implements leased claims with automatic extension and expiry on Postgres. A Storage adapter on Postgres with an Absurd-style owner lease (or running each harness session as an Absurd task) gives failover across processes and removes the duplicate-resume risk.",
+   "value": 4,
+   "reach": 3,
+   "confidence": "derived",
+   "horizon_fit": 1.2,
+   "effort": 4,
+   "action": "re-platform",
+   "evidence": ["README.md:783", "/home/user/GitHub_Repos_Dump/earendil-works__absurd/sql/absurd.sql:915-1078", "/home/user/GitHub_Repos_Dump/earendil-works__absurd/sql/absurd.sql:1555-1615"]
+  },
+  {
+   "lens": "O2",
+   "criterion": "OPP-2",
+   "title": "One tool core shared with pi-coding-agent",
+   "description": "src/tools/edit-diff.ts matches 495 of its 500 lines in pi-coding-agent's edit-diff.ts and src/truncate.ts 141 of 174 lines; the coding agent does not depend on pi-durable. Moving the shared cores into one module both packages import removes double maintenance and behaviour drift.",
+   "value": 3,
+   "reach": 3,
+   "confidence": "observed",
+   "horizon_fit": 1.0,
+   "effort": 2,
+   "action": "consolidate",
+   "evidence": ["src/tools/edit-diff.ts", "^/packages/coding-agent/src/core/tools/edit-diff.ts", "src/truncate.ts", "^/packages/coding-agent/src/core/tools/truncate.ts", "^/packages/env/package.json:49"]
+  },
+  {
+   "lens": "O11",
+   "criterion": "OPP-1",
+   "title": "Conformance kits as a cross-engine durability suite",
+   "description": "The package already exports registerStorageConformance and registerEnvConformance for any Vitest- or Jest-compatible runner. Extended with a process-kill scenario (crash at step k, reopen, assert no completed work reruns and ids are unchanged), the kit could also certify Absurd's SDKs and the RE4exa rex store, giving comparable durability results across engines.",
+   "value": 3,
+   "reach": 3,
+   "confidence": "observed",
+   "horizon_fit": 1.2,
+   "effort": 3,
+   "action": "extract",
+   "evidence": ["README.md:794-808", "README.md:452", "/home/user/RE4exa/prototypes/rea-durable-evidence/test/crash-test.sh"]
+  },
+  {
+   "lens": "O9",
+   "criterion": "OPP-6",
+   "title": "Agent event stream and telemetry schema as a published format for control surfaces",
+   "description": "watchEvents emits coding-agent style events with snapshots, and DURABLE_TELEMETRY_SCHEMA is a versioned, content-free span vocabulary. Stabilised and versioned as a format, they would let agent control surfaces (t3code, orca, pandacode) and task viewers (Absurd's habitat) display pi-durable runs without custom adapters.",
+   "value": 3,
+   "reach": 3,
+   "confidence": "inferred",
+   "horizon_fit": 1.3,
+   "effort": 3,
+   "action": "re-cut-interface",
+   "evidence": ["README.md:588-602", "src/harness/telemetry.ts:50-51", "/home/user/GitHub_Repos_Dump/pingdotgg__t3code/README.md"]
+  },
+  {
+   "lens": "O13",
+   "criterion": "OPP-7",
+   "title": "SBOM and VEX from the existing advisory ledger",
+   "description": "scripts/npm-audit.mjs already records reviewed advisories with reasons. Emitting them as OpenVEX next to a CycloneDX SBOM in the provenance-attested release covers the EU CRA's December 2027 SBOM and vulnerability-handling obligations at little cost.",
+   "value": 3,
+   "reach": 4,
+   "confidence": "observed",
+   "horizon_fit": 1.5,
+   "effort": 2,
+   "action": "harden",
+   "evidence": ["^/scripts/npm-audit.mjs:12-21", "^/.github/workflows/build-binaries.yml:312-387"]
+  }
+ ],
+ "reengineering": [
+  {
+   "action": "harden",
+   "component": "built-in tools and agent defaults (src/tools/bash.ts, src/env/node.ts, extension selection)",
+   "gain": "Least-agency defaults: no credential inheritance, bounded commands and nesting, opt-in approval.",
+   "measure": "Number of host environment variables visible to a default bash call (all of process.env today, an allowlist after); a test that a call beyond the nesting limit returns an error result; pass rate of an injection corpus run with the faux provider."
+  },
+  {
+   "action": "re-platform",
+   "component": "storage ownership (Harness.open and the SQLite/JSONL adapters)",
+   "gain": "Safe overlap of processes on one storage and optional multi-process failover.",
+   "measure": "A two-process test in which the second open fails with a typed error; zero duplicate tool executions in a restart-overlap test."
+  },
+  {
+   "action": "consolidate",
+   "component": "tool cores shared with pi-coding-agent (edit-diff, truncate, file mutation queue)",
+   "gain": "One implementation of edit matching and truncation for both agents.",
+   "measure": "Identical lines between packages/durable/src and packages/coding-agent/src/core/tools: 636 in edit-diff.ts and truncate.ts today, 0 after."
+  },
+  {
+   "action": "harden",
+   "component": "release and versioning (lockstep publish, package contents)",
+   "gain": "Version numbers that signal breaking changes, and compliant packages.",
+   "measure": "Breaking changes appear only in major or pre-release versions; the npm tarball contains LICENSE; an SBOM is attached and attested for each release."
+  }
+ ],
+ "questions": [
+  {
+   "question": "Does pi-durable avoid repeating side effects after a crash?",
+   "answer": "Yes by default: a tool's intent is committed before execution and an interrupted call is answered as interrupted unless both the stored and current definitions are replay-safe; submissions dedupe by requestId; tasks cut off 5 times are parked. Verified by code reading and fault-injection tests at each commit stage, not by a process kill.",
+   "evidence": ["src/harness/tool.ts:175-186", "README.md:212-214", "test/harness-tasks-recovery.test.ts:291-305"]
+  },
+  {
+   "question": "What prevents two processes from running the same storage?",
+   "answer": "Nothing beyond documentation: there is no lock or lease, so overlapping processes both resume pending work.",
+   "evidence": ["README.md:783", "^/packages/chord/src/sqlite/node.ts:237-239"]
+  },
+  {
+   "question": "Are the agent-facing defaults least-privilege?",
+   "answer": "No: all installed extensions are enabled, bash inherits the host environment with no default timeout, nesting is unbounded and approval is left to host hooks; the trust model places the user's account inside the boundary.",
+   "evidence": ["README.md:241", "src/tools/bash.ts:76", "README.md:329", "^/SECURITY.md:6-22"]
+  }
+ ],
+ "not_examined": [
+  "Runtime behaviour: nothing was built or run, including the benchmarks and examples.",
+  "The published npm tarball; its contents were derived from package.json files and the pack script.",
+  "Dependencies' internals (chord, pi-ai, pi-codemode sandbox, pi-telemetry) beyond the SQLite pragmas, prefix validation and AssistantMessage type cited.",
+  "Real-provider behaviour and the Cloudflare Durable Object runtime outside the test configuration.",
+  "Git history, contributor spread and branch protection (shallow clone).",
+  "Full reads of scheduler.ts (2507 lines), session/transaction code and most of the 5,618-line spec; sampled sections only."
+ ],
+ "time_minutes": 80
+}
