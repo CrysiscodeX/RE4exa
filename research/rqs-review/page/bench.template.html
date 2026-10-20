@@ -1,0 +1,603 @@
+<title>RQS-2030 Review Bench</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,500..800&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+/* Layout: an inspection bench. A 0-5 instrument scale runs through the header; the worksheet is a
+   checklist of 13 dimensions with a live gauge panel beside it; results are a heat table. */
+:root {
+  --paper: #f3f5f8; --panel: #ffffff; --ink: #142029; --muted: #55646f; --rule: #d4dbe2; --soft: #e8edf2;
+  --horizon: #2c58a8; --horizon-ink: #ffffff; --signal: #b42318; --focus: #2c58a8;
+  --l0: #b42318; --l1: #c2410c; --l2: #d39a12; --l3: #2f7a3e; --l4: #1d7466; --l5: #2c58a8;
+  --l0i: #ffffff; --l1i: #ffffff; --l2i: #1b1405; --l3i: #ffffff; --l4i: #ffffff; --l5i: #ffffff;
+  --lu: #c9d1d9; --lui: #3a4650;
+  --display: "Archivo", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --r: 6px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0e141a; --panel: #151d25; --ink: #e5ecf2; --muted: #95a5b2; --rule: #27333e; --soft: #1c2630;
+    --horizon: #86a8f2; --horizon-ink: #0e141a; --signal: #f2776b; --focus: #86a8f2;
+    --l0: #ee6b5f; --l1: #f0894e; --l2: #e3b544; --l3: #6cbf7b; --l4: #4cc0aa; --l5: #86a8f2;
+    --l0i: #160806; --l1i: #170b04; --l2i: #161002; --l3i: #07140a; --l4i: #061512; --l5i: #0b1222;
+    --lu: #33404c; --lui: #b9c6d1; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0e141a; --panel: #151d25; --ink: #e5ecf2; --muted: #95a5b2; --rule: #27333e; --soft: #1c2630;
+  --horizon: #86a8f2; --horizon-ink: #0e141a; --signal: #f2776b; --focus: #86a8f2;
+  --l0: #ee6b5f; --l1: #f0894e; --l2: #e3b544; --l3: #6cbf7b; --l4: #4cc0aa; --l5: #86a8f2;
+  --l0i: #160806; --l1i: #170b04; --l2i: #161002; --l3i: #07140a; --l4i: #061512; --l5i: #0b1222;
+  --lu: #33404c; --lui: #b9c6d1; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { background: var(--paper); color: var(--ink); font: 15px/1.5 var(--body); }
+.wrap { max-width: 1240px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1, h2, h3, h4 { font-family: var(--display); font-stretch: 80%; text-wrap: balance; margin: 0; line-height: 1.15; }
+h1 { font-size: clamp(1.9rem, 4.2vw, 2.9rem); font-weight: 800; letter-spacing: -0.01em; }
+h2 { font-size: 1.45rem; font-weight: 750; }
+h3 { font-size: 1.12rem; font-weight: 700; }
+h4 { font-size: 0.98rem; font-weight: 700; }
+p { margin: 0; max-width: 72ch; }
+a { color: var(--horizon); }
+code, .mono { font-family: var(--mono); font-size: 0.86em; }
+.eyebrow { font: 600 0.72rem/1.2 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.muted { color: var(--muted); }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+
+/* header with the instrument scale */
+header { border-bottom: 1px solid var(--rule); background: var(--panel); }
+header .wrap { padding-block: 22px 0; display: grid; gap: 14px; }
+.lede { color: var(--muted); max-width: 78ch; }
+.scale { position: relative; height: 46px; margin-top: 4px; }
+.scale .bar { position: absolute; left: 0; right: 0; top: 18px; height: 2px; background: var(--rule); }
+.scale .tick { position: absolute; top: 10px; transform: translateX(-50%); text-align: center; font: 600 0.7rem/1 var(--mono); color: var(--muted); }
+.scale .tick::before { content: ""; display: block; width: 2px; height: 18px; margin: 0 auto 6px; background: var(--rule); }
+.scale .tick.today::before { background: var(--l3); }
+.scale .tick.horizon::before { background: var(--horizon); height: 22px; margin-top: -4px; }
+.scale .tick span { display: block; margin-top: 2px; font-weight: 400; letter-spacing: 0.02em; white-space: nowrap; }
+.scale .tick.horizon { color: var(--horizon); }
+nav.tabs { display: flex; gap: 2px; flex-wrap: wrap; }
+nav.tabs button { border: 0; background: none; padding: 10px 14px 11px; font: 600 0.9rem/1 var(--body); color: var(--muted); border-bottom: 3px solid transparent; }
+nav.tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--horizon); }
+main .wrap { padding-block: 22px 60px; }
+section.view { display: grid; gap: 22px; }
+
+/* panels and controls */
+.panel { background: var(--panel); border: 1px solid var(--rule); border-radius: var(--r); padding: 16px; min-width: 0; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.field { display: grid; gap: 4px; min-width: 0; }
+.field label, .field .lab { font: 600 0.74rem/1.2 var(--mono); letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+input[type="text"], select, textarea { background: var(--paper); border: 1px solid var(--rule); border-radius: 4px; padding: 7px 9px; min-width: 0; width: 100%; }
+textarea { font-family: var(--mono); font-size: 0.8rem; line-height: 1.45; resize: vertical; }
+.btn { border: 1px solid var(--rule); background: var(--panel); border-radius: 4px; padding: 7px 12px; font-weight: 600; font-size: 0.86rem; }
+.btn.primary { background: var(--horizon); color: var(--horizon-ink); border-color: var(--horizon); }
+.btn:hover { border-color: var(--muted); }
+.flags { display: flex; flex-wrap: wrap; gap: 6px; }
+.flag { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--rule); border-radius: 999px; padding: 4px 10px 4px 8px; font-size: 0.82rem; background: var(--paper); }
+.flag input { accent-color: var(--horizon); margin: 0; }
+.notice { font-size: 0.86rem; border-left: 3px solid var(--horizon); padding: 6px 10px; background: var(--soft); border-radius: 0 4px 4px 0; }
+
+/* worksheet */
+.bench { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 22px; align-items: start; }
+.gauge { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); display: grid; gap: 14px; }
+.grade { display: flex; align-items: baseline; gap: 12px; }
+.grade .g { font: 800 3.4rem/0.9 var(--display); font-stretch: 75%; }
+.kv { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.kv div { background: var(--paper); border-radius: 4px; padding: 8px; }
+.kv b { display: block; font: 600 1.15rem/1.1 var(--mono); font-variant-numeric: tabular-nums; }
+.kv span { font-size: 0.72rem; color: var(--muted); }
+.dimbars { display: grid; gap: 5px; }
+.dimbar { display: grid; grid-template-columns: 44px minmax(0, 1fr) 40px; gap: 8px; align-items: center; font: 0.78rem/1.2 var(--mono); }
+.dimbar .track { position: relative; height: 10px; background: var(--soft); border-radius: 2px; overflow: hidden; }
+.dimbar .fill { position: absolute; inset: 0 auto 0 0; border-radius: 2px; }
+.dimbar .mark3 { position: absolute; top: -2px; bottom: -2px; left: 60%; width: 1px; background: var(--muted); opacity: 0.6; }
+.dimbar .v { text-align: right; font-variant-numeric: tabular-nums; }
+.flagsum { display: grid; gap: 4px; font-size: 0.82rem; }
+.chip { display: inline-block; font: 600 0.68rem/1 var(--mono); letter-spacing: 0.04em; text-transform: uppercase; padding: 4px 6px; border-radius: 3px; border: 1px solid var(--rule); color: var(--muted); }
+.chip.red { color: var(--signal); border-color: var(--signal); }
+.chip.core { color: var(--ink); border-color: var(--ink); }
+.chip.cond { color: var(--horizon); border-color: var(--horizon); }
+.dim { display: grid; gap: 10px; }
+.dimhead { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; border-bottom: 2px solid var(--ink); padding-bottom: 6px; }
+.dimhead .score { margin-left: auto; font: 600 0.9rem/1 var(--mono); }
+.crit { border: 1px solid var(--rule); border-radius: var(--r); background: var(--panel); padding: 12px 14px; display: grid; gap: 8px; min-width: 0; }
+.crit.na { opacity: 0.55; }
+.crit .top { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.crit .cid { font: 600 0.8rem/1 var(--mono); color: var(--muted); }
+.crit .q { color: var(--muted); font-size: 0.88rem; }
+.seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 4px; overflow: hidden; flex-wrap: wrap; }
+.seg label { position: relative; }
+.seg input { position: absolute; opacity: 0; inset: 0; margin: 0; }
+.seg span { display: block; min-width: 34px; text-align: center; padding: 5px 7px; font: 600 0.82rem/1.1 var(--mono); border-right: 1px solid var(--rule); background: var(--paper); }
+.seg label:last-child span { border-right: 0; }
+.seg input:focus-visible + span { outline: 2px solid var(--focus); outline-offset: -2px; }
+.seg input:checked + span { color: var(--lvl-ink, var(--ink)); background: var(--lvl, var(--soft)); }
+.controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.controls select { width: auto; }
+.ev { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
+details.anch > summary { cursor: pointer; font-size: 0.84rem; color: var(--horizon); width: fit-content; }
+.anchors { display: grid; gap: 6px; margin-top: 8px; font-size: 0.88rem; }
+.anchors div { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 8px; }
+.anchors b { font: 600 0.72rem/1.4 var(--mono); text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+.anchors .h b { color: var(--horizon); }
+
+/* level swatches */
+.L0 { --lvl: var(--l0); --lvl-ink: var(--l0i); } .L1 { --lvl: var(--l1); --lvl-ink: var(--l1i); } .L2 { --lvl: var(--l2); --lvl-ink: var(--l2i); }
+.L3 { --lvl: var(--l3); --lvl-ink: var(--l3i); } .L4 { --lvl: var(--l4); --lvl-ink: var(--l4i); } .L5 { --lvl: var(--l5); --lvl-ink: var(--l5i); }
+.LU { --lvl: var(--lu); --lvl-ink: var(--lui); } .LNA { --lvl: transparent; --lvl-ink: var(--muted); }
+.cell { background: var(--lvl); color: var(--lvl-ink); font: 600 0.78rem/1 var(--mono); text-align: center; font-variant-numeric: tabular-nums; }
+.LU.cell { background-image: repeating-linear-gradient(135deg, transparent 0 4px, color-mix(in srgb, var(--lui) 18%, transparent) 4px 6px); }
+
+/* tables */
+.scroll { overflow-x: auto; min-width: 0; border: 1px solid var(--rule); border-radius: var(--r); background: var(--panel); }
+table { border-collapse: collapse; width: 100%; font-size: 0.85rem; }
+th, td { padding: 7px 8px; border-bottom: 1px solid var(--rule); text-align: left; vertical-align: top; }
+th { font: 600 0.72rem/1.2 var(--mono); letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); background: var(--soft); position: sticky; top: 0; }
+td.num, th.num { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+table.heat td.cell { padding: 6px 4px; min-width: 38px; border-left: 1px solid var(--panel); }
+table.heat tr.sel td:first-child { box-shadow: inset 4px 0 0 var(--horizon); }
+table.heat tbody tr { cursor: pointer; }
+table.heat tbody tr:hover td:not(.cell) { background: var(--soft); }
+.matrix td.cell { min-width: 30px; padding: 4px 2px; font-size: 0.72rem; }
+.matrix th.rot { writing-mode: vertical-rl; transform: rotate(180deg); white-space: nowrap; padding: 8px 4px; }
+.grid2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+.list { display: grid; gap: 10px; }
+.item { border-left: 3px solid var(--rule); padding: 2px 0 2px 12px; display: grid; gap: 3px; }
+.item.sev-critical, .item.sev-high { border-left-color: var(--signal); }
+.item.sev-medium { border-left-color: var(--l2); }
+.item h4 { font-family: var(--body); font-stretch: 100%; font-size: 0.95rem; font-weight: 600; }
+.item p { font-size: 0.88rem; }
+.bars { display: grid; gap: 6px; }
+.hbar { display: grid; grid-template-columns: 210px minmax(0, 1fr) 36px; gap: 10px; align-items: center; font-size: 0.84rem; }
+.hbar .t { height: 12px; background: var(--soft); border-radius: 2px; position: relative; }
+.hbar .t i { position: absolute; inset: 0 auto 0 0; background: var(--horizon); border-radius: 2px; }
+.std-grid { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 22px; align-items: start; }
+.toc { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); display: grid; gap: 2px; font-size: 0.86rem; }
+.toc a { text-decoration: none; color: var(--ink); padding: 3px 0; }
+.std-crit { display: grid; gap: 6px; padding: 12px 0; border-bottom: 1px solid var(--rule); }
+.legend { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; font-size: 0.78rem; }
+.legend .cell { display: inline-block; min-width: 28px; padding: 4px 6px; border-radius: 3px; }
+footer { color: var(--muted); font-size: 0.8rem; }
+@media (max-width: 980px) {
+  .bench, .std-grid, .grid2 { grid-template-columns: minmax(0, 1fr); }
+  .gauge, .toc { position: static; }
+  .toc { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+}
+@media (max-width: 560px) {
+  .ev { grid-template-columns: minmax(0, 1fr); }
+  .kv { grid-template-columns: repeat(2, 1fr); }
+  .hbar { grid-template-columns: 120px minmax(0, 1fr) 30px; }
+  .anchors div { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .scale .tick span { display: none; }
+}
+@media (prefers-reduced-motion: no-preference) { .dimbar .fill { transition: width 0.25s ease; } }
+</style>
+
+<header>
+  <div class="wrap">
+    <div class="eyebrow" id="hdr-eyebrow">RE4exa quality standard</div>
+    <h1>RQS-2030 Review Bench</h1>
+    <p class="lede">Score a repository against the RQS-2030 standard, find its gaps and the parts worth extracting, merging or rebuilding, and compare it with fifteen reviewed projects. Scoring here uses the same formulas, red lines and gates as <code>tools/rqs</code>.</p>
+    <div class="scale" aria-hidden="true" id="scale"></div>
+    <nav class="tabs" role="tablist" aria-label="Views">
+      <button role="tab" id="tab-score" aria-controls="score" aria-selected="true">Score a repository</button>
+      <button role="tab" id="tab-results" aria-controls="results" aria-selected="false">Fifteen reviews</button>
+      <button role="tab" id="tab-standard" aria-controls="standard" aria-selected="false">The standard</button>
+      <button role="tab" id="tab-method" aria-controls="method" aria-selected="false">How to review</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+    <section class="view" id="score" role="tabpanel" aria-labelledby="tab-score"></section>
+    <section class="view" id="results" role="tabpanel" aria-labelledby="tab-results" hidden></section>
+    <section class="view" id="standard" role="tabpanel" aria-labelledby="tab-standard" hidden></section>
+    <section class="view" id="method" role="tabpanel" aria-labelledby="tab-method" hidden></section>
+  </div>
+</main>
+
+<script>
+const STD = /*__STD__*/null;
+const RESULTS = /*__RESULTS__*/null;
+</script>
+<script>
+"use strict";
+const $ = (s, el = document) => el.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+const CRIT = STD.dimensions.flatMap((d) => d.criteria.map((c) => ({ ...c, dimension: d.id })));
+const DIMS = STD.dimensions.map((d) => d.id);
+const FLAGS = Object.keys(STD.applicability_flags);
+const LEVELS = [0, 1, 2, 3, 4, 5, "U", "NA"];
+const OPP_CONF = { observed: 1.0, derived: 0.8, inferred: 0.5 };
+const DRAFT_KEY = "rqs-bench-draft-v1";
+
+// Python-compatible round(x, nd): exact decimal expansion, ties to even.
+function pyRound(x, nd) {
+  if (x === null || !isFinite(x)) return x;
+  const s = Math.abs(x).toFixed(Math.min(100, nd + 30));
+  const [ip, fp] = s.split(".");
+  let n = BigInt(ip + fp.slice(0, nd));
+  const rest = fp.slice(nd), tail = rest.slice(1);
+  if (rest[0] > "5" || (rest[0] === "5" && /[1-9]/.test(tail))) n += 1n;
+  else if (rest[0] === "5" && n % 2n === 1n) n += 1n;
+  const r = Number(n) / Math.pow(10, nd);
+  return x < 0 ? -r : r;
+}
+// Same Neumaier-compensated sum as tools/rqs (score.nsum), so both give identical numbers.
+function nsum(xs) {
+  let f = 0, c = 0;
+  for (const x of xs) { const t = f + x; c += Math.abs(f) >= Math.abs(x) ? (f - t) + x : (x - t) + f; f = t; }
+  return c && isFinite(c) ? f + c : f;
+}
+const lvlClass = (l) => (l === "U" || l === undefined || l === null ? "LU" : l === "NA" ? "LNA" : "L" + Math.max(0, Math.min(5, Math.round(l))));
+const fmt = (x, d = 1) => (x === null || x === undefined ? "–" : Number(x).toFixed(d));
+const pct = (x) => (x === null || x === undefined ? "–" : Math.round(100 * x) + "%");
+
+function normLevel(x) {
+  if (x === undefined || x === null || x === "") return "U";
+  if (typeof x === "string") { const t = x.trim().toUpperCase(); if (t === "U" || t === "NA") return t; if (/^\d$/.test(t)) x = +t; else return "U"; }
+  return x >= 0 && x <= 5 ? Math.trunc(x) : "U";
+}
+
+// Mirrors tools/rqs/rqs/score.py (score + resolve) for a reviewer-entered review.
+function score(rev) {
+  const flags = rev.flags || {};
+  const profile = STD.profiles[rev.profile] ? rev.profile : "agent-tool";
+  const W = STD.profiles[profile].weights;
+  const cw = Object.fromEntries(Object.entries(STD.confidence).map(([k, v]) => [k, v.weight]));
+  const scores = rev.scores || {};
+  const crit = CRIT.map((c) => {
+    const e = scores[c.id] || {};
+    const byFlag = !c.applies_if || !!flags[c.applies_if];
+    let level = byFlag ? normLevel(e.level) : "NA";
+    const conf = cw[e.confidence] ? e.confidence : "inferred";
+    return { id: c.id, dimension: c.dimension, core: !!c.core, red_line: !!c.red_line, level, confidence: conf, applicable: byFlag && level !== "NA", source: e.source || "review" };
+  });
+  const dims = STD.dimensions.map((d) => {
+    const rs = crit.filter((r) => r.dimension === d.id && r.applicable);
+    const known = rs.filter((r) => typeof r.level === "number");
+    const num = nsum(known.map((r) => (r.core ? 2 : 1) * cw[r.confidence] * r.level));
+    const den = nsum(known.map((r) => (r.core ? 2 : 1) * cw[r.confidence]));
+    return { id: d.id, name: d.name, weight: W[d.id], score: den ? pyRound(num / den, 2) : null, known: known.length, applicable: rs.length, coverage: rs.length ? pyRound(known.length / rs.length, 2) : null };
+  });
+  const scored = dims.filter((d) => d.score !== null);
+  const qi = scored.length ? pyRound(20 * nsum(scored.map((d) => d.weight * d.score)) / nsum(scored.map((d) => d.weight)), 1) : null;
+  const known = crit.filter((r) => r.applicable && typeof r.level === "number");
+  const appl = crit.filter((r) => r.applicable);
+  const hri = known.length ? pyRound(100 * nsum(known.map((r) => (r.level === 5 ? 1 : r.level === 4 ? 0.5 : 0))) / known.length, 1) : null;
+  const cov = appl.length ? pyRound(known.length / appl.length, 2) : null;
+  const byId = Object.fromEntries(crit.map((r) => [r.id, r]));
+  const red = [];
+  for (const rule of STD.red_lines.rules) {
+    const r = byId[rule.criterion];
+    const m = /level (\d)( or below)?/.exec(rule.condition);
+    const lim = +m[1], below = !!m[2];
+    if (typeof r.level === "number" && (below ? r.level <= lim : r.level === lim)) red.push({ id: rule.id, criterion: r.id, text: rule.text });
+  }
+  const bands = Object.entries(STD.scoring.grade_bands).sort((a, b) => b[1] - a[1]);
+  const order = bands.map((b) => b[0]);
+  let band = order[order.length - 1];
+  for (const [g, v] of bands) { if (qi !== null && qi >= v) { band = g; break; } }
+  let grade = band; const gates = [];
+  if (red.length && order.indexOf(grade) < order.indexOf("D")) { grade = "D"; gates.push("Red line: grade capped at D"); }
+  const provisional = cov !== null && cov < 0.6;
+  if (provisional && order.indexOf(grade) < order.indexOf("C")) grade = "C";
+  if (provisional) gates.push("Evidence coverage below 60%: provisional, capped at C");
+  const blocking = dims.filter((d) => d.weight >= 2.5 && d.score !== null && d.score < 2);
+  return { grade: grade + (provisional ? "?" : ""), band, qi, hri, cov, red, gates, blocking, dims, known: known.length, applicable: appl.length };
+}
+
+function priority(o) {
+  try { return pyRound(o.value * o.reach * (OPP_CONF[o.confidence] ?? 0.5) * (o.horizon_fit ?? 1.0) / Math.max(1, o.effort), 2); } catch (e) { return null; }
+}
+
+/* ---------------- state ---------------- */
+function blankReview() {
+  return { rqs_review: 1, target: { name: "" }, profile: "agent-tool", flags: Object.fromEntries(FLAGS.map((f) => [f, false])), reviewer: { id: "", kind: "human", conflicts: "" },
+           date: new Date().toISOString().slice(0, 10), scores: {} };
+}
+function exampleReview() {
+  const t = RESULTS && RESULTS.targets.find((x) => x.name === RESULTS.example) || (RESULTS && RESULTS.targets[0]);
+  return t ? JSON.parse(JSON.stringify(t.review)) : blankReview();
+}
+let state = { review: null, example: false };
+function loadDraft() {
+  try { const s = localStorage.getItem(DRAFT_KEY); if (s) { const d = JSON.parse(s); if (d && d.review) return d; } } catch (e) { /* storage unavailable */ }
+  return null;
+}
+function saveDraft() { try { localStorage.setItem(DRAFT_KEY, JSON.stringify(state)); } catch (e) { /* storage unavailable */ } }
+
+/* ---------------- header scale ---------------- */
+function renderScale() {
+  const ticks = [[0, "absent"], [1, "ad hoc"], [2, "partial"], [3, "meets today"], [4, "enforced"], [5, "horizon 2030-35"]];
+  $("#scale").innerHTML = '<div class="bar"></div>' + ticks.map(([v, t]) => `<div class="tick ${v === 3 ? "today" : v === 5 ? "horizon" : ""}" style="left:${4 + v * 18.4}%">${v}<span>${t}</span></div>`).join("");
+  $("#hdr-eyebrow").textContent = `${STD.standard.id} v${STD.standard.version} · ${STD.standard.date} · ${CRIT.length} criteria in ${DIMS.length} dimensions`;
+}
+
+/* ---------------- score view ---------------- */
+function critRow(c, e, flags) {
+  const na = c.applies_if && !flags[c.applies_if];
+  const lv = na ? "NA" : normLevel(e.level);
+  const name = `lv-${c.id}`;
+  const tags = [c.core ? '<span class="chip core">core</span>' : "", c.red_line ? '<span class="chip red">red line</span>' : "", c.applies_if ? `<span class="chip cond">if ${esc(c.applies_if)}</span>` : ""].join(" ");
+  return `<article class="crit${na ? " na" : ""}" data-id="${c.id}">
+    <div class="top"><span class="cid">${c.id}</span><h4>${esc(c.title)}</h4> ${tags}</div>
+    <p class="q">${esc(c.question)}</p>
+    ${na ? `<p class="muted" style="font-size:.84rem">Not applicable: the <code>${esc(c.applies_if)}</code> flag is off.</p>` : `
+    <div class="controls">
+      <fieldset class="seg" style="border:0;padding:0;margin:0"><legend class="sr" hidden>Level for ${c.id}</legend>
+        ${LEVELS.map((l) => `<label class="${lvlClass(l)}"><input type="radio" name="${name}" id="${name}-${l}" value="${l}" ${String(lv) === String(l) ? "checked" : ""}><span>${l}</span></label>`).join("")}
+      </fieldset>
+      <select id="cf-${c.id}" aria-label="Confidence for ${c.id}">${Object.keys(STD.confidence).map((k) => `<option ${e.confidence === k ? "selected" : ""}>${k}</option>`).join("")}</select>
+    </div>
+    <div class="ev">
+      <input type="text" id="evd-${c.id}" placeholder="Evidence: path:line, command, measurement" value="${esc((e.evidence || []).join(", "))}" aria-label="Evidence for ${c.id}">
+      <input type="text" id="note-${c.id}" placeholder="Note" value="${esc(e.note || "")}" aria-label="Note for ${c.id}">
+    </div>`}
+    <details class="anch"><summary>Anchors and rationale</summary>
+      <div class="anchors">
+        <div><b>Fails 0-1</b><span>${esc(c.fail)}</span></div>
+        <div><b>Meets 3</b><span>${esc(c.meets)}</span></div>
+        <div class="h"><b>Horizon 5</b><span>${esc(c.horizon)}</span></div>
+        <div><b>Why</b><span>${esc(c.why)}</span></div>
+        <div><b>Evidence</b><span>${esc(c.evidence.join(", "))} · probes ${c.probes.map((p) => `<code>${esc(p)}</code>`).join(" ")} · ${esc(c.refs.join(", "))}</span></div>
+      </div>
+    </details>
+  </article>`;
+}
+
+function renderScore() {
+  const rev = state.review;
+  const el = $("#score");
+  const flags = rev.flags || {};
+  el.innerHTML = `
+  ${state.example ? `<div class="notice" id="ex-note">Example loaded: the review of <b>${esc(rev.target.name)}</b> from the fifteen-review set. Change anything to try the scoring, or <button class="btn" id="b-new">Start a new review</button></div>` : ""}
+  <div class="bench">
+    <div class="dim" style="gap:18px;min-width:0">
+      <div class="panel" style="display:grid;gap:12px">
+        <div class="row" style="align-items:end">
+          <div class="field" style="flex:2 1 220px"><label for="t-name">Repository</label><input type="text" id="t-name" value="${esc(rev.target.name || "")}" placeholder="owner/repo"></div>
+          <div class="field" style="flex:1 1 170px"><label for="t-profile">Profile</label><select id="t-profile">${Object.keys(STD.profiles).map((p) => `<option ${p === rev.profile ? "selected" : ""}>${p}</option>`).join("")}</select></div>
+          <div class="field" style="flex:1 1 170px"><label for="t-rev">Reviewer</label><input type="text" id="t-rev" value="${esc((rev.reviewer || {}).id || "")}" placeholder="name or agent id"></div>
+        </div>
+        <p class="muted" style="font-size:.84rem" id="p-text">${esc(STD.profiles[rev.profile]?.text || "")}</p>
+        <div class="field"><span class="lab">Applies to this product</span>
+          <div class="flags">${FLAGS.map((f) => `<label class="flag" title="${esc(STD.applicability_flags[f])}"><input type="checkbox" id="fl-${f}" ${flags[f] ? "checked" : ""}>${f.replace(/_/g, " ")}</label>`).join("")}</div>
+        </div>
+      </div>
+      ${STD.dimensions.map((d) => `<div class="dim" id="dim-${d.id}">
+          <div class="dimhead"><span class="eyebrow">${d.id}</span><h3>${esc(d.name)}</h3><span class="score" id="ds-${d.id}"></span></div>
+          <p class="muted" style="font-size:.88rem">${esc(d.intent)}</p>
+          ${d.criteria.map((c) => critRow({ ...c, dimension: d.id }, (rev.scores || {})[c.id] || {}, flags)).join("")}
+        </div>`).join("")}
+      <div class="panel" style="display:grid;gap:10px">
+        <h3>Save or move this review</h3>
+        <p class="muted" style="font-size:.88rem">The JSON below is the review file <code>rqs score</code> reads. Copy it into a file next to your probes, or paste a review here to load it. Drafts are kept in this browser only.</p>
+        <div class="row"><button class="btn primary" id="b-copy">Copy review JSON</button><button class="btn" id="b-load">Load JSON from the box</button>
+          <label class="btn" for="f-file" style="display:inline-block">Open a file…</label><input type="file" id="f-file" accept="application/json,.json" hidden>
+          <button class="btn" id="b-clear">Start a new review</button><span id="io-msg" class="muted" role="status" style="font-size:.84rem"></span></div>
+        <textarea id="io" rows="10" spellcheck="false" aria-label="Review JSON"></textarea>
+      </div>
+    </div>
+    <aside class="gauge panel" aria-live="polite" id="gauge"></aside>
+  </div>`;
+  bindScore();
+  updateGauge();
+}
+
+function collect() {
+  const rev = state.review;
+  rev.target = { ...(rev.target || {}), name: $("#t-name").value.trim() };
+  rev.profile = $("#t-profile").value;
+  rev.reviewer = { ...(rev.reviewer || {}), id: $("#t-rev").value.trim() };
+  rev.flags = Object.fromEntries(FLAGS.map((f) => [f, $("#fl-" + f).checked]));
+  rev.scores = rev.scores || {};
+  for (const c of CRIT) {
+    const picked = document.querySelector(`input[name="lv-${c.id}"]:checked`);
+    if (!picked) continue;
+    const v = picked.value;
+    const evd = $("#evd-" + c.id).value.split(",").map((s) => s.trim()).filter(Boolean);
+    rev.scores[c.id] = { ...(rev.scores[c.id] || {}), level: /^\d$/.test(v) ? +v : v, confidence: $("#cf-" + c.id).value, evidence: evd, note: $("#note-" + c.id).value, source: "review" };
+  }
+}
+
+function updateGauge() {
+  const s = score(state.review);
+  const gcls = s.grade.startsWith("A") ? "L5" : s.grade.startsWith("B") ? "L4" : s.grade.startsWith("C") ? "L3" : s.grade.startsWith("D") ? "L1" : "L0";
+  $("#gauge").innerHTML = `
+    <div class="eyebrow">Live score · ${esc(state.review.profile)}</div>
+    <div class="grade"><span class="g ${gcls}" style="color:var(--lvl)">${esc(s.grade)}</span><span class="muted" style="font-size:.86rem">band ${esc(s.band)}${s.gates.length ? "<br>" + s.gates.map(esc).join("<br>") : ""}</span></div>
+    <div class="kv">
+      <div><b>${fmt(s.qi)}</b><span>Quality Index</span></div>
+      <div><b>${fmt(s.hri)}</b><span>Horizon readiness</span></div>
+      <div><b>${pct(s.cov)}</b><span>Evidence coverage</span></div>
+    </div>
+    <div class="flagsum">${s.red.length ? s.red.map((r) => `<div><span class="chip red">${r.id}</span> ${esc(r.criterion)}: ${esc(r.text)}</div>`).join("") : '<div class="muted">No red line triggered.</div>'}
+      ${s.blocking.length ? `<div>Blocking: ${s.blocking.map((b) => `<b>${b.id}</b> ${fmt(b.score, 2)}`).join(", ")}</div>` : ""}</div>
+    <div class="dimbars">${s.dims.map((d) => `<div class="dimbar" title="${esc(d.name)} · weight ${d.weight} · ${d.known}/${d.applicable} known"><span>${d.id}</span><span class="track"><span class="fill ${lvlClass(d.score === null ? "U" : d.score)}" style="width:${d.score === null ? 0 : d.score * 20}%;background:var(--lvl)"></span><span class="mark3"></span></span><span class="v">${d.score === null ? "U" : fmt(d.score, 2)}</span></div>`).join("")}</div>
+    <p class="muted" style="font-size:.78rem">${s.known} of ${s.applicable} applicable criteria scored. The faint line marks level 3.</p>`;
+  for (const d of s.dims) { const x = $("#ds-" + d.id); if (x) x.textContent = d.score === null ? "U" : `${fmt(d.score, 2)} · ${d.known}/${d.applicable}`; }
+  $("#io").value = JSON.stringify(state.review, null, 1);
+}
+
+function bindScore() {
+  const el = $("#score");
+  const onChange = (ev) => {
+    const id = ev.target.id || "";
+    if (id === "t-profile") $("#p-text").textContent = STD.profiles[ev.target.value]?.text || "";
+    if (id.startsWith("fl-")) { collect(); saveDraft(); renderScore(); return; }
+    collect(); saveDraft(); updateGauge();
+  };
+  el.addEventListener("change", onChange);
+  el.addEventListener("input", (ev) => { if (ev.target.type === "text") { collect(); saveDraft(); updateGauge(); } });
+  const startNew = () => { state = { review: blankReview(), example: false }; saveDraft(); renderScore(); };
+  $("#b-new")?.addEventListener("click", startNew);
+  $("#b-clear").addEventListener("click", startNew);
+  $("#b-copy").addEventListener("click", async () => {
+    const txt = $("#io").value;
+    try { await navigator.clipboard.writeText(txt); $("#io-msg").textContent = "Copied."; }
+    catch (e) { $("#io").focus(); $("#io").select(); $("#io-msg").textContent = "Copy is blocked here: the text is selected, press Ctrl+C or Cmd+C."; }
+  });
+  const loadText = (txt) => {
+    try {
+      const d = JSON.parse(txt);
+      if (!d || typeof d !== "object" || !d.scores) throw new Error("The JSON has no \"scores\" object, so it is not a review file.");
+      d.flags = d.flags || {}; d.target = d.target || {}; d.reviewer = d.reviewer || {};
+      if (!STD.profiles[d.profile]) d.profile = "agent-tool";
+      state = { review: d, example: false }; saveDraft(); renderScore(); $("#io-msg").textContent = "Loaded.";
+    } catch (e) { $("#io-msg").textContent = "Could not load: " + e.message; }
+  };
+  $("#b-load").addEventListener("click", () => loadText($("#io").value));
+  $("#f-file").addEventListener("change", (ev) => {
+    const f = ev.target.files[0]; if (!f) return;
+    const r = new FileReader(); r.onload = () => loadText(String(r.result)); r.readAsText(f);
+  });
+}
+
+/* ---------------- results view ---------------- */
+function renderResults() {
+  const el = $("#results");
+  if (!RESULTS || !RESULTS.targets.length) { el.innerHTML = '<div class="panel"><p>No review results are bundled with this page.</p></div>'; return; }
+  const T = RESULTS.targets;
+  const head = `<tr><th>Target</th><th>Profile</th><th>Grade</th><th class="num">QI</th><th class="num">HRI</th><th class="num">Coverage</th><th>Red lines</th>${DIMS.map((d) => `<th class="num">${d}</th>`).join("")}</tr>`;
+  const rows = T.map((t, i) => `<tr data-i="${i}" tabindex="0"><td><b>${esc(t.name)}</b><div class="muted mono" style="font-size:.72rem">${esc(t.repo || "")}</div></td><td>${esc(t.profile)}</td>
+     <td><b>${esc(t.summary.grade)}</b></td><td class="num">${fmt(t.summary.quality_index)}</td><td class="num">${fmt(t.summary.horizon_index)}</td><td class="num">${pct(t.summary.evidence_coverage)}</td>
+     <td>${t.summary.red_lines.length ? t.summary.red_lines.map((r) => `<span class="chip red" title="${esc(r.text)}">${esc(r.criterion)}</span>`).join(" ") : '<span class="muted">none</span>'}</td>
+     ${DIMS.map((d) => { const v = t.dims[d]; return `<td class="cell ${lvlClass(v === null ? "U" : v)}">${v === null ? "U" : fmt(v, 1)}</td>`; }).join("")}</tr>`).join("");
+  const ag = RESULTS.agreement || [];
+  const lensRows = RESULTS.lens_counts || [];
+  const maxLens = Math.max(1, ...lensRows.map((x) => x.count));
+  el.innerHTML = `
+    <div class="grid2">
+      <div class="panel" style="display:grid;gap:8px"><span class="eyebrow">What was reviewed</span>
+        <p>${T.length} targets: ${esc(RESULTS.scope)}</p>
+        <p class="muted" style="font-size:.88rem">${esc(RESULTS.method)}</p></div>
+      <div class="panel" style="display:grid;gap:8px"><span class="eyebrow">Headline findings</span>
+        <ul style="margin:0;padding-left:18px;display:grid;gap:4px;font-size:.92rem">${(RESULTS.headlines || []).map((h) => `<li>${esc(h)}</li>`).join("")}</ul></div>
+    </div>
+    <div style="display:grid;gap:8px"><h2>Scores by dimension</h2>
+      <div class="legend"><span class="muted">Level</span>${[0, 1, 2, 3, 4, 5].map((l) => `<span class="cell ${lvlClass(l)}">${l}</span>`).join("")}<span class="cell LU">U</span><span class="muted">Select a row for its gaps and opportunities.</span></div>
+      <div class="scroll"><table class="heat"><thead>${head}</thead><tbody id="heat-body">${rows}</tbody></table></div></div>
+    <div class="panel" id="detail" style="display:grid;gap:14px"></div>
+    <div class="grid2">
+      <div class="panel" style="display:grid;gap:10px"><h3>Highest-priority opportunities across all targets</h3>
+        <p class="muted" style="font-size:.84rem">Priority = value x reach x confidence x horizon fit / effort, from each review.</p>
+        <div class="list">${(RESULTS.top_opportunities || []).map((o) => `<div class="item"><h4>${esc(o.title)} <span class="chip">${esc(o.target)}</span> <span class="chip">${fmt(o.priority, 1)}</span></h4><p>${esc(o.description)}</p><p class="muted">${esc(o.action || "")}${o.lens ? " · " + esc(o.lens) : ""}</p></div>`).join("")}</div></div>
+      <div class="panel" style="display:grid;gap:10px"><h3>Where the gaps cluster</h3>
+        <p class="muted" style="font-size:.84rem">Gap findings per lens, all targets together.</p>
+        <div class="bars">${lensRows.map((x) => `<div class="hbar"><span>${esc(x.lens)} ${esc(x.name)}</span><span class="t"><i style="width:${(100 * x.count) / maxLens}%"></i></span><span class="mono">${x.count}</span></div>`).join("")}</div>
+        ${ag.length ? `<h3 style="margin-top:8px">Second-reviewer agreement</h3><div class="scroll"><table><thead><tr><th>Target</th><th class="num">Pairs</th><th class="num">Exact</th><th class="num">Within 1</th><th class="num">Kappa</th></tr></thead><tbody>${ag.map((a) => `<tr><td>${esc(a.target)}</td><td class="num">${a.pairs}</td><td class="num">${pct(a.exact)}</td><td class="num">${pct(a.within_1)}</td><td class="num">${a.quadratic_weighted_kappa === null ? "–" : fmt(a.quadratic_weighted_kappa, 2)}</td></tr>`).join("")}</tbody></table></div><p class="muted" style="font-size:.8rem">${esc(RESULTS.agreement_note || "")}</p>` : ""}
+      </div>
+    </div>
+    <div style="display:grid;gap:8px"><h2>Every criterion, every target</h2>
+      <div class="scroll" style="max-height:70vh"><table class="heat matrix"><thead><tr><th>Criterion</th>${T.map((t) => `<th class="rot">${esc(t.name)}</th>`).join("")}</tr></thead><tbody>
+      ${CRIT.map((c) => `<tr><td style="white-space:nowrap"><span class="mono">${c.id}</span> <span class="muted" style="font-size:.78rem">${esc(c.title.slice(0, 42))}${c.title.length > 42 ? "…" : ""}</span></td>${T.map((t) => { const v = t.levels[c.id]; return `<td class="cell ${lvlClass(v)}" title="${esc(t.name)} ${c.id}: ${v ?? "U"}">${v === "NA" ? "" : v ?? "U"}</td>`; }).join("")}</tr>`).join("")}
+      </tbody></table></div></div>`;
+  const show = (i) => {
+    const t = T[i];
+    document.querySelectorAll("#heat-body tr").forEach((r) => r.classList.toggle("sel", +r.dataset.i === i));
+    $("#detail").innerHTML = `<div class="row" style="justify-content:space-between"><div><span class="eyebrow">${esc(t.profile)} · ${esc(t.repo || "")}${t.head ? " @ " + esc(t.head.slice(0, 7)) : ""}</span><h2>${esc(t.name)}: grade ${esc(t.summary.grade)}, QI ${fmt(t.summary.quality_index)}</h2></div>
+      <button class="btn" id="b-open">Open this review in the worksheet</button></div>
+      ${t.scope_notes ? `<p class="muted">${esc(t.scope_notes)}</p>` : ""}
+      ${t.summary.gates.length ? `<p class="muted" style="font-size:.86rem">${t.summary.gates.map(esc).join(" · ")}</p>` : ""}
+      <div class="grid2">
+        <div style="display:grid;gap:10px"><h3>Gaps</h3><div class="list">${t.gaps.map((g) => `<div class="item sev-${esc(String(g.severity || "").toLowerCase())}"><h4>${esc(g.title)} <span class="chip">${esc(g.severity || "")}</span> <span class="chip">${esc(g.lens || "")}</span></h4><p>${esc(g.impact || "")}</p><p class="muted">Case: ${esc(g.case || "")}</p><p>Fix: ${esc(g.fix || "")}</p></div>`).join("") || '<p class="muted">None recorded.</p>'}</div></div>
+        <div style="display:grid;gap:10px"><h3>Opportunities</h3><div class="list">${t.opps.map((o) => `<div class="item"><h4>${esc(o.title)} <span class="chip">${fmt(o.priority, 1)}</span> <span class="chip">${esc(o.action || "")}</span></h4><p>${esc(o.description || "")}</p><p class="muted">${esc(o.lens || "")} ${esc(o.criterion || "")} · value ${o.value} x reach ${o.reach} x ${esc(o.confidence)} x ${o.horizon_fit ?? 1} / effort ${o.effort}</p></div>`).join("") || '<p class="muted">None recorded.</p>'}</div>
+          ${t.reeng.length ? `<h3>Re-engineering</h3><div class="list">${t.reeng.map((r) => `<div class="item"><h4>${esc(r.action)}: ${esc(r.component)}</h4><p>${esc(r.gain)}</p><p class="muted">Measured by ${esc(r.measure)}</p></div>`).join("")}</div>` : ""}</div>
+      </div>`;
+    $("#b-open").addEventListener("click", () => { state = { review: JSON.parse(JSON.stringify(t.review)), example: true }; saveDraft(); renderScore(); selectTab("score"); window.scrollTo(0, 0); });
+  };
+  $("#heat-body").addEventListener("click", (ev) => { const tr = ev.target.closest("tr"); if (tr) show(+tr.dataset.i); });
+  $("#heat-body").addEventListener("keydown", (ev) => { if (ev.key === "Enter") { const tr = ev.target.closest("tr"); if (tr) show(+tr.dataset.i); } });
+  show(0);
+}
+
+/* ---------------- standard view ---------------- */
+function renderStandard() {
+  const S = STD;
+  const sec = (id, title, body) => `<section id="s-${id}" style="display:grid;gap:10px;scroll-margin-top:16px"><h2>${title}</h2>${body}</section>`;
+  const prof = `<div class="scroll"><table><thead><tr><th>Profile</th>${DIMS.map((d) => `<th class="num">${d}</th>`).join("")}</tr></thead><tbody>${Object.entries(S.profiles).map(([k, v]) => `<tr><td><b>${esc(k)}</b><div class="muted" style="font-size:.78rem;max-width:36ch">${esc(v.text)}</div></td>${DIMS.map((d) => `<td class="num">${v.weights[d]}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+  const crits = S.dimensions.map((d) => `<div style="display:grid;gap:4px" class="std-dim" data-dim="${d.id}"><h3 style="margin-top:10px">${d.id} · ${esc(d.name)}</h3><p class="muted" style="font-size:.88rem">${esc(d.intent)} ISO/IEC 25010: ${esc(d.iso25010.join(", "))}.</p>
+    ${d.criteria.map((c) => `<div class="std-crit" data-text="${esc((c.id + " " + c.title + " " + c.question + " " + c.why + " " + c.fail + " " + c.meets + " " + c.horizon).toLowerCase())}">
+      <div class="top row"><span class="mono muted">${c.id}</span><h4>${esc(c.title)}</h4>${c.core ? '<span class="chip core">core</span>' : ""}${c.red_line ? '<span class="chip red">red line</span>' : ""}${c.applies_if ? `<span class="chip cond">if ${esc(c.applies_if)}</span>` : ""}</div>
+      <p>${esc(c.question)}</p><p class="muted" style="font-size:.88rem">${esc(c.why)}</p>
+      <div class="anchors"><div><b>Fails 0-1</b><span>${esc(c.fail)}</span></div><div><b>Meets 3</b><span>${esc(c.meets)}</span></div><div class="h"><b>Horizon 5</b><span>${esc(c.horizon)}</span></div>
+      <div><b>Evidence</b><span>${esc(c.evidence.join(", "))} · ${esc(c.refs.join(", "))}</span></div></div></div>`).join("")}</div>`).join("");
+  const lens = (rows, a, b, c) => `<div class="scroll"><table><thead><tr><th>ID</th><th>Lens</th><th>${a}</th><th>${b}</th></tr></thead><tbody>${rows.map((r) => `<tr><td class="mono">${r.id}</td><td><b>${esc(r.name)}</b></td><td>${esc(r[c[0]])}</td><td class="muted">${esc(r[c[1]])}</td></tr>`).join("")}</tbody></table></div>`;
+  const toc = [["principles", "Principles"], ["scale", "Scale"], ["profiles", "Profiles"], ["flags", "Applicability"], ["criteria", "Criteria"], ["opp", "Opportunity criteria"], ["red", "Red lines"], ["scoring", "Scoring"], ["gaps", "Gap lenses"], ["olens", "Opportunity lenses"], ["reeng", "Re-engineering"], ["integrity", "Reviewer integrity"], ["refs", "References"]];
+  $("#standard").innerHTML = `<div class="std-grid"><nav class="toc panel" aria-label="Standard sections">${toc.map(([k, t]) => `<a href="#s-${k}">${t}</a>`).join("")}</nav><div style="display:grid;gap:26px;min-width:0">
+    <div class="panel" style="display:grid;gap:6px"><span class="eyebrow">${esc(S.standard.id)} v${esc(S.standard.version)} · ${esc(S.standard.date)} · ${esc(S.standard.status)}</span><p>${esc(S.standard.scope)}</p><p class="muted">${esc(S.standard.audience)}</p></div>
+    ${sec("principles", "Principles", `<div class="list">${S.standard.principles.map((p) => `<div class="item"><h4>${esc(p.id)}</h4><p>${esc(p.text)}</p></div>`).join("")}</div>`)}
+    ${sec("scale", "Scale", `<div class="scroll"><table><thead><tr><th>Level</th><th>Name</th><th>Meaning</th></tr></thead><tbody>${Object.entries(S.levels).map(([k, v]) => `<tr><td class="cell ${lvlClass(/^\d$/.test(k) ? +k : k)}" style="width:48px">${k}</td><td><b>${esc(v.name)}</b></td><td>${esc(v.text)}</td></tr>`).join("")}</tbody></table></div>
+       <div class="scroll"><table><thead><tr><th>Confidence</th><th class="num">Weight</th><th>Meaning</th></tr></thead><tbody>${Object.entries(S.confidence).map(([k, v]) => `<tr><td><b>${k}</b></td><td class="num">${v.weight}</td><td>${esc(v.text)}</td></tr>`).join("")}</tbody></table></div>`)}
+    ${sec("profiles", "Profiles and dimension weights", prof)}
+    ${sec("flags", "Applicability flags", `<div class="list">${Object.entries(S.applicability_flags).map(([k, v]) => `<div class="item"><h4><code>${k}</code></h4><p>${esc(v)}</p></div>`).join("")}</div>`)}
+    ${sec("criteria", `Criteria (${CRIT.length})`, `<div class="field"><label for="q">Filter criteria</label><input type="text" id="q" placeholder="Type a word, e.g. provenance, telemetry, crash"></div><div id="crit-list">${crits}</div>`)}
+    ${sec("opp", "Opportunity criteria", `<p class="muted">${esc(S.opportunity_dimension.intent)}</p><div class="list">${S.opportunity_dimension.criteria.map((c) => `<div class="item"><h4>${c.id} ${esc(c.title)}</h4><p>${esc(c.question)}</p><p class="muted">Signals: ${esc(c.signals.join("; "))}</p></div>`).join("")}</div>`)}
+    ${sec("red", "Red lines", `<p>${esc(S.red_lines.effect)}</p><div class="list">${S.red_lines.rules.map((r) => `<div class="item sev-high"><h4>${r.id} · ${r.criterion} at ${esc(r.condition)}</h4><p>${esc(r.text)}</p></div>`).join("")}</div>`)}
+    ${sec("scoring", "Scoring", `<div class="list">${["criterion", "dimension", "evidence_coverage", "quality_index", "horizon_index", "opportunity_priority"].map((k) => `<div class="item"><h4>${k.replace(/_/g, " ")}</h4><p>${esc(S.scoring[k])}</p></div>`).join("")}<div class="item"><h4>Grades and gates</h4><p>${Object.entries(S.scoring.grade_bands).map(([g, v]) => `${g} from ${v}`).join(", ")}. ${S.scoring.gates.map(esc).join(" ")}</p></div></div>`)}
+    ${sec("gaps", "Gap lenses", lens(S.lenses.gaps, "Ask", "How", ["ask", "how"]))}
+    ${sec("olens", "Opportunity lenses", lens(S.lenses.opportunities, "Heuristic", "Where to look", ["heuristic", "query"]))}
+    ${sec("reeng", "Re-engineering actions", `<div class="scroll"><table><thead><tr><th>Action</th><th>When</th></tr></thead><tbody>${S.reengineering.actions.map((a) => `<tr><td><b>${a.id}</b></td><td>${esc(a.when)}</td></tr>`).join("")}</tbody></table></div><p>${esc(S.reengineering.rule)}</p>`)}
+    ${sec("integrity", "Reviewer integrity", `<ul style="margin:0;padding-left:18px;display:grid;gap:4px">${S.reviewer_integrity.map((r) => `<li>${esc(r)}</li>`).join("")}</ul>`)}
+    ${sec("refs", "References", `<div class="scroll"><table><thead><tr><th>ID</th><th>Reference</th><th>Note</th></tr></thead><tbody>${S.references.map((r) => `<tr><td class="mono">${r.id}</td><td>${esc(r.name)}</td><td class="muted">${esc(r.note || "")}</td></tr>`).join("")}</tbody></table></div>`)}
+  </div></div>`;
+  $("#q").addEventListener("input", (ev) => {
+    const q = ev.target.value.trim().toLowerCase();
+    document.querySelectorAll(".std-crit").forEach((x) => { x.hidden = q && !x.dataset.text.includes(q); });
+    document.querySelectorAll(".std-dim").forEach((d) => { d.hidden = q && !d.querySelector(".std-crit:not([hidden])"); });
+  });
+}
+
+/* ---------------- method view ---------------- */
+function renderMethod() {
+  const S = STD;
+  $("#method").innerHTML = `<div class="grid2">
+    <div class="panel" style="display:grid;gap:10px"><h2>Review procedure</h2>
+      <ol style="margin:0;padding-left:20px;display:grid;gap:6px">${S.procedure.map((p) => `<li><b>${esc(p.name)}.</b> ${esc(p.do)}</li>`).join("")}</ol></div>
+    <div class="panel" style="display:grid;gap:10px"><h2>With the command-line tool</h2>
+      <p class="muted" style="font-size:.88rem">Inert probes collect evidence; you confirm or change every suggested level; the scorer applies the standard.</p>
+      <pre class="mono" style="margin:0;white-space:pre-wrap;background:var(--paper);border:1px solid var(--rule);border-radius:4px;padding:10px;font-size:.78rem;overflow-x:auto">tools/rqs/rqs.sh probe /path/repo --out probes.json
+tools/rqs/rqs.sh template probes.json --out review.json
+#  set level, confidence, evidence and "source": "review"
+#  add gaps, opportunities and re-engineering actions
+tools/rqs/rqs.sh score probes.json review.json --out card.json
+tools/rqs/rqs.sh report card.json > report.md
+tools/rqs/rqs.sh compare cards/*.json --md
+tools/rqs/rqs.sh agree review-a.json review-b.json
+tools/rqs/rqs.sh mcp   # the same, as 8 MCP tools</pre>
+      <h3>Report template</h3><ol style="margin:0;padding-left:20px;display:grid;gap:3px;font-size:.9rem">${S.report_template.map((r) => `<li>${esc(r)}</li>`).join("")}</ol></div>
+  </div>
+  <div class="panel" style="display:grid;gap:8px"><h3>Limits of this page</h3><p class="muted" style="font-size:.9rem">The worksheet scores what you enter; it does not read a repository. Use <code>rqs probe</code> for evidence. A draft stays in this browser only, so copy the JSON to keep it. Red lines here trigger on any level you enter, because every level on this page counts as a reviewer's level.</p></div>
+  <footer>${esc(RESULTS?.footer || "")}</footer>`;
+}
+
+/* ---------------- tabs ---------------- */
+const TABS = ["score", "results", "standard", "method"];
+function selectTab(name) {
+  for (const t of TABS) { $("#tab-" + t).setAttribute("aria-selected", String(t === name)); $("#" + t).hidden = t !== name; }
+}
+for (const t of TABS) $("#tab-" + t).addEventListener("click", () => selectTab(t));
+document.querySelector("nav.tabs").addEventListener("keydown", (ev) => {
+  const i = TABS.findIndex((t) => $("#tab-" + t).getAttribute("aria-selected") === "true");
+  if (ev.key === "ArrowRight" || ev.key === "ArrowLeft") { const j = (i + (ev.key === "ArrowRight" ? 1 : TABS.length - 1)) % TABS.length; selectTab(TABS[j]); $("#tab-" + TABS[j]).focus(); }
+});
+
+renderScale();
+const draft = loadDraft();
+state = draft || { review: exampleReview(), example: true };
+renderScore();
+renderResults();
+renderStandard();
+renderMethod();
+const hash = (location.hash || "").slice(1);
+if (TABS.includes(hash)) selectTab(hash);
+</script>

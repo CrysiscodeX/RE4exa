@@ -44,6 +44,9 @@ def report(sc: dict) -> str:
     w("")
     w("Flags: " + ", ".join(f"`{k}`" for k, v in sorted(sc["flags"].items()) if v) + ". Not set: " + (", ".join(f"`{k}`" for k, v in sorted(sc["flags"].items()) if not v) or "none") + ".")
     w("")
+    if sc.get("scope_notes"):
+        w(f"{_c(sc['scope_notes'])}")
+        w("")
     for q in sc["questions"]:
         w(f"- Question: {_c(q)}")
     if sc["not_examined"]:

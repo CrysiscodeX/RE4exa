@@ -15,6 +15,17 @@ SEVERITY = {"critical": 0, "high": 1, "medium": 2, "low": 3}
 OPP_CONF = {"observed": 1.0, "derived": 0.8, "inferred": 0.5}  # standard: scoring.opportunity_priority
 
 
+def nsum(xs) -> float:
+    """Neumaier-compensated sum, written out so results do not depend on the Python version
+    (built-in sum() changed in 3.12) and match the Review Bench page's JavaScript exactly."""
+    f = c = 0.0
+    for x in xs:
+        t = f + x
+        c += (f - t) + x if abs(f) >= abs(x) else (x - t) + f
+        f = t
+    return f + c if c and c == c and abs(c) != float("inf") else f
+
+
 def _level(x):
     if x is None:
         return "U"
@@ -76,16 +87,16 @@ def score(std: dict, probes_doc: dict | None, review: dict | None) -> dict:
     for d in std["dimensions"]:
         rs = [r for r in crit if r["dimension"] == d["id"] and r["applicable"]]
         known = [r for r in rs if isinstance(r["level"], int)]
-        num = sum((2 if r["core"] else 1) * cw[r["confidence"]] * r["level"] for r in known)
-        den = sum((2 if r["core"] else 1) * cw[r["confidence"]] for r in known)
+        num = nsum((2 if r["core"] else 1) * cw[r["confidence"]] * r["level"] for r in known)
+        den = nsum((2 if r["core"] else 1) * cw[r["confidence"]] for r in known)
         dims.append({"id": d["id"], "name": d["name"], "weight": W[d["id"]], "score": round(num / den, 2) if den else None,
                      "known": len(known), "applicable": len(rs), "coverage": round(len(known) / len(rs), 2) if rs else None,
                      "auto": sum(r["source"] == "auto" for r in known)})
     scored = [d for d in dims if d["score"] is not None]
-    qi = round(20 * sum(d["weight"] * d["score"] for d in scored) / sum(d["weight"] for d in scored), 1) if scored else None
+    qi = round(20 * nsum(d["weight"] * d["score"] for d in scored) / nsum(d["weight"] for d in scored), 1) if scored else None
     known = [r for r in crit if r["applicable"] and isinstance(r["level"], int)]
     appl = [r for r in crit if r["applicable"]]
-    hri = round(100 * sum(1.0 if r["level"] == 5 else 0.5 if r["level"] == 4 else 0.0 for r in known) / len(known), 1) if known else None
+    hri = round(100 * nsum(1.0 if r["level"] == 5 else 0.5 if r["level"] == 4 else 0.0 for r in known) / len(known), 1) if known else None
     cov = round(len(known) / len(appl), 2) if appl else None
     red, suspected = [], []
     by_id = {r["id"]: r for r in crit}
@@ -128,7 +139,7 @@ def score(std: dict, probes_doc: dict | None, review: dict | None) -> dict:
                         "provisional": provisional, "red_lines": red, "suspected_red_lines": suspected, "gates": gates, "blocking": blocking,
                         "criteria": {"applicable": len(appl), "known": len(known), "auto": sum(r["source"] == "auto" for r in known), "auto_share": auto_share}},
             "dimensions": dims, "criteria": crit, "gaps": gaps, "opportunities": opps,
-            "reengineering": review.get("reengineering") or [], "questions": review.get("questions") or [],
+            "reengineering": review.get("reengineering") or [], "questions": review.get("questions") or [], "scope_notes": review.get("scope_notes"),
             "not_examined": review.get("not_examined") or [], "time_minutes": review.get("time_minutes")}
 
 
