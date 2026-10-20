@@ -119,7 +119,7 @@
   "PERF-2": {
    "level": 3,
    "confidence": "derived",
-   "evidence": ["agent/agent.py:64-80", "agent/agent.py:46", "agent/agent.py:51", "agent/agent.py:120-121", "measurement: jq rebuild of SCHEMA from agent.py:64-80 -> 974 bytes of compact JSON"],
+   "evidence": ["agent/agent.py:64-80", "agent/agent.py:46", "agent/agent.py:51", "agent/agent.py:120-121", "measurement: jq rebuild of SCHEMA from agent/agent.py:64-80 -> 974 bytes of compact JSON"],
    "note": "The catalog is five tools with one-line descriptions (about 1 KB of JSON), the system prompt is two sentences, and tool outputs are capped at 4,000 characters or 2,000 bytes. The project does not measure this, which is proportionate at this size.",
    "source": "review"
   },

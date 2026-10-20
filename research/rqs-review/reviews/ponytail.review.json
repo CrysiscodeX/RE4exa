@@ -168,7 +168,7 @@
   "SEC-7": {
    "level": 3,
    "confidence": "derived",
-   "evidence": ["hooks/ponytail-map.js:42 and hooks/band/register.tsx:186,302 (git via argv arrays)", "hooks/ponytail-config.js:45-52 and hooks/ponytail-activate.js:92-99,142 (allowlist before a path enters a shell snippet)", "hooks/ponytail-subagent.js:68-78 (user regex run under a 100 ms vm timeout)", "hooks/band/board.ts:184,523-524 (names as text; JSON escaped inside the script block)", "scripts/publish-openclaw-skills.js:64 (shell: true, maintainer-only, inputs from package.json and directory names)", "benchmarks/correctness.js:48-55,123 (benchmark executes model-generated code on the host, with a timeout)"],
+   "evidence": ["hooks/ponytail-map.js:42 and hooks/band/register.tsx:186,302 (git via argv arrays)", "hooks/ponytail-config.js:45-52 and hooks/ponytail-activate.js:92-99,142 (allowlist before a path enters a shell snippet)", "hooks/ponytail-subagent.js:68-78 (user regex run under a 100 ms vm timeout)", "hooks/band/board.ts:184,523-524 (names as text; JSON escaped inside the script block)", "scripts/publish-openclaw-skills.js:64 (shell: true, maintainer-only, inputs from package.json and directory names)", "benchmarks/correctness.js:48-55,131-132 (benchmark executes model-generated code on the host, with a timeout)"],
    "note": "Shipped runtime code avoids shell strings and escapes output; the shell and code-execution sites are maintainer and benchmark scripts, not reachable from user input. Red line RL-4 not triggered.",
    "source": "review"
   },
@@ -259,7 +259,7 @@
   "INT-6": {
    "level": 3,
    "confidence": "observed",
-   "evidence": ["i18n/README.es.md, README.ja.md, README.ko.md, README.zh-CN.md (+ localised images in assets/v5/)", "hooks/band/register.tsx:462 (SVG with alt text)", "hooks/band/board.ts:552-553 (aria-label, role=img; aria-pressed chips)", "hooks/ponytail-statusline.sh:8-11 (colour is a redundant cue)", "INSTALL.md (per-host steps)"],
+   "evidence": ["i18n/README.es.md, README.ja.md, README.ko.md, README.zh-CN.md (+ localised images in assets/v5/)", "hooks/band/register.tsx:462 (SVG with alt text)", "hooks/band/board.ts:543,547,551 (aria-label, role=img) and :148 (aria-pressed chips)", "hooks/ponytail-statusline.sh:8-10 (colour is a redundant cue)", "INSTALL.md (per-host steps)"],
    "note": "Localised docs and accessibility attributes; no automated accessibility or quickstart test.",
    "source": "review"
   },
@@ -287,14 +287,14 @@
   "EPI-3": {
    "level": 3,
    "confidence": "observed",
-   "evidence": ["skills/ponytail-audit/SKILL.md:61-62 (grep tests, config, string and dynamic references before calling code unused)", "skills/ponytail-gain/SKILL.md:143-149 (no per-repo savings figure: there is no baseline)", "skills/ponytail-review/SKILL.md:60-62 (confirm the code really is unused)"],
+   "evidence": ["skills/ponytail-audit/SKILL.md:61-62 (grep tests, config, string and dynamic references before calling code unused)", "skills/ponytail-gain/SKILL.md:42-48 (no per-repo savings figure: there is no baseline)", "skills/ponytail-review/SKILL.md:60-62 (confirm the code really is unused)"],
    "note": "Explicit rules against reading absence as a negative.",
    "source": "review"
   },
   "EPI-4": {
    "level": 3,
    "confidence": "observed",
-   "evidence": ["skills/ponytail-audit/SKILL.md:27-28,83-84,98 (say what was not read; how many findings were left out; 'Not checked')", "hooks/ponytail-map.js:307 (folders not listed)", "benchmarks/agentic/README.md:156-166 (what the benchmark can and cannot show)"],
+   "evidence": ["skills/ponytail-audit/SKILL.md:27-28,83-84,98 (say what was not read; how many findings were left out; 'Not checked')", "hooks/ponytail-map.js:106 (folders not listed)", "benchmarks/agentic/README.md:156-166 (what the benchmark can and cannot show)"],
    "note": "Reports state scope and what was skipped; nothing reconciles them automatically.",
    "source": "review"
   },
@@ -315,7 +315,7 @@
   "MNT-2": {
    "level": 3,
    "confidence": "observed",
-   "evidence": ["sha256sum: .agents/rules, .clinerules, .github/copilot-instructions.md, .qoder/rules, .windsurf/rules identical (ca99e5958383)", "scripts/check-rule-copies.js:19-37 (copies checked in CI)", "hooks/ponytail-instructions.js:43-75 (fallback copy of the rules, not checked)", "__init__.py:60-80 (Python port of the instruction filter)", "probe size.largest: benchmarks/agentic/tasks.py 1,545 lines"],
+   "evidence": ["sha256sum: .agents/rules, .clinerules, .github/copilot-instructions.md, .qoder/rules, .windsurf/rules identical (ca99e5958383)", "scripts/check-rule-copies.js:19-37 (copies checked in CI)", "hooks/ponytail-instructions.js:43-75 (fallback copy of the rules, not checked)", "__init__.py:61-86 (Python port of the instruction filter)", "probe size.largest: benchmarks/agentic/tasks.py 1,545 lines"],
    "note": "Duplication is deliberate and mostly CI-checked; the JS fallback text and the Python filter port are unchecked copies.",
    "source": "review"
   },
@@ -329,7 +329,7 @@
   "MNT-4": {
    "level": 4,
    "confidence": "observed",
-   "evidence": [".github/CONTRIBUTING.md (merge rules, benchmark requirement, dev commands)", "AGENTS.md:32 (instructions apply to agents on this repo)", "docs/agent-portability.md, docs/cursor-hooks.md", "scripts/check-rule-copies.js and tests/openclaw-skills.test.js (rule and generated-skill drift checked in CI)", "hooks/ponytail-mode-tracker.js:303-312 (decisions recorded with issue numbers #443, #790)"],
+   "evidence": [".github/CONTRIBUTING.md (merge rules, benchmark requirement, dev commands)", "AGENTS.md:32 (instructions apply to agents on this repo)", "docs/agent-portability.md, docs/cursor-hooks.md", "scripts/check-rule-copies.js and tests/openclaw-skills.test.js (rule and generated-skill drift checked in CI)", "hooks/ponytail-mode-tracker.js:205-214 (decisions recorded with issue numbers #443, #790)"],
    "note": "Contributor and agent instructions exist, drift of rule copies is checked in CI and the agent instructions are evaluated by running agents; decisions live in comments, not ADRs.",
    "source": "review"
   },
@@ -357,7 +357,7 @@
   "EVO-3": {
    "level": 2,
    "confidence": "observed",
-   "evidence": [".github/workflows/test.yml:14 (ubuntu-latest only)", "tests/hooks-windows.test.js (Windows behaviour simulated on Linux)", "README.md:118 (Claude Code 2.1.290 or later for the band)", "INSTALL.md:3 (node on PATH)"],
+   "evidence": [".github/workflows/test.yml:14 (ubuntu-latest only)", "tests/hooks-windows.test.js (Windows behaviour simulated on Linux)", "README.md:118 (Claude Code 2.1.290 or later for the band)", "INSTALL.md:5 (node on PATH)"],
    "note": "Windows, macOS and Linux paths exist and host minimums are stated, but CI runs one OS.",
    "source": "review"
   },
@@ -371,21 +371,21 @@
   "OPS-1": {
    "level": 2,
    "confidence": "observed",
-   "evidence": ["hooks/ponytail-activate.js:86-99,135-141 (detects a broken statusline path and prints the fix)", "hooks/ponytail-runtime.js:258-277 (Cursor rule conflict notice)", "probe obs.doctor: none"],
+   "evidence": ["hooks/ponytail-activate.js:86-99,135-141 (detects a broken statusline path and prints the fix)", "hooks/ponytail-runtime.js:83-102 (Cursor rule conflict notice)", "probe obs.doctor: none"],
    "note": "Two self-checks with fixes; no diagnostic command.",
    "source": "review"
   },
   "OPS-2": {
    "level": 2,
    "confidence": "observed",
-   "evidence": ["hooks/band/register.tsx:282-337 (per-turn metrics recorded)", "hooks/band/board.ts:540-559 (local dashboard)", ".opencode/plugins/ponytail.mjs:168-170 (host log)", "probe obs.logging, obs.otel: none"],
+   "evidence": ["hooks/band/register.tsx:282-337 (per-turn metrics recorded)", "hooks/band/board.ts:534-559 (local dashboard)", ".opencode/plugins/ponytail.mjs:168-170 (host log)", "probe obs.logging, obs.otel: none"],
    "note": "Product metrics are recorded and visualised; no structured logs or traces for the hooks.",
    "source": "review"
   },
   "OPS-3": {
    "level": 2,
    "confidence": "observed",
-   "evidence": ["README.md:187-188 and INSTALL.md (PONYTAIL_DEFAULT_MODE, config.json, PONYTAIL_SUBAGENT_MATCHER)", "hooks/ponytail-map.js:217 and hooks/ponytail-activate.js:66 (PONYTAIL_MAP_CHARS, PONYTAIL_MAP undocumented)", "hooks/ponytail-config.js:107-139 (PONYTAIL_QUIET_STARTUP, PONYTAIL_HIDE_STATUS undocumented)", ".claude-plugin/plugin.json:33-37 (sendNames defaults to true)"],
+   "evidence": ["README.md:187-188 and INSTALL.md (PONYTAIL_DEFAULT_MODE, config.json, PONYTAIL_SUBAGENT_MATCHER)", "hooks/ponytail-map.js:16 and hooks/ponytail-activate.js:66 (PONYTAIL_MAP_CHARS, PONYTAIL_MAP undocumented)", "hooks/ponytail-config.js:107-139 (PONYTAIL_QUIET_STARTUP, PONYTAIL_HIDE_STATUS undocumented)", ".claude-plugin/plugin.json:33-37 (sendNames defaults to true)"],
    "note": "Main settings documented and normalised; four variables undocumented; invalid values ignored silently; task names go to a configured webhook by default.",
    "source": "review"
   },
@@ -406,7 +406,7 @@
   "PRV-2": {
    "level": 2,
    "confidence": "observed",
-   "evidence": ["README.md:124 (local by default)", ".claude-plugin/plugin.json:15-19 (ledger on by default)", "hooks/band/register.tsx:233-240 (first line of the first prompt stored as the task name)", "hooks/ponytail-band-import.js:216-266 (imports every past Claude Code session)", "scripts/uninstall.js:26-41 (does not remove ~/.config/ponytail/band or ~/.claude/.ponytail-band)", "INSTALL.md:240 (leftover list omits them)"],
+   "evidence": ["README.md:124 (local by default)", ".claude-plugin/plugin.json:15-19 (ledger on by default)", "hooks/band/register.tsx:233-240 (first line of the first prompt stored as the task name)", "hooks/ponytail-band-import.js:216-266 (imports every past Claude Code session)", "scripts/uninstall.js:26-42 (does not remove ~/.config/ponytail/band or ~/.claude/.ponytail-band)", "INSTALL.md:240 (leftover list omits them)"],
    "note": "Local by default and exportable; deletion on uninstall is incomplete and undocumented.",
    "source": "review"
   },
@@ -485,16 +485,16 @@
   {
    "lens": "G10",
    "title": "Uninstall leaves the band's data behind, undocumented",
-   "case": "scripts/uninstall.js:26-41 removes mode flags, config and the statusline copy but not ~/.config/ponytail/band/ (per-project CSV ledgers holding the first line of each task's first prompt, plus board.html) or ~/.claude/.ponytail-band; INSTALL.md:240 lists leftovers without them. The ledger is on by default (.claude-plugin/plugin.json:15-19) and 'band import' copies every past Claude Code session in (hooks/ponytail-band-import.js:216-266).",
+   "case": "scripts/uninstall.js:26-42 removes mode flags, config and the statusline copy but not ~/.config/ponytail/band/ (per-project CSV ledgers holding the first line of each task's first prompt, plus board.html) or ~/.claude/.ponytail-band; INSTALL.md:240 lists leftovers without them. The ledger is on by default (.claude-plugin/plugin.json:15-19) and 'band import' copies every past Claude Code session in (hooks/ponytail-band-import.js:216-266).",
    "impact": "Prompt excerpts and usage history persist after removal without notice (GDPR-style deletion expectations).",
    "fix": "Remove, or ask to remove, the band directory in uninstall.js and list it in INSTALL.md.",
    "severity": "medium",
-   "evidence": ["scripts/uninstall.js:26-41", "INSTALL.md:240", ".claude-plugin/plugin.json:15-19", "hooks/band/register.tsx:233-240"]
+   "evidence": ["scripts/uninstall.js:26-42", "INSTALL.md:240", ".claude-plugin/plugin.json:15-19", "hooks/band/register.tsx:233-240"]
   },
   {
    "lens": "G11",
    "title": "Review and audit read untrusted content without a data-not-instructions rule",
-   "case": "/ponytail-review accepts 'a PR link' (skills/ponytail-review/SKILL.md:18-19) and /ponytail-audit reads whole repositories (skills/ponytail-audit/SKILL.md:18-26); neither skill tells the agent to treat that text as data. The codebase map, by contrast, filters to identifiers and is injection-tested (hooks/ponytail-map.js:222-223, tests/map.test.js:9-27).",
+   "case": "/ponytail-review accepts 'a PR link' (skills/ponytail-review/SKILL.md:18-19) and /ponytail-audit reads whole repositories (skills/ponytail-audit/SKILL.md:18-26); neither skill tells the agent to treat that text as data. The codebase map, by contrast, filters to identifiers and is injection-tested (hooks/ponytail-map.js:21-22,67, tests/map.test.js:9-27).",
    "impact": "Instructions planted in a PR or repository can steer a review in hosts where the agent holds tools.",
    "fix": "Add the rule to both skills and an injected-PR case to the benchmark.",
    "severity": "medium",
@@ -503,11 +503,11 @@
   {
    "lens": "G1",
    "title": "Headline statistic and raw runs are not shipped",
-   "case": "benchmarks/results/2026-10-07-agentic.md:32-34 reports geometric means with 95% bootstrap intervals, but benchmarks/agentic/compare.py:76-91 computes median ratios and sign tests only, and run workspaces are gitignored (.gitignore:25-26). Recomputing from the published per-task medians reproduces the headline (lines -52.6% [-63, -41], cost -25.9% [-36, -16]).",
+   "case": "benchmarks/results/2026-10-07-agentic.md:32-34 reports geometric means with 95% bootstrap intervals, but benchmarks/agentic/compare.py:78-91 computes median ratios and sign tests only, and run workspaces are gitignored (.gitignore:25-26). Recomputing from the published per-task medians reproduces the headline (lines -52.6% [-63, -41], cost -25.9% [-36, -16]).",
    "impact": "The numbers are consistent, but no one can recompute them from shipped code or rerun the statistics on raw data.",
    "fix": "Ship the aggregation script and a compressed results.json per release.",
    "severity": "low",
-   "evidence": ["benchmarks/results/2026-10-07-agentic.md:32-34", "benchmarks/agentic/compare.py:76-91", ".gitignore:25-26"]
+   "evidence": ["benchmarks/results/2026-10-07-agentic.md:32-34", "benchmarks/agentic/compare.py:78-91", ".gitignore:25-26"]
   },
   {
    "lens": "G9",
@@ -549,7 +549,7 @@
    "horizon_fit": 1.2,
    "effort": 2,
    "action": "extract",
-   "evidence": ["hooks/ponytail-map.js:202-312", "hooks/band/metrics.ts:35-90", "tests/map.test.js:9-27"]
+   "evidence": ["hooks/ponytail-map.js:1-111", "hooks/band/metrics.ts:35-90", "tests/map.test.js:9-27"]
   },
   {
    "lens": "O11",
@@ -594,14 +594,14 @@
    "lens": "O2",
    "criterion": "OPP-2",
    "title": "Generate every rule copy from SKILL.md",
-   "description": "The rule text exists in 8 host copies, a JS fallback string (hooks/ponytail-instructions.js:43-75) and a Python port of the level filter (__init__.py:60-80); check-rule-copies.js itself names generation as the upgrade path. A build step would remove the hand-synced copies.",
+   "description": "The rule text exists in 8 host copies, a JS fallback string (hooks/ponytail-instructions.js:43-75) and a Python port of the level filter (__init__.py:61-86); check-rule-copies.js itself names generation as the upgrade path. A build step would remove the hand-synced copies.",
    "value": 2,
    "reach": 2,
    "confidence": "observed",
    "horizon_fit": 1.0,
    "effort": 2,
    "action": "consolidate",
-   "evidence": ["scripts/check-rule-copies.js:39-43", "hooks/ponytail-instructions.js:43-75", "__init__.py:60-80"]
+   "evidence": ["scripts/check-rule-copies.js:39-43", "hooks/ponytail-instructions.js:43-75", "__init__.py:61-86"]
   },
   {
    "lens": "O5",

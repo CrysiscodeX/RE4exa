@@ -147,7 +147,7 @@
   "SEC-4": {
    "level": 1,
    "confidence": "observed",
-   "evidence": ["probe ci.sbom: sbom_steps=0, vex_steps=0", "probe meta.notices: files=[]", "src/vendor/enriched-markdown/README.md:1-20"],
+   "evidence": ["probe ci.sbom: sbom_steps=0, vex_steps=0", "probe meta.notices: files=[]", "src/vendor/enriched-markdown/README.md:1-17"],
    "note": "No SBOM or VEX, and no third-party notices file for the 47 dependencies compiled or bundled into releases. The one vendored component documents its source, integrity hash, change and license.",
    "source": "review"
   },
@@ -475,7 +475,7 @@
   {
    "lens": "G11",
    "title": "Billed cloud machines can be created without approval in Full access",
-   "case": "src-tauri/src/vm/tools.rs:40 (vm_manage creates Daytona, AWS EC2 or AgentCore machines) and vm/tools.rs:111; src-tauri/src/providers/mcp_host.rs:491 skips approvals in full mode except for ALWAYS_ASK = [\"pandacode_cloud_cli\"] (src-tauri/src/cloud/deploy.rs:25). The only guard is tool-description text asking the model to confirm.",
+   "case": "src-tauri/src/vm/tools.rs:40 (vm_manage creates Daytona, AWS EC2 or AgentCore machines) and src-tauri/src/vm/tools.rs:111; src-tauri/src/providers/mcp_host.rs:491 skips approvals in full mode except for ALWAYS_ASK = [\"pandacode_cloud_cli\"] (src-tauri/src/cloud/deploy.rs:25). The only guard is tool-description text asking the model to confirm.",
    "impact": "Unbounded spend in the user's connected cloud accounts from a default-mode agent loop or an injected instruction. Impact category: unbounded consumption (OWASP LLM10).",
    "fix": "Add cloud create and start actions of vm_manage to ALWAYS_ASK, add a per-task machine-count or spend cap, and cover both in the mcp_host tests.",
    "severity": "medium",
@@ -493,7 +493,7 @@
   {
    "lens": "G9",
    "title": "No SBOM, provenance, update bot or vulnerability scan; a signing secret is exposed to dependency installs",
-   "case": "Probes ci.sbom (0 steps), ci.provenance (false), deps.update_bot (none) and ci.security_scans (none); installers are unsigned by default (docs/releasing.md:134-159); .github/workflows/release.yml:57 sets APPLE_CERTIFICATE at job level, so it is in the environment of npm ci (release.yml:70).",
+   "case": "Probes ci.sbom (0 steps), ci.provenance (false), deps.update_bot (none) and ci.security_scans (none); installers are unsigned by default (docs/releasing.md:134-159); .github/workflows/release.yml:57 sets APPLE_CERTIFICATE at job level, so it is in the environment of npm ci (.github/workflows/release.yml:70).",
    "impact": "Users cannot verify who built a release or which components it contains, known-vulnerable dependencies go unnoticed, and the CRA SBOM and vulnerability-handling obligations due from December 2027 are unprepared. Impact category: supply-chain integrity.",
    "fix": "Generate CycloneDX SBOMs for npm and Cargo in release.yml, add a build-provenance attestation step, enable Dependabot or Renovate with cargo-audit and npm audit gates, move the certificate secret to the signing step only, and use npm ci --ignore-scripts where the build allows.",
    "severity": "medium",
