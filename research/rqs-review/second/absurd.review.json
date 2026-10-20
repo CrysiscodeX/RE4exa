@@ -1,0 +1,133 @@
+{
+  "rqs_review": 1,
+  "target": {"name": "absurd", "commit": "3cfc64f10b0bef7ff159ec4e01a4ae76424c8d05"},
+  "profile": "workflow-engine",
+  "flags": {
+    "uses_llm": true,
+    "has_ui": true,
+    "executes_code": true,
+    "parses_untrusted": false,
+    "uses_crypto": false,
+    "heavy_compute": false,
+    "network_service": true,
+    "distributed": true
+  },
+  "scope_notes": "Postgres-native durable execution engine (SQL schema + TS/Python/Go SDKs + absurdctl CLI + habitat web UI): workflow-engine. uses_llm=true because absurdctl ships and installs an agent skill (skills/absurd/SKILL.md, CHANGELOG.md:35) and is meant to be driven by agents; has_ui and network_service from habitat (HTTP on :7890); executes_code because workers run registered task handlers for tasks any caller (including agents via spawn-task) enqueues; distributed via npm, PyPI and GitHub release binaries. No crypto, no third-party content parsing, no heavy compute. Second-reviewer subset: 16 criteria only.",
+  "reviewer": {"id": "second-reviewer", "kind": "agent", "conflicts": "none"},
+  "date": "2026-10-20",
+  "scores": {
+    "PUR-1": {
+      "level": 3,
+      "confidence": "observed",
+      "evidence": ["README.md:8", "README.md:41", "README.md:58", "README.md:215", "docs/comparison.md:14", "docs/comparison.md:105", "CONTRIBUTING.md:105"],
+      "note": "README states the problem (durable execution on Postgres only), how to start, the agent workflow, and a non-goal (no push model); docs/comparison.md lists what Absurd deliberately does not own; claim-expiry overlap is documented. No machine-readable capability statement (SKILL.md is prose).",
+      "source": "review"
+    },
+    "PUR-2": {
+      "level": 1,
+      "confidence": "observed",
+      "evidence": ["README.md:8", "README.md:37", "docs/comparison.md:9", "rg -il 'benchmark|throughput|p99|latency' . -> only docs/storage.md:223 (prose) and CHANGELOG.md:50", "probe test.bench found=false; claims.harness harness_files=0"],
+      "note": "No numeric headline claims, but the value framing ('simplest durable execution workflow system', exactly-once promise) and the opinionated comparison are unmeasured; no benchmark harness, results, baseline or overhead numbers exist in the repo.",
+      "source": "review"
+    },
+    "COR-1": {
+      "level": 3,
+      "confidence": "observed",
+      "evidence": [".github/workflows/test.yml:3", ".github/workflows/test.yml:33", ".github/workflows/test.yml:53", "Makefile:39", "Makefile:57", ".github/workflows/build.yml:105", "habitat/internal/server/handlers_tasks_test.go", "probe test.ratio 0.687 (15588/22680 lines)"],
+      "note": "SQL-level integration tests against real Postgres plus TS, Python and Go SDK suites run on every push and PR via make check/test. Gaps: habitat Go tests are not run in CI (build.yml only builds), single OS (ubuntu-latest), no coverage measurement, ratio not reported by the project.",
+      "source": "review"
+    },
+    "COR-3": {
+      "level": 0,
+      "confidence": "observed",
+      "evidence": ["probe test.mutation/test.property/test.fuzz found=false", "rg 'hypothesis|fast-check|quickcheck|gopter|mutmut|stryker|func Fuzz|fuzz' -> no test-strength tooling (only Math.random in examples)", "tests/test_retry_delay_overflow.py:10"],
+      "note": "No mutation, property-based or fuzz testing anywhere; only hand-picked parametrized edge cases.",
+      "source": "review"
+    },
+    "REL-1": {
+      "level": 4,
+      "confidence": "observed",
+      "evidence": ["sql/absurd.sql:223", "sql/absurd.sql:246", "sql/absurd.sql:268", "tests/test_state_transitions.py:41", "tests/test_checkpoints.py:118", "tests/test_idempotent_spawn.py:28", "sql/absurd.sql:65", "docs/concepts.md:314", "CONTRIBUTING.md:105"],
+      "note": "Core purpose: step checkpoints in Postgres, claim leases with expiry and extension, spawn idempotency keys, bounded retries with capped backoff and max_attempts; CI tests simulate worker loss via fake-time lease expiry and verify checkpoints survive retries. Not 5: no process-kill fault injection, and overlapping execution after claim expiry is documented rather than prevented.",
+      "source": "review"
+    },
+    "SEC-1": {
+      "level": 0,
+      "confidence": "observed",
+      "evidence": ["git ls-files | grep -ci security -> 0", "probe meta.security_policy found=false (threat_model_mentions 0)", "habitat/README.md:45", "CHANGELOG.md:63"],
+      "note": "No SECURITY.md, no reporting contact, no threat model or trust-boundary statement (habitat listens on all interfaces by default with no stated exposure assumptions). Only a changelog line records a past security fix.",
+      "source": "review"
+    },
+    "SEC-2": {
+      "level": 2,
+      "confidence": "observed",
+      "evidence": ["sdks/typescript/package-lock.json", "sdks/python/uv.lock", "habitat/go.sum", "habitat/ui/package-lock.json", ".github/workflows/test.yml:30", ".github/workflows/build.yml:102", "probe deps.update_bot found=false", "probe ci.security_scans found=false"],
+      "note": "Lockfiles are committed and the SDK CI uses npm ci, but the release habitat UI build uses npm install (lockfile not enforced), there is no Dependabot/Renovate and no known-vulnerability scan in CI.",
+      "source": "review"
+    },
+    "SEC-5": {
+      "level": 1,
+      "confidence": "observed",
+      "evidence": [".github/workflows/build.yml:353", ".github/workflows/build.yml:388", ".github/workflows/build.yml:18", ".github/workflows/test.yml:13", ".github/workflows/docs.yml:11", ".github/workflows/build.yml:131", ".github/workflows/build.yml:256", "probe ci.pinned_actions 0/37 SHA-pinned"],
+      "note": "All 37 action references are tag or branch refs, including a branch-pinned publish action in jobs holding id-token: write. test.yml and most build.yml jobs set no permissions (repo default token). Mitigations: docs.yml top-level read, environment-gated OIDC publishing, no pull_request_target.",
+      "source": "review"
+    },
+    "AGT-2": {
+      "level": 2,
+      "confidence": "observed",
+      "evidence": ["absurdctl:1016", "absurdctl:1044", "absurdctl:816", "absurdctl:1659", "absurdctl:1486", "absurdctl:1226", "skills/absurd/SKILL.md:198"],
+      "note": "drop-queue asks for confirmation, cleanup and migrate offer --dry-run, and the skill tells agents which commands change state. Gaps: detach-candidate --drop drops a partition with no confirmation or dry-run, and the skill's state-changing list omits detach-candidate, cron and queue-policy; no read-only mode or scoped credential guidance; no machine-readable effect hints.",
+      "source": "review"
+    },
+    "INT-1": {
+      "level": 2,
+      "confidence": "observed",
+      "evidence": ["docs/sdks/typescript.md:26", "docs/tools/absurdctl.md:107", "sdks/typescript/package.json:3", "absurdctl:2262", "probe agent.json_output/agent.mcp/agent.openapi found=false", "rg get_schema_version sdks/* -> 0 hits"],
+      "note": "Documented SDK APIs (TS/Python/Go), a partially documented SQL function interface and a documented CLI with a queryable schema version. The CLI has no JSON output, there is no MCP/OpenAPI surface, SDKs do not check the installed schema version, and no SDK/schema compatibility policy is stated.",
+      "source": "review"
+    },
+    "INT-4": {
+      "level": 2,
+      "confidence": "derived",
+      "evidence": ["sql/absurd.sql:1110", "sql/absurd.sql:1113", "sql/absurd.sql:76", "sql/absurd.sql:570", "sdks/typescript/src/index.ts:1392", "docs/sdks/typescript.md:400", "tests/test_retry_delay_overflow.py:31", "CONTRIBUTING.md:42", "grep -c 'raise exception sqlstate' sql/absurd.sql -> 15 of 80 raise sites"],
+      "note": "Three custom SQLSTATEs (AB001 cancelled, AB002 run already failed, AB003 invalid retry strategy) map to typed SDK errors and are asserted in tests; the remaining raise sites are free-text messages with the generic code. No remediation or retryable fields; CLI exits 1 for every error; CONTRIBUTING's 'Error Payloads' section contains unrelated text.",
+      "source": "review"
+    },
+    "EPI-1": {
+      "level": 2,
+      "confidence": "observed",
+      "evidence": ["sql/absurd.sql:223", "sql/absurd.sql:246", "sql/absurd.sql:268", "tests/test_state_transitions.py:86"],
+      "note": "Task and run records keep task params, headers, retry settings, attempt, claiming worker, timestamps, result and structured failure reasons; checkpoints keep owner run and time. No schema/SDK/task-code version or input digest is recorded with results.",
+      "source": "review"
+    },
+    "EPI-3": {
+      "level": 2,
+      "confidence": "observed",
+      "evidence": ["absurdctl:2472", "absurdctl:2491", "absurdctl:2262", "docs/sdks/typescript.md:131", "sdks/go/absurd/worker.go:333"],
+      "note": "dump-task states its search scope ('not found in any queue') and workers defer unknown task names instead of failing them. list-tasks prints 'No tasks found' without restating filters or limit, and fetchTaskResult documents null as 'task does not exist' for a single-queue lookup that retention cleanup can also empty.",
+      "source": "review"
+    },
+    "MNT-3": {
+      "level": 2,
+      "confidence": "observed",
+      "evidence": ["Makefile:34", "Makefile:49", ".github/workflows/test.yml:33", "habitat/ui/package.json:8", "sdks/typescript/tsconfig.json:7", "Makefile:4", "probe static.lint found=false; static.format found=false"],
+      "note": "Type checking runs in CI (tsc for the TS SDK and habitat UI, ty for the Python SDK; Go compiles), TS configs are strict. No linter is configured, and formatters (prettier, ruff format, gofmt) exist only as a local make target, not checked in CI.",
+      "source": "review"
+    },
+    "EVO-1": {
+      "level": 3,
+      "confidence": "observed",
+      "evidence": ["CHANGELOG.md:5", "CHANGELOG.md:22", "sql/migrations/0.4.0-0.5.0.sql", "sql/migrations/0.5.0-0.5.1.sql", "docs/database.md:78", ".github/workflows/build.yml:22"],
+      "note": "Per-release changelog, a migration script for every schema version, documented upgrade path with --dry-run and --dump-sql, and CI checks SDK versions against the tag. Pre-1.0 versions with no stated versioning policy; behaviour changes are listed as 'Changed' without breaking labels.",
+      "source": "review"
+    },
+    "PRV-3": {
+      "level": 3,
+      "confidence": "observed",
+      "evidence": ["LICENSE:1", "sdks/typescript/package.json:40", "sdks/python/pyproject.toml:7", "sdks/go/absurd/LICENSE", "docs/assets/fonts/commit-mono/commit-mono-license.txt:3", "habitat/ui/package.json:11", "README.md:228"],
+      "note": "Unmodified Apache-2.0 LICENSE with SPDX ids in manifests, a copy in the Go module and the OFL font licence kept with the font. No third-party notice file for the UI dependencies embedded in released habitat binaries (completeness of retained notices in the bundle not verifiable statically); no REUSE headers.",
+      "source": "review"
+    }
+  },
+  "time_minutes": 40
+}

@@ -1,0 +1,133 @@
+{
+  "rqs_review": 1,
+  "target": {"name": "t3code", "commit": "7e289ae1f77b9137580688aaccf00d48906984ad"},
+  "profile": "agent-harness",
+  "flags": {
+    "uses_llm": true,
+    "has_ui": true,
+    "executes_code": true,
+    "parses_untrusted": true,
+    "uses_crypto": true,
+    "heavy_compute": false,
+    "network_service": true,
+    "distributed": true
+  },
+  "scope_notes": "T3 Code is a control surface that starts and drives coding agents (Codex, Claude, Cursor, Grok, OpenCode, Antigravity) on the user's machine through desktop, web and mobile clients and a local server: agent-harness. Flags: runs agents and their commands, parses provider streams, repository and tool output, uses DPoP/OAuth/signed URLs, serves HTTP/WebSocket/MCP, distributed via app stores, npm, winget, Homebrew and GitHub releases. Second-reviewer subset: 16 criteria only.",
+  "reviewer": {"id": "second-reviewer", "kind": "agent", "conflicts": "none"},
+  "date": "2026-10-20",
+  "scores": {
+    "PUR-1": {
+      "level": 3,
+      "confidence": "observed",
+      "evidence": ["README.md:3", "README.md:5", "README.md:13", "README.md:87", "README.md:93", "docs/user/outside-agents.md:3", "docs/user/cursor.md:46", "docs/user/background-service.md:78"],
+      "note": "README says what it is, which agent CLIs it drives, how to install and start, and that it is early and mostly closed to contributions; the docs index covers agent access over MCP and states per-feature limits ('does not', 'not supported'). Non-goals are thin in the README and there is no machine-readable capability statement.",
+      "source": "review"
+    },
+    "PUR-2": {
+      "level": 1,
+      "confidence": "observed",
+      "evidence": ["README.md:3", "README.md:11", "docs/internals/performance-regressions.md:1", "apps/web/src/performance.bench.ts", "probe test.bench result_files=[]; claims.harness result_files=[]"],
+      "note": "Headline value claims are unmeasured superlatives ('best-in-class mobile app', 'performant'). Perf regression tests with payload budgets exist, but no benchmark results, baselines or dates are published to back the claims.",
+      "source": "review"
+    },
+    "COR-1": {
+      "level": 4,
+      "confidence": "observed",
+      "evidence": [".github/workflows/ci.yml:3", ".github/workflows/ci.yml:184", ".github/workflows/ci.yml:311", ".github/workflows/ci.yml:517", ".github/workflows/windows-tests.yml:1", "probe test.ratio 0.816 (748771/917825 lines, 2159 test files)"],
+      "note": "Unit, browser, sharded server integration and Rust tests run on every PR, and a final Check job requires every job (plus thread-transfer measurements) to pass. No coverage measurement, and tests run only on Linux: the Windows lane is manual and its header says the suite does not pass on Windows yet, though Windows builds ship.",
+      "source": "review"
+    },
+    "COR-3": {
+      "level": 1,
+      "confidence": "observed",
+      "evidence": ["packages/contracts/src/baseSchemas.test.ts:204", "rg 'it.prop(' --glob '*.test.ts' -> 3 sites in 1 file", "probe test.fuzz/test.mutation found=false"],
+      "note": "Three property-based tests on schema string trimming are the only test-strength technique; no fuzzing of the provider-stream, terminal or protocol parsers and no mutation testing.",
+      "source": "review"
+    },
+    "REL-1": {
+      "level": 4,
+      "confidence": "observed",
+      "evidence": ["docs/orchestration-v2/README.md:108", "docs/orchestration-v2/core-graph-and-data-model.md:331", "apps/server/src/orchestration-v2/RestartContinuation.test.ts:146", "apps/server/src/orchestration-v2/RestartContinuation.test.ts:1148", "apps/server/src/orchestration-v2/ProviderRuntimeRecoveryService.test.ts:29", "docs/user/updating.md:44", "docs/user/updating.md:56"],
+      "note": "SQLite-backed event store with command receipts (duplicate command ids return the stored result without re-running provider side effects), durable resume refs, restart continuation that stops after three automatic resumes, and tests for crash-before-start, restart loops and process loss. Terminal commands can still be interrupted, and no process-kill fault injection was found.",
+      "source": "review"
+    },
+    "SEC-1": {
+      "level": 3,
+      "confidence": "observed",
+      "evidence": [".github/SECURITY.md:3", ".github/SECURITY.md:7", "docs/internals/t3-connect.md:35", "docs/internals/t3-connect.md:54", "docs/internals/environment-auth.md:30", "docs/internals/environment-auth.md:107"],
+      "note": "SECURITY.md gives a reporting address and links a full policy with scope and safe harbour; internals docs state trust boundaries (relay as trusted broker and its residual risk, environment as the filesystem boundary, MCP clients as a separate audience). In-repo policy has no response targets or supported versions.",
+      "source": "review"
+    },
+    "SEC-2": {
+      "level": 2,
+      "confidence": "observed",
+      "evidence": ["pnpm-lock.yaml", "native/resource-monitor/Cargo.lock", "pnpm-workspace.yaml:8", "pnpm-workspace.yaml:92", "probe deps.update_bot found=false", "rg 'audit|osv|codeql|scorecard|dependabot|renovate' .github/workflows -> none"],
+      "note": "Lockfiles are committed, dependency build scripts are allowlisted and a minimum release age is in effect (with exclusions). No automated update PRs and no known-vulnerability scanning in CI.",
+      "source": "review"
+    },
+    "SEC-5": {
+      "level": 2,
+      "confidence": "observed",
+      "evidence": [".github/workflows/ci.yml:41", ".github/workflows/ci.yml:426", ".github/workflows/mobile-eas-preview.yml:100", ".github/workflows/ci.yml:9", ".github/workflows/pr-size.yml:127", ".github/workflows/desktop-macos-preview-publish.yml:3", "probe ci.pinned_actions 20/116 SHA-pinned, 2 branch refs"],
+      "note": "Every workflow declares permissions (read-only defaults, narrow job elevation) and privileged triggers are deliberately isolated (pull_request_target reads PR commits only as data; signed previews gated by a vouch list). But 96 of 116 action references are tag or branch refs, including two branch-tracking actions.",
+      "source": "review"
+    },
+    "AGT-2": {
+      "level": 2,
+      "confidence": "observed",
+      "evidence": ["docs/user/permission-modes.md:8", "packages/contracts/src/settings.test.ts:176", "docs/user/outside-agents.md:46", "docs/internals/environment-auth.md:43", "apps/server/src/mcp/McpHttpServer.ts:476", "docs/orchestration-v2/orchestrator-mcp-server.md:489"],
+      "note": "Outside agents get read-only MCP access by default or a signed runtime-mode ceiling, tools expose readOnly/destructive/idempotent hints and child threads cannot escalate. But new agent threads default to Full access (commands and edits without approval), asserted as the default in tests; approval modes exist but are opt-in.",
+      "source": "review"
+    },
+    "INT-1": {
+      "level": 3,
+      "confidence": "observed",
+      "evidence": ["docs/user/outside-agents.md:3", "apps/server/src/mcp/AcpMcpStdioBridge.ts:33", "docs/internals/environment-auth.md:68", "docs/internals/performance-regressions.md:1", "apps/server/package.json:3"],
+      "note": "A documented MCP server for outside agents plus typed RPC contracts; older clients and servers are handled through advertised capabilities and legacy fields, with compatibility tests. The main RPC has no stated protocol version, there is no declared compatibility window, and packages are pre-1.0.",
+      "source": "review"
+    },
+    "INT-4": {
+      "level": 3,
+      "confidence": "observed",
+      "evidence": ["packages/contracts/src/orchestratorMcp.ts:671", "docs/orchestration-v2/orchestrator-mcp-server.md:502", "docs/orchestration-v2/orchestrator-mcp-server.md:507", "apps/server/src/mcp/threadAccess.ts:136", "apps/server/src/mcp/threadAccess.ts:22"],
+      "note": "MCP failures use a closed, documented code set with messages, several of which name the fix, and retry semantics are documented via clientRequestId. No retryable flag, some messages are generic, and the doc lists 14 of the 16 codes defined in the contract.",
+      "source": "review"
+    },
+    "EPI-1": {
+      "level": 2,
+      "confidence": "observed",
+      "evidence": ["docs/orchestration-v2/core-graph-and-data-model.md:221", "docs/orchestration-v2/core-graph-and-data-model.md:315", "docs/internals/assistant-citations.md:3", "docs/orchestration-v2/provider-capability-system.md:23"],
+      "note": "Runs and attempts record provider, provider thread, attempt reason, model, working directory and timestamps, and citations carry source identity. Provider/CLI or server version and input digests are not part of the run records (capability versioning is a 'should').",
+      "source": "review"
+    },
+    "EPI-3": {
+      "level": 3,
+      "confidence": "observed",
+      "evidence": ["docs/user/usage.md:16", "docs/user/usage.md:26", "docs/user/activity-log.md:16", "packages/provider-core/src/server/handoffBudget.ts:235"],
+      "note": "Usage states which history is missing and shows a notice instead of incomplete totals or estimates, activity summaries avoid guessing when details are unavailable, and handoffs state selected versus omitted items. No machine-readable coverage field across outputs.",
+      "source": "review"
+    },
+    "MNT-3": {
+      "level": 4,
+      "confidence": "derived",
+      "evidence": ["tsconfig.base.json:11", ".github/workflows/ci.yml:91", ".github/workflows/ci.yml:100", ".github/workflows/ci.yml:169", ".github/workflows/ci.yml:430", ".vite-hooks/pre-commit:1", "rg '(oxlint|eslint)-disable' apps packages -> 115 sites, 9 without a stated reason"],
+      "note": "Strict TypeScript everywhere (strict, noUncheckedIndexedAccess, exactOptionalPropertyTypes) with Effect diagnostics as errors, oxlint with custom rules, formatting via vp check, knip, rustfmt and typecheck in the required CI gate, and a pre-commit hook. Not 5: a few suppressions carry no reason.",
+      "source": "review"
+    },
+    "EVO-1": {
+      "level": 2,
+      "confidence": "observed",
+      "evidence": ["probe meta.changelog found=false", "docs/operations/release.md:7", "docs/operations/release.md:43", "apps/server/package.json:3", "docs/user/thread-migration.md", "docs/user/updating.md:59"],
+      "note": "Stable/nightly/preview channels with auto-generated GitHub release notes and a migration guide for the orchestration rewrite. No changelog in the repo, no versioning or breaking-change policy, and pre-1.0 versions.",
+      "source": "review"
+    },
+    "PRV-3": {
+      "level": 4,
+      "confidence": "observed",
+      "evidence": ["LICENSE:1", "apps/server/package.json:4", "docs/internals/open-source-licenses.md:3", "docs/internals/open-source-licenses.md:27", "third-party-licenses.config.json", "apps/mobile/modules/t3-terminal/THIRD_PARTY_NOTICES.md"],
+      "note": "MIT LICENSE with SPDX in manifests; third-party notices are generated for web, desktop and mobile builds, and the build fails when a bundled package lacks a distributable licence or notice text; manual notices cover non-npm assets. No REUSE per-file headers.",
+      "source": "review"
+    }
+  },
+  "time_minutes": 35
+}

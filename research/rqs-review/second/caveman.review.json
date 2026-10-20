@@ -1,0 +1,133 @@
+{
+  "rqs_review": 1,
+  "target": {"name": "caveman", "commit": "bad48a0e1df55e05e3f52249afa35ecc1909ee76"},
+  "profile": "agent-harness",
+  "flags": {
+    "uses_llm": true,
+    "has_ui": true,
+    "executes_code": true,
+    "parses_untrusted": true,
+    "uses_crypto": true,
+    "heavy_compute": false,
+    "network_service": true,
+    "distributed": true
+  },
+  "scope_notes": "Caveman 4.0.1 ships skills plus a CLI that installs into 30+ coding agents, a local provider proxy that rewrites and routes LLM traffic with the user's logins, model routing (Auto), Blocks, browse, MCP servers and SDK/middleware packages: judged as agent-harness (runs and acts for agents on the user's machine and accounts) rather than as the engine alone. Flags: LLM use, TUI/extension UI, runs commands and agents, parses tool output and web pages, signature/TLS/OIDC verification in the proxy, loopback/network proxy, npm/PyPI/binary distribution. Second-reviewer subset: 16 criteria only.",
+  "reviewer": {"id": "second-reviewer", "kind": "agent", "conflicts": "none"},
+  "date": "2026-10-20",
+  "scores": {
+    "PUR-1": {
+      "level": 3,
+      "confidence": "observed",
+      "evidence": ["README.md:7", "README.md:69", "README.md:77", "README.md:100", "README.md:196", "README.md:238", "docs/HONEST-NUMBERS.md:30", "tests/verify_repo.py:154"],
+      "note": "README states what it does, for which agents, a one-line start, non-goals (never rewrites prompts or denies commands) and inline limits ('Honest part', 'Not measured yet', pre-release Blocks with no sandbox); CI checks that shipped skills are named in README. Scope is spread over six parts plus a cloud upsell with heavy promotional copy, and there is no machine-readable capability statement for the product.",
+      "source": "review"
+    },
+    "PUR-2": {
+      "level": 2,
+      "confidence": "observed",
+      "evidence": ["README.md:16", "docs/WRAP-BENCHMARK.md:86", "docs/AUTO-BENCHMARK.md:63", "docs/HONEST-NUMBERS.md:16", "docs/HONEST-NUMBERS.md:30", "evals/snapshots/results.json", "benchmarks/results/.gitkeep"],
+      "note": "Methods, sample sizes, dates, a bootstrap interval and net-negative cases are published, and the voice and compress numbers are reproducible from in-repo harnesses. But none of the four headline tiles is reproducible from this checkout: the 33.2% session result and the interim 54% Auto result have no harness/raw runs here (the docs say so), Blocks and the 1.4-2.4x figure come from other repos or papers; benchmarks/results is empty and nothing runs in CI.",
+      "source": "review"
+    },
+    "COR-1": {
+      "level": 4,
+      "confidence": "observed",
+      "evidence": [".github/workflows/ci.yml:3", ".github/workflows/ci.yml:52", ".github/workflows/engine-ci.yml:30", ".github/workflows/engine-ci.yml:102", ".github/workflows/engine-ci.yml:137", ".github/workflows/engine-ci.yml:301", "probe test.ratio 1.137 (166593/146545 lines, 697 test files)"],
+      "note": "Unit, integration and e2e suites (Node, Python, Go incl. -race) run on every PR and main push on Linux, macOS and Windows plus the Node 18 floor. No coverage measurement or flaky-test tracking found.",
+      "source": "review"
+    },
+    "COR-3": {
+      "level": 2,
+      "confidence": "observed",
+      "evidence": ["proxy/internal/translate/properties_test.go:278", "engine/compressors/toon_roundtrip_test.go:32", "engine/compressors/axtree_test.go:326", "proxy/providers/anthropic/scan_string_test.go:55", "engine/compressors/testdata/fuzz/FuzzTOONRoundTrip/e011846e6c4f04ee", "rg -- '-fuzz' .github/workflows -> none", "probe test.mutation found=false"],
+      "note": "16 Go fuzz/property targets cover provider-format translation, JSON string scanning, TOON round-trip and the AX-tree compressor, with fuzz-found inputs committed as regression corpus. No mutation testing, fuzzing is not run beyond seed corpora in CI, and most compressors (JSON, log, HTML, tabular) have no fuzz target.",
+      "source": "review"
+    },
+    "REL-1": {
+      "level": 3,
+      "confidence": "observed",
+      "evidence": ["packages/cli/src/index.ts:3622", "packages/cli/src/index.ts:3703", "packages/cli/tests/native-enable.runtime.mjs:1526", "packages/cli/tests/trial-usage.runtime.mjs:323", "installer/lib/settings.js:128", "packages/cli/src/index.ts:2089"],
+      "note": "Side-effecting setup runs as a journaled transaction (pending journal with before/after hashes and backups) that doctor --fix completes or rolls back, tested in CI; settings writes are atomic and originals are written before conversion. No checkpoint/resume for long runs (trials, learn scans, benchmark harnesses), and in-flight proxy requests are simply lost on a crash.",
+      "source": "review"
+    },
+    "SEC-1": {
+      "level": 3,
+      "confidence": "observed",
+      "evidence": ["SECURITY.md:6", "SECURITY.md:23", "SECURITY.md:29", "SECURITY.md:287", "SECURITY.md:328"],
+      "note": "Supported-version table, response targets (3-business-day acknowledgement, 30-day critical fix target), private GHSA reporting, data flows and an explicit proxy trust boundary including what is not provided. No evidence of per-release threat-model review or measured disclosure timelines.",
+      "source": "review"
+    },
+    "SEC-2": {
+      "level": 4,
+      "confidence": "observed",
+      "evidence": [".github/dependabot.yml:1", ".github/workflows/supply-chain.yml:41", ".github/workflows/supply-chain.yml:75", ".github/workflows/release-packages.yml:254", ".github/workflows/release-packages.yml:256", "pnpm-lock.yaml", "go.sum", "packages/sdk/typescript/package-lock.json"],
+      "note": "Committed lockfiles, weekly grouped Dependabot PRs for actions, Go, Docker and npm with justified ignores, and failing vulnerability gates (govulncheck, pip-audit on certified extras, npm audit in release lanes) with --ignore-scripts installs in CI. No written policy for reviewing new dependencies.",
+      "source": "review"
+    },
+    "SEC-5": {
+      "level": 4,
+      "confidence": "observed",
+      "evidence": [".github/workflows/supply-chain.yml:35", ".github/workflows/ci.yml:8", ".github/workflows/sync-skill.yml:22", ".github/workflows/ci.yml:58", ".github/workflows/scorecard.yml:29", "probe ci.pinned_actions 121/121 SHA-pinned; ci.pull_request_target none"],
+      "note": "Every third-party action is SHA-pinned (kept current by Dependabot), all workflows declare read-only defaults with narrow job-level elevation, credentials are not persisted, and no privileged triggers exist; OpenSSF Scorecard runs. Not 5: Scorecard publishes but does not gate, and there is no CODEOWNERS or other required review for workflow changes.",
+      "source": "review"
+    },
+    "AGT-2": {
+      "level": 3,
+      "confidence": "observed",
+      "evidence": ["packages/cli/src/agent-mcp.ts:257", "packages/cli/tests/agent-mcp.runtime.mjs:66", "README.md:69", "README.md:244", "packages/cli/src/index.ts:1923", "agents/cavecrew-investigator.md:4", "README.md:77"],
+      "note": "MCP tools are read-only with full readOnly/destructive/idempotent hints asserted in tests; setup shows changes and waits for confirmation; learn fixes need a per-edit yes; convert and learn apply have --dry-run; config changes are reversible. Gaps: all six parts are on after install, and the 'read-only' cavecrew investigator is restricted only by its description (no tools allowlist).",
+      "source": "review"
+    },
+    "INT-1": {
+      "level": 5,
+      "confidence": "observed",
+      "evidence": ["packages/cli/src/agent-mcp.ts:45", "mcp/server.go:55", "docs/technical/middleware-protocol.md:111", "docs/technical/middleware-protocol.md:866", "docs/technical/middleware-protocol.md:871", "packages/shared/contracts/openapi/middleware.openapi.json", ".github/workflows/middleware-conformance.yml:5", "probe agent.json_output 224 sites"],
+      "note": "MCP servers negotiate protocol versions, the middleware protocol has an OpenAPI description, versioned JSON Schemas, feature negotiation, an N-1 rule in both directions with a 12-month declared support window and deprecation policy, and CI runs version-skew conformance in both directions; the CLI offers JSON output.",
+      "source": "review"
+    },
+    "INT-4": {
+      "level": 4,
+      "confidence": "observed",
+      "evidence": ["docs/technical/middleware-protocol.md:258", "docs/technical/middleware-protocol.md:267", "packages/shared/contracts/schemas/middleware-error.schema.json:4", "mcp/protocol.go:83", ".github/workflows/middleware-conformance.yml:5"],
+      "note": "The middleware error catalog gives each stable code its HTTP status, a retryable flag and meaning, the envelope is a closed schema, and the conformance kit holds servers to it; MCP tool errors fail closed with a code. No machine-applicable fix field, and CLI errors sit outside this scheme.",
+      "source": "review"
+    },
+    "EPI-1": {
+      "level": 4,
+      "confidence": "observed",
+      "evidence": ["packages/shared/contracts/schemas/middleware-common.schema.json:193", "packages/shared/contracts/schemas/middleware-common.schema.json:224", "packages/shared/contracts/schemas/middleware-receipt.schema.json:14", "docs/WRAP-BENCHMARK.md:63"],
+      "note": "Each replacement records original_sha256, output sha256, transform id and version, a recovery handle and token counts; receipts carry a provider request digest and plan/attempt ids; benchmark reports pin corpus, harness and binary hashes. Results are not signed.",
+      "source": "review"
+    },
+    "EPI-3": {
+      "level": 3,
+      "confidence": "observed",
+      "evidence": ["docs/HONEST-NUMBERS.md:53", "docs/technical/middleware-protocol.md:267", "packages/shared/contracts/schemas/middleware-page.schema.json:15", "packages/shared/contracts/schemas/middleware-plan.schema.json:18", "README.md:85"],
+      "note": "Savings without a comparison are reported as unknown, not_found is kept distinct from storage failure, pages carry a complete flag and plans list skipped items; unmeasured parts are labelled 'Not measured yet'. Not shown to hold uniformly across CLI surfaces.",
+      "source": "review"
+    },
+    "MNT-3": {
+      "level": 2,
+      "confidence": "observed",
+      "evidence": ["tsconfig.base.json:7", "packages/cli/package.json:33", ".github/workflows/engine-ci.yml:29", "git ls-files: no eslint/biome/prettier/ruff/golangci/mypy configs", "probe static.format 'black' hit is the word 'black-box' in .github/workflows/middleware-conformance.yml:3"],
+      "note": "Strict TypeScript (strict, noUncheckedIndexedAccess, exactOptionalPropertyTypes) is type-checked by tsc inside the tested build, and go vet runs in CI. No JS/TS or Python linter, no formatter check (gofmt, prettier or black) in CI, and no Python type checker.",
+      "source": "review"
+    },
+    "EVO-1": {
+      "level": 4,
+      "confidence": "observed",
+      "evidence": ["packages/middleware/typescript/CHANGELOG.md:3", "packages/sdk/typescript/CHANGELOG.md:5", "docs/PACKAGE_RELEASES.md:31", "docs/PACKAGE_RELEASES.md:499", "docs/technical/middleware-protocol.md:854", "SECURITY.md:18", "README.md:88"],
+      "note": "SDK and middleware declare semver with dated per-package changelogs that label breaking changes, CI checks versions against changelog headings, migration notes exist and the protocol has a deprecation policy. The main product (installer/CLI 4.x) has no in-repo changelog (release notes live only on GitHub), and a relicence is labelled breaking in a minor (SDK 1.2.0).",
+      "source": "review"
+    },
+    "PRV-3": {
+      "level": 4,
+      "confidence": "observed",
+      "evidence": ["LICENSING.md:1", "LICENSING.md:11", "NOTICE:1", "LICENSING.md:60", "tests/verify_repo.py:909", "tests/verify_repo.py:1045", "probe meta.license Apache-2.0 unmodified + LICENSE-MIT; meta.notices 14 files"],
+      "note": "Verbatim Apache-2.0 with the pre-3.0 MIT text retained, a NOTICE listing third-party code and font licences, per-package LICENSE/NOTICE copies checked in CI, and Go dependency licences shipped with binaries. No REUSE per-file licensing.",
+      "source": "review"
+    }
+  },
+  "time_minutes": 45
+}
