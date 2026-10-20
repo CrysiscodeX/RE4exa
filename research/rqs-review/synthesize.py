@@ -155,8 +155,9 @@ def main() -> None:
                     rer.append((name, cid, a, b))
         rerun = {"all": _auto_stats(rer), "excluding_re4exa": _auto_stats([x for x in rer if x[0] != "re4exa"]),
                  "note": "re4exa was changed after its review (fixes from that review), so its rerun is not like-for-like"}
-    else:
-        rerun = None
+    else:  # keep the comparison from an earlier run made with --rerun-dir
+        old = HERE / "results.json"
+        rerun = json.loads(old.read_text()).get("auto_vs_reviewer_rerun") if old.exists() else None
     res = {"rqs_results": 1, "standard": {"id": std["standard"]["id"], "version": std["standard"]["version"], "sha256": std["meta"]["source_sha256"]},
            "date": max((t["date"] or "") for t in targets) if targets else None,
            "targets": targets, "dimension_means": dims_mean, "criteria": per_crit, "lens_counts": sorted(
