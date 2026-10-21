@@ -300,6 +300,7 @@ function priority(o) {
 }
 
 /* ---------------- state ---------------- */
+const TARGETS = (RESULTS && RESULTS.targets) || [];
 function blankReview() {
   return { rqs_review: 1, target: { name: "" }, profile: "agent-tool", flags: Object.fromEntries(FLAGS.map((f) => [f, false])), reviewer: { id: "", kind: "human", conflicts: "" },
            date: new Date().toISOString().slice(0, 10), scores: {} };
@@ -358,13 +359,17 @@ function renderScore() {
   const rev = state.review;
   const el = $("#score");
   const flags = rev.flags || {};
+  const isOther = !TARGETS.some((t) => t.name === (rev.target || {}).name);
   el.innerHTML = `
-  ${state.example ? `<div class="notice" id="ex-note">Example loaded: the review of <b>${esc(rev.target.name)}</b> from the fifteen-review set. Change anything to try the scoring, or <button class="btn" id="b-new">Start a new review</button></div>` : ""}
+  ${state.example ? `<div class="notice" id="ex-note">Showing the review of <b>${esc(rev.target.name)}</b> from the fifteen-review set. Change anything to try the scoring, pick another repository above, or <button class="btn" id="b-new">Start a new review</button></div>` : ""}
   <div class="bench">
     <div class="dim" style="gap:18px;min-width:0">
       <div class="panel" style="display:grid;gap:12px">
         <div class="row" style="align-items:end">
-          <div class="field" style="flex:2 1 220px"><label for="t-name">Repository</label><input type="text" id="t-name" value="${esc(rev.target.name || "")}" placeholder="owner/repo"></div>
+          <div class="field" style="flex:2 1 220px"><label for="t-pick">Repository</label>
+            <select id="t-pick">${TARGETS.map((t) => `<option value="${esc(t.name)}" ${!isOther && t.name === rev.target.name ? "selected" : ""}>${esc(t.name)} · ${esc(t.repo || "")}</option>`).join("")}
+              <option value="__other" ${isOther ? "selected" : ""}>Another repository…</option></select>
+            <input type="text" id="t-name" value="${esc(isOther ? rev.target.name || "" : rev.target.name)}" placeholder="owner/repo of the repository you are reviewing" aria-label="Repository name" ${isOther ? "" : "hidden"}></div>
           <div class="field" style="flex:1 1 170px"><label for="t-profile">Profile</label><select id="t-profile">${Object.keys(STD.profiles).map((p) => `<option ${p === rev.profile ? "selected" : ""}>${p}</option>`).join("")}</select></div>
           <div class="field" style="flex:1 1 170px"><label for="t-rev">Reviewer</label><input type="text" id="t-rev" value="${esc((rev.reviewer || {}).id || "")}" placeholder="name or agent id"></div>
         </div>
@@ -395,7 +400,9 @@ function renderScore() {
 
 function collect() {
   const rev = state.review;
-  rev.target = { ...(rev.target || {}), name: $("#t-name").value.trim() };
+  const pick = $("#t-pick").value;
+  const known = TARGETS.find((t) => t.name === pick);
+  rev.target = known ? { name: known.name, repo: known.repo } : { ...(rev.target || {}), name: $("#t-name").value.trim() };
   rev.profile = $("#t-profile").value;
   rev.reviewer = { ...(rev.reviewer || {}), id: $("#t-rev").value.trim() };
   rev.flags = Object.fromEntries(FLAGS.map((f) => [f, $("#fl-" + f).checked]));
@@ -431,6 +438,13 @@ function updateGauge() {
 function bindScore() {
   const el = $("#score");
   const onChange = (ev) => {
+    if (ev.target.id === "t-pick") {  // a reviewed repository loads its review; "another" starts a blank one
+      const t = TARGETS.find((x) => x.name === ev.target.value);
+      state = t ? { review: JSON.parse(JSON.stringify(t.review)), example: true } : { review: blankReview(), example: false };
+      saveDraft(); renderScore();
+      if (!t) $("#t-name").focus();
+      return;
+    }
     const id = ev.target.id || "";
     if (id === "t-profile") $("#p-text").textContent = STD.profiles[ev.target.value]?.text || "";
     if (id.startsWith("fl-")) { collect(); saveDraft(); renderScore(); return; }
