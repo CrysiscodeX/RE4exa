@@ -111,3 +111,49 @@ The cards are summarized in [03-ideas.md](03-ideas.md). Each advocate came back 
 **Families.** I grouped the ten cards into five families. Families A (durable record, single node) and B (fleet/CI) are the strongest seeds for candidates. C (long-lived work) and D (effects gateway) may be features, not products. E (null option and spec) holds the baselines every candidate has to beat.
 
 **Moderator decision (method, not product).** Layer 4 tests every card against the skeptic's ten questions, not only the families. Clustering too early would hide weak cards inside strong families.
+
+## J-04 Debate round 1: attack and scoring
+
+The files are [round-1-skeptic.md](04-debate/round-1-skeptic.md) (237 lines) and [round-1-judge.md](04-debate/round-1-judge.md) (257 lines).
+
+**Spot checks.** I checked three of the skeptic's critical claims against the clones, and all three hold.
+
+1. **The rea Evidence ID is a hash of the semantic projection** (`rea:src/domain/evidence.ts:251-278`). The projection includes `raw_result`, `normalized_result` and `environment`. So the ID is known only after the probe runs. It changes when output varies between runs, and it changes between hosts.
+2. **pi-durable tools take a `models` object from `HarnessOptions`** (`durable:src/harness/types.ts:217-218`). Its `commit` belongs to the tool runtime (`:243`). It is not shared with the tool's result.
+3. **absurd events are cached and the first emit wins** (`absurd:README.md:160-161`). A reused event name returns the old payload.
+
+**The skeptic and the judge disagree on one point.** I am recording the disagreement here rather than averaging it.
+- The judge ranks **D-1 first**, saying it fixes rea's path-dependent IDs on paper.
+- The skeptic argues that D-1's step key cannot be the Evidence ID at all (X-1). It also argues that D-1's "same atomic commit" is not in pi-durable's API (W-D1-2).
+- Both points are true at the same time. D-1's *intent* is the right one, and its *mechanism* as written does not work. Round 2 has to give a mechanism.
+
+**The skeptic proposed forcing the cards together.** The judge's ranking supports it independently: the judge also proposed merging D-1 with R-1.
+- R-1, D-1 and L-1 become a **durable case file**.
+- R-2, L-2 and B-1 become a **CI sweep and delta gate**.
+- D-2 becomes the effects layer.
+- B-2 becomes an option.
+- S-2 becomes a mandatory layer.
+- S-1 stays as the baseline.
+
+I am not adopting the merge yet. Round 2 gives the advocates a chance to argue against it.
+
+**The judge found systemic gaps that no card fills:**
+
+| Gap | Where every card stands |
+|---|---|
+| AGT-1, prompt injection | at most 2 |
+| SEC-1, threat model | U |
+| EPI-2, calibration | U or 2 |
+| SEC-6, secrets taken from targets | at most 2 |
+| PRV-4 / EVO-4 | No card states its own CRA position or support period. Six of them sell CRA evidence to their users |
+
+Two of the skeptic's cross-card weak spots are critical: **X-1** (output-derived identity) and **X-2** (no enforced untrusted-content boundary).
+
+**Moderator decision (method).** In round 2 each advocate also **owns the resolution of specific cross-card gaps**. Without an owner these would stay everyone's problem and no one's design.
+
+| Advocate | Gaps it owns |
+|---|---|
+| A-rea | X-1 identity, X-5 importability, X-6 coverage, EPI-2 calibration |
+| A-leanrea | X-2 untrusted content and injection evaluation, SEC-1 threat model, X-9 bytes per answer, X-8 platform reach |
+| A-durable | X-3 model access versus delegated sign-in, X-7 replay from declared effects, X-10 spend and budget, SEC-6 secret handling |
+| A-absurd | X-4 storage split, the lease fence, B-2 event semantics, PRV-4/EVO-4 support period and CRA position |
