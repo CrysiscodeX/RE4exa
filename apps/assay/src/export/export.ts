@@ -225,7 +225,7 @@ export function makeBundle(k: Kernel, caseId: string, home: string, version: str
 export function verifyBundle(
   b: Bundle,
   trustedPublicKey?: string,
-): { records: number; claims: number; signer: string } {
+): { records: number; claims: number; signer: string; authenticated: boolean } {
   if (b.spec !== BUNDLE_SPEC) throw new AssayError("bundle_tampered", { why: "unknown spec" });
   if (b.signature?.alg !== "ed25519")
     throw new AssayError("bundle_tampered", { why: `unsupported signature algorithm ${String(b.signature?.alg)}` });
@@ -251,5 +251,7 @@ export function verifyBundle(
     records: b.records.length,
     claims: Array.isArray(b.manifest.claims) ? b.manifest.claims.length : 0,
     signer: sha256(pub).slice(0, 16),
+    // Without a trusted key the check proves integrity only: anyone can re-sign an edited bundle with a new key.
+    authenticated: trustedPublicKey !== undefined,
   };
 }

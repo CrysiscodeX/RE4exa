@@ -14,6 +14,8 @@ export interface AssayProbe extends ProbeDef {
   sweep: ("root" | "each")[];
   /** The result depends on the file name (extension), so the name joins the ProbeKey profile. */
   nameSensitive?: boolean;
+  /** "approval": the person must approve each run (router rows whose tool downloads or executes code). */
+  consent?: "none" | "approval";
 }
 
 export type JsonObject = { [k: string]: Json };

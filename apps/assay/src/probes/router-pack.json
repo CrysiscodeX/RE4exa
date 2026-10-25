@@ -11,7 +11,7 @@
         {
           "id": "asar-list",
           "program": "npx",
-          "args": ["-y", "@electron/asar", "list", "{path}"],
+          "args": ["-y", "@electron/asar@4.3.1", "list", "{path}"],
           "platforms": ["linux", "darwin", "win32"],
           "fallback": "archive.list reads the ASAR header in TypeScript",
           "outputCap": 262144

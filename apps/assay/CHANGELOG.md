@@ -19,6 +19,19 @@ What each contract promises:
 
 The first version.
 
+Fixed before release. These were found by two independent RQS-2030 reviews and reproduced before fixing:
+- The verifier marked "app.js does NOT use eval" verified, because it checked only the predicate. A claim whose text negates its predicate is now unverifiable; `negate: true` checks an absence.
+- External-tool probes marked `consent: approval` ran without asking, with Assay's full environment. They now ask every time and get the allow-listed environment. `@electron/asar` is pinned.
+- A write to `docs/hooks/x`, where `docs` links to `.git`, landed in `.git/hooks`; `.GIT/` was also accepted. Both are refused.
+- `assay verify --bundle` accepted a bundle re-signed with any key. It now reports integrity only and exits 3 unless `--key` is given. `assay key` prints the public key.
+- Output of commands the verifier re-ran was stored unredacted. It is now redacted, and the command gets the allow-listed environment.
+- `assay sweep --json` piped into another program was cut at 64 KiB.
+- Worker reports reached the coordinator outside the untrusted-content envelope.
+- `assay_release_worker` was declared read-only.
+- Approval cards cut arguments at 2,000 characters. They now show up to 256 KiB, and say when they show less.
+- Workers had no spend cap; they now get what is left of the case budget.
+- The live benchmark graded the two arms differently and read its baseline from outside the repository.
+
 - **Durable kernel** on SQLite:
   - one process per store;
   - leases with a write fence;

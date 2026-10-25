@@ -4,7 +4,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { App, defaultHome, VERSION } from "./app/app.ts";
 import { isAssayError } from "./errors.ts";
-import { type Bundle, verifyBundle } from "./export/export.ts";
+import { type Bundle, signingKey, verifyBundle } from "./export/export.ts";
 
 const HELP = `assay ${VERSION} — chat with your signed-in agent clients, run sub-agents, check every claim
 
@@ -14,7 +14,8 @@ usage:
   assay sweep <path> [--json]                                      model-free first pass on a file or folder
   assay probe <path> --probe <id> [--params JSON]                  run one probe; prints the evidence record
   assay probe --list                                               list probes
-  assay verify --bundle <file> [--key <public.pem>]                check a signed evidence bundle
+  assay verify --bundle <file> [--key <public.pem>]                check a signed bundle (exit 3: intact, signer unchecked)
+  assay key                                                        print the public key that signs your bundles
   assay export <case-id> --format s2|sarif|cyclonedx|md|bundle [--out FILE]
   assay capabilities                                               machine-readable capability statement
   assay forget <case-id> | --all                                   delete cases from the store
@@ -33,6 +34,7 @@ const FLAGS: Record<string, { value: string[]; bool: string[] }> = {
   sweep: { value: ["--workspace", "--home"], bool: ["--json"] },
   probe: { value: ["--probe", "--params", "--workspace", "--home"], bool: ["--list"] },
   verify: { value: ["--bundle", "--key"], bool: [] },
+  key: { value: ["--home"], bool: [] },
   export: { value: ["--format", "--out", "--workspace", "--home"], bool: [] },
   capabilities: { value: ["--workspace", "--home"], bool: [] },
   forget: { value: ["--workspace", "--home"], bool: ["--all"] },
@@ -145,6 +147,12 @@ async function main(argv: string[]): Promise<number> {
       await app.close();
       return 0;
     }
+    case "key": {
+      // The public half of this store's bundle-signing key, to give to people who check your bundles.
+      const { publicPem } = signingKey(resolve(home));
+      process.stdout.write(publicPem);
+      return 0;
+    }
     case "verify": {
       const file = flag(args, "--bundle");
       if (!file) {
@@ -156,8 +164,16 @@ async function main(argv: string[]): Promise<number> {
         JSON.parse(readFileSync(resolve(file), "utf8")) as Bundle,
         key ? readFileSync(resolve(key), "utf8") : undefined,
       );
-      console.log(`bundle verifies: ${r.records} evidence records, ${r.claims} claims, signer ${r.signer}`);
-      return 0;
+      if (r.authenticated) {
+        console.log(`bundle is authentic: ${r.records} evidence records, ${r.claims} claims, signed by ${r.signer}`);
+        return 0;
+      }
+      console.log(
+        `bundle is intact (${r.records} evidence records, ${r.claims} claims) but its signer is NOT authenticated:\n` +
+          `  it is signed with the key it carries (fingerprint ${r.signer}), and anyone can re-sign an edited bundle.\n` +
+          "  Ask the sender for their key (`assay key` prints it) and pass --key <public.pem>.",
+      );
+      return 3;
     }
     case "export": {
       const caseId = args[0];
@@ -213,8 +229,11 @@ function forget(app: App, caseId: string): void {
   });
 }
 
+// Exit only after stdout has drained: process.exit on a pipe drops whatever is still buffered (64 KiB).
+const exitAfterFlush = (code: number) => process.stdout.write("", () => process.exit(code));
+
 main(process.argv.slice(2)).then(
-  (code) => process.exit(code),
+  (code) => exitAfterFlush(code),
   (e) => {
     if (isAssayError(e)) {
       const j = e.toJSON();

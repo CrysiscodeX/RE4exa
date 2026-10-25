@@ -122,6 +122,7 @@ const settle = async (orch: Orchestrator, caseId: string) => {
 };
 
 test("coordinator spawns two workers that run in parallel, report done, and are released", async () => {
+  let checkUntrusted: boolean | undefined;
   const s = setup({
     turn: async (text, opts, call) => {
       if (opts.systemPrompt.includes("You are worker")) {
@@ -133,7 +134,8 @@ test("coordinator spawns two workers that run in parallel, report done, and are 
       await call("assay_spawn_worker", { task: "look at alpha", retryId: "r1" });
       await call("assay_spawn_worker", { task: "look at alpha", retryId: "r1" }); // retry: same worker
       await call("assay_spawn_worker", { task: "look at beta" });
-      const r = (await call("assay_check_workers", { wait: 5 })) as { text: string };
+      const r = (await call("assay_check_workers", { wait: 5 })) as { text: string; untrusted?: boolean };
+      checkUntrusted = r.untrusted;
       return `workers: ${r.text}`;
     },
   });
@@ -146,6 +148,7 @@ test("coordinator spawns two workers that run in parallel, report done, and are 
   const workers = s.orch.workers(c.id);
   assert.equal(workers.length, 2, "the retried spawn reused the first worker");
   assert.deepEqual(workers.map((w) => w.result).sort(), ["alpha finished", "beta finished"]);
+  assert.equal(checkUntrusted, true, "worker reports reach the coordinator as untrusted content");
   assert.ok(Date.now() - t0 < 2000);
   await s.orch.checkWorkers(c.id);
   for (const w of workers) await s.orch.releaseWorker(c.id, w.id);

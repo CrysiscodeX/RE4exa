@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-25T23:20:04.986Z",
+  "at": "2026-10-25T23:31:44.002Z",
   "model": "haiku",
   "reps": 3,
   "capUsd": 3,
@@ -12,6 +12,7 @@
       "correct": 93,
       "facts": 105,
       "verifiedFacts": 0,
+      "correctWithClaims": null,
       "costPerCorrect": 0.001,
       "medianMs": 16258
     },
@@ -19,21 +20,24 @@
       "arm": "assay",
       "runs": 24,
       "costUsd": 0.0626,
-      "correct": 89,
+      "correct": 88,
       "facts": 105,
       "verifiedFacts": 80,
-      "costPerCorrect": 0.0007,
+      "correctWithClaims": 89,
+      "costPerCorrect": 0.00071,
       "medianMs": 17109
     }
   ],
-  "ratio": 0.7,
+  "ratio": 0.71,
   "ci": [
-    0.5751641833379485,
-    0.8693336709172723
+    0.5339639280277647,
+    0.9837563518329965
   ],
   "pairedCells": 24,
+  "tasks": 8,
+  "grading": "keyword match on the answer text only, the same rule for both arms",
   "pass": false,
-  "summary": "model haiku, 8 tasks × 3: Tier 0 93/105 facts, $0.0929, 0 machine-verified; Assay 89/105 facts, $0.0626, 80 machine-verified; cost per correct fact ratio Assay/Tier0 = 0.70 [95% bootstrap 0.58–0.87, 24 paired cells]",
+  "summary": "model haiku, 8 tasks × 3: Tier 0 93/105 facts, $0.0929, 0 machine-verified; Assay 88/105 facts, $0.0626, 80 machine-verified; cost per correct fact ratio Assay/Tier0 = 0.71 [95% task-cluster bootstrap 0.53–0.98, 24 paired cells in 8 tasks]; graded on answer text only for both arms",
   "runs": [
     {
       "arm": "tier0",
@@ -96,7 +100,8 @@
           "verdict": null,
           "reason": null
         }
-      ]
+      ],
+      "correctWithClaims": 3
     },
     {
       "arm": "tier0",
@@ -180,7 +185,8 @@
           "verdict": "verified",
           "reason": "the needle occurs in the file"
         }
-      ]
+      ],
+      "correctWithClaims": 5
     },
     {
       "arm": "tier0",
@@ -243,7 +249,8 @@
           "verdict": "verified",
           "reason": "links @rpath/libsparkle.dylib"
         }
-      ]
+      ],
+      "correctWithClaims": 3
     },
     {
       "arm": "tier0",
@@ -309,7 +316,8 @@
           "verdict": "verified",
           "reason": "the needle occurs in the file"
         }
-      ]
+      ],
+      "correctWithClaims": 4
     },
     {
       "arm": "tier0",
@@ -357,7 +365,8 @@
           "verdict": "verified",
           "reason": "the needle occurs in the file"
         }
-      ]
+      ],
+      "correctWithClaims": 4
     },
     {
       "arm": "tier0",
@@ -432,7 +441,8 @@
           "verdict": "verified",
           "reason": "the needle occurs in the file"
         }
-      ]
+      ],
+      "correctWithClaims": 4
     },
     {
       "arm": "tier0",
@@ -489,7 +499,8 @@
           "verdict": "verified",
           "reason": "the needle occurs in the file"
         }
-      ]
+      ],
+      "correctWithClaims": 4
     },
     {
       "arm": "tier0",
@@ -537,7 +548,8 @@
           "verdict": "verified",
           "reason": "the archive has app/link"
         }
-      ]
+      ],
+      "correctWithClaims": 2
     },
     {
       "arm": "assay",
@@ -589,7 +601,8 @@
           "verdict": "verified",
           "reason": "the needle occurs in the file"
         }
-      ]
+      ],
+      "correctWithClaims": 4
     },
     {
       "arm": "tier0",
@@ -663,7 +676,8 @@
           "verdict": null,
           "reason": null
         }
-      ]
+      ],
+      "correctWithClaims": 5
     },
     {
       "arm": "tier0",
@@ -711,7 +725,8 @@
           "verdict": "verified",
           "reason": "links @rpath/libsparkle.dylib"
         }
-      ]
+      ],
+      "correctWithClaims": 3
     },
     {
       "arm": "tier0",
@@ -786,7 +801,8 @@
           "verdict": "verified",
           "reason": "node-gyp-build is in dependencies"
         }
-      ]
+      ],
+      "correctWithClaims": 4
     },
     {
       "arm": "tier0",
@@ -843,7 +859,8 @@
           "verdict": "verified",
           "reason": "the needle occurs in the file"
         }
-      ]
+      ],
+      "correctWithClaims": 4
     },
     {
       "arm": "tier0",
@@ -918,7 +935,8 @@
           "verdict": "verified",
           "reason": "the needle occurs in the file"
         }
-      ]
+      ],
+      "correctWithClaims": 4
     },
     {
       "arm": "tier0",
@@ -984,7 +1002,8 @@
           "verdict": "verified",
           "reason": "a literal names api.stable.example.com"
         }
-      ]
+      ],
+      "correctWithClaims": 4
     },
     {
       "arm": "tier0",
@@ -1032,7 +1051,8 @@
           "verdict": "verified",
           "reason": "the archive has app/link"
         }
-      ]
+      ],
+      "correctWithClaims": 2
     },
     {
       "arm": "tier0",
@@ -1100,7 +1120,8 @@
           "verdict": "verified",
           "reason": "the needle occurs in the file"
         }
-      ]
+      ],
+      "correctWithClaims": 4
     },
     {
       "arm": "tier0",
@@ -1175,7 +1196,8 @@
           "verdict": "verified",
           "reason": "the needle occurs in the file"
         }
-      ]
+      ],
+      "correctWithClaims": 5
     },
     {
       "arm": "tier0",
@@ -1197,7 +1219,7 @@
       "rep": 3,
       "costUsd": 0.0016165200000000002,
       "ms": 13274,
-      "correct": 3,
+      "correct": 2,
       "facts": 4,
       "verifiedFacts": 3,
       "claims": 2,
@@ -1223,7 +1245,8 @@
           "verdict": "verified",
           "reason": "links @rpath/libsparkle.dylib"
         }
-      ]
+      ],
+      "correctWithClaims": 3
     },
     {
       "arm": "tier0",
@@ -1315,7 +1338,8 @@
           "verdict": "unverifiable",
           "reason": "read from a lone package.json: an implicit node-gyp install cannot be ruled out"
         }
-      ]
+      ],
+      "correctWithClaims": 4
     },
     {
       "arm": "tier0",
@@ -1381,7 +1405,8 @@
           "verdict": "verified",
           "reason": "the needle occurs in the file"
         }
-      ]
+      ],
+      "correctWithClaims": 4
     },
     {
       "arm": "tier0",
@@ -1438,7 +1463,8 @@
           "verdict": "verified",
           "reason": "the needle occurs in the file"
         }
-      ]
+      ],
+      "correctWithClaims": 4
     },
     {
       "arm": "tier0",
@@ -1513,7 +1539,8 @@
           "verdict": "verified",
           "reason": "the needle occurs in the file"
         }
-      ]
+      ],
+      "correctWithClaims": 4
     },
     {
       "arm": "tier0",
@@ -1561,7 +1588,8 @@
           "verdict": "verified",
           "reason": "the archive has app/link"
         }
-      ]
+      ],
+      "correctWithClaims": 2
     }
   ]
 }

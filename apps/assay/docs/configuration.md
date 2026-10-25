@@ -11,8 +11,7 @@ Assay has very few settings, and each default is the safe choice. Settings that 
 | `ASSAY_LOG` | env | `warn` (`info` under `serve`) | `error`, `warn`, `info`, `debug` or `off`. JSON lines on stderr, with secrets redacted |
 | `ASSAY_LIVE` | env | unset | `1` enables tests and benchmarks that spend real model usage |
 | Mode | per case (UI) | `enforced` | `enforced` exposes only Assay's tools to the agent client. `open` keeps the client's built-in tools, which bypass Assay's checks, and is labelled "unenforced" |
-| Budget | per case (UI, API `budgetUsd`) | none | A cap in USD. A turn or worker that would cross it is refused with `budget_exceeded` |
-| Auto-approval rules | per case (approvals API) | none | Allow one tool without asking. Once a session has read untrusted content a rule stops applying, unless it was created with `evenWhenTainted` |
+| Budget | per case (UI, API `budgetUsd`) | none | A cap in USD. Once the case's recorded spend reaches it, new turns and workers are refused with `budget_exceeded`. The coordinator gets the cap, and each worker what is left of it, as the client's own per-session limit (`maxBudgetUsd`, Claude only). Spend is known only after a turn ends, so one turn can overshoot; Codex and ACP turns are checked only between turns |
 
 Limits fixed in code:
 

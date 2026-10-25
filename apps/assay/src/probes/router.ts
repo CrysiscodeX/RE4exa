@@ -177,6 +177,7 @@ export function externalProbes(pack = loadRouterPack()): AssayProbe[] {
         cost: "medium",
         confidence: "observed",
         sweep: [],
+        consent: row.consent,
         async run(ctx) {
           if (ctx.subject.kind !== "file") fail("external tools run on files");
           const args = tool.args.map((a) => a.replaceAll("{path}", ctx.subject.abs));

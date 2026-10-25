@@ -174,6 +174,11 @@ function WorkerCard(props: { entry: TimelineEntry; worker: WorkerView | undefine
   );
 }
 
+function partialArgs(detail: unknown): string[] {
+  const p = rec(rec(detail).args).partial;
+  return Array.isArray(p) ? p.filter((x): x is string => typeof x === "string") : [];
+}
+
 function ApprovalCard(props: { entry: TimelineEntry; approval: ApprovalView | undefined }): ReactNode {
   const a = props.approval;
   const [busy, setBusy] = useState(false);
@@ -202,6 +207,12 @@ function ApprovalCard(props: { entry: TimelineEntry; approval: ApprovalView | un
       <p>
         <span className="label-sm inline">Why</span> {a.reason}
       </p>
+      {partialArgs(a.detail).length ? (
+        <p className="warn" role="alert">
+          Not shown in full: {partialArgs(a.detail).join(", ")}. Only the start, end and sha256 are below; deny unless
+          you trust where it came from.
+        </p>
+      ) : null}
       <details>
         <summary>Details</summary>
         <pre className="json">{json(a.detail)}</pre>

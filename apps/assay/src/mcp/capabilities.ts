@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 import type { ProbeEngine } from "../contracts.ts";
 import type { Json } from "../evidence/jcs.ts";
 import { DETECTOR_VERSION } from "../policy/redact.ts";
+import { createProbeEngine } from "../probes/engine.ts";
 import { PROTOCOL_VERSION, SUPPORTED_PROTOCOL_VERSIONS } from "./server.ts";
 import { LIMITS, TOOL_SPECS, type ToolSpec, VERIFY_SPEC } from "./tools.ts";
 
@@ -52,9 +53,14 @@ export function capabilityStatement(opts: { engine?: ProbeEngine; verifier?: boo
     },
     tools: specs.map(tool),
     probes: opts.engine
-      ? opts.engine
-          .list()
-          .map((p) => ({ id: p.id, version: p.version, predicate: p.predicate, cost: p.cost, platforms: p.platforms }))
+      ? opts.engine.list().map((p) => ({
+          id: p.id,
+          version: p.version,
+          predicate: p.predicate,
+          cost: p.cost,
+          platforms: p.platforms,
+          consent: (p as { consent?: string }).consent ?? "none",
+        }))
       : [],
     limits: { ...LIMITS },
     redaction: { detectorVersion: DETECTOR_VERSION },
@@ -76,8 +82,15 @@ export function capabilityStatement(opts: { engine?: ProbeEngine; verifier?: boo
   };
 }
 
-export function capabilitiesJson(opts: { engine?: ProbeEngine; verifier?: boolean } = {}): string {
-  return `${JSON.stringify(capabilityStatement(opts), null, 2)}\n`;
+/** The published statement: every tool a served case has, including assay_verify, and every probe. */
+export function publishedStatement(): Json {
+  // list() only reads the probe table, so no store is needed
+  const engine = createProbeEngine({ kernel: null as never, workspace: ROOT, platform: "linux" });
+  return capabilityStatement({ engine, verifier: true });
+}
+
+export function capabilitiesJson(): string {
+  return `${JSON.stringify(publishedStatement(), null, 2)}\n`;
 }
 
 const isMain = process.argv[1] !== undefined && resolve(process.argv[1]) === fileURLToPath(import.meta.url);

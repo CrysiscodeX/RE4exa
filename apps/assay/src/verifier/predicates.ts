@@ -233,5 +233,6 @@ export function predicateCatalog(): string {
       const shown = names.filter((n) => !(p.oneOf ?? []).flat().includes(n.replace("?", "")));
       return `${p.predicate}{${[...shown, ...groups].join(",")}}`;
     })
-    .join(" ");
+    .join(" ")
+    .concat(' | any predicate: negate:true when the text states an absence ("does not use eval")');
 }

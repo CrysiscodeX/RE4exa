@@ -110,7 +110,7 @@
           },
           "params": {
             "type": "object",
-            "description": "params by predicate (workspace-relative paths; literal text, not regex): file.contains{path,offset?,text|hex} file.identify{path,format} file.hash{path,sha256} pkg.has-dependency{path,name,scope?} pkg.has-install-script{path,hook?} js.imports{path,specifier} native.links{path,library} archive.contains{path,entry} endpoint.present{path,host} cmd.exit{program,args?,expect}"
+            "description": "params by predicate (workspace-relative paths; literal text, not regex): file.contains{path,offset?,text|hex} file.identify{path,format} file.hash{path,sha256} pkg.has-dependency{path,name,scope?} pkg.has-install-script{path,hook?} js.imports{path,specifier} native.links{path,library} archive.contains{path,entry} endpoint.present{path,host} cmd.exit{program,args?,expect} | any predicate: negate:true when the text states an absence (\"does not use eval\")"
           },
           "path": {
             "type": "string"
@@ -411,9 +411,433 @@
         "maxBytes": 10485760
       },
       "costHint": "cheap"
+    },
+    {
+      "name": "assay_verify",
+      "effect": "read",
+      "coordinatorOnly": false,
+      "untrustedOutput": true,
+      "description": "Re-run the evidence behind this case's `seen` claims (or one claim) and record verdicts.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "claim_id": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "limits": {
+        "resultTextBytes": 8192
+      },
+      "costHint": "heavy"
     }
   ],
-  "probes": [],
+  "probes": [
+    {
+      "id": "file.identify",
+      "version": "1",
+      "predicate": "file.identify",
+      "cost": "cheap",
+      "platforms": [
+        "linux",
+        "darwin",
+        "win32"
+      ],
+      "consent": "none"
+    },
+    {
+      "id": "file.hash",
+      "version": "1",
+      "predicate": "file.hash",
+      "cost": "cheap",
+      "platforms": [
+        "linux",
+        "darwin",
+        "win32"
+      ],
+      "consent": "none"
+    },
+    {
+      "id": "file.strings",
+      "version": "1",
+      "predicate": "file.strings",
+      "cost": "medium",
+      "platforms": [
+        "linux",
+        "darwin",
+        "win32"
+      ],
+      "consent": "none"
+    },
+    {
+      "id": "file.contains",
+      "version": "1",
+      "predicate": "file.contains",
+      "cost": "cheap",
+      "platforms": [
+        "linux",
+        "darwin",
+        "win32"
+      ],
+      "consent": "none"
+    },
+    {
+      "id": "dir.inventory",
+      "version": "1",
+      "predicate": "dir.inventory",
+      "cost": "cheap",
+      "platforms": [
+        "linux",
+        "darwin",
+        "win32"
+      ],
+      "consent": "none"
+    },
+    {
+      "id": "archive.list",
+      "version": "1",
+      "predicate": "archive.list",
+      "cost": "cheap",
+      "platforms": [
+        "linux",
+        "darwin",
+        "win32"
+      ],
+      "consent": "none"
+    },
+    {
+      "id": "pkg.manifest",
+      "version": "1",
+      "predicate": "pkg.manifest",
+      "cost": "cheap",
+      "platforms": [
+        "linux",
+        "darwin",
+        "win32"
+      ],
+      "consent": "none"
+    },
+    {
+      "id": "pkg.native-addons",
+      "version": "1",
+      "predicate": "pkg.native-addons",
+      "cost": "cheap",
+      "platforms": [
+        "linux",
+        "darwin",
+        "win32"
+      ],
+      "consent": "none"
+    },
+    {
+      "id": "js.imports",
+      "version": "1",
+      "predicate": "js.imports",
+      "cost": "cheap",
+      "platforms": [
+        "linux",
+        "darwin",
+        "win32"
+      ],
+      "consent": "none"
+    },
+    {
+      "id": "js.endpoints",
+      "version": "1",
+      "predicate": "js.endpoints",
+      "cost": "cheap",
+      "platforms": [
+        "linux",
+        "darwin",
+        "win32"
+      ],
+      "consent": "none"
+    },
+    {
+      "id": "elf.info",
+      "version": "1",
+      "predicate": "elf.info",
+      "cost": "cheap",
+      "platforms": [
+        "linux",
+        "darwin",
+        "win32"
+      ],
+      "consent": "none"
+    },
+    {
+      "id": "pe.info",
+      "version": "1",
+      "predicate": "pe.info",
+      "cost": "cheap",
+      "platforms": [
+        "linux",
+        "darwin",
+        "win32"
+      ],
+      "consent": "none"
+    },
+    {
+      "id": "macho.info",
+      "version": "1",
+      "predicate": "macho.info",
+      "cost": "cheap",
+      "platforms": [
+        "linux",
+        "darwin",
+        "win32"
+      ],
+      "consent": "none"
+    },
+    {
+      "id": "wasm.info",
+      "version": "1",
+      "predicate": "wasm.info",
+      "cost": "cheap",
+      "platforms": [
+        "linux",
+        "darwin",
+        "win32"
+      ],
+      "consent": "none"
+    },
+    {
+      "id": "code.obfuscation",
+      "version": "1",
+      "predicate": "code.obfuscation",
+      "cost": "cheap",
+      "platforms": [
+        "linux",
+        "darwin",
+        "win32"
+      ],
+      "consent": "none"
+    },
+    {
+      "id": "ext.electron.asar-list",
+      "version": "1",
+      "predicate": "ext.electron",
+      "cost": "medium",
+      "platforms": [
+        "linux",
+        "darwin",
+        "win32"
+      ],
+      "consent": "approval"
+    },
+    {
+      "id": "ext.hermes.hbc-decompile",
+      "version": "1",
+      "predicate": "ext.hermes",
+      "cost": "medium",
+      "platforms": [
+        "linux",
+        "darwin",
+        "win32"
+      ],
+      "consent": "none"
+    },
+    {
+      "id": "ext.macho.lipo-info",
+      "version": "1",
+      "predicate": "ext.macho",
+      "cost": "medium",
+      "platforms": [
+        "darwin"
+      ],
+      "consent": "none"
+    },
+    {
+      "id": "ext.macho.otool-L",
+      "version": "1",
+      "predicate": "ext.macho",
+      "cost": "medium",
+      "platforms": [
+        "darwin"
+      ],
+      "consent": "none"
+    },
+    {
+      "id": "ext.macho.nm-exports",
+      "version": "1",
+      "predicate": "ext.macho",
+      "cost": "medium",
+      "platforms": [
+        "darwin"
+      ],
+      "consent": "none"
+    },
+    {
+      "id": "ext.macho.codesign-entitlements",
+      "version": "1",
+      "predicate": "ext.macho",
+      "cost": "medium",
+      "platforms": [
+        "darwin"
+      ],
+      "consent": "none"
+    },
+    {
+      "id": "ext.native-logic.objdump-d",
+      "version": "1",
+      "predicate": "ext.native-logic",
+      "cost": "medium",
+      "platforms": [
+        "linux",
+        "darwin",
+        "win32"
+      ],
+      "consent": "none"
+    },
+    {
+      "id": "ext.native-logic.otool-tV",
+      "version": "1",
+      "predicate": "ext.native-logic",
+      "cost": "medium",
+      "platforms": [
+        "darwin"
+      ],
+      "consent": "none"
+    },
+    {
+      "id": "ext.elf-pe.readelf-d",
+      "version": "1",
+      "predicate": "ext.elf-pe",
+      "cost": "medium",
+      "platforms": [
+        "linux"
+      ],
+      "consent": "none"
+    },
+    {
+      "id": "ext.elf-pe.nm-D",
+      "version": "1",
+      "predicate": "ext.elf-pe",
+      "cost": "medium",
+      "platforms": [
+        "linux"
+      ],
+      "consent": "none"
+    },
+    {
+      "id": "ext.elf-pe.objdump-x",
+      "version": "1",
+      "predicate": "ext.elf-pe",
+      "cost": "medium",
+      "platforms": [
+        "linux",
+        "darwin",
+        "win32"
+      ],
+      "consent": "none"
+    },
+    {
+      "id": "ext.go.go-version-m",
+      "version": "1",
+      "predicate": "ext.go",
+      "cost": "medium",
+      "platforms": [
+        "linux",
+        "darwin",
+        "win32"
+      ],
+      "consent": "none"
+    },
+    {
+      "id": "ext.rust.cargo-audit-bin",
+      "version": "1",
+      "predicate": "ext.rust",
+      "cost": "medium",
+      "platforms": [
+        "linux",
+        "darwin",
+        "win32"
+      ],
+      "consent": "none"
+    },
+    {
+      "id": "ext.dotnet.ilspycmd",
+      "version": "1",
+      "predicate": "ext.dotnet",
+      "cost": "medium",
+      "platforms": [
+        "linux",
+        "darwin",
+        "win32"
+      ],
+      "consent": "none"
+    },
+    {
+      "id": "ext.apk.unzip-l",
+      "version": "1",
+      "predicate": "ext.apk",
+      "cost": "medium",
+      "platforms": [
+        "linux",
+        "darwin",
+        "win32"
+      ],
+      "consent": "approval"
+    },
+    {
+      "id": "ext.wasm.wasm-objdump-x",
+      "version": "1",
+      "predicate": "ext.wasm",
+      "cost": "medium",
+      "platforms": [
+        "linux",
+        "darwin",
+        "win32"
+      ],
+      "consent": "none"
+    },
+    {
+      "id": "ext.sqlite.sqlite3-schema",
+      "version": "1",
+      "predicate": "ext.sqlite",
+      "cost": "medium",
+      "platforms": [
+        "linux",
+        "darwin",
+        "win32"
+      ],
+      "consent": "none"
+    },
+    {
+      "id": "ext.plist.plutil-p",
+      "version": "1",
+      "predicate": "ext.plist",
+      "cost": "medium",
+      "platforms": [
+        "darwin"
+      ],
+      "consent": "none"
+    },
+    {
+      "id": "ext.pcap.tshark-conv",
+      "version": "1",
+      "predicate": "ext.pcap",
+      "cost": "medium",
+      "platforms": [
+        "linux",
+        "darwin",
+        "win32"
+      ],
+      "consent": "none"
+    },
+    {
+      "id": "ext.firmware.binwalk-scan",
+      "version": "1",
+      "predicate": "ext.firmware",
+      "cost": "medium",
+      "platforms": [
+        "linux",
+        "darwin"
+      ],
+      "consent": "none"
+    }
+  ],
   "limits": {
     "resultTextBytes": 8192,
     "dataBytes": 8192,

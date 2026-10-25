@@ -1,6 +1,6 @@
 # Assay
 
-**A local workbench for agents.** You chat with the agent clients you already have, signed in with your own accounts: Claude, Codex, or any Agent Client Protocol (ACP) agent. The agent can split work across sub-agents that run in parallel. Every factual claim it makes is re-run against evidence that needs no model, and is shown as ✔ verified, ✖ refuted or ? unverifiable. Investigations survive crashes, and can be rewound, forked at any step, and re-run against a new version.
+**A local workbench for agents.** You chat with the agent clients you already have, signed in with your own accounts: Claude, Codex, or any Agent Client Protocol (ACP) agent. The agent can split work across sub-agents that run in parallel. Each claim it records with one of 10 machine-checkable predicates is re-run without a model and shown as ✔ verified or ✖ refuted. Every other claim is shown as ? unverifiable. Investigations survive crashes, and can be rewound, forked at any step, and re-run against a new version.
 
 ![Claims verified and refuted in the chat](docs/screenshots/claims.png)
 
@@ -49,16 +49,23 @@ node bin/assay.mjs doctor
   - Limits: depth 1, a circuit breaker after 3 failures, a prompt budget, and retry receipts.
   - Worker status is live, exited or unverifiable.
   - "Second opinion" asks a worker on another provider to check a worker's claims.
-- **Every claim checked.** `seen` claims are re-run by a verifier with no model (10 predicates). `cmd.exit` claims, such as "tests pass", run only after you approve. Verdicts feed **calibration per provider and account**, with Wilson intervals.
+- **Claims checked where a predicate fits.**
+  - A `seen` claim that names a predicate is re-run by a verifier with no model (10 predicates). `cmd.exit` claims, such as "tests pass", run only after you approve.
+  - The verdict covers the predicate. A claim whose text negates its predicate ("does not use eval") is marked unverifiable unless the predicate says `negate: true`.
+  - Verdicts feed **calibration per provider and account**, with Wilson intervals.
 - **Safety by default.**
   - Content from the target arrives inside an untrusted-content envelope with a fresh random tag.
   - Once an agent has read such content, any action that writes, executes, uses the network or publishes needs **your approval**, shown in the chat.
-  - Secrets found in targets are stored only as fingerprints.
+  - Secrets found in targets, and in the output of commands the verifier re-runs, are stored only as fingerprints.
+  - Commands, probes and the verifier run with a fixed allow-list of environment variables, not Assay's environment.
+  - External tools that download or execute code (router rows marked `consent: approval`, such as `npx @electron/asar`) ask every time.
 - **Durable cases.**
   - Each probe commits its step, its evidence and any unknown in one transaction.
   - The case log is hash-chained, so you can check it is intact.
   - You can fork a case at any step, and re-run it against a new version: findings are paired across versions by FindingKey.
-- **Exports.** S-2 JSONL, SARIF, CycloneDX, Markdown, and ed25519-signed bundles that anyone can check.
+- **Exports.** S-2 JSONL, SARIF, CycloneDX, Markdown, and ed25519-signed bundles.
+  - `assay verify --bundle` proves a bundle is intact.
+  - It proves who signed it only with `--key` and the signer's public key, which `assay key` prints. Without `--key` it exits 3 and says the signer was not checked.
 
 | Workers in parallel | Approval in the chat | Evidence inspector |
 |---|---|---|
@@ -70,9 +77,9 @@ The model-free benchmark is `node bench/run.ts --gate`, and it runs in CI. The l
 
 | | Measure | Baseline | Assay |
 |---|---|---|---|
-| M1 | Work lost per SIGKILL (30 kills at random points) | rea: the whole session | 0 evidence lost; at most 1 step re-run per kill; keyed effects never duplicated |
-| M2 | Bytes an agent loads to start | rea: 3,211,385 B | **7,565 B** (20 tools) |
-| M3 | Bytes per tool result | rea sends each result twice | median **777 B**, one copy |
+| M1 | Work lost per SIGKILL (30 kills at random points, on a 6-step test worker built on the kernel) | rea: the whole session | 0 evidence lost; at most 1 step re-run per kill; keyed effects never duplicated |
+| M2 | Bytes an agent loads to start | rea: 3,211,385 B | **8,278 B** (20 tools) |
+| M3 | Bytes per tool result | rea sends each result twice | median **546 B**, one copy |
 | M4 | Verifier against oracle claims | Tier 0: 0 machine-verified | 60/60 agree with the oracle; 0 false "verified" |
 | M5 | Planted-instruction attacks (24 kinds of file) | not measured by any parent | 0 of 26 attempted effects ran; all went to approval |
 | M6 | Two processes on one store | PGlite: rows lost in 5 of 8 runs | 1000/1000 second opens refused; 0 rows lost |
@@ -81,31 +88,57 @@ The model-free benchmark is `node bench/run.ts --gate`, and it runs in CI. The l
 | M9 | False "complete" coverage | rea: yes | 0 of 300 |
 | M10 | Time to first evidence | rea CLI starts in 2.1 s | 0.3 ms identify; under 7 ms sweep per fixture |
 | M11 | 4 workers in parallel | serial | 3.7× faster (synthetic 300 ms turns) |
-| M13 | Server start to first verified claim in the browser | — | about 1.1 s |
+| M13 | Server start to first verified claim in the browser | — | 1–2 s (1.1 s and 1.7 s in the last two runs) |
 
 **Live comparison (M12).** The same questions went to the same model, on the same signed-in Claude account, through two set-ups:
 - **Tier 0:** the official client with Bash and leanrea's skill;
 - **Assay:** enforced mode.
 
-The results are in [`bench/results/live.json`](bench/results/live.json), from the final version: 8 tasks × 3 repetitions on Claude Haiku, 24 paired cells, $0.16 in total.
+The results are in [`bench/results/live.json`](bench/results/live.json), from the final version: 8 tasks × 3 repetitions on Claude Haiku, 24 paired cells, $0.16 in total. Both arms are graded the same way, by keyword match on the answer text only. The baseline's skill file is vendored in [`bench/baseline/`](bench/baseline/), so the run can be repeated from this repository.
 
 | | Tier 0 | Assay |
 |---|---|---|
-| Correct facts (keyword grading, as in leanrea) | **93 / 105** | 89 / 105 |
+| Correct facts in the answer | **93 / 105** | 88 / 105 |
 | Cost | $0.093 | **$0.063** |
-| Cost per correct fact | $0.00100 | **$0.00070**: ratio **0.70**, 95% bootstrap 0.58–0.87 |
-| Facts verified by machine | 0 | **80 / 105** (85 of 92 recorded claims verified, 0 refuted) |
-| Median time per task | about 14 s | about 14 s |
+| Cost per correct fact | $0.00100 | **$0.00071**: ratio **0.71**, 95% interval 0.53–0.98 (bootstrap over the 8 tasks) |
+| Facts in claims the verifier confirmed | 0 | **80 / 105** (85 of 92 recorded claims verified, 0 refuted) |
+| Median time per task | about 16 s | about 17 s |
 
-**The target was missed.** M12 was defined in advance as: the whole cost interval at or below parity, *and* accuracy no lower than Tier 0. Cost meets it. Accuracy is 4 facts lower, and all 4 are on one task (`zip-slip`: 6 of 15 against 10 of 15). On that task Tier 0's answers listed benign entries and a sibling `.tar.gz` the question did not ask about. The keyword grader counts each of those as a fact. Assay's shorter answers named the dangerous entries correctly. The grader was not changed after the fact.
+**The target was missed.** M12 was defined in advance as two conditions:
+- the whole cost interval at or below parity;
+- accuracy no lower than Tier 0.
 
-What changed between versions:
-- The first full run scored 90 against 90, at a cost ratio of 0.57, with 16 facts verified.
-- Making claims checkable raised machine-verified facts from 16 to 80. Assay's agents now record more claims, which costs some of the saving.
+Cost meets the first. Accuracy fails the second: Assay's answers carry 5 fewer facts, and 4 of the 5 are on one task (`zip-slip`). On that task Tier 0's answers listed benign entries and a sibling `.tar.gz` that the question did not ask about, and the keyword grader counts each as a fact. The grader was not changed after the fact.
+
+Two earlier versions of this table overstated the result:
+- They graded Assay on its answer plus its recorded claims, and Tier 0 on its answer only. Graded the same way, the first full run was 88 against 90, not 90 against 90.
+- They resampled cells rather than tasks, which gave a narrower interval (0.58–0.87).
+
+What changed between versions: making claims checkable raised machine-verified facts from 16 to 80. Assay's agents now record more claims, which costs some of the saving.
 
 **Caveats:**
 - The tasks are fixtures written for this benchmark, not real-world artifacts.
 - One model and one account were used for both arms.
+- The arms differ in more than tools. Tier 0's prompt asks it to cite offsets, and Assay's agent gets Assay's system prompt.
+- Eight tasks is a small sample. [docs/debt.md](docs/debt.md) sets 60 paired cells as the bar before any public cost claim.
+
+## Independent review
+
+Two agent reviewers scored commit `9373f4d` against RQS-2030 (agent-harness profile), without seeing each other's work.
+- **Result:** grade **C**, quality index 59.3, horizon readiness 13.9, evidence on all 61 criteria. Agreement between them was kappa 0.73.
+- **Report:** [`research/rqs-review/reports/assay.md`](../../research/rqs-review/reports/assay.md).
+- **Defects:** all the ones they reproduced are fixed, each with a test (see [CHANGELOG.md](CHANGELOG.md)). The grade has not been re-scored since.
+- **What holds it at C:** no release or provenance, one maintainer, and no pull-request review. Fixing code cannot change those.
+
+## Platforms
+
+| Platform | CI | Notes |
+|---|---|---|
+| Linux x64 (Ubuntu 24.04) | full check: tests with coverage, browser end-to-end, benchmark gates, install rehearsal | primary |
+| macOS 14 (arm64) | unit and integration tests | signed-in terminal login uses node-pty |
+| Windows Server 2022 | unit and integration tests | external-tool probes that need POSIX tools report "not available" |
+
+Node 22.12 or later. The browser interface is tested in Chromium only.
 
 ## Honest limits
 

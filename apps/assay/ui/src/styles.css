@@ -2473,3 +2473,8 @@ dialog::backdrop {
   font: 12px / 1.45 var(--font-mono, ui-monospace, monospace);
   color: var(--fg);
 }
+
+.approval-card .warn {
+  color: var(--warn);
+  font-weight: 600;
+}

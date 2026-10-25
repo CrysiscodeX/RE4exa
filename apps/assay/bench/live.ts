@@ -24,7 +24,8 @@ const REPS = Number(arg("--reps", "1"));
 const CAP = Number(arg("--cap-usd", "3"));
 const PER_RUN = 0.4;
 const ROOT = join(import.meta.dirname, "..");
-const SKILL = readFileSync("/home/user/GitHub_Repos_Dump/aicodeking__leanrea/leanrea/SKILL.md", "utf8").replace(
+// leanrea's skill, vendored at a pinned commit (bench/baseline/README.md), so the baseline is reproducible.
+const SKILL = readFileSync(join(ROOT, "bench", "baseline", "leanrea-SKILL.md"), "utf8").replace(
   /^---[\s\S]*?---\n/,
   "",
 );
@@ -72,6 +73,7 @@ interface Run {
   refuted: number;
   answer: string;
   error?: string;
+  correctWithClaims?: number;
   claimDetail?: { predicate: string | null; params: unknown; verdict: string | null; reason: string | null }[];
 }
 const runs: Run[] = [];
@@ -146,10 +148,13 @@ async function assay(t: Task, ws: string): Promise<Omit<Run, "arm" | "task" | "r
     const cost = Number(
       app.kernel.get<{ c: number }>("SELECT SUM(COALESCE(cost_usd,0)) AS c FROM usage WHERE case_id=?", c.id)?.c ?? 0,
     );
-    const g = grade(
+    // Both arms are graded on the answer text alone. Facts that appear only in recorded claims are
+    // counted separately (correctWithClaims) and never enter the M12 ratio.
+    const g = grade(t, answer);
+    const withClaims = grade(
       t,
       `${answer}\n${claims.map((x) => `${x.claim.text} ${JSON.stringify(x.claim.params ?? {})}`).join("\n")}`,
-    );
+    ).correct;
     const verifiedText = claims
       .filter((x) => x.verdict === "verified")
       .map((x) => `${x.claim.text} ${JSON.stringify(x.claim.params ?? {})}`.toLowerCase())
@@ -163,6 +168,7 @@ async function assay(t: Task, ws: string): Promise<Omit<Run, "arm" | "task" | "r
       costUsd: cost,
       ms,
       ...g,
+      correctWithClaims: withClaims,
       verifiedFacts,
       claims: claims.length,
       verified: claims.filter((x) => x.verdict === "verified").length,
@@ -189,6 +195,17 @@ if (summarizeOnly) {
     runs: Run[];
     spentUsd: number;
   };
+  // Re-grade from the recorded answers, so a change to the grading rule applies to old runs too.
+  const byId = new Map(tasks.map((t) => [t.id, t]));
+  for (const r of prev.runs) {
+    const t = byId.get(r.task);
+    if (t && r.answer) {
+      const g = grade(t, r.answer);
+      if (r.arm === "assay" && r.correctWithClaims === undefined) r.correctWithClaims = r.correct;
+      r.correct = g.correct;
+      r.facts = g.facts;
+    }
+  }
   runs.push(...prev.runs);
   spent = prev.spentUsd;
 } else {
@@ -241,6 +258,7 @@ const arms = ["tier0", "assay"].map((arm) => {
     correct,
     facts,
     verifiedFacts: sum(arm, (r) => r.verifiedFacts),
+    correctWithClaims: arm === "assay" ? sum(arm, (r) => r.correctWithClaims ?? r.correct) : null,
     costPerCorrect: correct ? +(cost / correct).toFixed(5) : null,
     medianMs:
       [...runs.filter((r) => r.arm === arm).map((r) => r.ms)].sort((a, b) => a - b)[
@@ -259,26 +277,31 @@ const rnd = () => {
   seed = (seed * 1103515245 + 12345) & 0x7fffffff;
   return seed / 0x7fffffff;
 };
+// Resample whole tasks (clusters of their repetitions), not cells: repetitions of one task are not
+// independent, and resampling cells would understate the interval.
+const byTask = new Map<string, Record<"tier0" | "assay", Run>[]>();
+for (const c of paired) byTask.set(c.tier0.task, [...(byTask.get(c.tier0.task) ?? []), c]);
+const clusters = [...byTask.values()];
 const boot: number[] = [];
-for (let b = 0; b < 10_000 && paired.length; b++) {
+for (let b = 0; b < 10_000 && clusters.length; b++) {
   let ct = 0,
     ca = 0,
     nt = 0,
     na = 0;
-  for (let i = 0; i < paired.length; i++) {
-    const c = paired[Math.floor(rnd() * paired.length)]!;
-    ct += c.tier0.costUsd;
-    ca += c.assay.costUsd;
-    nt += c.tier0.correct;
-    na += c.assay.correct;
-  }
+  for (let i = 0; i < clusters.length; i++)
+    for (const c of clusters[Math.floor(rnd() * clusters.length)]!) {
+      ct += c.tier0.costUsd;
+      ca += c.assay.costUsd;
+      nt += c.tier0.correct;
+      na += c.assay.correct;
+    }
   if (nt && na) boot.push(ca / na / (ct / nt));
 }
 boot.sort((a, b) => a - b);
 const ci: [number, number] | null = boot.length
   ? [boot[Math.floor(boot.length * 0.025)]!, boot[Math.floor(boot.length * 0.975)]!]
   : null;
-const summary = `model ${MODEL}, ${tasks.length} tasks × ${REPS}: Tier 0 ${t0a.correct}/${t0a.facts} facts, $${t0a.costUsd}, 0 machine-verified; Assay ${asa.correct}/${asa.facts} facts, $${asa.costUsd}, ${asa.verifiedFacts} machine-verified; cost per correct fact ratio Assay/Tier0 = ${ratio?.toFixed(2) ?? "n/a"}${ci ? ` [95% bootstrap ${ci[0].toFixed(2)}–${ci[1].toFixed(2)}, ${paired.length} paired cells]` : ""}`;
+const summary = `model ${MODEL}, ${tasks.length} tasks × ${REPS}: Tier 0 ${t0a.correct}/${t0a.facts} facts, $${t0a.costUsd}, 0 machine-verified; Assay ${asa.correct}/${asa.facts} facts, $${asa.costUsd}, ${asa.verifiedFacts} machine-verified; cost per correct fact ratio Assay/Tier0 = ${ratio?.toFixed(2) ?? "n/a"}${ci ? ` [95% task-cluster bootstrap ${ci[0].toFixed(2)}–${ci[1].toFixed(2)}, ${paired.length} paired cells in ${clusters.length} tasks]` : ""}; graded on answer text only for both arms`;
 const out = {
   at: new Date().toISOString(),
   model: MODEL,
@@ -289,6 +312,8 @@ const out = {
   ratio,
   ci,
   pairedCells: paired.length,
+  tasks: clusters.length,
+  grading: "keyword match on the answer text only, the same rule for both arms",
   // M12 passes only when the whole interval is at or below parity and accuracy is not lower
   pass: ci !== null && ci[1] <= 1.0 && asa.correct >= t0a.correct,
   summary,

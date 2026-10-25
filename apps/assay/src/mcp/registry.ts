@@ -9,6 +9,7 @@
 //      in a fresh envelope, and the caller is marked tainted;
 //   5. any failure becomes an isError result carrying the AssayError JSON (code, message, fix).
 
+import { createHash } from "node:crypto";
 import type { Effect, ProbeEngine, ToolContext, ToolDef, ToolResult } from "../contracts.ts";
 import { AssayError, isAssayError } from "../errors.ts";
 import type { Json } from "../evidence/jcs.ts";
@@ -142,12 +143,26 @@ export function errorResult(e: unknown): ToolResult {
   return { text: cutBytes(JSON.stringify(body), LIMITS.resultTextBytes), data: body, isError: true };
 }
 
-function summarizeArgs(args: Record<string, Json>): Json {
+// The person approves what they can see: arguments are shown in full up to APPROVAL_SHOW_MAX characters.
+// A longer one is shown as head, tail and sha256, and named in `partial`, so the card can say so.
+export const APPROVAL_SHOW_MAX = 256 * 1024;
+
+export function summarizeArgs(args: Record<string, Json>): Json {
   const out: Record<string, Json> = {};
+  const partial: string[] = [];
   for (const [k, v] of Object.entries(args)) {
-    if (typeof v === "string" && v.length > 2000) out[k] = `${v.slice(0, 2000)}... (${v.length} chars)`;
-    else out[k] = v;
+    if (typeof v === "string" && v.length > APPROVAL_SHOW_MAX) {
+      partial.push(k);
+      out[k] = {
+        partial: true,
+        chars: v.length,
+        sha256: createHash("sha256").update(v).digest("hex"),
+        head: v.slice(0, 4096),
+        tail: v.slice(-1024),
+      };
+    } else out[k] = v;
   }
+  if (partial.length) out.partial = partial;
   return redact(out).value;
 }
 

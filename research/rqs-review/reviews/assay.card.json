@@ -1,0 +1,1530 @@
+{
+ "rqs_scorecard": 1,
+ "standard": {
+  "id": "RQS-2030",
+  "version": "1.1.0",
+  "sha256": "e3a9982369d16dcd554d55228b9a2b88a2aaaf20f5a2c8f6c5cf1e54ca3a8f82"
+ },
+ "target": {
+  "path": "/home/user/RE4exa/apps/assay",
+  "name": "assay",
+  "head": "9373f4da1eb710b2578806aa81d78d3355a65019",
+  "shallow": false,
+  "repo": "CrysiscodeX/RE4exa (apps/assay)"
+ },
+ "profile": "agent-harness",
+ "flags": {
+  "uses_llm": true,
+  "has_ui": true,
+  "executes_code": true,
+  "network_service": true,
+  "parses_untrusted": true,
+  "uses_crypto": true,
+  "heavy_compute": false,
+  "distributed": true
+ },
+ "reviewer": {
+  "id": "assay-primary",
+  "kind": "agent",
+  "conflicts": "Assay was designed and written in this same Claude Code session by other Claude agents (18 of 18 Assay commits are authored 'Claude <noreply@anthropic.com>' with a Claude Opus 5.5 trailer), and this reviewer is the same model in the same session and repository. Conflict of interest declared; compensated by an adversarial review: every level was checked against source, a local run (npm test, tsc, biome, CLI), the committed results or CI job logs, and no level 5 was given unless the horizon anchor is met in full."
+ },
+ "date": "2026-10-25",
+ "summary": {
+  "grade": "C",
+  "band": "C",
+  "quality_index": 59.3,
+  "horizon_index": 13.9,
+  "evidence_coverage": 1.0,
+  "provisional": false,
+  "red_lines": [],
+  "suspected_red_lines": [],
+  "gates": [],
+  "blocking": [],
+  "criteria": {
+   "applicable": 61,
+   "known": 61,
+   "auto": 0,
+   "auto_share": 0.0
+  }
+ },
+ "dimensions": [
+  {
+   "id": "PUR",
+   "name": "Purpose and value",
+   "weight": 1,
+   "score": 3.5,
+   "known": 3,
+   "applicable": 3,
+   "coverage": 1.0,
+   "auto": 0
+  },
+  {
+   "id": "COR",
+   "name": "Correctness and verification",
+   "weight": 2,
+   "score": 3.33,
+   "known": 5,
+   "applicable": 5,
+   "coverage": 1.0,
+   "auto": 0
+  },
+  {
+   "id": "REL",
+   "name": "Reliability, durability and resource safety",
+   "weight": 2.5,
+   "score": 3.4,
+   "known": 4,
+   "applicable": 4,
+   "coverage": 1.0,
+   "auto": 0
+  },
+  {
+   "id": "PERF",
+   "name": "Efficiency and sustainability",
+   "weight": 1.5,
+   "score": 3.67,
+   "known": 2,
+   "applicable": 2,
+   "coverage": 1.0,
+   "auto": 0
+  },
+  {
+   "id": "SEC",
+   "name": "Security and supply chain",
+   "weight": 3,
+   "score": 2.3,
+   "known": 9,
+   "applicable": 9,
+   "coverage": 1.0,
+   "auto": 0
+  },
+  {
+   "id": "AGT",
+   "name": "AI and agent safety",
+   "weight": 3,
+   "score": 2.75,
+   "known": 6,
+   "applicable": 6,
+   "coverage": 1.0,
+   "auto": 0
+  },
+  {
+   "id": "INT",
+   "name": "Interfaces and interoperability",
+   "weight": 2,
+   "score": 3.5,
+   "known": 7,
+   "applicable": 7,
+   "coverage": 1.0,
+   "auto": 0
+  },
+  {
+   "id": "EPI",
+   "name": "Epistemic integrity",
+   "weight": 1.5,
+   "score": 3.5,
+   "known": 5,
+   "applicable": 5,
+   "coverage": 1.0,
+   "auto": 0
+  },
+  {
+   "id": "MNT",
+   "name": "Maintainability and architecture",
+   "weight": 1.5,
+   "score": 3.0,
+   "known": 5,
+   "applicable": 5,
+   "coverage": 1.0,
+   "auto": 0
+  },
+  {
+   "id": "EVO",
+   "name": "Evolution, compatibility and release",
+   "weight": 1.5,
+   "score": 2.25,
+   "known": 4,
+   "applicable": 4,
+   "coverage": 1.0,
+   "auto": 0
+  },
+  {
+   "id": "OPS",
+   "name": "Operability and observability",
+   "weight": 2,
+   "score": 3.0,
+   "known": 4,
+   "applicable": 4,
+   "coverage": 1.0,
+   "auto": 0
+  },
+  {
+   "id": "PRV",
+   "name": "Privacy, licensing and compliance",
+   "weight": 2,
+   "score": 2.6,
+   "known": 4,
+   "applicable": 4,
+   "coverage": 1.0,
+   "auto": 0
+  },
+  {
+   "id": "SUS",
+   "name": "Project sustainability",
+   "weight": 1,
+   "score": 2.0,
+   "known": 3,
+   "applicable": 3,
+   "coverage": 1.0,
+   "auto": 0
+  }
+ ],
+ "criteria": [
+  {
+   "id": "PUR-1",
+   "dimension": "PUR",
+   "title": "Problem, users and limits are explicit",
+   "level": 4,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": false,
+   "red_line": false,
+   "evidence": [
+    "README.md:1-41 (problem, users, quick start), README.md:105-111 ('Honest limits': no OS sandbox, partial Codex/ACP enforcement, 10 predicates, small live sample, one maintainer)",
+    "node src/cli.ts capabilities -> 19,229-byte JSON with per-tool effect, limits, costHint and inputSchema",
+    "test/mcp-config.test.ts:72-73 (CI test: docs/capabilities.json must equal the generator output)"
+   ],
+   "note": "Scope, limits and a machine-readable capability statement exist, and a CI test keeps the committed statement equal to its generator. Not 5: the committed docs/capabilities.json is generated without the probe engine and verifier, so it omits assay_verify and lists 0 of the ~35 probes that `assay capabilities` reports (diff run during review); the published statement understates the runtime surface."
+  },
+  {
+   "id": "PUR-2",
+   "dimension": "PUR",
+   "title": "Value claims are measured and reproducible",
+   "level": 3,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": true,
+   "red_line": false,
+   "evidence": [
+    "bench/run.ts, bench/results/latest.md:1-17 (model-free M1-M11, M13 with method, baseline, target, date; gated by `bench/run.ts --gate` in .github/workflows/assay.yml:55-56)",
+    "bench/results/live.json recomputed with jq: tier0 correct=90/105 cost=$0.0900; assay correct=90/105 cost=$0.0515 verified=16; claims=63 verified=13 (matches README.md:90-102)",
+    "bench/live.ts:27 (baseline skill read from /home/user/GitHub_Repos_Dump/aicodeking__leanrea/leanrea/SKILL.md, outside the repository)",
+    "bench/live.ts:149-152 vs :107 (Assay arm graded on answer + claim params, Tier 0 on answer only); answer-only regrade: Assay 88/105 vs Tier 0 90/105",
+    "bench/results/live-diagnostic.json (the only live run of the reviewed code: 8 cells, ratio 0.83 [0.57-1.12], Assay 30/35 vs Tier 0 31/35)",
+    "README.md:74-75 (M2 7,565 B, M3 777 B) vs bench/results/latest.md:12-13 (7952 B, 545.5 B)"
+   ],
+   "note": "Model-free benchmarks are in the repo with baselines from docs/merger (3,211,385 B, 5 of 8, 2.1 s all trace to docs/merger), dates and CI gates; caveats are stated. Live M12 is reproducible only on the author's machine (external skill path), grades the two arms differently, was measured on the code before 9373f4d's claim-schema change, and README numbers drift from committed results. No CI intervals for the model-free rows, no per-release versioning, no independent reproduction."
+  },
+  {
+   "id": "PUR-3",
+   "dimension": "PUR",
+   "title": "Necessity and scope discipline",
+   "level": 4,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": false,
+   "red_line": false,
+   "evidence": [
+    "scripts/dep-budget.ts:5-26 (allow-list with a reason per runtime dependency, exact pins; CI step .github/workflows/assay.yml:37-40, log 'dependency budget ok: 7 runtime dependencies, all exact-pinned')",
+    "ARCHITECTURE.md:27-41 (job and origin for each module)",
+    "package-lock.json: 120 non-dev packages; node_modules/@anthropic-ai is 579 MB (platform binaries of the official client)",
+    "bench/results/latest.md:12 (M2 tools/list gated at <= 12,288 B)"
+   ],
+   "note": "A necessity gate for direct runtime dependencies and a catalog-size gate run in CI; every module has a stated reason. Not 5: the gate counts direct dependencies only (120 transitive runtime packages are not tracked), react/react-dom ship as runtime deps although the UI is prebuilt, and surface size is not recorded per release (there are no releases)."
+  },
+  {
+   "id": "COR-1",
+   "dimension": "COR",
+   "title": "Automated tests cover behaviour and gate changes",
+   "level": 3,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": true,
+   "red_line": false,
+   "evidence": [
+    "npm test locally: tests 238, pass 238, fail 0, duration 53 s",
+    "package.json scripts.coverage (c8 --check-coverage --lines 85 --branches 75 --functions 85); local coverage/coverage-summary.json lines 94.53%",
+    "GitHub run 40243131708 on 9373f4d: check failed at 'npm run lint' (biome format error src/mcp/tools.ts:105,110); coverage, e2e, bench and self-application steps skipped; platforms (macos-14) success; platforms (windows-2022) still in npm test",
+    "Runs 40240963852, 40241407510, 40242344677, 40242669933: windows-2022 npm test cancelled at the 30-minute timeout or still hanging; never green before 9373f4d",
+    "Run 40243481832 on 0dc827f (after the review start): check success, macos success, windows failure (path separators, CRLF)"
+   ],
+   "note": "Tests cover the main paths (kernel, fault injection, policy, MCP, providers via protocol fakes, probes, verifier, e2e) and coverage is gated in CI. Not 4: on the reviewed commit CI is red and the gated test step did not run on Linux, and the Windows leg of the declared test matrix has never passed. Flaky/hanging tests are not tracked or quarantined."
+  },
+  {
+   "id": "COR-2",
+   "dimension": "COR",
+   "title": "Independent oracles",
+   "level": 4,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": false,
+   "red_line": false,
+   "evidence": [
+    "bench/tasks/*.json oracles over fixtures generated by bench/tasks/make-fixtures.ts (ground truth by construction); latest.md:14 M4 '60/60 agree with the oracle; false-verified 0'",
+    "test/probes-differential.test.ts:46,81 (identification vs file(1) on every fixture; ELF NEEDED vs readelf -d, including /bin/ls)",
+    "test/verifier.test.ts (M4 corpus: agreement=102/102 in the local run output)"
+   ],
+   "note": "Independent oracles exist and run in CI, including differential tests against reference tools with explicit regex tolerances. Not 5: differential testing covers only identification and ELF dynamic sections; JS loading forms, endpoints, PE, Mach-O and archive listings rely on oracles written by the same authors, and file(1)/readelf tests skip where the tools are absent (Windows)."
+  },
+  {
+   "id": "COR-3",
+   "dimension": "COR",
+   "title": "Test strength is measured",
+   "level": 2,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": false,
+   "red_line": false,
+   "evidence": [
+    "test/probes-fuzz.test.ts:1-2,24-25 (seeded mutation fuzzing, 2,000 mutations per parser fixture, 200 ms bound, in npm test)",
+    "rg -i 'stryker|mutation-testing|fast-check' apps/assay (no mutation testing or property-based framework; only the seeded fuzz loop)"
+   ],
+   "note": "Parsers are fuzzed with a seeded mutator on every test run, which is real strength testing, but there is no mutation testing (periodic or otherwise) and no property tests beyond the fuzz loop, so the 'meets' anchor is not complete. No fuzz-found crashes are recorded as regression cases."
+  },
+  {
+   "id": "COR-4",
+   "dimension": "COR",
+   "title": "Self-application and dogfooding",
+   "level": 3,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": false,
+   "red_line": false,
+   "evidence": [
+    ".github/workflows/assay.yml:57-58 (self-application: `src/cli.ts sweep . --json > self-sweep.json`, uploaded as artifact, no assertions)",
+    "local self-sweep: 1,487 evidence records, 1,283 findings, 36 questions in 3.9 s; notExamined lists 'the workspace: node_modules/' twice",
+    "test/probes-differential.test.ts:81 (real /bin/ls)"
+   ],
+   "note": "The product runs on its own repository in CI and on a real system binary in tests. Not 4/5: the CI step only checks that the sweep does not crash; its findings are not compared, triaged or tracked to closure, and live runs used fixtures written for the benchmark."
+  },
+  {
+   "id": "COR-5",
+   "dimension": "COR",
+   "title": "Determinism and reproducibility of results",
+   "level": 5,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": false,
+   "red_line": false,
+   "evidence": [
+    "src/evidence/record.ts:1-8,66-73 (ProbeKey from inputs, ObservationId from semantic content, sha256 over RFC 8785 JCS; paths, host and timings excluded)",
+    "test/probes-engine.test.ts:309 ('two sweeps, and sweeps of two copies at different paths, give identical ids and keys'), test/evidence.test.ts:51 (two paths, two hosts); both in npm test, run in CI (macos-14 green on 9373f4d) and in the M8 bench gate",
+    "Reviewer reproduction: sweep of bench/tasks/fixtures in place and of a copy at another path with another --home: sorted finding keys sha256 82d85729... and evidence ids sha256 ed5554dc... identical in both runs (40 findings each)"
+   ],
+   "note": "Horizon met: outputs carry content-addressed identifiers, nondeterministic fields are isolated in `volatile`/`locator`, and a run-twice-and-compare test runs in CI; the reviewer's own double run at two paths reproduced identical ids."
+  },
+  {
+   "id": "REL-1",
+   "dimension": "REL",
+   "title": "Crash safety and resumability",
+   "level": 4,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": true,
+   "red_line": false,
+   "evidence": [
+    "test/fault-injection.test.ts:40-110 (30+ SIGKILLs at random points; asserts 6/6 evidence present, no duplicate keyed effect, unsafe effect at most once, re-executed steps <= kills); latest.md:5 M1 kills=32 re-executed-steps=0",
+    "src/kernel/kernel.ts:376-394 (crash count, parking after maxCrashes), test/kernel.test.ts:129 (parked after 5 crashes)",
+    "ARCHITECTURE.md:53,59 (an interrupted turn is settled as interrupted and never re-sent; a running worker becomes 'unverifiable' and is never restarted)"
+   ],
+   "note": "The kernel meets the horizon mechanics (leases with a fence, intents before effects, receipts as idempotency keys, crash-loop parking, automated fault injection in CI). Not 5: the product's long tasks (agent turns, workers) are not resumed after a crash, only settled; and the fault-injection target is a synthetic worker fixture, not the orchestrator."
+  },
+  {
+   "id": "REL-2",
+   "dimension": "REL",
+   "title": "Bounded resources and no size cliffs",
+   "level": 3,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": false,
+   "red_line": false,
+   "evidence": [
+    "src/mcp/tools.ts:27-39 (result text 8 KB, read 1 MiB, search 1000 results/20,000 files/2 MiB per file/5 s, exec 30 s and 1 MiB, write 10 MiB)",
+    "docs/configuration.md:20-28 (limits documented)",
+    "src/mcp/registry.ts:192-199 (bulk text behind a handle with paging), src/mcp/handles.ts:1-3 (in-memory LRU with a byte cap)",
+    "src/probes/engine.ts:131 (probe timeout 20 s), digest caps DIGEST_MAX_ENTRIES/DIGEST_MAX_FILE"
+   ],
+   "note": "Memory, time and output are bounded and documented, and large results page. Not 4/5: no large-input tests at 10x the documented maxima, resource use per operation is not reported, and `sweep --json` on the repo emits 558,664 bytes unpaged."
+  },
+  {
+   "id": "REL-3",
+   "dimension": "REL",
+   "title": "Graceful degradation and honest partial results",
+   "level": 4,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": false,
+   "red_line": false,
+   "evidence": [
+    "docs/failure-modes.md (code, meaning, retryable, fix; generated from src/errors.ts, checked by scripts/gen-docs.ts --check in CI)",
+    "test/failure-modes.test.ts:7,17 (every code raised by at least one test; every code has a message and a fix)",
+    "src/evidence/record.ts:22-28 (coverage 'complete' only when unresolved and unclaimed are 0); src/verifier/verifier.ts:240-247 (refuted only on a complete scan, otherwise unverifiable)",
+    "src/mcp/registry.ts:199 ('[assay: showing N of M chars; the rest is behind a handle]')"
+   ],
+   "note": "Partial results are labelled, defaults fail closed, and the error table is enumerated, documented and tested by automation. Not 5: retryable codes (tool_failed, approval_expired) carry no retry-after or backoff, and process-level failure modes such as a child that never exits (the Windows CI hang) are outside the enumerated table."
+  },
+  {
+   "id": "REL-4",
+   "dimension": "REL",
+   "title": "Lifecycle hygiene",
+   "level": 2,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": false,
+   "red_line": false,
+   "evidence": [
+    "src/cli.ts:90-91 and bin/assay.mjs:12-13 (SIGINT/SIGTERM handling), src/vendor/orca-process-host/process-tree-termination.ts (process-tree kill), src/orchestrator/orchestrator.ts:757 (worktree removed on release)",
+    "Run 40241407510 job 121313793488 (windows-2022): every accounts test passed at 22:42:17, then npm test hung until cancelled at 23:12:00",
+    "Commit a5fbe8a (after the reviewed commit): 'node-pty closes the pseudoconsole and terminates its conout worker thread only in kill(). After a login program exited on its own, both leaked'"
+   ],
+   "note": "Cleanup on signals and process-tree termination exist, but at the reviewed commit a login program that exits on its own leaks node-pty's pseudoconsole and worker thread on Windows, which kept the test process alive in every Windows CI run. No test checks for leftover processes, files or worktrees."
+  },
+  {
+   "id": "PERF-1",
+   "dimension": "PERF",
+   "title": "Latency and throughput are measured",
+   "level": 3,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": false,
+   "red_line": false,
+   "evidence": [
+    "bench/results/latest.md:10 (M10 identify/sweep per fixture 0.3-5.2 ms, target median <= 1000 ms), :15 (M11 3.67x, target >= 2.5x), :16 (M13 1063 ms, target <= 60,000 ms)",
+    ".github/workflows/assay.yml:55-56 (gate)"
+   ],
+   "note": "Main model-free operations are timed with budgets, and the budgets are checked in CI. Not 4: the budgets sit 200-1000x above the measured values (M10 1000 ms vs about 1-5 ms; M13 60 s vs 1.1 s), so they would not catch a realistic regression; only medians, no p99; model-turn latency is measured only in the opt-in live run."
+  },
+  {
+   "id": "PERF-2",
+   "dimension": "PERF",
+   "title": "Attention economy (tokens and bytes an agent must read)",
+   "level": 4,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": true,
+   "red_line": false,
+   "evidence": [
+    "bench/results/latest.md:12 (tools/list 7952 B for 20 tools, gate <= 12,288 B), :13 (median result 545.5 B, max 2505 B over 36 calls, 0 duplicated payloads, gate median <= 8,192 B)",
+    "src/mcp/registry.ts:192-211 (preview inline, rest behind assay_fetch handle)",
+    "src/mcp/tools.ts:41-49 (costHint per tool)"
+   ],
+   "note": "Summary-first results, one payload copy and a small catalog, gated in CI. Not 5: outputs do not state their byte or token cost, and handles are random ids in an in-memory LRU (lost on restart or eviction), not stable content handles."
+  },
+  {
+   "id": "PERF-3",
+   "dimension": "PERF",
+   "title": "Energy and carbon awareness",
+   "level": "NA",
+   "confidence": "observed",
+   "source": "review",
+   "applicable": false,
+   "core": false,
+   "red_line": false,
+   "evidence": [
+    "ARCHITECTURE.md:3 (one Node process; model calls run in the official clients), bench/results/latest.md:10 (millisecond-scale probes)"
+   ],
+   "note": "applies only if heavy_compute"
+  },
+  {
+   "id": "SEC-1",
+   "dimension": "SEC",
+   "title": "Security policy and threat model",
+   "level": 3,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": true,
+   "red_line": false,
+   "evidence": [
+    "SECURITY.md:7-16 (private reporting, response times), :22-38 (what Assay protects and does not)",
+    "docs/threat-model.md:43-92 (7 trust boundaries, 11 threats each mapped to a test, residual risks)"
+   ],
+   "note": "Policy, contact, response expectations and a test-mapped threat model. Not 4/5: no automated check that each threat's cited test exists, no advisories (no releases), and the threat model misses the external-probe path (T1/T6 claim every exec/network effect goes to approval; ext.* probes do not, see gaps)."
+  },
+  {
+   "id": "SEC-2",
+   "dimension": "SEC",
+   "title": "Dependency hygiene",
+   "level": 2,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": false,
+   "red_line": false,
+   "evidence": [
+    "package-lock.json committed; package.json exact pins; scripts/dep-budget.ts",
+    ".github/workflows/assay.yml:36,40 (npm ci --ignore-scripts; npm audit --omit=dev --audit-level=high, log 'found 0 vulnerabilities')",
+    "ls /home/user/RE4exa/.github: CODEOWNERS and workflows only (no dependabot.yml or renovate config)"
+   ],
+   "note": "Lockfile, exact pins, install scripts disabled in CI and an audit gate, but no automated update process (no Dependabot or Renovate), which the 'meets' anchor requires for a product that declares security support until 2031-12-31 (support.json:6)."
+  },
+  {
+   "id": "SEC-3",
+   "dimension": "SEC",
+   "title": "Build provenance and signed releases",
+   "level": 1,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": false,
+   "red_line": false,
+   "evidence": [
+    "CHANGELOG.md:18 ('0.1.0 (unreleased)'); git tag: none; package.json private:true",
+    ".github/workflows/assay.yml (no release job, no attestation or provenance step)"
+   ],
+   "note": "Nothing is released or signed; the install rehearsal packs a tarball in CI but produces no provenance. Users can install only from a source checkout."
+  },
+  {
+   "id": "SEC-4",
+   "dimension": "SEC",
+   "title": "SBOM and VEX",
+   "level": 2,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": false,
+   "red_line": false,
+   "evidence": [
+    ".github/workflows/assay.yml:47-48 (npm sbom --sbom-format cyclonedx, only JSON-parsed), :59-67 (uploaded as the assay-results artifact); skipped on 9373f4d because lint failed",
+    "NOTICE (adapted projects with commits and licenses)"
+   ],
+   "note": "A CycloneDX SBOM is produced per CI run and third-party notices are complete for adapted code, but there is no release to attach it to, no VEX, and SECURITY.md:20 and support.json:12 describe a per-release SBOM that does not exist yet."
+  },
+  {
+   "id": "SEC-5",
+   "dimension": "SEC",
+   "title": "CI and automation hardening",
+   "level": 3,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": false,
+   "red_line": false,
+   "evidence": [
+    ".github/workflows/assay.yml:12-13 (permissions: contents: read), :33,59,87 (actions pinned by full SHA), :6-10 (push and pull_request only)"
+   ],
+   "note": "SHA-pinned first-party actions, read-only token, no pull_request_target. Not 4: nothing checks workflows automatically (no Scorecard, zizmor or actionlint), commits are unsigned, and the checkout step writes the token into the git remote URL inside the workspace."
+  },
+  {
+   "id": "SEC-6",
+   "dimension": "SEC",
+   "title": "Secrets and sensitive data",
+   "level": 2,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": false,
+   "red_line": true,
+   "evidence": [
+    "git ls-files | xargs grep for sk-ant-, ghp_, AKIA, PRIVATE KEY: only synthetic test values in test/log.test.ts, test/policy-redact.test.ts and the detector table src/policy/redact.ts:62-73",
+    "src/log.ts:25-28 (log redaction applies to top-level string fields only)",
+    "test/policy-redact.test.ts (seeded corpus), docs/threat-model.md:61 (T4)",
+    "Reviewer run with stub npx: the ext.electron.asar-list child saw FAKE_SECRET_FOR_TEST from Assay's environment (src/probes/engine.ts:241-250 passes no env; src/mcp/tools.ts:307-312 allow-lists env only for assay_exec)"
+   ],
+   "note": "Red line RL-2 not triggered: no live secrets committed, and stored/agent-visible output is redacted with tests. Level 2 because no secret scanner runs in CI, log redaction skips nested values, and external probe tools inherit the full process environment (credentials included) instead of the allow-list used by assay_exec."
+  },
+  {
+   "id": "SEC-7",
+   "dimension": "SEC",
+   "title": "Dangerous operations",
+   "level": 2,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": false,
+   "red_line": true,
+   "evidence": [
+    "src/vendor/orca-process-host/spawn-resolution.ts:38-40 (shell: false), windows-command-line.ts (caret escaping for cmd.exe targets); src/mcp/tools.ts:550-552 (NUL rejected, argv only)",
+    "rqs pattern hits src/contracts.ts:27, src/probes/engine.ts:241 are argv-only exec helpers, ui/mock/data.ts:609 is mock data (false positives)",
+    "src/probes/router-pack.json:12 ('npx -y @electron/asar list {path}' in a row with consent 'approval', :20); src/probes/router.ts:163-200 registers it as probe ext.electron.asar-list; src/probes/engine.ts:274-299 runs probes with no consent check",
+    "Reviewer run: `PATH=<stub>:... node src/cli.ts probe app.asar --probe ext.electron.asar-list` -> stub log 'npx called with: -y @electron/asar list <abs path>'"
+   ],
+   "note": "Red line RL-4 not triggered: no shell strings, eval or unsafe deserialisation on untrusted paths, and argv is fixed by the router pack. Level 2 because one dangerous operation is unconstrained: a download-and-execute of an unpinned npm package (`npx -y`) with the full environment, reachable from an agent's assay_probe call without approval, against the row's own consent: approval."
+  },
+  {
+   "id": "SEC-8",
+   "dimension": "SEC",
+   "title": "Safe parsing of untrusted input",
+   "level": 2,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": false,
+   "red_line": false,
+   "evidence": [
+    "src/probes/builtin/*.ts (TypeScript parsers), readBytes caps in src/probes/engine.ts, test/probes-fuzz.test.ts (2,000 mutations per parser)",
+    "src/probes/router-pack.json programs: objdump, readelf, nm, otool, binwalk, tshark, ilspycmd, jadx, sqlite3, wasm-objdump, plutil, unzip; src/probes/router.ts:180-183 run them on the target file with a 30 s timeout and output cap, no sandbox"
+   ],
+   "note": "Built-in parsers are memory-safe, size-limited and fuzzed (that part would be 4). The external-tool path runs native parsers of untrusted binaries with the user's privileges and full environment, without isolation and without approval (assay_probe is effect 'read'), so the 'meets' anchor (memory-safe or sandboxed) is not met for every parser path."
+  },
+  {
+   "id": "SEC-9",
+   "dimension": "SEC",
+   "title": "Crypto-agility and post-quantum readiness",
+   "level": 3,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": false,
+   "red_line": false,
+   "evidence": [
+    "docs/crypto.md:3-9 (inventory: SHA-256, Ed25519, HMAC-SHA256, random tokens), :11 (post-quantum plan)",
+    "src/export/export.ts:225-239 (alg field checked; only ed25519 accepted)"
+   ],
+   "note": "Inventory documented, algorithms named in data, no deprecated algorithms. Not 4/5: no automated crypto inventory check, and the ML-DSA plan is undated ('once Node's crypto supports it')."
+  },
+  {
+   "id": "AGT-1",
+   "dimension": "AGT",
+   "title": "Prompt-injection resilience",
+   "level": 4,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": true,
+   "red_line": false,
+   "evidence": [
+    "src/policy/taint.ts:1-80 (random-id envelope, look-alike neutralisation, hidden-character stripping), :92-118 (SessionTaint), :150-170 (tainted callers lose auto-approval)",
+    "test/tripwire.test.ts and latest.md:11 (M5: 24 carriers, 26 attempted effects, 0 executed, 26 routed to approval; CI gate)",
+    "src/providers/claude.ts:5,89-96 (enforced mode: tools: [], only mcp__assay)"
+   ],
+   "note": "Untrusted content is labelled and separated, actions are blocked by policy rather than prompt wording, and an adversarial corpus is a CI gate. Not 5: the corpus runs against a fake agent, not per model version; Codex/ACP enforcement is partial and open mode bypasses policy (documented); and the ext.* probe path lets a tainted agent trigger network and exec effects without approval."
+  },
+  {
+   "id": "AGT-2",
+   "dimension": "AGT",
+   "title": "Least agency and honest effect declarations",
+   "level": 2,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": false,
+   "red_line": false,
+   "evidence": [
+    "src/mcp/server.ts:57-70 (readOnlyHint/destructiveHint derived from effect)",
+    "src/mcp/tools.ts:76,86 (assay_probe effect 'read') while ext.electron.asar-list runs `npx -y` (network + exec); src/mcp/tools.ts:221-225 (assay_verify effect 'read' although cmd.exit claims run a program after approval)",
+    "src/policy/taint.ts:154-156 (read allowed; spawn allowed without approval)",
+    "src/orchestrator/orchestrator.ts:593-612 (spawnWorker: no worker-count limit; checkBudget passes when no budget is set, src/kernel/kernel.ts:809-811)"
+   ],
+   "note": "Destructive tools need approval and coordinator-only tools are hidden from workers, but effect hints are inaccurate for assay_probe (readOnlyHint true for a probe that downloads and runs a package) and assay_verify, and the router pack's consent: approval is not enforced outside the sweep. Spawning paid workers needs no approval and has no default count limit."
+  },
+  {
+   "id": "AGT-3",
+   "dimension": "AGT",
+   "title": "Human oversight and reversibility",
+   "level": 3,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": false,
+   "red_line": false,
+   "evidence": [
+    "src/kernel/kernel.ts:190-283 (hash-chained case log, verifyChain, fork at a seq)",
+    "README.md:55 and src/app/app.ts:136-140 (approvals in the chat, cmd.exit after approval); docs/api.md routes 'POST /api/cases/:id/interrupt'",
+    "rg -i 'rollback|undo' README.md docs/ ARCHITECTURE.md: no matches"
+   ],
+   "note": "Readable tamper-evident action log, approvals for consequential actions and a stop control. Rollback covers the case (fork/rewind) but not the effects: assay_write_file overwrites in place and approved commands cannot be undone, and no rollback procedure is documented. Exports exist in open formats."
+  },
+  {
+   "id": "AGT-4",
+   "dimension": "AGT",
+   "title": "Evaluation of model-dependent behaviour",
+   "level": 2,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": true,
+   "red_line": false,
+   "evidence": [
+    "bench/live.ts:1-5,14-17 (opt-in ASSAY_LIVE=1; not in CI)",
+    "bench/live.ts:27 (baseline skill path outside the repo), :55-58 and :149-152 (substring grading; Assay arm also credited for facts in claim params)",
+    "bench/live.ts:290 (pass = point ratio <= 1.0) vs commit 92ba21c message ('M12 passes only when the whole interval is at or below parity and accuracy is not lower')",
+    "bench/results/live-diagnostic.json (1 rep on the reviewed code; ratio 0.83 [0.57-1.12]; Assay 30/35 vs Tier 0 31/35)"
+   ],
+   "note": "An eval set with expected outcomes exists and results are recorded, but it is not run before changes to the model-facing surface (9373f4d changed the claim tool schema and was checked with 8 cells only), it is not rerunnable outside the author's machine, the grader is asymmetric, and the documented pass rule is not the coded one. One model (Haiku), one provider."
+  },
+  {
+   "id": "AGT-5",
+   "dimension": "AGT",
+   "title": "AI transparency and disclosure",
+   "level": 3,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": false,
+   "red_line": false,
+   "evidence": [
+    "README.md:45-47, docs/threat-model.md:48 (TB5: providers and their own sign-in), support.json:15-19 (data handling)",
+    "src/evidence/record.ts:16-17 (producer kind agent; agents record analyst-inference only), docs/failure-modes.md (evidence_confidence)"
+   ],
+   "note": "Providers and data flows are documented and agent-produced claims are marked by producer and confidence class. Not 4/5: no AI-BOM, no record of model versions per release, and support.json:17 ('outbound traffic happens only through the official agent clients') is contradicted by the npx-based probe."
+  },
+  {
+   "id": "AGT-6",
+   "dimension": "AGT",
+   "title": "Consumption limits and cost visibility",
+   "level": 2,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": false,
+   "red_line": false,
+   "evidence": [
+    "docs/configuration.md:15 (Budget per case: default none)",
+    "src/kernel/kernel.ts:809-816 (checkBudget returns when no budget is set)",
+    "src/orchestrator/orchestrator.ts:35,608-612 (only an 8,000-character prompt budget and a 3-failure breaker for workers)",
+    "docs/api.md 'POST /api/cases/:id/estimate' (cost estimate), usage table and /api state (usage reported)"
+   ],
+   "note": "Usage and cost are recorded and reported, an estimate exists, and an optional USD/calls budget is enforced before spending. By default nothing bounds tokens, money, turn time or worker count per task, so the 'meets' anchor (per-task limits) holds only when the person sets one."
+  },
+  {
+   "id": "INT-1",
+   "dimension": "INT",
+   "title": "Open, versioned interfaces",
+   "level": 4,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": true,
+   "red_line": false,
+   "evidence": [
+    "src/mcp/server.ts (JSON-RPC MCP; protocol versions 2025-06-18, 2025-03-26, 2024-11-05 negotiated), test/mcp-server.test.ts:67-80",
+    "src/cli.ts:13-23 (sweep/probe/capabilities JSON), docs/api.md (HTTP routes with types in src/server/api-types.ts)",
+    "src/providers/acp.ts (ACP client side)"
+   ],
+   "note": "A standard protocol with tested version negotiation, a JSON CLI and a documented HTTP API. Not 5: one server-side standard protocol (MCP); the HTTP API has no OpenAPI and no compatibility window; `doctor` has no JSON output on the CLI (rejects --json)."
+  },
+  {
+   "id": "INT-2",
+   "dimension": "INT",
+   "title": "Machine-readable contract and self-description",
+   "level": 3,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": false,
+   "red_line": false,
+   "evidence": [
+    "node src/cli.ts capabilities (schemas, effects, limits per tool; probes with platforms)",
+    "diff <(node src/cli.ts capabilities) docs/capabilities.json: the committed file lacks assay_verify and has \"probes\": [] (src/mcp/capabilities.ts:79-88 writes it without engine or verifier)",
+    "test/mcp-config.test.ts:72-73 (drift test compares only the reduced statement)"
+   ],
+   "note": "Schemas and a describe command with stable field names exist. The published, CI-checked contract is not the runtime contract (one tool and every probe missing), so the drift check does not protect what agents actually see; no per-release contract publication."
+  },
+  {
+   "id": "INT-3",
+   "dimension": "INT",
+   "title": "Small, composable surface",
+   "level": 4,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": false,
+   "red_line": false,
+   "evidence": [
+    "bench/results/latest.md:12 (20 tools, 7,952 B, gated)",
+    "src/mcp/tools.ts:76-100 (one parameterised assay_probe for ~35 probes; assay_list_probes on demand)",
+    "src/mcp/registry.ts (coordinator-only tools hidden from workers)"
+   ],
+   "note": "Small, parameterised surface whose size is measured and gated. Not 5: tool-selection accuracy is not measured."
+  },
+  {
+   "id": "INT-4",
+   "dimension": "INT",
+   "title": "Actionable, consistent errors",
+   "level": 4,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": false,
+   "red_line": false,
+   "evidence": [
+    "src/errors.ts (FAILURE_MODES: code, message, retryable, fix), docs/failure-modes.md generated and checked in CI",
+    "test/failure-modes.test.ts:7,17",
+    "node src/cli.ts doctor --bogus -> 'assay: unknown option --bogus for `assay doctor`' exit 2"
+   ],
+   "note": "Typed codes with cause, fix and retryable flag, documented and tested by automation. Not 5: fixes are prose, not machine-applicable; consistency across interfaces is not tested (Windows path separators differed between search results and probe locators until e65a111)."
+  },
+  {
+   "id": "INT-5",
+   "dimension": "INT",
+   "title": "Idempotency and stable identifiers",
+   "level": 4,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": false,
+   "red_line": false,
+   "evidence": [
+    "src/evidence/record.ts (ob_/pk_/fk_ content addresses identical across paths and hosts; reviewer double run)",
+    "src/orchestrator/orchestrator.ts:616-620 (spawn receipts keyed by retryId), src/kernel/kernel.ts (receipts, receipt_conflict)",
+    "src/mcp/handles.ts:1-3 (paging handles: random ids, in-memory LRU)"
+   ],
+   "note": "Content-addressed, cross-machine identical ids and receipts for worker spawns. Not 5: paging handles are random and volatile, assay_write_file and POST /messages take no idempotency key."
+  },
+  {
+   "id": "INT-6",
+   "dimension": "INT",
+   "title": "Human usability and accessibility",
+   "level": 2,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": false,
+   "red_line": false,
+   "evidence": [
+    "test/e2e/ui-smoke.test.ts:3,66-80 (axe-core in both themes; serious/critical violations fail), .github/workflows/assay.yml:51-54",
+    "scripts/install-rehearsal.ts (quickstart-like install rehearsal in CI)",
+    "ui/src: no i18n layer (strings inline), ui/index.html:2 lang=en only"
+   ],
+   "note": "Quickstart rehearsal, complete help and automated accessibility checks in CI are present, but no UI or documentation text can be translated, which the 'meets' anchor requires; screen-reader behaviour is not tested beyond axe."
+  },
+  {
+   "id": "INT-7",
+   "dimension": "INT",
+   "title": "Open formats and exit",
+   "level": 3,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": false,
+   "red_line": false,
+   "evidence": [
+    "src/export/export.ts (S-2 JSONL, SARIF 2.1.0, CycloneDX 1.6, Markdown, signed bundle), docs/claim-format.md (assay.claim/1)",
+    "ASSAY_HOME/assay.db is SQLite with forward-only migrations (src/kernel/schema.ts)",
+    "test/export.test.ts:39-56 (shape assertions only)"
+   ],
+   "note": "Results leave in open, documented formats and the store is SQLite. Not 4/5: there is no import of bundles or JSONL, and the SARIF/CycloneDX outputs are not validated against their schemas."
+  },
+  {
+   "id": "EPI-1",
+   "dimension": "EPI",
+   "title": "Evidence and provenance of outputs",
+   "level": 4,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": true,
+   "red_line": false,
+   "evidence": [
+    "src/evidence/record.ts:36-56 (probe id and version, params, subject digest, producer, nested ids, limitations, coverage)",
+    "reviewer run: js.imports record carries observation_id, probe_key, subject.digest, limitations and coverage",
+    "src/export/export.ts:216-221 (ed25519 over the canonical manifest), :232 (verification falls back to the bundle's own public key when --key is not given)"
+   ],
+   "note": "Records are content-addressed and linked to their inputs, and bundles are signed. Not 5: signatures exist only on exported bundles, and `assay verify` without --key trusts whatever key the bundle carries, so exchange between parties is integrity-checked but not authenticated by default; the Assay version is not in the record."
+  },
+  {
+   "id": "EPI-2",
+   "dimension": "EPI",
+   "title": "Calibrated uncertainty and abstention",
+   "level": 3,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": false,
+   "red_line": false,
+   "evidence": [
+    "src/evidence/record.ts:16 (observed/derived/inferred/analyst-inference), claims labelled seen/inferred/unknown (src/mcp/tools.ts:104-110)",
+    "src/evidence/store.ts:267-300 (calibration per producer and question class with Wilson intervals)",
+    "README.md:102,109 (unverifiable claims stay unverifiable and are shown)"
+   ],
+   "note": "Claims carry confidence classes, weak ones are shown as unverifiable, and per-producer precision has intervals. Not 4/5: no ECE or fitted abstention thresholds, and nothing gates calibration in CI."
+  },
+  {
+   "id": "EPI-3",
+   "dimension": "EPI",
+   "title": "Absence is not a negative",
+   "level": 4,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": false,
+   "red_line": false,
+   "evidence": [
+    "src/verifier/verifier.ts:240-247 ('refuted' only when the scan was complete; otherwise 'unverifiable ... the scan was not exhaustive')",
+    "src/mcp/tools.ts (assay_search returns filesScanned, truncated, stopped with 'no matches')",
+    "bench/results/latest.md:9 (M9 false 'complete' 0 of 300, CI gate)"
+   ],
+   "note": "Absence is labelled with the coverage examined and machine-readable, with a CI gate on false completeness. Not 5: not every negative carries its boundary (for example the sweep's questions and the doctor's 'not installed' do not)."
+  },
+  {
+   "id": "EPI-4",
+   "dimension": "EPI",
+   "title": "Coverage accounting",
+   "level": 4,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": false,
+   "red_line": false,
+   "evidence": [
+    "src/evidence/record.ts:22-28 (coverage: examined, skipped with reasons, unresolved, unclaimed, forms)",
+    "local sweep JSON: notExamined list and questions (36 on the repo)",
+    "bench/results/latest.md:9 (M9 gate)"
+   ],
+   "note": "Reports separate examined, skipped and unresolved, with automation on the coverage census. Not 5: declared questions are not reconciled automatically with outcomes, and notExamined repeats entries (node_modules/ three times)."
+  },
+  {
+   "id": "EPI-5",
+   "dimension": "EPI",
+   "title": "Claims hygiene",
+   "level": 2,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": false,
+   "red_line": true,
+   "evidence": [
+    "README.md:74 (M2 7,565 B) and :13 ('7.6 KB catalog') vs bench/results/latest.md:12 (7952 B); README.md:75 (M3 777 B) vs latest.md:13 (545.5 B)",
+    "README.md:94,100 ('as accurate ... about 43% cheaper') vs answer-only regrade of live.json (Assay 88/105, Tier 0 90/105) and docs/debt.md:14 ('Before claiming a cost advantage publicly: 60 paired cells'; README uses 24)",
+    "bench/results/live-diagnostic.json (reviewed code: Assay 30/35 vs 31/35, ratio interval 0.57-1.12, not cited in README)",
+    "bench/run.ts:334-339 (M12 'Cost per correct-and-verified answer' label; the measure is cost per correct fact)",
+    "README.md:34 ('Model-free features need no account and no network') vs ext.electron.asar-list running `npx -y`"
+   ],
+   "note": "Red line RL-5 not triggered: the 24-cell M12 numbers recompute exactly from live.json and caveats sit next to them. Level 2 because headline numbers drift from the committed results, the accuracy-parity and cost claims rest on an asymmetric grader and break the project's own 60-cell rule, and README claims are hand-written rather than generated."
+  },
+  {
+   "id": "MNT-1",
+   "dimension": "MNT",
+   "title": "Modularity and enforced boundaries",
+   "level": 3,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": false,
+   "red_line": false,
+   "evidence": [
+    "ARCHITECTURE.md:5-41 (module map), module header comments state invariants",
+    "import scan: kernel -> evidence (jcs.ts only), evidence -> kernel; policy -> server/api-types (types); probes -> mcp",
+    "rg for boundary/architecture tests in test/: none"
+   ],
+   "note": "Architecture is documented and mostly respected (cross-layer imports are types and the JCS helper). No automated boundary rules."
+  },
+  {
+   "id": "MNT-2",
+   "dimension": "MNT",
+   "title": "Size, complexity and duplication hygiene",
+   "level": 2,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": false,
+   "red_line": false,
+   "evidence": [
+    "rqs probe size.largest: src/orchestrator/orchestrator.ts 1003 lines, ui/mock/server.ts 988, src/kernel/kernel.ts 864; size.duplicates 0 bytes",
+    "ui/mock/server.ts and ui/mock/data.ts (a second, mock implementation of the HTTP API for UI work)",
+    "biome.json (recommended rules; no duplication or dead-code tool in CI)"
+   ],
+   "note": "Sizes are reasonable and no byte-level duplication was found, but no duplication or dead-code check exists, and a ~1,600-line mock API server parallels src/server and src/app."
+  },
+  {
+   "id": "MNT-3",
+   "dimension": "MNT",
+   "title": "Static analysis and type safety",
+   "level": 4,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": false,
+   "red_line": false,
+   "evidence": [
+    "tsconfig.json (strict, noUncheckedIndexedAccess, noImplicitOverride, verbatimModuleSyntax), biome.json (lint + format, noExplicitAny error)",
+    "npx tsc -p tsconfig.json: exit 0; npx biome check: 1 error (format, src/mcp/tools.ts) — the CI lint step caught the same error on 9373f4d",
+    "11 suppressions, each with a reason (for example src/policy/taint.ts:43)"
+   ],
+   "note": "Strict type checking, lint and format enforced in CI with explained suppressions. Not 5: no pre-commit hook (the reviewed commit was pushed failing the formatter), and src/vendor is excluded from type checking."
+  },
+  {
+   "id": "MNT-4",
+   "dimension": "MNT",
+   "title": "Documentation for maintainers and agents",
+   "level": 3,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": false,
+   "red_line": false,
+   "evidence": [
+    "CONTRIBUTING.md, ARCHITECTURE.md, AGENTS.md, docs/decisions/0001-0003, docs/ai-development.md",
+    "scripts/gen-docs.ts:1,43-46 (checks failure-modes.md only; capabilities and reach have their own tests) vs the CI step name 'capabilities, reach, failure modes' (.github/workflows/assay.yml:45)"
+   ],
+   "note": "Maintainer and agent documentation and ADRs exist. Not 4: only generated docs are drift-checked; hand-written docs drifted (README benchmark table, support.json network statement) without any check, and agent instructions are not tested by running agents."
+  },
+  {
+   "id": "MNT-5",
+   "dimension": "MNT",
+   "title": "Debt is visible",
+   "level": 3,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": false,
+   "red_line": false,
+   "evidence": [
+    "docs/debt.md:5-15 (9 debts with cost and pay-back trigger)",
+    "rqs probe static.debt_markers: 1 marker outside tests"
+   ],
+   "note": "A debt ledger with triggers exists. Not 4/5: no owners per entry, not generated from code markers, and the ledger's own trigger (60 paired cells before claiming a cost advantage) is already violated by the README."
+  },
+  {
+   "id": "EVO-1",
+   "dimension": "EVO",
+   "title": "Versioning honesty",
+   "level": 3,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": false,
+   "red_line": false,
+   "evidence": [
+    "CHANGELOG.md:3-16 (SemVer with pre-1.0 meaning, contracts listed, migration guides promised)",
+    "CONTRIBUTING.md:3-4 (forward-only migrations; assay.claim/2 rule for hashed-field changes)"
+   ],
+   "note": "Explicit version policy and contract rules. Not 4: the contract is not diffed automatically between versions, and no version has been released."
+  },
+  {
+   "id": "EVO-2",
+   "dimension": "EVO",
+   "title": "Release integrity and sustainable cadence",
+   "level": 2,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": false,
+   "red_line": false,
+   "evidence": [
+    ".github/workflows/assay.yml:49-50 (install rehearsal: pack, install, run the installed CLI)",
+    "CHANGELOG.md:18 (0.1.0 unreleased); no tags, no release workflow"
+   ],
+   "note": "Qualification steps exist in CI, but there are no automated releases, channels or rollback path."
+  },
+  {
+   "id": "EVO-3",
+   "dimension": "EVO",
+   "title": "Platform and runtime compatibility",
+   "level": 1,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": false,
+   "red_line": false,
+   "evidence": [
+    "README.md:22 ('Node 22.12+') is the only platform statement; support.json has no platform matrix",
+    "docs/capabilities.json / `assay capabilities`: probes declared for linux, darwin and win32",
+    "Windows CI (windows-2022) on every run up to 9373f4d: hung until the 30-minute timeout or still running; on 0dc827f it ran and failed"
+   ],
+   "note": "No supported OS/architecture matrix is stated, while probes declare win32 support and the Windows leg has never passed; macOS runs unit tests only; ARM and containers are not tested."
+  },
+  {
+   "id": "EVO-4",
+   "dimension": "EVO",
+   "title": "Support commitments",
+   "level": 3,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": false,
+   "red_line": false,
+   "evidence": [
+    "support.json:4-8 (security fixes for the latest 0.x line until 2031-12-31; successor announced 12 months ahead)",
+    "SECURITY.md:3-5"
+   ],
+   "note": "A support period is declared in machine-readable form. Not 4/5: no LTS line, and with no release yet there is nothing the commitment covers; one maintainer carries it (GOVERNANCE.md)."
+  },
+  {
+   "id": "OPS-1",
+   "dimension": "OPS",
+   "title": "Diagnostics",
+   "level": 3,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": false,
+   "red_line": false,
+   "evidence": [
+    "node src/cli.ts doctor --home <tmp>: ok/FIX lines with '->' fixes for node, store, providers, git, ui",
+    "docs/api.md 'GET /api/doctor' (DoctorCheck[] JSON)"
+   ],
+   "note": "A diagnostic command checks prerequisites and prints fixes, and the API exposes it as JSON. Not 4/5: the CLI has no --json, no repair plan, and some fixes are not actionable ('Install the official acp client', where ACP is a protocol with many clients)."
+  },
+  {
+   "id": "OPS-2",
+   "dimension": "OPS",
+   "title": "Logs, metrics and traces",
+   "level": 3,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": false,
+   "red_line": false,
+   "evidence": [
+    "src/log.ts:1-30 (JSON lines on stderr, levels via ASSAY_LOG, trace ids, redaction)",
+    "docs/debt.md:11 (no OpenTelemetry)"
+   ],
+   "note": "Structured logs with levels and trace ids; usage and calibration exposed via the API. No OpenTelemetry."
+  },
+  {
+   "id": "OPS-3",
+   "dimension": "OPS",
+   "title": "Configuration clarity and secure defaults",
+   "level": 3,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": false,
+   "red_line": false,
+   "evidence": [
+    "docs/configuration.md:3-28 (settings, defaults, limits)",
+    "node src/cli.ts doctor --bogus -> exit 2 'unknown option'",
+    "src/log.ts:13-17 (an unrecognised ASSAY_LOG silently falls back to warn); ASSAY_MCP_TOKEN (src/mcp/stdio-proxy.ts:94) and ASSAY_UI_SKIP_BUILD are not in docs/configuration.md"
+   ],
+   "note": "Settings are documented, unknown CLI options fail loudly and defaults (enforced mode, loopback, approvals) are safe. Not 4: no published configuration schema, an invalid ASSAY_LOG is accepted silently despite docs/configuration.md:3, two environment variables are undocumented, and the default budget is unlimited."
+  },
+  {
+   "id": "OPS-4",
+   "dimension": "OPS",
+   "title": "Installation integrity",
+   "level": 3,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": false,
+   "red_line": false,
+   "evidence": [
+    "README.md:20-24 (npm ci from the committed lockfile, then build)",
+    "rqs pipe-to-shell hit bench/tasks/make-fixtures.ts:411 is a zip-slip test fixture, not an install path"
+   ],
+   "note": "Install is via the package manager with a pinned lockfile; no remote scripts. Not 4/5: no signed artefacts and no offline install bundle."
+  },
+  {
+   "id": "PRV-1",
+   "dimension": "PRV",
+   "title": "Telemetry consent",
+   "level": 3,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": false,
+   "red_line": true,
+   "evidence": [
+    "support.json:16 ('telemetry': 'none'); rg for fetch/http.request in src: only the MCP client to the local endpoint",
+    "rg 'TELEMETRY|NONESSENTIAL|DO_NOT_TRACK' src: none (the official clients Assay launches keep their own telemetry defaults)"
+   ],
+   "note": "Red line RL-3 not triggered: Assay itself collects nothing. Not higher: the clients it launches in Assay-created account homes keep their own telemetry defaults, which Assay neither discloses nor sets, and nothing guards against telemetry being added."
+  },
+  {
+   "id": "PRV-2",
+   "dimension": "PRV",
+   "title": "Data minimisation and locality",
+   "level": 2,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": false,
+   "red_line": false,
+   "evidence": [
+    "support.json:15-19 (local store, deletion with `assay forget`)",
+    "src/cli.ts:205-220 (forget deletes rows; no VACUUM, WAL and free pages keep data)",
+    "support.json:17 ('outbound traffic happens only through the official agent clients') vs the npx-based probe (registry download)"
+   ],
+   "note": "Local by default with export and deletion, but the documented data-flow statement is inaccurate (a probe reaches the npm registry) and deletion is not verifiable."
+  },
+  {
+   "id": "PRV-3",
+   "dimension": "PRV",
+   "title": "License clarity",
+   "level": 3,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": true,
+   "red_line": true,
+   "evidence": [
+    "LICENSE (Apache-2.0), package.json license 'Apache-2.0', NOTICE (orca MIT, absurd Apache-2.0, pi MIT, rea MIT, leanrea MIT, t3code MIT with commits)",
+    "src/vendor/orca-process-host/LICENSE and README (vendored commit and changes)"
+   ],
+   "note": "Red line RL-1 not triggered. License with SPDX id and complete notices for adapted code. Not 4/5: no REUSE per-file headers, and license data reaches an SBOM only per CI run, not per release."
+  },
+  {
+   "id": "PRV-4",
+   "dimension": "PRV",
+   "title": "Regulatory readiness",
+   "level": 2,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": false,
+   "red_line": false,
+   "evidence": [
+    "support.json:9-14 (CRA role, SBOM, vulnerability handling, advisories)",
+    "rg -i 'AI Act|2024/1689|accessibility act' apps/assay (excluding docs/merger): none"
+   ],
+   "note": "A CRA position is stated; no position under the EU AI Act (an agent harness with human-oversight features) or the European Accessibility Act (it ships a UI)."
+  },
+  {
+   "id": "SUS-1",
+   "dimension": "SUS",
+   "title": "Maintainer resilience and governance",
+   "level": 2,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": false,
+   "red_line": false,
+   "evidence": [
+    "GOVERNANCE.md:3-6 (one maintainer, stated as a known risk), /home/user/RE4exa/.github/CODEOWNERS:2 (one owner)",
+    "git log -- apps/assay: 18 commits, all by 'Claude <noreply@anthropic.com>'"
+   ],
+   "note": "Written governance and code ownership exist, but one human owner and one agent are the only contributors."
+  },
+  {
+   "id": "SUS-2",
+   "dimension": "SUS",
+   "title": "Contribution and review pipeline",
+   "level": 1,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": false,
+   "red_line": false,
+   "evidence": [
+    "ls .github: no ISSUE_TEMPLATE, no pull_request_template",
+    "gh api 'repos/CrysiscodeX/RE4exa/pulls?head=CrysiscodeX:claude/admiring-volta-uc87nj&state=all' -> 0; every Assay commit was pushed directly",
+    "gh api .../branches/.../protection -> 403 (not visible)"
+   ],
+   "note": "CI runs on push, but there are no templates, no pull request and no review before merge; GOVERNANCE.md:6 says security-relevant paths need the owner's review, and no review is recorded."
+  },
+  {
+   "id": "SUS-3",
+   "dimension": "SUS",
+   "title": "Transparency about AI-assisted development",
+   "level": 3,
+   "confidence": "observed",
+   "source": "review",
+   "applicable": true,
+   "core": false,
+   "red_line": false,
+   "evidence": [
+    "docs/ai-development.md (how agents designed, built and checked Assay)",
+    "git log --format='%(trailers:key=Co-Authored-By)' -- apps/assay: 18 of 18 commits carry 'Claude Opus 5.5'",
+    "CONTRIBUTING.md:8 (AI-assisted PRs must say so)"
+   ],
+   "note": "Agent authorship is disclosed and attributed and a review policy is written. Not 4/5: the stated practice (checks run before commit) is contradicted by the reviewed commit failing lint, and agent contributions are not evaluated over time."
+  }
+ ],
+ "gaps": [
+  {
+   "lens": "G11",
+   "title": "External-tool probes bypass the approval policy: a 'read' tool downloads and runs an unpinned npm package with the full environment",
+   "case": "src/probes/router-pack.json:12,20 declares `npx -y @electron/asar list {path}` in a row with consent 'approval'; src/probes/router.ts:163-200 registers it as probe ext.electron.asar-list; src/probes/engine.ts:274-299 runs any probe id with no consent check; src/mcp/tools.ts:76,86 gives assay_probe effect 'read', which src/policy/taint.ts:154 allows even for a tainted caller. Reviewer reproduction with a stub npx on PATH: `node src/cli.ts probe app.asar --probe ext.electron.asar-list --workspace <tmp>` invoked 'npx -y @electron/asar list <abs path>', and the child saw an environment variable set only in Assay's environment (src/probes/engine.ts:241-250 passes no env, unlike assay_exec's allow-list at src/mcp/tools.ts:307-312).",
+   "impact": "A prompt-injected agent can cause network access and execution of registry code without the approval the README (README.md:55), threat model (T1, T6) and support.json:17 promise; credentials in Assay's environment reach that process. Other ext.* probes run native parsers of untrusted binaries the same way.",
+   "fix": "Give external probes effect 'exec' (and 'network' for npx), enforce the row's consent in engine.run, run them with the execEnv allow-list, and drop or pin the npx row (archive.list already reads ASAR headers in TypeScript). Add a tripwire case that calls assay_probe ext.* after reading untrusted content and expects approval.",
+   "severity": "high",
+   "evidence": [
+    "src/probes/router-pack.json:12,20",
+    "src/probes/engine.ts:241-250,274-299",
+    "src/mcp/tools.ts:76,86,307-312",
+    "src/policy/taint.ts:154"
+   ]
+  },
+  {
+   "lens": "G1",
+   "title": "M12 live comparison: asymmetric grading, an off-repo baseline, a pass rule that differs from its description, and a cost claim made before the project's own sample threshold",
+   "case": "bench/live.ts:149-152 grades the Assay arm on its answer plus claim text and JSON params; :107 grades Tier 0 on the answer only. Regrading live.json on answers only gives Assay 88/105 vs Tier 0 90/105 (README.md:94 says 90/105 each). bench/live.ts:27 reads the baseline skill from /home/user/GitHub_Repos_Dump/... outside the repository. bench/live.ts:290 passes on the point ratio, while commit 92ba21c says the whole interval must be at or below parity with accuracy not lower. docs/debt.md:14 requires 60 paired cells before claiming a cost advantage; README.md:100 claims 'about 43% cheaper' on 24. The only run on the reviewed code (live-diagnostic.json) gives ratio 0.83 [0.57-1.12] and 30/35 vs 31/35.",
+   "impact": "The headline that Assay is as accurate and cheaper is not established for the shipped code and cannot be rerun by anyone else; readers and agents choosing tools will over-trust it.",
+   "fix": "Grade both arms on the final answer only (report claim-credited facts separately), vendor the leanrea skill at a pinned commit into bench/, implement the documented interval-and-accuracy pass rule, run >= 60 paired cells on the released code, and generate the README table from live.json.",
+   "severity": "high",
+   "evidence": [
+    "bench/live.ts:27,55-58,107,149-152,290",
+    "bench/results/live.json",
+    "bench/results/live-diagnostic.json",
+    "docs/debt.md:14",
+    "README.md:90-102"
+   ]
+  },
+  {
+   "lens": "G9",
+   "title": "CI is red on the reviewed commit and the Windows leg has never passed",
+   "case": "Run 40243131708 (9373f4d): check failed at `npm run lint` (biome format error in src/mcp/tools.ts), so coverage, generated-docs, SBOM, install rehearsal, e2e, benchmark gates and self-application were skipped; macos-14 passed; windows-2022 was still in npm test. Runs 1-5: windows-2022 cancelled at the 30-minute timeout after the accounts suite (job 121313793488 log ends at 22:42:17, cancelled 23:12:00). Run 7 (0dc827f, after review start): Windows no longer hangs but fails (path separators, CRLF).",
+   "impact": "The quality gates the README and docs/ai-development.md describe did not hold for the reviewed commit; Windows users get an untested product while probes declare win32 support.",
+   "fix": "Make the check job's gates required before push (pre-commit hook running biome and tsc; branch protection with required checks), add a per-test timeout so a hang fails fast, and keep Windows in the matrix only once it is green, or state that Windows is unsupported.",
+   "severity": "high",
+   "evidence": [
+    "GitHub run 40243131708 jobs 121319008165, 121319008336, 121319008381",
+    "GitHub run 40241407510 job 121313793488",
+    "GitHub run 40243481832 job 121320070120",
+    ".github/workflows/assay.yml:41-42,69-91"
+   ]
+  },
+  {
+   "lens": "G4",
+   "title": "A login program that exits on its own leaks node-pty's pseudoconsole and worker on Windows",
+   "case": "Windows CI hung after every accounts test passed (job 121313793488). Commit a5fbe8a, made after the reviewed commit, states that node-pty closes the pseudoconsole and its conout worker only in kill(), so after a login exited on its own both leaked and kept the process alive.",
+   "impact": "Each sign-in on Windows leaves a pseudoconsole and a thread behind in the long-running `assay serve` process; in tests it blocks exit. No test checks for leftover processes or handles.",
+   "fix": "Keep the a5fbe8a disposal and add a lifecycle test that runs a login to completion and asserts no live child, handle or worktree remains (process.getActiveResourcesInfo on exit), on all three OSes.",
+   "severity": "medium",
+   "evidence": [
+    "GitHub run 40241407510 job 121313793488",
+    "git show a5fbe8a -- apps/assay/src/accounts/registry.ts",
+    "src/accounts/registry.ts:35-80 (at 9373f4d)"
+   ]
+  },
+  {
+   "lens": "G7",
+   "title": "The published capability statement is not the runtime one",
+   "case": "`diff <(node src/cli.ts capabilities) docs/capabilities.json` at 9373f4d: the committed file lacks the assay_verify tool and has \"probes\": [] while the CLI lists about 35 probes; src/mcp/capabilities.ts:79-88 writes it without engine or verifier, and test/mcp-config.test.ts:72-73 compares against that reduced output.",
+   "impact": "Agents and integrators reading docs/capabilities.json (linked from the README as the machine-readable statement) see neither the verifier tool nor any probe, and the CI drift check cannot catch drift in what agents actually get.",
+   "fix": "Generate docs/capabilities.json from the same call as `assay capabilities` (with engine and verifier), and make the test compare the CLI output with the committed file.",
+   "severity": "medium",
+   "evidence": [
+    "src/mcp/capabilities.ts:43,79-88",
+    "test/mcp-config.test.ts:72-73",
+    "src/cli.ts:177-181"
+   ]
+  },
+  {
+   "lens": "G1",
+   "title": "README benchmark numbers drift from the committed results",
+   "case": "README.md:74 and :13 give the catalog as 7,565 B / 7.6 KB, bench/results/latest.md:12 (committed with 9373f4d) measures 7,952 B; README.md:75 gives a median 777 B result, latest.md:13 measures 545.5 B; README.md:73 '30 kills' vs 32. The M10 row compares Assay's warm in-process 0.3 ms with rea's cold CLI start of 2.1 s, and M2 cites rea's default 3,211,385 B catalog, not the 222,396 B compact profile docs/merger/journal.md:76 also measured.",
+   "impact": "Numbers in the README are not the numbers the harness produces, and two baselines are not like for like; claims cannot be trusted to track the code.",
+   "fix": "Generate the README results table from bench/results/latest.json in CI (fail on drift), state warm vs cold, and cite rea's compact catalog beside the default.",
+   "severity": "medium",
+   "evidence": [
+    "README.md:13,71-84",
+    "bench/results/latest.md:5-16",
+    "docs/merger/journal.md:76"
+   ]
+  },
+  {
+   "lens": "G11",
+   "title": "No default bound on cost, tokens, time or worker count, and worker spawn needs no approval",
+   "case": "docs/configuration.md:15 (Budget: default none); src/kernel/kernel.ts:809-811 returns early when no budget exists; src/orchestrator/orchestrator.ts:593-612 checks depth, prompt length and a 3-failure breaker but no worker count; src/policy/taint.ts:156 allows effect 'spawn' without approval.",
+   "impact": "A coordinator agent (possibly steered by injected content) can start any number of paid workers on the person's accounts; OWASP LLM10 unbounded consumption.",
+   "fix": "Ship a default per-case budget (USD, calls and wall time) and a maximum number of concurrent and total workers, shown before work starts and raisable by the person.",
+   "severity": "medium",
+   "evidence": [
+    "docs/configuration.md:15",
+    "src/kernel/kernel.ts:809-816",
+    "src/orchestrator/orchestrator.ts:593-612",
+    "src/policy/taint.ts:156"
+   ]
+  },
+  {
+   "lens": "G9",
+   "title": "No release, provenance, update automation or secret scanning",
+   "case": "CHANGELOG.md:18 '0.1.0 (unreleased)', no tags, package.json private:true, no release job or attestation in .github/workflows/assay.yml; no dependabot/renovate config; no secret scanner step; SECURITY.md:20 and support.json:12 describe a per-release SBOM and support for 'the latest 0.x release' that do not exist.",
+   "impact": "Users cannot verify what they install, dependencies are updated by hand, and the CRA-oriented statements describe a process that is not running.",
+   "fix": "Add a tag-triggered release job (npm pack with provenance or a Sigstore attestation, SBOM attached), Dependabot for npm and actions, and a secret-scanning step; keep SECURITY.md and support.json in step with what the pipeline does.",
+   "severity": "medium",
+   "evidence": [
+    "CHANGELOG.md:18",
+    ".github/workflows/assay.yml",
+    "SECURITY.md:20",
+    "support.json:4-14"
+   ]
+  },
+  {
+   "lens": "G13",
+   "title": "One human owner, one agent author, no review before merge",
+   "case": "git log -- apps/assay: 18 commits, all 'Claude <noreply@anthropic.com>'; no pull request for the branch (gh api pulls?head=...: 0); no issue or PR templates; GOVERNANCE.md:3-6 records one maintainer.",
+   "impact": "Every change, including policy and provider code that GOVERNANCE.md:6 says needs the owner's review, lands without review; continuity depends on one person directing agents.",
+   "fix": "Route changes through pull requests with required checks and CODEOWNERS review for src/policy, src/providers, src/accounts, src/server and src/mcp; add templates; name a second maintainer for the security channel.",
+   "severity": "medium",
+   "evidence": [
+    "git log --format='%h %an' -- apps/assay",
+    "GOVERNANCE.md:3-6",
+    "/home/user/RE4exa/.github/CODEOWNERS"
+   ]
+  },
+  {
+   "lens": "G7",
+   "title": "`assay verify` accepts any signer by default",
+   "case": "src/export/export.ts:232 uses `trustedPublicKey ?? b.signature.public_key`: without --key, the bundle's own embedded key verifies the bundle, and src/cli.ts:149-160 prints 'bundle verifies ... signer <fingerprint>'. README.md:61 calls these 'ed25519-signed bundles that anyone can check'.",
+   "impact": "A modified bundle re-signed with any key reports success; recipients who do not compare the fingerprint get integrity, not authenticity.",
+   "fix": "Without --key, report 'signature valid for an unpinned key <fingerprint>' with a distinct exit code, and document key pinning in the export docs.",
+   "severity": "low",
+   "evidence": [
+    "src/export/export.ts:225-239",
+    "src/cli.ts:149-160",
+    "README.md:61"
+   ]
+  }
+ ],
+ "opportunities": [
+  {
+   "lens": "O9",
+   "criterion": "OPP-6",
+   "title": "Publish the S-2 claim record and three-key identity as a shared evidence format",
+   "description": "Assay's assay.claim/1 record (src/evidence/record.ts, docs/claim-format.md) separates ProbeKey (inputs), ObservationId (semantic content) and FindingKey (cross-version), carries coverage and limitations, and was shown here to give identical ids across paths and hosts. RE4exa's rex keeps its own ev_<sha256> records and rqs cites evidence as path:line strings. One versioned format with a JSON Schema would let Assay, rex and rqs exchange and verify evidence.",
+   "value": 4,
+   "reach": 4,
+   "confidence": "observed",
+   "horizon_fit": 1.4,
+   "effort": 2,
+   "action": "extract",
+   "evidence": [
+    "src/evidence/record.ts:1-8,36-80",
+    "docs/claim-format.md",
+    "test/probes-engine.test.ts:309"
+   ],
+   "priority": 11.2
+  },
+  {
+   "lens": "O5",
+   "criterion": "OPP-4",
+   "title": "Delete the npx-based ASAR probe",
+   "description": "The only router row that downloads code at run time (`npx -y @electron/asar list`) duplicates archive.list, which already reads the ASAR header in TypeScript (the row's own fallback text says so). Removing it closes the approval bypass's worst case and the inaccurate 'no network' statements at no capability cost.",
+   "value": 3,
+   "reach": 3,
+   "confidence": "observed",
+   "horizon_fit": 1.0,
+   "effort": 1,
+   "action": "retire",
+   "evidence": [
+    "src/probes/router-pack.json:12",
+    "src/probes/builtin/archive.ts",
+    "README.md:34",
+    "support.json:17"
+   ],
+   "priority": 9.0
+  },
+  {
+   "lens": "O13",
+   "criterion": "OPP-7",
+   "title": "Turn the existing SBOM, support period and signed bundles into a CRA-ready release pipeline",
+   "description": "CI already produces a CycloneDX SBOM, support.json declares a support period and CRA role, and bundles are ed25519-signed with a dated ML-DSA plan missing. A release job that attaches SBOM, VEX, provenance and a signed manifest would meet the Dec 2027 CRA obligations and SEC-3/SEC-4/PRV-4 together.",
+   "value": 3,
+   "reach": 3,
+   "confidence": "observed",
+   "horizon_fit": 1.4,
+   "effort": 2,
+   "action": "harden",
+   "evidence": [
+    ".github/workflows/assay.yml:47-48",
+    "support.json",
+    "docs/crypto.md:11"
+   ],
+   "priority": 6.3
+  },
+  {
+   "lens": "O1",
+   "criterion": "OPP-1",
+   "title": "Extract the SQLite durable kernel",
+   "description": "src/kernel/kernel.ts (864 lines) provides leases with a write fence, intents before effects, receipts, crash-loop parking, sequenced topics and a hash-chained log, with fault injection (test/fault-injection.test.ts) and the exclusive-open fix for the PGlite row loss measured in docs/merger. It depends only on node:sqlite and the JCS helper, and fixes defects measured in absurd and pi-durable.",
+   "value": 4,
+   "reach": 3,
+   "confidence": "observed",
+   "horizon_fit": 1.2,
+   "effort": 3,
+   "action": "extract",
+   "evidence": [
+    "src/kernel/kernel.ts",
+    "test/fault-injection.test.ts",
+    "test/kernel.test.ts:129",
+    "docs/merger/gaps.md:36"
+   ],
+   "priority": 4.8
+  },
+  {
+   "lens": "O11",
+   "criterion": "OPP-3",
+   "title": "Use the model-free verifier to check review evidence (rqs) and agent claims elsewhere",
+   "description": "The verifier re-runs `seen` claims with 10 predicates and refutes only on complete scans (src/verifier/verifier.ts:240-247). rqs reviews, including this one, cite file:line and command evidence that nothing re-checks; pointing Assay's file.contains / js.imports predicates at rqs evidence entries would make review evidence machine-verified, and the same service would serve other agent harnesses.",
+   "value": 4,
+   "reach": 3,
+   "confidence": "derived",
+   "horizon_fit": 1.3,
+   "effort": 3,
+   "action": "extract",
+   "evidence": [
+    "src/verifier/verifier.ts",
+    "src/verifier/predicates.ts",
+    "tools/rqs (review evidence strings)"
+   ],
+   "priority": 4.16
+  }
+ ],
+ "reengineering": [
+  {
+   "action": "harden",
+   "component": "Probe engine external-tool path (src/probes/router.ts externalProbes, src/probes/engine.ts run/exec, src/mcp/tools.ts assay_probe)",
+   "gain": "Every exec or network effect goes through the policy, as README.md:55 and docs/threat-model.md T1/T6 state; external tools stop seeing Assay's credentials.",
+   "measure": "A tripwire case that calls assay_probe ext.* after reading untrusted content is routed to approval (M5 counts it); a test asserts an external probe child sees only the execEnv allow-list; `rg npx src/probes/router-pack.json` returns nothing or a pinned version."
+  },
+  {
+   "action": "harden",
+   "component": "Live benchmark (bench/live.ts) and README claims",
+   "gain": "M12 becomes rerunnable by others and its pass/fail matches its description; README numbers stop drifting.",
+   "measure": "Both arms graded on the final answer; baseline skill vendored by commit hash; pass rule = interval upper bound <= 1.0 and accuracy not lower; >= 60 paired cells on a tagged release; a CI check fails when README's results table differs from bench/results/*.json."
+  },
+  {
+   "action": "harden",
+   "component": "CI and release (.github/workflows/assay.yml, repository settings)",
+   "gain": "Red commits and platform regressions are blocked before they land; releases are verifiable.",
+   "measure": "Required checks on all three OS jobs green for the release tag; per-test timeouts so a hang fails in under 5 minutes; a release with provenance attestation and attached SBOM; Dependabot PRs appear; OpenSSF Scorecard score recorded."
+  },
+  {
+   "action": "re-cut-interface",
+   "component": "Capability statement (src/mcp/capabilities.ts, docs/capabilities.json)",
+   "gain": "The machine-readable contract agents read equals what the server exposes.",
+   "measure": "A test asserts `assay capabilities` output byte-equals docs/capabilities.json; the committed file lists assay_verify and every probe."
+  }
+ ],
+ "questions": [
+  "Does Assay meet RQS-2030 for an agent harness? Partly: strong durability, identity, evidence and injection design with CI gates; held back by an approval bypass in the external-probe path, unproven live claims, red CI on the reviewed commit, no releases or provenance, and a one-owner, no-review process.",
+  "Are the README's headline numbers supported? The model-free numbers are measured and gated but two drifted from the committed results; the live M12 numbers recompute from live.json, but the grader credits only Assay for facts in claim params (answer-only 88 vs 90), the baseline is not in the repo, and the only run on the reviewed code has an interval crossing parity.",
+  "Is CI green on HEAD across platforms? No: on 9373f4d the Linux check failed at lint and skipped every later gate, macOS passed, and Windows has never passed (hangs up to 9373f4d, failures after).",
+  "Does every effectful path go through approval? No: assay_probe (effect read) can run external tools, including `npx -y`, with the full environment and no consent check.",
+  "Does the durable kernel survive SIGKILL without losing evidence or duplicating keyed effects? Yes for the kernel (fault-injection test in CI, M1 32 kills, 0 re-executed steps); agent turns and workers are settled, not resumed.",
+  "Are identifiers reproducible? Yes: the reviewer's double sweep at two paths gave identical finding keys and observation ids."
+ ],
+ "scope_notes": "Profile agent-harness: Assay runs official agent clients (Claude Agent SDK, codex app-server, ACP agents) on the person's own accounts, orchestrates sub-agents and executes approved commands on the person's machine (README.md:3,45-52); the template's workflow-engine suggestion came from the durable-kernel vocabulary. Flags: uses_llm (drives LLM clients; exposes an MCP server), has_ui (React web UI, ui/src), executes_code (assay_exec, cmd.exit verifier, external probe tools, worker worktrees), network_service (loopback HTTP/WebSocket and MCP endpoint, src/server/server.ts:299), parses_untrusted (ELF/PE/Mach-O/wasm/archive/JS parsers over target files), uses_crypto (ed25519 bundle signatures, HMAC session cookies, SHA-256 content addresses; docs/crypto.md), distributed (public GitHub repository, README quick start tells others to install and run it, package.json has bin/files/prepack and CI rehearses installing the packed tarball, support.json declares a support period and a CRA position; although package.json is private:true and CHANGELOG says 0.1.0 unreleased, so release criteria are scored against the absence of releases). heavy_compute is off (no training or inference; model calls happen in the clients). Reviewed commit 9373f4d (HEAD when the review started). HEAD moved during the review to 0dc827f (biome format of src/mcp/tools.ts), a5fbe8a (node-pty pseudoconsole release on Windows) and e65a111 (Windows path separators, LF checkouts); those commits are not scored, but their CI runs are cited where they confirm a defect present at 9373f4d. Runs allowed by the brief and done: npm test (238/238 pass, 53 s, Linux, Node 22.22.0), npx tsc -p tsconfig.json (exit 0), npx biome check (fails: 1 format error in src/mcp/tools.ts), CLI help/doctor/capabilities/sweep/probe with --home in temp dirs, and one external-probe run with a stub npx on PATH (no network). bench/run.ts and bench/live.ts were not run; their committed results were recomputed from the JSON.",
+ "not_examined": [
+  "bench/run.ts and bench/live.ts were not run (brief); live.json and latest.md were recomputed from their JSON only.",
+  "Codex and ACP adapters against real clients (only their protocol-fake tests ran); the Claude provider was not driven live.",
+  "The web UI by hand (keyboard, screen reader); only the axe-based e2e test and its source were read.",
+  "Exploitability of the external-probe approval bypass beyond the stub-npx reproduction (no network was used; defensive review rules).",
+  "The final outcome of the Windows job for 9373f4d (still running at review end) and CI for e65a111.",
+  "Branch protection and repository rulesets (API returned 403).",
+  "The vendored orca-process-host code beyond its spawn and Windows command-line handling.",
+  "The quality of the secret detector corpus and of the redaction false-positive rate (test claims only).",
+  "Notices inside the built UI bundle (ui/dist) and transitive dependency licenses.",
+  "Commits after 9373f4d (0dc827f, a5fbe8a, e65a111) except where their CI runs or messages confirm a defect present at 9373f4d."
+ ],
+ "time_minutes": 80,
+ "agreement": {
+  "pairs": 61,
+  "exact": 0.705,
+  "within_1": 0.967,
+  "mean_abs_diff": 0.328,
+  "quadratic_weighted_kappa": 0.732,
+  "disagreements": [
+   {
+    "id": "REL-3",
+    "a": 4,
+    "b": 2
+   },
+   {
+    "id": "SEC-8",
+    "a": 2,
+    "b": 4
+   }
+  ],
+  "unknown_or_na_mismatch": [],
+  "note": ""
+ }
+}

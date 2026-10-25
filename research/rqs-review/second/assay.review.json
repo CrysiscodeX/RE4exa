@@ -1,0 +1,1013 @@
+{
+ "rqs_review": 1,
+ "target": {
+  "path": "/home/user/RE4exa/apps/assay",
+  "name": "assay",
+  "repo": "CrysiscodeX/RE4exa (apps/assay)",
+  "head": "9373f4da1eb710b2578806aa81d78d3355a65019",
+  "shallow": false
+ },
+ "profile": "agent-harness",
+ "flags": {
+  "uses_llm": true,
+  "has_ui": true,
+  "executes_code": true,
+  "network_service": true,
+  "parses_untrusted": true,
+  "uses_crypto": true,
+  "heavy_compute": false,
+  "distributed": true
+ },
+ "scope_notes": "Profile agent-harness (not the probe's workflow-engine): Assay drives agent clients on the user's accounts and executes approved commands. uses_llm: drives Claude/Codex/ACP. has_ui: React web UI. executes_code: assay_exec and cmd.exit. network_service: loopback HTTP/WS/MCP server. parses_untrusted: probes parse target binaries/archives. uses_crypto: Ed25519 bundles, HMAC sessions. heavy_compute false: no training or inference. distributed true: public source distribution with install instructions, a declared support period and CRA role, although package.json is private and nothing is on a registry. Scored at 9373f4d; the branch moved to 0dc827f during the review and the working tree had uncommitted edits, so probes were re-run against a git-archive snapshot of 9373f4d.",
+ "reviewer": {
+  "id": "assay-second",
+  "kind": "agent",
+  "conflicts": "Assay was built in this same session by other Claude agents (same model family, same orchestrating session). Compensated by an adversarial brief: every README/benchmark claim was checked against code, tests, CI logs and throwaway probes under /tmp/claude-0/probes; levels were not rounded up. The other reviewer's file was not read."
+ },
+ "date": "2026-10-25",
+ "scores": {
+  "PUR-1": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    "README.md:1-111 (problem, quick start, 'Honest limits')",
+    "docs/capabilities.json (tools, effects, limits, costHint)",
+    "test suite: capabilities staleness test runs in CI (assay.yml 'Tests with coverage gates')"
+   ],
+   "note": "Problem, users, start and limits are stated; a machine-readable capability statement exists and a staleness test keeps it in sync. Not 5: no output schemas in the statement, and the README headline overstates scope (see EPI-5).",
+   "source": "review"
+  },
+  "PUR-2": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "bench/run.ts (model-free, --gate in CI)",
+    "bench/live.ts:27 hard-coded /home/user/GitHub_Repos_Dump/... SKILL path",
+    "bench/live.ts:107 vs :149-152 asymmetric grading",
+    "bench/live.ts:86 vs :122 different prompts",
+    "recompute of bench/results/live.json answer-only: Assay 88/105 vs Tier 0 90/105"
+   ],
+   "note": "Model-free benchmark is rerunnable and gated, but the one value claim (M12 cost and accuracy) uses an asymmetric grader and prompt, a non-portable harness path, 8 tasks on one model, and baselines for M1-M11 are quoted from the merger debate rather than rerun arms.",
+   "source": "review"
+  },
+  "PUR-3": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": [
+    "ARCHITECTURE.md module table with origin per module",
+    "scripts/dep-budget.ts (reason per runtime dependency, CI step)",
+    "src/policy/approvals.ts:175 addRule has no caller outside tests (git grep)"
+   ],
+   "note": "Each module and runtime dependency has a stated reason; dependency budget runs in CI. Dead surface remains: auto-approval rules are unreachable from the product; two host/origin checkers and two body readers.",
+   "source": "review"
+  },
+  "COR-1": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    "npm test: 238 pass, 0 fail, 0 skipped (this review)",
+    "package.json coverage: c8 --check-coverage lines 85 branches 75 functions 85",
+    "coverage/coverage-summary.json: lines 94.5, branches 81.6, functions 92.2",
+    "GitHub run 40243131708 (HEAD): check job failed at lint, coverage step skipped; windows-2022 job never green in 7 runs"
+   ],
+   "note": "Broad unit/integration/e2e tests with an enforced coverage gate. Not 5: tests do not pass on every supported platform (Windows never completed green; leak fixed only after HEAD in a5fbe8a).",
+   "source": "review"
+  },
+  "COR-2": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "bench/tasks/*.json oracle answer keys over generated fixtures (bench/tasks/make-fixtures.ts)",
+    "test/probes-differential.test.ts:46,81 differential vs file(1) and readelf -d"
+   ],
+   "note": "Answer keys come from fixture construction, and two capabilities have differential tests against reference tools. Independence is partial: the same agents wrote generator, keys and probes; PE/Mach-O/archive/JS have no reference-tool parity.",
+   "source": "review"
+  },
+  "COR-3": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "test/probes-fuzz.test.ts:1-2 seeded mutation fuzzing, 2,000 mutations per parser"
+   ],
+   "note": "Seeded input fuzzing of parsers runs in CI. No mutation testing of the test suite and no property tests of core algorithms; the anchor's mutation-testing element is missing.",
+   "source": "review"
+  },
+  "COR-4": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    ".github/workflows/assay.yml 'Self-application' (sweep . --json > self-sweep.json)",
+    "scripts/install-rehearsal.ts (packs and runs the tarball)",
+    "this review: src/cli.ts sweep . --json -> 1487 evidence, 1283 findings"
+   ],
+   "note": "Self-sweep and install rehearsal run in CI; findings are uploaded but not gated or tracked. README itself states the live tasks are fixtures, not real-world artifacts.",
+   "source": "review"
+  },
+  "COR-5": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    "src/evidence/record.ts (ProbeKey, ObservationId, FindingKey content-addressed)",
+    "test/evidence.test.ts (same bytes at two paths and two hosts give equal keys)",
+    "npm test: 'bench fixtures and task files are deterministic and match the committed copies'"
+   ],
+   "note": "Content-addressed ids with double-run identity tests in CI. Not 5: whole outputs (sweep report, exports) are not compared across runs; sweep reports carry elapsedMs and case ids are time-based.",
+   "source": "review"
+  },
+  "REL-1": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    "src/kernel/kernel.ts:462-472 fence; :611 runEffect replay policies; crash parking maxCrashes 5",
+    "test/fault-injection.test.ts (30+ SIGKILLs; this run: kills=32 re-executed-steps=0)",
+    "test/fixtures/fault-worker.ts (synthetic 6-step worker)"
+   ],
+   "note": "Leases, fence, intents and parking are real and fault-injected in CI. Not 5: the fault injection exercises a synthetic kernel worker, not the shipped orchestrator or sweep; product turns are settled as interrupted and workers become unverifiable (never resumed).",
+   "source": "review"
+  },
+  "REL-2": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "src/mcp/tools.ts:27-39 LIMITS (8 KB results with handles, 1 MiB read, exec 30 s/1 MiB, write 10 MiB)",
+    "docs/configuration.md 'Limits fixed in code'",
+    "src/probes/builtin/archive.ts:48 gzip bomb guard"
+   ],
+   "note": "Limits exist, are documented, and MCP results page through handles. Not tested at 10x; the CLI JSON path has no paging (see REL-3).",
+   "source": "review"
+  },
+  "REL-3": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "src/cli.ts:217 main().then((code) => process.exit(code))",
+    "repro: `node src/cli.ts sweep . --json --home T | wc -c` = 65536 (3 runs) vs 558,664 bytes redirected to a file; exit status 0"
+   ],
+   "note": "In-product partial results are labelled (coverage partial, unverifiable reasons, notExamined). The CLI's --json output is silently truncated at 64 KiB when piped, with exit 0: a partial result with no label.",
+   "source": "review"
+  },
+  "REL-4": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "src/cli.ts:86-91 SIGINT/SIGTERM close",
+    "src/vendor/orca-process-host/process-tree-termination.ts",
+    "commit a5fbe8a (after HEAD): node-pty pseudoconsole leaked on Windows and kept npm test alive",
+    "GitHub run 40240963852 windows-2022 npm test cancelled at 30-min timeout"
+   ],
+   "note": "Cleanup paths and process-tree kill exist, but a leaked pty worker hung the Windows test process at the reviewed commit; no test checks for leftovers.",
+   "source": "review"
+  },
+  "PERF-1": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "bench/run.ts M10/M11/M13 with targets",
+    "bench/results/latest.md M10 target median <= 1000 ms vs measured <= 8.3 ms"
+   ],
+   "note": "Main operations are benchmarked with budgets and gated in CI, but budgets have 100x headroom, so the gate cannot catch realistic regressions.",
+   "source": "review"
+  },
+  "PERF-2": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    "bench/results/latest.md M2 7,952 B tools/list (gate <= 12,288 B), M3 median 545.5 B",
+    "src/mcp/server.ts:136-139 text only, no duplicate structuredContent",
+    "src/mcp/registry.ts:195-201 bulk behind assay_fetch handles"
+   ],
+   "note": "Compact catalog and results, one copy, handles for detail, gated in CI. Not 5: outputs do not state their own byte/token cost.",
+   "source": "review"
+  },
+  "PERF-3": {
+   "level": "NA",
+   "confidence": "observed",
+   "evidence": [
+    "no training or inference in the product"
+   ],
+   "note": "heavy_compute is false: Assay drives external clients and runs small probes.",
+   "source": "review"
+  },
+  "SEC-1": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "SECURITY.md (contact, response times)",
+    "docs/threat-model.md (7 boundaries, 11 threats, test per threat)"
+   ],
+   "note": "Policy and threat model with tests per threat. No advisories process evidence; some threat-model statements describe controls that are not reachable (auto rules).",
+   "source": "review"
+  },
+  "SEC-2": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "package-lock.json, exact pins",
+    "assay.yml: npm ci --ignore-scripts; npm audit --omit=dev --audit-level=high; dep-budget.ts",
+    "no dependabot/renovate config in .github"
+   ],
+   "note": "Lockfile, scanning and a dependency budget exist; automated update PRs do not, so the meets anchor is not met in full. Audit covers runtime deps only.",
+   "source": "review"
+  },
+  "SEC-3": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": [
+    "package.json private: true",
+    "no tags or releases (git tag empty)",
+    "no provenance or signing steps in assay.yml"
+   ],
+   "note": "No release pipeline, no provenance or signatures. Install rehearsal builds a tarball in CI but nothing is published or attested.",
+   "source": "review"
+  },
+  "SEC-4": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "assay.yml 'SBOM' (npm sbom cyclonedx, uploaded artifact)",
+    "NOTICE (Orca, absurd, pi, rea, leanrea, t3code with commits and licences)",
+    "src/vendor/orca-process-host/LICENSE"
+   ],
+   "note": "CycloneDX SBOM per CI run and complete-looking notices. No VEX; SBOM not signed; at HEAD the SBOM step was skipped because lint failed.",
+   "source": "review"
+  },
+  "SEC-5": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    ".github/workflows/assay.yml: actions pinned by SHA, permissions contents: read, pull_request trigger",
+    ".github/CODEOWNERS covers /apps/assay/ only, not .github/workflows"
+   ],
+   "note": "Pinned actions and minimal permissions. No Scorecard or workflow linting gate; workflow files have no code owner; the checkout step embeds the job token in the remote URL.",
+   "source": "review"
+  },
+  "SEC-6": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": [
+    "src/app/app.ts:144 runProcess for cmd.exit with no env (child inherits full process.env)",
+    "src/app/app.ts:163 volatile.stdout_tail stored without redact()",
+    "src/export/export.ts:196 bundle records include volatile",
+    "repro /tmp/claude-0/probes/p3.ts: token-shaped value printed by an approved cmd.exit claim is stored raw (redactor would have caught it)",
+    "no secret scanner in CI"
+   ],
+   "note": "Red-line decision: not level 0. No secrets committed, logs and tool results are redacted. But the cmd.exit verifier path stores command output unredacted in evidence and in shareable bundles, contradicting README:56, and CI has no secret scanner. Fail-range level 1.",
+   "source": "review"
+  },
+  "SEC-7": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "src/vendor/orca-process-host/run-process.ts argv-only spawn",
+    "src/mcp/paths.ts realpath workspace guard",
+    "src/kernel/kernel.ts forget()/setVerdict SQL interpolation uses constant table names/verdicts only",
+    "repro p1: .git write guard bypass via in-workspace symlink and case variant (paths.ts:33)"
+   ],
+   "note": "Red-line decision: not level 0. No shell strings or eval on untrusted paths; exec is argv-only and approval-gated. The .git write protection checks the lexical path only. No SAST gate.",
+   "source": "review"
+  },
+  "SEC-8": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    "TypeScript (memory-safe runtime)",
+    "test/probes-fuzz.test.ts 2,000 mutations per parser, 200 ms bound, in CI",
+    "archive entry caps and gzip bomb guard"
+   ],
+   "note": "Memory-safe parsers with limits and fuzzing in CI. Not 5: parsers run in-process with the server's privileges, no isolation.",
+   "source": "review"
+  },
+  "SEC-9": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "docs/crypto.md inventory and PQ plan",
+    "src/export/export.ts:230 alg dispatch"
+   ],
+   "note": "Inventory documented, algorithm named in data, no deprecated algorithms. PQ plan is conditional ('once Node supports it'), not dated.",
+   "source": "review"
+  },
+  "AGT-1": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "src/policy/taint.ts:70-81 random-id envelope, look-alike neutralisation",
+    "test/tripwire.test.ts (24 carriers, 26 attempts, 0 executed, in CI)",
+    "src/orchestrator/orchestrator.ts:867-884 assay_check_workers returns worker text without untrusted flag"
+   ],
+   "note": "Untrusted target content is enveloped and effects are blocked by policy, tested in CI. Not 4: the corpus drives a scripted fake agent, not model versions, and worker reports reach the coordinator unenveloped and untainted.",
+   "source": "review"
+  },
+  "AGT-2": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "src/orchestrator/orchestrator.ts:901-910 assay_release_worker effect 'none' -> readOnlyHint true (src/mcp/server.ts:57-67)",
+    "src/orchestrator/worktree.ts:44 git worktree remove --force",
+    "orchestrator.ts:886 assay_reply_worker effect 'none' starts a paid model turn",
+    "src/policy/taint.ts:156 spawn always allowed"
+   ],
+   "note": "Effects are declared and gated for Assay's file/exec tools, and enforced mode removes built-ins. But a tool that force-deletes a worktree is declared read-only, and turn-starting tools are declared effect-free.",
+   "source": "review"
+  },
+  "AGT-3": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "kernel hash-chained case log (verifyChain)",
+    "approvals in chat (src/policy/approvals.ts)",
+    "/api/cases/:id/interrupt, fork",
+    "src/mcp/registry.ts:145-152 approval args cut at 2,000 chars"
+   ],
+   "note": "Readable log, approvals, stop and fork exist; S-2 export of the trail. Gap: the person approves write content shown only to its first 2,000 characters; effects outside the store have no rollback.",
+   "source": "review"
+  },
+  "AGT-4": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "bench/live.ts (8 tasks x 3, Haiku, one account)",
+    "bench/live.ts:49-59 substring keyword grader; keys include 'pe', 'elf', 'zip', 'install', 'https'",
+    "bench/live.ts:149-152 Assay graded on answer + claim params"
+   ],
+   "note": "An evaluation set with expected outcomes exists and results are recorded, but it is not run per release or in CI, uses a weak substring grader, and grades the two arms on different text.",
+   "source": "review"
+  },
+  "AGT-5": {
+   "level": 3,
+   "confidence": "derived",
+   "evidence": [
+    "README.md:43-61 providers and modes",
+    "support.json data section",
+    "src/providers/claude.ts:72-76 CLAUDE_AGENT_SDK_CLIENT_APP=assay/0.1.0 (not mentioned in docs)"
+   ],
+   "note": "Providers, modes and data flows are documented; claims carry provider:account authorship. The client-app identification sent to the provider is undocumented.",
+   "source": "review"
+  },
+  "AGT-6": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "src/orchestrator/orchestrator.ts:218, :612 checkBudget(..., {calls: 1}) pre-check only",
+    "orchestrator.ts:655-660 worker runner gets no maxBudgetUsd",
+    "docs/configuration.md:14 'A turn or worker that would cross it is refused'"
+   ],
+   "note": "Usage is recorded per turn, account and worker and a USD cap exists, but it is checked against spend so far, not the turn about to run; workers run without a per-session cap.",
+   "source": "review"
+  },
+  "INT-1": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "src/mcp/server.ts:14-15 protocol versions negotiated",
+    "docs/api.md HTTP API",
+    "CLI --json for sweep/probe"
+   ],
+   "note": "MCP (HTTP + stdio proxy), documented HTTP API and CLI JSON with stated versions. The CLI JSON path truncates when piped (REL-3).",
+   "source": "review"
+  },
+  "INT-2": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "`assay capabilities` JSON (this review)",
+    "docs/claim-format.md + src/evidence/record.ts validator",
+    "capabilities staleness test in CI"
+   ],
+   "note": "Input schemas, a describe command and a validated claim-record schema; drift test for the catalog. Tool outputs have no schema (text only by design).",
+   "source": "review"
+  },
+  "INT-3": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    "20 tools (bench/results/latest.md M2)",
+    "assay_probe parameterised over the probe catalog",
+    "M2 gate <= 12,288 B in bench/run.ts"
+   ],
+   "note": "Small, measured, gated surface. Not 5: tool-selection accuracy is not measured.",
+   "source": "review"
+  },
+  "INT-4": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    "src/errors.ts FAILURE_MODES (retryable, message, fix; 32 fixes)",
+    "scripts/gen-docs.ts --check docs/failure-modes.md",
+    "test/failure-modes.test.ts each code raised"
+   ],
+   "note": "Typed codes with fixes, generated docs and coverage of codes, enforced in CI. Not 5: no machine-applicable fixes; non-AssayError exceptions surface as HTTP 400 bad_request (src/server/server.ts:262-268).",
+   "source": "review"
+  },
+  "INT-5": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    "src/kernel/kernel.ts withReceipt retry keys; turn idempotencyKey (orchestrator.ts:229)",
+    "content-addressed ObservationId identical across paths/hosts (test/evidence.test.ts)",
+    "handles with offsets for paging"
+   ],
+   "note": "Retry keys, stable content-addressed ids and offset paging, tested in CI. Not 5: assay_exec/assay_write_file take no idempotency key.",
+   "source": "review"
+  },
+  "INT-6": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "test/e2e/ui-smoke.test.ts:66-69 axe-core gating serious/critical only",
+    "ui/index.html lang=en, no i18n layer"
+   ],
+   "note": "Accessible markup with an automated axe gate, quickstart rehearsed. UI text is not translatable and minor axe violations are not gated.",
+   "source": "review"
+  },
+  "INT-7": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "src/export/export.ts S-2 JSONL, SARIF, CycloneDX, Markdown, bundle",
+    "store is SQLite"
+   ],
+   "note": "Open export formats and an open store. No import path; bundles cannot be imported, only verified.",
+   "source": "review"
+  },
+  "EPI-1": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "src/evidence/record.ts content-addressed records with probe id/version, params, subject digest, producer",
+    "src/export/export.ts:232 verify falls back to the bundle's own key",
+    "repro p2: re-signed bundle with flipped verdicts 'verifies' without --key",
+    "export.ts:196-202 bundle claims carry no predicate or params"
+   ],
+   "note": "Records carry full provenance. The exchange layer is weak: default verification trusts the embedded key, and bundle claims do not record what predicate was checked, so a recipient cannot tell what 'verified' covered.",
+   "source": "review"
+  },
+  "EPI-2": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "seen/inferred/unknown labels; observed/derived/inferred confidence (docs/claim-format.md)",
+    "src/evidence/store.ts:231-240 calibration counters, Wilson intervals (/api/calibration)"
+   ],
+   "note": "Claims carry labels and confidence; per-producer calibration exists. Calibration counts verdicts that only check the predicate (see gap 1), and no abstention thresholds are fitted.",
+   "source": "review"
+  },
+  "EPI-3": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    "src/verifier/verifier.ts:135, :187, :230 refuted only on complete coverage",
+    "test/probes-js.test.ts M9 0 of 300 false complete (CI)"
+   ],
+   "note": "Absence is reported as unverifiable unless coverage is complete, and this is gated in CI. Not 5: the CLI JSON path can silently drop results.",
+   "source": "review"
+  },
+  "EPI-4": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "sweep report: evidence, findings, questions, notExamined (this review: 670 not examined)",
+    "coverage census {examined, skipped, unresolved, unclaimed}"
+   ],
+   "note": "Scope, examined and skipped items are reported. The person's question is not reconciled against recorded outcomes automatically.",
+   "source": "review"
+  },
+  "EPI-5": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": [
+    "README.md:3 'Every factual claim it makes is re-run' vs README.md:102 (50 of 63 claims not re-runnable) and verifier.ts:92",
+    "README.md:94-100 'as accurate' depends on asymmetric grading (live.ts:107 vs :149-152; answer-only 88 vs 90)",
+    "README.md:74-75 M2 7,565 B / M3 777 B vs bench/results/latest.md 7,952 B / 545.5 B",
+    "README.md:61 'anyone can check' vs export.ts:232",
+    "README.md:56 vs app.ts:163",
+    "docs/configuration.md:14-15 budget refusal and auto-approval API not implemented"
+   ],
+   "note": "Red-line decision: not level 0. Numbers link to harness files with dates and the main caveats sit next to M12. But several headline statements are contradicted by the repository's own code and data, and README numbers are hand-copied and have drifted. Fail-range level 1.",
+   "source": "review"
+  },
+  "MNT-1": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "ARCHITECTURE.md module table and flows",
+    "module header invariants (e.g. src/kernel/kernel.ts:1-9)"
+   ],
+   "note": "Architecture documented and respected in what was read. No boundary rules in CI.",
+   "source": "review"
+  },
+  "MNT-2": {
+   "level": 2,
+   "confidence": "derived",
+   "evidence": [
+    "largest file src/orchestrator/orchestrator.ts 1,003 lines",
+    "no duplication or dead-code check in package.json scripts or assay.yml",
+    "unreachable addRule path (src/policy/approvals.ts:175)"
+   ],
+   "note": "Sizes are moderate and the rqs probe found no duplicated bytes, but the project runs no duplication or dead-code check, and dead policy surface exists.",
+   "source": "review"
+  },
+  "MNT-3": {
+   "level": 4,
+   "confidence": "observed",
+   "evidence": [
+    "tsconfig.json strict, noUncheckedIndexedAccess",
+    "biome lint+format in CI; at HEAD the lint gate failed the job (run 40243131708)",
+    "tsconfig excludes src/vendor from typecheck"
+   ],
+   "note": "Strict typing, lint and format enforced in CI. Not 5: vendored code is excluded from typecheck and there is no pre-commit check.",
+   "source": "review"
+  },
+  "MNT-4": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "CONTRIBUTING.md, AGENTS.md, ARCHITECTURE.md, docs/decisions/0001-0003",
+    "gen-docs --check covers failure-modes only; README numbers drifted"
+   ],
+   "note": "Maintainer and agent docs plus decision records. Drift checks cover generated docs only; README and configuration.md drifted from code and results.",
+   "source": "review"
+  },
+  "MNT-5": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "docs/debt.md (cost and payback trigger per item)"
+   ],
+   "note": "Debt ledger with triggers. Not generated from markers; owner implicit.",
+   "source": "review"
+  },
+  "EVO-1": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "CHANGELOG.md versioning policy and contract promises"
+   ],
+   "note": "SemVer policy with breaking-change rules; no release has exercised it.",
+   "source": "review"
+  },
+  "EVO-2": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": [
+    "no tags, releases or release workflow; CHANGELOG 0.1.0 (unreleased)"
+   ],
+   "note": "No release process exists yet.",
+   "source": "review"
+  },
+  "EVO-3": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "package.json engines node >=22.12; README Node 22.12+",
+    "assay.yml matrix ubuntu-24.04, macos-14, windows-2022",
+    "windows-2022 job: run 1 cancelled at 30 min, runs 2-6 still in progress at review time"
+   ],
+   "note": "No explicit OS support matrix; Windows is in CI but has never passed at or before the reviewed commit.",
+   "source": "review"
+  },
+  "EVO-4": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "support.json security_fixes_until 2031-12-31, 12-month successor notice",
+    "SECURITY.md supported versions"
+   ],
+   "note": "Support period stated machine-readably. No LTS lines.",
+   "source": "review"
+  },
+  "OPS-1": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "`assay doctor --home T` (this review): node, store, providers, git, ui with fixes",
+    "/api/doctor JSON"
+   ],
+   "note": "Doctor checks prerequisites and prints fixes; JSON via the HTTP API only. No repair plan.",
+   "source": "review"
+  },
+  "OPS-2": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "src/log.ts JSON lines with levels, trace ids, redaction",
+    "/api/usage per account/provider/case/worker"
+   ],
+   "note": "Structured logs and usage metrics. No OpenTelemetry (docs/debt.md).",
+   "source": "review"
+  },
+  "OPS-3": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "docs/configuration.md",
+    "CLI rejects unknown options (this review: `doctor --bogus` exit 2)",
+    "loopback bind, enforced mode default"
+   ],
+   "note": "Settings documented and mostly validated, safe defaults. configuration.md documents an auto-approval API that does not exist and a budget refusal that is not implemented as written; invalid ASSAY_LOG values fall back silently.",
+   "source": "review"
+  },
+  "OPS-4": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "README quick start: npm ci (lockfile integrity hashes)",
+    "no remote install scripts in product paths"
+   ],
+   "note": "Pinned package-manager install. No signed artefacts.",
+   "source": "review"
+  },
+  "PRV-1": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "support.json data.telemetry 'none'",
+    "no telemetry SDK in src (rqs probe)",
+    "src/providers/claude.ts:72-76 client-app identifier sent via the official SDK"
+   ],
+   "note": "Red-line decision: not triggered. No telemetry. Not 5: nothing to inspect locally; the client-app identifier passed to the provider is undocumented.",
+   "source": "review"
+  },
+  "PRV-2": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "support.json data flows",
+    "src/cli.ts:200-213 forget() deletes rows",
+    "src/accounts/registry.ts stores email/orgName from `claude auth status` in detail"
+   ],
+   "note": "Local by default with export and delete. Deletion is not verifiable (no VACUUM/secure_delete; WAL), worktrees and account homes are not removed by forget, and account email/org are stored though never shown.",
+   "source": "review"
+  },
+  "PRV-3": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "LICENSE Apache-2.0",
+    "NOTICE",
+    "src/vendor/orca-process-host/LICENSE (MIT)"
+   ],
+   "note": "Red-line decision: not triggered. Licence and notices present. No per-file SPDX/REUSE.",
+   "source": "review"
+  },
+  "PRV-4": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "support.json regulatory.eu_cra_role (hedged)",
+    "no AI Act or accessibility-act position (git grep)"
+   ],
+   "note": "CRA role and vulnerability handling stated; AI Act and EAA not addressed.",
+   "source": "review"
+  },
+  "SUS-1": {
+   "level": 2,
+   "confidence": "observed",
+   "evidence": [
+    "GOVERNANCE.md 'There is one maintainer today'",
+    ".github/CODEOWNERS single owner"
+   ],
+   "note": "Written governance and CODEOWNERS, but one maintainer.",
+   "source": "review"
+  },
+  "SUS-2": {
+   "level": 1,
+   "confidence": "observed",
+   "evidence": [
+    ".github has no ISSUE_TEMPLATE or PR template",
+    "59 commits pushed directly to claude/admiring-volta-uc87nj",
+    "no evidence of required review or branch protection"
+   ],
+   "note": "CI checks exist; no templates and no evidence of required review.",
+   "source": "review"
+  },
+  "SUS-3": {
+   "level": 3,
+   "confidence": "observed",
+   "evidence": [
+    "docs/ai-development.md",
+    "CONTRIBUTING.md:6",
+    "58 of 59 commits carry Co-Authored-By trailers"
+   ],
+   "note": "AI authorship disclosed with a review description and trailers. Review was by the lead agent; no human review evidenced.",
+   "source": "review"
+  }
+ },
+ "red_lines": {
+  "SEC-6": "Not level 0 (no committed secrets; logs and tool results redacted), scored 1: cmd.exit output stored unredacted and exported in bundles.",
+  "SEC-7": "Not level 0: argv-only execution, approval-gated effects, realpath guard; .git protection bypass recorded as a medium gap.",
+  "EPI-5": "Not level 0, scored 1: contradicted statements exist (README:3, :61, :56, :94-100, :74-75; configuration.md:14-15) but numbers link to harnesses with dates and M12 caveats are adjacent. Borderline.",
+  "PRV-1": "Not triggered: no telemetry.",
+  "PRV-3": "Not triggered: Apache-2.0 LICENSE and NOTICE."
+ },
+ "gaps": [
+  {
+   "lens": "G1",
+   "title": "A 'verified' verdict checks the predicate, not the claim's text",
+   "case": "/tmp/claude-0/probes/p1.ts at 9373f4d: claim text 'app.js does NOT use eval and is safe' with predicate file.contains {text:'eval'} -> verified; text 'app.js has no network endpoints' with file.contains {text:'a'} -> verified. src/verifier/verifier.ts:91-136 never relates text to predicate; the M4 corpus (test/verifier.test.ts:21-23) sets text to the predicate string, so it cannot catch this.",
+   "impact": "The UI shows a check mark next to agent-written text that the evidence does not support, including negations; calibration counts these as correct.",
+   "fix": "Render the verdict on a statement generated from predicate+params and show it instead of, or beside, the agent text; add mismatched and negated claims to the M4 corpus with a false-verified-as-read target of 0.",
+   "severity": "high",
+   "evidence": [
+    "src/verifier/verifier.ts:91-136",
+    "src/verifier/verifier.ts:343-385",
+    "test/verifier.test.ts:21-23"
+   ]
+  },
+  {
+   "lens": "G1",
+   "title": "M12 grades the two arms on different text and with different prompts",
+   "case": "bench/live.ts:107 grades Tier 0 on its answer; :149-152 grades Assay on answer plus every claim's text and JSON params. Prompts differ (:86 asks Tier 0 to cite file and offset; :122 does not). Recomputing bench/results/live.json on answers only gives Assay 88/105 vs Tier 0 90/105. Grader is substring match (:49-58) with keys such as 'pe', 'elf', 'zip', 'install', 'https'. Harness reads a skill from a hard-coded local path (:27). The bootstrap resamples 24 cells from 8 tasks.",
+   "impact": "README:94-100 'as accurate ... about 43% cheaper' is not supported as stated; part of the cost gap may come from the longer Tier 0 prompt.",
+   "fix": "Same prompt for both arms, answer-only grading with token-boundary matching, vendored skill text, task-level bootstrap, 60 paired cells as docs/debt.md already requires.",
+   "severity": "high",
+   "evidence": [
+    "bench/live.ts:27",
+    "bench/live.ts:49-59",
+    "bench/live.ts:86",
+    "bench/live.ts:107",
+    "bench/live.ts:122",
+    "bench/live.ts:149-152"
+   ]
+  },
+  {
+   "lens": "G11",
+   "title": "CLI --json output is silently truncated at 64 KiB when piped",
+   "case": "`node src/cli.ts sweep . --json --home <tmp> | wc -c` returned 65536 in three runs; redirected to a file the same report is 558,664 bytes; exit status 0. src/cli.ts:217 calls process.exit(code) before stdout drains.",
+   "impact": "Agents and scripts that pipe JSON get invalid, truncated JSON with a success exit code.",
+   "fix": "Set process.exitCode and return, or write with a drained callback; add a CI test that pipes a large --json result and parses it.",
+   "severity": "high",
+   "evidence": [
+    "src/cli.ts:217",
+    "src/cli.ts:104-108"
+   ]
+  },
+  {
+   "lens": "G8",
+   "title": "cmd.exit re-runs inherit the full environment and store output unredacted",
+   "case": "/tmp/claude-0/probes/p3.ts: an approved cmd.exit claim whose command prints a token-shaped environment value -> evidence volatile.stdout_tail holds it verbatim (redactString would have flagged it). src/app/app.ts:144 passes no env to runProcess (assay_exec uses execEnv, src/mcp/tools.ts:307-317); app.ts:163 stores stdout_tail without redact; bundles include volatile (src/export/export.ts:196).",
+   "impact": "Secrets reach the store, the UI and shareable bundles, contradicting README:56.",
+   "fix": "Use execEnv() for verifier commands and pass stdout_tail through redactString; add a regression test with a planted token.",
+   "severity": "high",
+   "evidence": [
+    "src/app/app.ts:136-169",
+    "src/mcp/tools.ts:307-317",
+    "src/export/export.ts:193-222"
+   ]
+  },
+  {
+   "lens": "G8",
+   "title": ".git write protection checks only the lexical path",
+   "case": "/tmp/claude-0/probes/p1.ts against the 9373f4d tree: resolveInWorkspace(ws, 'docs/hooks/pre-commit', {write:true}) with docs -> .git resolves to <ws>/.git/hooks/pre-commit and is allowed; '.GIT/hooks/pre-commit' is allowed (on case-insensitive macOS/Windows file systems this is .git). src/mcp/paths.ts:33 tests segments of the lexical relative path.",
+   "impact": "An approved assay_write_file can plant a git hook while the approval shows an innocuous path; target repositories are attacker-controlled and may ship such a symlink.",
+   "fix": "Apply the protected-segment test to the realpath relative to the root, case-insensitively on darwin/win32; add symlink and case tests on ubuntu and macOS.",
+   "severity": "medium",
+   "evidence": [
+    "src/mcp/paths.ts:16-57"
+   ]
+  },
+  {
+   "lens": "G1",
+   "title": "Bundle verification trusts the bundle's own key by default",
+   "case": "/tmp/claude-0/probes/p2.ts: a bundle whose claim verdicts were flipped to 'verified' and re-signed with a fresh Ed25519 key passes verifyBundle() without a key; `assay verify --bundle` (src/cli.ts:148-160) then prints 'bundle verifies'. src/export/export.ts:232 falls back to b.signature.public_key.",
+   "impact": "README:61 'signed bundles that anyone can check' reads as origin assurance; without a trusted key the check proves only self-consistency. Bundle claims also omit predicate and params (export.ts:196-202).",
+   "fix": "Require --key or a local trust store, print 'untrusted signer' and exit non-zero otherwise; include predicate and params in manifest claims.",
+   "severity": "medium",
+   "evidence": [
+    "src/export/export.ts:225-255",
+    "src/cli.ts:148-160"
+   ]
+  },
+  {
+   "lens": "G7",
+   "title": "Effect declarations understate two worker tools",
+   "case": "assay_release_worker is declared effect 'none' (src/orchestrator/orchestrator.ts:901-910), so tools/list marks it readOnlyHint true (src/mcp/server.ts:57-67), yet it runs `git worktree remove --force` (src/orchestrator/worktree.ts:44). assay_reply_worker (orchestrator.ts:886) is 'none' and starts a paid model turn; spawn is always allowed (src/policy/taint.ts:156).",
+   "impact": "Clients and people relying on MCP hints treat a destructive, ungated action as read-only; a tainted coordinator can discard a worker's uncommitted work without approval.",
+   "fix": "Declare release as write (approval when the worktree is dirty) and reply/spawn with their cost; test the hints against handler behaviour.",
+   "severity": "medium",
+   "evidence": [
+    "src/orchestrator/orchestrator.ts:886-910",
+    "src/orchestrator/worktree.ts:43-45",
+    "src/mcp/server.ts:57-67"
+   ]
+  },
+  {
+   "lens": "G11",
+   "title": "Approvals show at most 2,000 characters of each argument",
+   "case": "src/mcp/registry.ts:145-152 summarizeArgs cuts strings over 2,000 characters before ctx.approve; assay_write_file accepts up to 10 MiB (src/mcp/tools.ts:37).",
+   "impact": "The person approves file content they cannot see; a payload after character 2,000 is written unseen.",
+   "fix": "Show size and digest, keep full content behind a handle the UI can open, and refuse approval rendering that hides content without saying so.",
+   "severity": "medium",
+   "evidence": [
+    "src/mcp/registry.ts:145-152",
+    "src/mcp/registry.ts:249-259",
+    "src/mcp/tools.ts:37"
+   ]
+  },
+  {
+   "lens": "G11",
+   "title": "Worker reports reach the coordinator outside the untrusted envelope",
+   "case": "assay_check_workers (src/orchestrator/orchestrator.ts:867-884) returns worker summaries and questions as plain text with no untrusted flag, so registry.shape() neither envelopes them nor taints the coordinator.",
+   "impact": "Instructions a worker copied from target content arrive at the coordinator as trusted text; approval reasons omit 'session read untrusted content'.",
+   "fix": "Mark worker-originated text untrusted with origin worker:<id>, and propagate taint from worker to coordinator.",
+   "severity": "medium",
+   "evidence": [
+    "src/orchestrator/orchestrator.ts:672-700",
+    "src/orchestrator/orchestrator.ts:867-884",
+    "src/mcp/registry.ts:179-224"
+   ]
+  },
+  {
+   "lens": "G1",
+   "title": "Budget cap is checked against past spend only; workers have no session cap",
+   "case": "orchestrator.ts:218 and :612 call checkBudget with {calls: 1}; the USD of the coming turn is not estimated against the limit. Worker runners get no maxBudgetUsd (orchestrator.ts:655-660). docs/configuration.md:14 says a turn or worker that would cross the cap is refused.",
+   "impact": "A case can exceed its USD cap by one coordinator turn plus every running worker turn.",
+   "fix": "Pass remaining budget as maxBudgetUsd to every session, and refuse spawns when the estimate's upper bound crosses the cap.",
+   "severity": "medium",
+   "evidence": [
+    "src/orchestrator/orchestrator.ts:207",
+    "src/orchestrator/orchestrator.ts:218",
+    "src/orchestrator/orchestrator.ts:612-660",
+    "docs/configuration.md:14"
+   ]
+  },
+  {
+   "lens": "G9",
+   "title": "CI at the reviewed commit is red and Windows has never passed",
+   "case": "Run 40243131708 on 9373f4d: check job failed at 'npm run lint', so coverage, docs freshness, SBOM, install rehearsal, e2e, benchmark gates and self-application were skipped; macos-14 passed; windows-2022 npm test still running after >10 min (macOS takes ~45 s). Run 40240963852 windows job cancelled at the 30-min timeout. Commit a5fbe8a (after HEAD) names a pty leak that kept npm test alive on Windows.",
+   "impact": "README:69 'runs in CI' and the workflow's 'Tests also run on macOS and Windows' describe gates that did not pass at this commit.",
+   "fix": "Keep a required green check on the branch; add a per-test timeout on Windows; state the supported OS matrix in support.json.",
+   "severity": "medium",
+   "evidence": [
+    ".github/workflows/assay.yml:1-91",
+    "GitHub Actions runs 40243131708, 40242669933, 40240963852"
+   ]
+  },
+  {
+   "lens": "G12",
+   "title": "README and configuration docs drifted from results and code",
+   "case": "README.md:74-75 reports M2 7,565 B and M3 median 777 B; bench/results/latest.md at the same commit reports 7,952 B and 545.5 B. docs/configuration.md:15 documents auto-approval rules 'per case (approvals API)', but no route or UI calls ApprovalQueue.addRule (git grep: only tests).",
+   "impact": "Readers act on numbers and settings that are not current or do not exist.",
+   "fix": "Generate the README measures table from bench/results/latest.json and check it in CI; remove or implement the auto-rule setting.",
+   "severity": "low",
+   "evidence": [
+    "README.md:71-84",
+    "bench/results/latest.md",
+    "docs/configuration.md:15",
+    "src/policy/approvals.ts:175"
+   ]
+  }
+ ],
+ "opportunities": [
+  {
+   "lens": "O11",
+   "criterion": "OPP-6",
+   "title": "Publish assay.claim/1 with predicate-bound verdicts as a shared evidence format",
+   "description": "The S-2 record (ProbeKey, ObservationId, FindingKey, honest coverage) is the strongest part of Assay. Bound to a canonical predicate statement (gap 1) and a trust-store verifier (gap 6), it becomes a format other RE4exa tools (rea, leanrea, dissect) can emit and check.",
+   "value": 4,
+   "reach": 4,
+   "confidence": "derived",
+   "horizon_fit": 1.3,
+   "effort": 3,
+   "action": "extract",
+   "evidence": [
+    "docs/claim-format.md",
+    "src/evidence/record.ts",
+    "src/verifier/predicates.ts"
+   ]
+  },
+  {
+   "lens": "O8",
+   "criterion": "OPP-6",
+   "title": "Turn M12 into a fair, portable live evaluation",
+   "description": "Same prompt, answer-only token-boundary grading, vendored skill, task-level bootstrap and 60 paired cells; run per model version. This converts the headline value claim from indicative to defensible.",
+   "value": 4,
+   "reach": 3,
+   "confidence": "observed",
+   "horizon_fit": 1.2,
+   "effort": 2,
+   "action": "harden",
+   "evidence": [
+    "bench/live.ts:27-159",
+    "docs/debt.md (60 paired cells)"
+   ]
+  },
+  {
+   "lens": "O1",
+   "criterion": "OPP-1",
+   "title": "Extract the durable kernel",
+   "description": "src/kernel (lease fence, intents with replay policies, receipts, exclusive store lock, hash-chained log) is self-contained on node:sqlite and fault-injected; it replaces the absurd and pi-durable patterns other reviewed repositories carry.",
+   "value": 3,
+   "reach": 3,
+   "confidence": "inferred",
+   "horizon_fit": 1.1,
+   "effort": 3,
+   "action": "extract",
+   "evidence": [
+    "src/kernel/kernel.ts:1-9",
+    "test/fault-injection.test.ts",
+    "NOTICE (absurd, pi)"
+   ]
+  },
+  {
+   "lens": "O2",
+   "criterion": "OPP-2",
+   "title": "One loopback host/origin check and one body reader",
+   "description": "src/server/server.ts:102-112 and src/mcp/server.ts:266-274 implement host/origin checks with different allowlists ([::1] only in one); readBody exists twice with different overflow behaviour.",
+   "value": 2,
+   "reach": 2,
+   "confidence": "observed",
+   "horizon_fit": 1.0,
+   "effort": 1,
+   "action": "consolidate",
+   "evidence": [
+    "src/server/server.ts:102-112",
+    "src/server/server.ts:161-181",
+    "src/mcp/server.ts:266-293"
+   ]
+  },
+  {
+   "lens": "O5",
+   "criterion": "OPP-4",
+   "title": "Delete or wire up auto-approval rules",
+   "description": "AutoRule/evenWhenTainted and ApprovalQueue.addRule are unreachable from the product, yet documented as a setting; taint then only changes approval wording.",
+   "value": 2,
+   "reach": 2,
+   "confidence": "observed",
+   "horizon_fit": 1.0,
+   "effort": 1,
+   "action": "retire",
+   "evidence": [
+    "src/policy/approvals.ts:168-191",
+    "src/policy/taint.ts:127-166",
+    "docs/configuration.md:15"
+   ]
+  },
+  {
+   "lens": "O13",
+   "criterion": "OPP-7",
+   "title": "Release pipeline that emits the compliance set",
+   "description": "SBOM, support.json and CRA position already exist; a tagged release with provenance, a signed SBOM, VEX and an AI Act/EAA position would meet 2027 obligations with little new code.",
+   "value": 3,
+   "reach": 3,
+   "confidence": "derived",
+   "horizon_fit": 1.4,
+   "effort": 2,
+   "action": "harden",
+   "evidence": [
+    "support.json",
+    ".github/workflows/assay.yml 'SBOM'"
+   ]
+  }
+ ],
+ "reengineering": [
+  {
+   "action": "harden",
+   "component": "src/verifier + UI claim view",
+   "gain": "No claim text marked verified beyond what its predicate checked",
+   "measure": "M4 corpus extended with 50 mismatched and negated claims; false-verified-as-displayed = 0 in CI"
+  },
+  {
+   "action": "harden",
+   "component": "src/cli.ts output path",
+   "gain": "Complete JSON for piped consumers",
+   "measure": "CI test pipes `sweep . --json` and parses it; byte count equals file-redirect size"
+  },
+  {
+   "action": "harden",
+   "component": "src/mcp/paths.ts and src/app/app.ts cmd.exit exec",
+   "gain": "Protected paths hold through symlinks and case; verifier commands get the scrubbed env and redacted output",
+   "measure": "Regression tests for symlink/case .git writes (ubuntu + macOS) and a planted-token cmd.exit run with 0 raw secrets stored"
+  },
+  {
+   "action": "re-cut-interface",
+   "component": "src/export bundle verify",
+   "gain": "Verification establishes the signer, and claims state what was checked",
+   "measure": "Forged-signer bundle test exits non-zero; manifest claims include predicate and params"
+  },
+  {
+   "action": "harden",
+   "component": "bench/live.ts",
+   "gain": "Defensible M12",
+   "measure": "Identical prompts, answer-only grading, task-level CI reported; rerun from a clean checkout without local paths"
+  }
+ ],
+ "questions": [
+  "Does loopback auth hold (Host/Origin, pairing, cookies, WS tickets, MCP bearer tokens)? Yes for remote and browser callers; tokens are per case and caller, digests only.",
+  "Do path guards hold? Workspace containment yes (realpath); .git write protection no (symlink and case variants).",
+  "Can a claim be marked verified wrongly? Yes: the verdict covers predicate+params, not the agent's text.",
+  "Do durability tests test what they claim? The kernel mechanics yes (real SIGKILLs, real second process); the product's orchestrator and sweep are not fault-injected.",
+  "Does Assay read credentials? No reads found in src/providers or src/accounts; a grep guardrail test enforces it. It stores email/org from `claude auth status` but never shows which identity an account is.",
+  "Is the M12 comparison fair? No: asymmetric grading and prompts; answer-only Assay 88/105 vs Tier 0 90/105.",
+  "What is CI truth at HEAD? check job failed at lint (later gates skipped), macOS passed, Windows never completed green."
+ ],
+ "not_examined": [
+  "Windows cmd-shim argument quoting in src/vendor/orca-process-host/windows-cmd-shim-resolution.ts",
+  "Codex and ACP adapters beyond enforcement settings; no live provider runs (not permitted)",
+  "bench/run.ts and bench/live.ts were not executed (not permitted); results files were read and recomputed",
+  "UI source beyond grep for identity, mode labels and predicate display; e2e and gen-docs not run locally",
+  "Merger-debate baselines in docs/merger (quoted, not re-verified)",
+  "Probe parsers (archive, PE, Mach-O, JS tokenizer) read only at the limit/guard level"
+ ],
+ "time_minutes": 85
+}

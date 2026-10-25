@@ -185,10 +185,21 @@ test("path guard: outside paths, symlink escapes and .git writes are refused", a
     writeFileSync(join(outside, "secret.txt"), "top secret");
     symlinkSync(join(outside, "secret.txt"), join(s.ws, "link.txt"));
     symlinkSync(outside, join(s.ws, "linkdir"));
+    mkdirSync(join(s.ws, ".git", "hooks"), { recursive: true });
+    symlinkSync(join(s.ws, ".git"), join(s.ws, "docs")); // docs -> .git: a write to docs/hooks/x lands in .git
     s.setAnswer("approve");
     for (const p of ["../x", "/etc/passwd", "link.txt", "linkdir/secret.txt"])
       assert.equal(errCode(await s.reg.call(s.ctx(), "assay_read_file", { path: p })), "path_outside_workspace", p);
-    for (const p of ["../evil", "linkdir/new.txt", "link.txt", ".git/hooks/pre-commit"])
+    for (const p of [
+      "../evil",
+      "linkdir/new.txt",
+      "link.txt",
+      ".git/hooks/pre-commit",
+      ".GIT/hooks/pre-commit",
+      ".git./hooks/pre-commit",
+      "docs/hooks/pre-commit",
+      "docs/config",
+    ])
       assert.equal(
         errCode(await s.reg.call(s.ctx(), "assay_write_file", { path: p, content: "x" })),
         "path_outside_workspace",
@@ -196,6 +207,7 @@ test("path guard: outside paths, symlink escapes and .git writes are refused", a
       );
     assert.equal(readFileSync(join(outside, "secret.txt"), "utf8"), "top secret");
     assert.ok(!existsSync(join(outside, "new.txt")));
+    assert.ok(!existsSync(join(s.ws, ".git", "hooks", "pre-commit")));
     assert.equal(errCode(await s.reg.call(s.ctx(), "assay_read_file", { path: "missing.txt" })), "path_not_found");
     assert.equal(
       errCode(await s.reg.call(s.ctx(), "assay_exec", { program: "ls", args: [], cwd: "../" })),
@@ -373,4 +385,17 @@ test("a missing path suggests similar paths in the error the agent reads", async
   assert.match(e.message, /Did you mean: postinstall\/evil-helper/);
   assert.deepEqual(suggestPaths(root, "zzzz-nothing"), []);
   rmSync(root, { recursive: true, force: true });
+});
+
+test("approval cards show arguments in full up to 256 KiB, and flag longer ones as partial with a digest", async () => {
+  const { summarizeArgs, APPROVAL_SHOW_MAX } = await import("../src/mcp/registry.ts");
+  const small = "a".repeat(5000);
+  assert.equal((summarizeArgs({ content: small }) as Record<string, Json>).content, small);
+  const big = `${"b".repeat(APPROVAL_SHOW_MAX)}TAIL`;
+  const out = summarizeArgs({ path: "x", content: big }) as Record<string, Json>;
+  assert.deepEqual(out.partial, ["content"]);
+  const c = out.content as Record<string, Json>;
+  assert.equal(c.chars, big.length);
+  assert.match(String(c.sha256), /^[0-9a-f]{64}$/);
+  assert.ok(String(c.tail).endsWith("TAIL"));
 });

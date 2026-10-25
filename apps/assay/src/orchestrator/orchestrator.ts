@@ -654,10 +654,14 @@ export class Orchestrator {
       this.#setWorkerParams(workerId, { worktree: path, repo: c.workspace });
       cwd = path;
     }
+    // A worker may spend at most what is left of the case budget; the client enforces that cap per session.
+    const b = this.k.budget(`case:${caseId}`);
+    const left = b?.limit.usd !== undefined ? Math.max(0, b.limit.usd - b.spent.usd) : undefined;
     const runner = await this.#startRunner(caseId, workerId, params.provider, params.accountId, {
       systemPrompt: workerPrompt({ workerId, title: params.title, caseTitle: c.title }),
       mode: input.mode ?? settings.mode ?? "enforced",
       cwd,
+      ...(left !== undefined ? { maxBudgetUsd: left } : {}),
     });
     this.#rt(caseId).workers.set(workerId, runner);
     this.log(caseId, "worker", `Started worker "${params.title}" on ${params.provider}.`, {
@@ -876,9 +880,13 @@ export class Orchestrator {
             (w) => `${w.id} ${w.status}/${w.liveness} "${w.title}"${w.result ? `: ${w.result.slice(0, 200)}` : ""}`,
           );
           const msgs = r.messages.map((m) => `${m.kind} from ${m.from}: ${JSON.stringify(m.body).slice(0, 300)}`);
+          // Worker text is model output that may quote the target: it reaches the coordinator in the
+          // same untrusted-content envelope as probe results, and taints the coordinator's session.
+          const fromWorkers = msgs.length > 0 || r.workers.some((w) => w.result);
           return {
             text: [...lines, ...(msgs.length ? ["messages:", ...msgs] : ["no new messages"])].join("\n"),
             data: r as unknown as Json,
+            ...(fromWorkers ? { untrusted: true, origin: `workers:${ctx.caseId}` } : {}),
           };
         },
       },
@@ -899,8 +907,8 @@ export class Orchestrator {
       },
       {
         name: "assay_release_worker",
-        description: "Stop a worker and remove its worktree.",
-        effect: "none",
+        description: "Stop a worker and remove its worktree (uncommitted changes in it are lost).",
+        effect: "write",
         coordinatorOnly: true,
         inputSchema: { type: "object", properties: { workerId: { type: "string" } }, required: ["workerId"] },
         handler: async (ctx, a) => {

@@ -124,6 +124,39 @@ test("unverifiable, with the reason: partial census, unsupported predicates, bad
   }
 });
 
+test("the text must agree with the predicate: a negated text needs negate: true, which flips the verdict", async () => {
+  const s = setup();
+  try {
+    // Found by review: this used to come back verified, because only the predicate was checked.
+    const wrong = s.claim(
+      "file.contains",
+      { path: "elf/tool", text: "libcurl.so.4" },
+      { text: "elf/tool does NOT reference libcurl and is safe" },
+    );
+    const w = await s.verifier.verify("case_v", wrong);
+    assert.equal(w.verdict, "unverifiable");
+    assert.match(w.reason, /negation/);
+    const neg = (text: string, needle: string) =>
+      s.claim("file.contains", { path: "elf/tool", text: needle, negate: true }, { text });
+    assert.equal(
+      (await s.verifier.verify("case_v", neg("the tool does not contain libnope", "libnope"))).verdict,
+      "verified",
+    );
+    assert.equal(
+      (await s.verifier.verify("case_v", neg("the tool doesn't reference libcurl", "libcurl.so.4"))).verdict,
+      "refuted",
+    );
+    const noNegText = s.claim(
+      "file.contains",
+      { path: "elf/tool", text: "libnope", negate: true },
+      { text: "it has libnope" },
+    );
+    assert.equal((await s.verifier.verify("case_v", noNegText)).verdict, "unverifiable");
+  } finally {
+    s.cleanup();
+  }
+});
+
 test("inferred and unknown claims are not re-run and keep a null verdict", async () => {
   const s = setup();
   try {

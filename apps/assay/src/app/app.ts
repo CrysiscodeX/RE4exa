@@ -28,6 +28,7 @@ import { createToolRegistry } from "../mcp/registry.ts";
 import { createMcpHandler, mountHttp, queueApprover, TokenRegistry } from "../mcp/server.ts";
 import { Orchestrator } from "../orchestrator/orchestrator.ts";
 import { ApprovalQueue } from "../policy/approvals.ts";
+import { minimalEnv } from "../policy/env.ts";
 import { redact } from "../policy/redact.ts";
 import { diffFindings } from "../probes/diff.ts";
 import { createProbeEngine } from "../probes/engine.ts";
@@ -141,7 +142,14 @@ export class App {
           detail: { claimId, program, args } as Json,
           reason: "re-run a command to check a claim",
         });
-        const r = await runProcess({ program, args, cwd: this.workspace, timeoutMs: 120_000, maxOutputBytes: 1 << 20 });
+        const r = await runProcess({
+          program,
+          args,
+          cwd: this.workspace,
+          env: minimalEnv(),
+          timeoutMs: 120_000,
+          maxOutputBytes: 1 << 20,
+        });
         const probe = { id: "cmd.exit", version: "1" };
         const params = { program: basename(program), args } as Json;
         const rec = makeRecord(
@@ -160,7 +168,8 @@ export class App {
             confidence: "observed",
             producer: { kind: "verifier", id: "assay-verifier" },
             locator: { path: program },
-            volatile: { stdout_tail: r.stdout.slice(-2000) },
+            // Command output can carry secrets: stored only after redaction, like every other probe result.
+            volatile: { stdout_tail: redact(r.stdout.slice(-2000)).value },
           },
           this.kernel.now(),
         );

@@ -190,3 +190,36 @@ test("a second server on the same store is refused", async () => {
   await a.close();
   home.cleanup();
 });
+
+test("verifier re-runs of cmd.exit: approval first, allow-listed environment, secrets in output redacted", async () => {
+  const { recordClaim, getEvidence } = await import("../src/evidence/store.ts");
+  const home = tmp("assay-home-");
+  const ws = workspace();
+  process.env.ASSAY_TEST_SECRET = "should-not-reach-the-child";
+  const app = new App({ home: home.dir, workspace: ws.dir });
+  try {
+    const c = app.kernel.createCase({ title: "cmd", workspace: ws.dir });
+    const token = `ghp_${"a1B2".repeat(9)}`;
+    const script = `console.log(process.env.ASSAY_TEST_SECRET ?? "env-clean"); console.log("${token}")`;
+    const claim = recordClaim(app.kernel, c.id, "agent", {
+      text: "the script exits 0",
+      label: "seen",
+      predicate: "cmd.exit",
+      params: { program: process.execPath, args: ["-e", script], expect: 0 },
+    });
+    app.approvals.on("approval", (a: { id: string; state: string }) => {
+      if (a.state === "pending") app.approvals.decide(a.id, "approve");
+    });
+    const v = await app.verifier.verify(c.id, claim);
+    assert.equal(v.verdict, "verified", v.reason);
+    const rec = getEvidence(app.kernel, v.observation_id!)!;
+    const tail = JSON.stringify(rec.volatile);
+    assert.ok(tail.includes("env-clean"), tail);
+    assert.ok(!tail.includes(token), "the token-shaped output is stored only as a fingerprint");
+  } finally {
+    delete process.env.ASSAY_TEST_SECRET;
+    await app.close();
+    home.cleanup();
+    ws.cleanup();
+  }
+});

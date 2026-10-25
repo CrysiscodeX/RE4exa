@@ -22,6 +22,7 @@ import { type ClaimRecord, type Confidence, type Finding, makeRecord, probeKey }
 import { evidenceByProbeKey, putEvidence } from "../evidence/store.ts";
 import type { Kernel } from "../kernel/kernel.ts";
 import { pathNotFound } from "../mcp/suggest.ts";
+import { minimalEnv } from "../policy/env.ts";
 import { runProcess } from "../vendor/orca-process-host/run-process.ts";
 import { IDENTIFY_HEAD, type Ident, identifyBytes, identifyDirectory } from "./builtin/identify.ts";
 import { BUILTIN_PROBES } from "./builtin/index.ts";
@@ -244,6 +245,7 @@ export function createProbeEngine(opts: EngineOptions): AssayProbeEngine {
         const r = await runProcess({
           program,
           args,
+          env: minimalEnv(),
           timeoutMs: o?.timeoutMs ?? 30_000,
           maxOutputBytes: o?.maxOutputBytes ?? 1024 * 1024,
           signal,

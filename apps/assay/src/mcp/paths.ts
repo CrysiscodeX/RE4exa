@@ -13,6 +13,11 @@ function inside(root: string, p: string): boolean {
 
 const PROTECTED_WRITE = new Set([".git"]);
 
+/** Case-insensitive, and ignores the trailing dots and spaces Windows drops, so `.GIT` and `.git.` match. */
+function isProtected(rel: string): boolean {
+  return rel.split(/[\\/]/).some((seg) => PROTECTED_WRITE.has(seg.toLowerCase().replace(/[. ]+$/, "")));
+}
+
 /** Workspace-relative paths shown to agents use "/" on every platform, as the probes' locators do. */
 export function slashed(rel: string): string {
   return sep === "/" ? rel : rel.split(sep).join("/");
@@ -35,7 +40,7 @@ export function resolveInWorkspace(
   const abs = resolve(rootLexical, p);
   if (!inside(rootLexical, abs) && !inside(root, abs)) throw new AssayError("path_outside_workspace", { path: p });
   const relLexical = inside(rootLexical, abs) ? relative(rootLexical, abs) : relative(root, abs);
-  if (opts.write && relLexical.split(sep).some((seg) => PROTECTED_WRITE.has(seg)))
+  if (opts.write && isProtected(relLexical))
     throw new AssayError("path_outside_workspace", { path: p, why: "protected path (.git)" });
   if (existsSync(abs) || isDanglingLink(abs)) {
     if (opts.write && lstatSync(abs).isSymbolicLink())
@@ -48,6 +53,8 @@ export function resolveInWorkspace(
     }
     if (!inside(root, real))
       throw new AssayError("path_outside_workspace", { path: p, why: "symlink leaves workspace" });
+    if (opts.write && isProtected(relative(root, real)))
+      throw new AssayError("path_outside_workspace", { path: p, why: "protected path (.git)" });
     return { abs: real, rel: slashed(relative(root, real)) || "." };
   }
   if (opts.mustExist !== false && !opts.write) throw pathNotFound(root, p);
@@ -58,6 +65,9 @@ export function resolveInWorkspace(
   if (!inside(root, ancReal))
     throw new AssayError("path_outside_workspace", { path: p, why: "parent leaves workspace" });
   const final = resolve(ancReal, relative(anc, abs));
+  // A symlinked directory (docs -> .git) must not route a write into .git/hooks.
+  if (opts.write && isProtected(relative(root, final)))
+    throw new AssayError("path_outside_workspace", { path: p, why: "protected path (.git)" });
   return { abs: final, rel: slashed(relative(root, final)) };
 }
 

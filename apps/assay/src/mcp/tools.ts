@@ -18,6 +18,7 @@ import {
   resolveUnknown,
 } from "../evidence/store.ts";
 import type { Kernel } from "../kernel/kernel.ts";
+import { minimalEnv } from "../policy/env.ts";
 import type { ProcessResult, ProcessSpec } from "../vendor/orca-process-host/process-spec.ts";
 import { runProcess } from "../vendor/orca-process-host/run-process.ts";
 import { PREDICATES, predicateCatalog } from "../verifier/predicates.ts";
@@ -308,14 +309,6 @@ function compilePattern(p: string): RegExp {
   }
 }
 
-const SAFE_ENV_KEYS = ["PATH", "HOME", "LANG", "LC_ALL", "TMPDIR", "TMP", "TEMP", "SystemRoot", "PATHEXT", "ComSpec"];
-
-function execEnv(): NodeJS.ProcessEnv {
-  const env: NodeJS.ProcessEnv = { TERM: "dumb", NO_COLOR: "1" };
-  for (const k of SAFE_ENV_KEYS) if (process.env[k] !== undefined) env[k] = process.env[k];
-  return env;
-}
-
 type Handler = (ctx: ToolContext, args: Record<string, Json>) => Promise<HandlerResult>;
 
 export function builtinHandlers(svc: ToolServices): Record<string, Handler> {
@@ -323,6 +316,18 @@ export function builtinHandlers(svc: ToolServices): Record<string, Handler> {
   const run = svc.runProcess ?? ((spec: ProcessSpec) => runProcess(spec));
   return {
     async assay_probe(ctx, a) {
+      // External tools whose router row says consent: approval (they may download or execute code) need the
+      // person's approval on every run, tainted session or not.
+      const def = svc.engine.list().find((p) => p.id === s(a.probe)) as
+        | { consent?: string; summary?: string }
+        | undefined;
+      if (def?.consent === "approval")
+        await ctx.approve("assay_probe", {
+          tool: "assay_probe",
+          effect: "exec",
+          reason: `probe runs an external tool that needs consent: ${def.summary ?? s(a.probe)}`,
+          args: { probe: s(a.probe) ?? null, path: s(a.path) ?? null },
+        });
       const rec = await svc.engine.run({
         caseId: ctx.caseId,
         probeId: s(a.probe)!,
@@ -565,7 +570,7 @@ export function builtinHandlers(svc: ToolServices): Record<string, Handler> {
           program,
           args,
           cwd,
-          env: execEnv(),
+          env: minimalEnv(),
           timeoutMs,
           maxOutputBytes: LIMITS.execMaxOutputBytes,
           signal: ctx.signal,

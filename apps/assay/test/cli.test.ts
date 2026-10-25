@@ -30,6 +30,15 @@ test("CLI: version, help, unknown options rejected, sweep, probe list, forget", 
   );
   assert.equal(sweep.status, 0, sweep.stderr);
   assert.match(sweep.stdout, /evidence records/);
+  // Output over a pipe is complete: process.exit used to drop all but the first 64 KiB.
+  const big = run(
+    ["sweep", join(import.meta.dirname, "..", "src"), "--json", "--workspace", join(import.meta.dirname, "..")],
+    h.dir,
+  );
+  assert.equal(big.status, 0, big.stderr);
+  assert.ok(big.stdout.length > 65_536, `sweep JSON is ${big.stdout.length} bytes`);
+  JSON.parse(big.stdout);
+  assert.match(run(["key"], h.dir).stdout, /BEGIN PUBLIC KEY/);
   const list = run(["probe", "--list"], h.dir);
   assert.match(list.stdout, /file\.identify/);
   assert.equal(run(["forget", "--all"], h.dir).status, 0);

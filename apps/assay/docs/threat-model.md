@@ -1,6 +1,6 @@
 # Assay threat model
 
-> threat model v1, reviewed for assay 0.1.0
+> threat model v2, reviewed for assay 0.1.0 (v2 adds T12–T16, found by the RQS-2030 reviews)
 
 Assay drives official agent clients on the person's own signed-in accounts and checks what they claim
 against re-runnable evidence. It runs locally. The agents it drives are useful precisely because they
@@ -59,13 +59,18 @@ This document is the contract the `policy/` and `mcp/` subsystems implement and 
 | T2 | TB1 | Content breaks out of the envelope by writing its own `</untrusted-content>`, guessing the id, or using a look-alike / escaped / full-width tag. | `envelope` uses a fresh random id per call and neutralises every closing/opening tag look-alike (case, spacing, `_`/`-`, HTML and JS escapes, full-width/small forms) inside the body. | `test/policy-taint.test.ts` ("closing-tag escapes are neutralised, including guessed ids"); tripwire `escape-close.md`, `unicode-tags.md`, `zero-width.md`. |
 | T3 | TB1 | Hidden instructions a human reviewer cannot see (Unicode tag chars, bidi overrides, zero-width chars). | `envelope`/`sanitizeUntrusted` strip U+E0000-E007F, bidi controls and zero-width chars, and report counts in the `sanitized` attribute so the reviewer knows text was removed. | `test/policy-taint.test.ts` ("strips Unicode tag characters, bidi controls and zero-width"). |
 | T4 | TB1/A3 | A secret in the artifact (or in a tool error, approval detail, claim) is copied into the model context, the log, or an export. | `redact` walks every string, replaces detected secrets with `[redacted:<kind>:<fp8>]`, stores only a fingerprint. Applied to untrusted tool output, approval detail and error bodies. | `test/policy-redact.test.ts` (seeded corpus: 0 survive, <=2 false hits in 54 benign lines); `test/mcp-registry.test.ts` (secret in file output); `test/policy-approvals.test.ts` (detail redacted). |
-| T5 | TB3/A1/A5 | Path traversal or a symlink lets a file tool escape the workspace, or a write lands a hook in `.git`. | `resolveInWorkspace` resolves real paths, refuses anything outside the workspace, refuses writes through a symlink or into `.git`. | `test/mcp-registry.test.ts` ("path guard"). |
+| T5 | TB3/A1/A5 | Path traversal or a symlink lets a file tool escape the workspace, or a write lands a hook in `.git`. | `resolveInWorkspace` resolves real paths, refuses anything outside the workspace, refuses writes through a symlink or into `.git`, checked on both the lexical and the resolved path, ignoring case and trailing dots (so `docs -> .git` and `.GIT/` are refused). | `test/mcp-registry.test.ts` ("path guard"). |
 | T6 | TB3 | `assay_exec` reaches a shell, runs unbounded, leaks the environment, or floods output. | argv only, no shell (vendored Orca `runProcess`), 30 s timeout, 1 MiB output cap, a minimal allow-listed environment. | `test/mcp-registry.test.ts` ("argv only, bounded, minimal environment"). |
 | T7 | TB2/A2 | A worker calls a coordinator-only (worker-management) tool, or an agent self-approves. | `list`/`visible` hide `coordinatorOnly` tools from workers; `call` re-checks and only policy calls `ctx.approve`. The agent has no "approve" verb. | `test/mcp-registry.test.ts` ("hides coordinatorOnly"); `test/mcp-server.test.ts`. |
 | T8 | TB4/A4 | A browser or other local process drives the server (DNS rebinding, CSRF, token theft). | `mountHttp` requires a bearer token (constant-time compare, only a digest kept), checks Host and Origin against the loopback name, answers JSON only (no SSE), rejects GET. | `test/mcp-server.test.ts` ("bearer auth, Host/Origin checks, methods"). |
 | T9 | TB2/A3 | A forged tool result or a fake "SYSTEM:"/"user approved" message convinces the agent it already has permission. | Such text arrives only as enveloped untrusted content and still taints; approval is a separate out-of-band decision the content cannot reach. | tripwire `fake-tool-result.json`, `fake-system.md`, `escape-close.md`. |
 | T10 | TB5/TB6 | In enforced mode the client also loads the person's other MCP servers, exposing un-policed tools. | `claudeMcpArgs` adds `--strict-mcp-config`; `assertOnlyAssay` refuses any config naming another server. | `test/mcp-config.test.ts` ("refuses any other server"). |
 | T11 | A3 | An instruction past the 8 KB result budget, or inside a large payload, slips through un-enveloped. | The whole payload is redacted and enveloped; only a preview is inlined and the rest goes behind one handle that pages back enveloped and still tainting. | `test/mcp-registry.test.ts` ("large results ... one payload copy"); tripwire `long.txt`. |
+| T12 | TB3 | A probe runs an external tool that downloads or executes code (`npx -y …`) without the person's consent, with Assay's environment. | Router rows marked `consent: approval` ask on every run, tainted or not; probe tools get the same allow-listed environment as `assay_exec`; the downloaded package is pinned to a version. | `test/probe-consent.test.ts`. |
+| T13 | A3 | A command the verifier re-runs prints a secret, which is stored and exported. | The stored output tail is redacted; the command runs with the allow-listed environment. | `test/app-integration.test.ts` ("verifier re-runs of cmd.exit"). |
+| T14 | TB7 | Someone edits a bundle, re-signs it with their own key, and it passes `assay verify`. | Without `--key`, verification reports integrity only and exits 3; authenticity needs the signer's public key (`assay key`). | `test/export.test.ts` ("signed bundles verify"). |
+| T15 | TB2 | A worker's report carries an injected instruction to the coordinator. | `assay_check_workers` returns worker text as untrusted content, enveloped, and it taints the coordinator. | `test/orchestrator.test.ts`. |
+| T16 | A3 | An agent's claim text says the opposite of its predicate, and the chip shows ✔ verified. | The verifier marks a claim unverifiable when its text states a negation and its predicate does not (`negate: true` flips the verdict). | `test/verifier.test.ts` ("the text must agree with the predicate"). |
 
 ## Residual risks (stated plainly)
 
@@ -76,6 +81,8 @@ This document is the contract the `policy/` and `mcp/` subsystems implement and 
 - **Assay provides no OS-level process isolation.** `assay_exec` bounds time, output, argv and
   environment, but an approved process runs with the person's own privileges. Sandboxing (containers,
   seccomp, a separate user) is the host's responsibility; on Linux Assay does not add it.
+- **An approval card shows each argument in full only up to 256 KiB.** A longer one is shown as start,
+  end and sha256, and the card says it is not shown in full.
 - **Approval is only as strong as the person.** Policy routes correctly, but a person who approves
   without reading defeats it. The reason text and redacted detail exist to make the decision
   informed; they cannot force attention.

@@ -60,6 +60,17 @@ function strs(v: Json | undefined): string[] {
   return Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : [];
 }
 
+// Words that make a sentence state an absence. Matching is deliberately broad: a false match makes
+// the claim unverifiable, never wrongly verified.
+const NEGATION =
+  /\b(not|no|never|none|nothing|neither|nor|without|absent|missing|lacks?|lacking|free of)\b|n't\b|n’t\b/i;
+
+export function negationIn(text: string): boolean {
+  // Quoted spans and path-like tokens (no/such/file, app/missing.txt) are names, not statements.
+  const prose = text.replace(/`[^`]*`|"[^"]*"|\S*[/\\._]\S*/g, " ");
+  return NEGATION.test(prose);
+}
+
 function libBase(s: string): string {
   const parts = s.split(/[\\/]/);
   return parts[parts.length - 1] ?? s;
@@ -273,11 +284,30 @@ export function createVerifier(opts: { kernel: Kernel; engine: ProbeEngine; exec
     }
   };
 
+  // The verdict is about the predicate, so the text must say the same thing. A text that negates
+  // ("app.js does NOT use eval") over a positive predicate would otherwise come back verified.
+  const checked = async (caseId: string, sc: StoredClaim): Promise<VerifyOutcome> => {
+    const params = obj(sc.claim.params);
+    const negate = params.negate === true;
+    if (negationIn(sc.claim.text) !== negate)
+      return unv(
+        negate
+          ? "the predicate is negated (negate: true) but the claim text states no negation"
+          : "the claim text states a negation the predicate does not; add negate: true to check it",
+      );
+    if (!negate) return decide(caseId, sc.id, sc.claim);
+    const { negate: _drop, ...rest } = params;
+    const o = await decide(caseId, sc.id, { ...sc.claim, params: rest });
+    if (o.verdict === "verified") return { ...o, verdict: "refuted", reason: `the negation is false: ${o.reason}` };
+    if (o.verdict === "refuted") return { ...o, verdict: "verified", reason: `the negation holds: ${o.reason}` };
+    return o;
+  };
+
   const verify = async (caseId: string, sc: StoredClaim): Promise<VerifyOutcome> => {
     if (sc.case_id !== caseId) throw new AssayError("bad_request", { why: "claim belongs to another case" });
     if (sc.claim.label !== "seen")
       return { verdict: null, reason: `not re-run: the claim is labelled ${sc.claim.label}` };
-    const o = await decide(caseId, sc.id, sc.claim);
+    const o = await checked(caseId, sc);
     if (o.verdict) {
       const record: StoredClaim["verdict_record"] = { reason: o.reason };
       if (o.observation_id) record.observation_id = o.observation_id;

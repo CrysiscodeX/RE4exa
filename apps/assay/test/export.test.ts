@@ -57,6 +57,8 @@ test("signed bundles verify, and any change is detected", () => {
   const s = seed();
   const b = makeBundle(s.k, s.c.id, s.dir, "0.1.0");
   assert.deepEqual(verifyBundle(structuredClone(b)).records, 1);
+  assert.equal(verifyBundle(structuredClone(b)).authenticated, false, "the embedded key proves integrity only");
+  assert.equal(verifyBundle(structuredClone(b), b.signature.public_key).authenticated, true);
   const t1 = structuredClone(b);
   (t1.records[0]!.result as Record<string, unknown>).name = "evil";
   assert.throws(
@@ -73,6 +75,13 @@ test("signed bundles verify, and any change is detected", () => {
   const otherKey = makeBundle(s.k, s.c.id, other.dir, "0.1.0").signature.public_key;
   assert.throws(
     () => verifyBundle(structuredClone(b), otherKey),
+    (e) => isAssayError(e, "bundle_tampered"),
+  );
+  // A forger re-signs with their own key: intact, but not authentic against the real signer's key.
+  const forged = makeBundle(s.k, s.c.id, other.dir, "0.1.0");
+  assert.equal(verifyBundle(structuredClone(forged)).authenticated, false);
+  assert.throws(
+    () => verifyBundle(structuredClone(forged), b.signature.public_key),
     (e) => isAssayError(e, "bundle_tampered"),
   );
   other.cleanup();
