@@ -17,22 +17,19 @@ Build no new runtime. Ship the parents as a pinned four-tier composition, and us
 
 **Scenario 1: Tier 1, interactive, on the person's subscription.** "What does this Electron installer do?"
 1. The person installs `leanrea/SKILL.md`, pinned by commit, since leanrea has no tags [seen: git log at `09ba4aa`: 4 commits, 0 tags]. They add `rea mcp` to their client config with `REA_MCP_INPUT_SCHEMA_PROFILE=compact` and `REA_MCP_OUTPUT_SCHEMA_PROFILE=off`. That cuts the catalog from 3,211,385 B to 222,396 B (`rea.md` O2, measured). A short skill addendum (about 20 lines, estimate) sets the order: router row first; rea only when checkable Evidence is needed; `detail:"summary"`; then `export_evidence_bundle` to `./re/<sha256>/evidence.json`.
-2. The agent runs the asar row through Bash, then calls one rea tool, then exports the bundle.
-3. **What the person sees:** an answer with seen/inferred/unknown labels, the Evidence IDs of the rea-backed claims, and the bundle path.
-4. Credit comes from the person's own sign-in. The kit stores no credential. If the client crashes, recovery depends on the client's own resume [unknown]. The bundle on disk survives and can be re-imported.
+2. The agent runs the asar row through Bash, calls one rea tool, and exports the bundle. **The person sees** an answer with seen/inferred/unknown labels, the Evidence IDs of the rea-backed claims, and the bundle path.
+3. Credit comes from the person's own sign-in; the kit stores no credential. After a client crash, recovery depends on the client's own resume [unknown]; the bundle on disk survives and can be re-imported.
 
 **Scenario 2: Tier 2, a durable 30-probe investigation that is killed at step 17.**
 1. The tier-2 host is about 350-600 lines on pi-durable (estimate, `skeptic.md` S-1). It connects to `rea mcp` through pi-mcp and wraps each rea tool as a `defineTool`.
 2. After each Evidence-producing call, the host exports the bundle and commits its path and sha256 in a pi-durable document.
-3. On reopen, pi-durable settles the in-flight call as `interrupted` unless both replay policies are `safe` (`durable:src/harness/tool.ts:175-196`). The host then restarts rea and calls `open_binary` and `import_evidence_bundle`.
-4. **What the person sees:** the CLI reports "resumed at step 17; 1 call interrupted; 16 Evidence records re-imported". Ghidra project state is gone and its analysis reruns (W-S1-1).
-5. **Model access** is API keys through pi-ai, behind an allowlist guard. The Mode A recorder (§3 row 9) would use the person's client instead, but that mechanism has not been spiked.
+3. On reopen, pi-durable settles the in-flight call as `interrupted` unless both replay policies are `safe` (`durable:src/harness/tool.ts:175-196`); the host restarts rea and calls `open_binary` and `import_evidence_bundle`. **The person sees** "resumed at step 17; 1 call interrupted; 16 Evidence records re-imported". Ghidra project state is gone and its analysis reruns (W-S1-1).
+4. **Model access** is API keys through pi-ai, behind an allowlist guard. The Mode A recorder (§3 row 9) would use the person's client instead, but it has not been spiked.
 
 **Scenario 3: Tier 3, an optional fleet over 200 release artifacts in CI.**
 1. An absurd queue holds one task per artifact. Each attempt runs a tier-2 host on its own SQLite file, `<task_id>-<attempt>.db`, so the lease-overlap window never puts two writers on one store (`absurd.md` §3 item 2).
-2. The checkpoint stores only the bundle digest. After the run, bundles are merged with `import_evidence_bundle`, which merges atomically (`rea.md` O6).
-3. **What the platform team sees:** a merged bundle and a per-task status table. There is no cross-fleet SQL and no version-to-version verdict.
-4. **Limits:** until the tar PR lands, npm `.tgz` inputs are rejected by rea (`rea.md` O10, measured). Unattended runs exclude tools with `executesForeignCode` or `mutatesDevice` (scope cut).
+2. The checkpoint stores only the bundle digest. After the run, bundles are merged with `import_evidence_bundle`, which merges atomically (`rea.md` O6). **The team sees** a merged bundle and a per-task status table: no cross-fleet SQL and no version-to-version verdict.
+3. **Limits:** until the tar PR lands, npm `.tgz` inputs are rejected by rea (`rea.md` O10, measured). Unattended runs exclude tools with `executesForeignCode` or `mutatesDevice` (scope cut).
 
 ## 3. Anatomy of capabilities
 
@@ -99,26 +96,14 @@ Build no new runtime. Ship the parents as a pinned four-tier composition, and us
 
 ## 4. Integration surfaces
 
-- **MCP, CLI and SDK:**
-  - `rea mcp` over stdio, to the client (tier 1) or to pi-mcp (tier 2);
-  - the tier-2 host CLI (`kit run`, `kit resume`, about 100 lines);
-  - pi-durable's `defineTool` and `beforeTool`;
-  - absurd's TS SDK (tier 3);
-  - the Mode A recorder would expose an MCP proxy.
-  D adds no tool to rea's 208.
-- **Storage.** There is one store for findings: **rea's own record**. Today that is the exported bundle files. After R-3 it would be rea's append-only log. The other stores hold no findings:
-  - pi-durable's SQLite holds the transcript, the intents and the bundle digest;
-  - absurd's Postgres holds queue and lease state.
-  So there are still two or three stores of state side by side. This is why D has no atomic commit (§9).
+- **MCP, CLI and SDK:** `rea mcp` over stdio, to the client (tier 1) or to pi-mcp (tier 2); the tier-2 host CLI (`kit run`, `kit resume`, about 100 lines); pi-durable's `defineTool` and `beforeTool`; absurd's TS SDK (tier 3); an MCP proxy for the Mode A recorder. D adds no tool to rea's 208.
+- **Storage.** There is one store for findings: **rea's own record**, which is the exported bundle files today and would be rea's append-only log after R-3. The other stores hold no findings: pi-durable's SQLite holds the transcript, the intents and the bundle digest; absurd's Postgres holds queue and lease state. So two or three stores of state still sit side by side, which is why D has no atomic commit (§9).
 - **Identity and accounts.** Sanctioned delegation only.
   - **Tiers 0-1:** the person's official client owns the loop and the sign-in, so subscription credit applies where the provider allows it. The kit stores 0 credentials.
   - **Tier 2:** API keys through pi-ai with the row 8 guard. Or Mode A, where the official client drives and pi-durable only records tool calls. Mode A uses subscription credit but is unproven.
   - **pi-ai's Claude subscription login is excluded** (G-pi-ai). Tier 2 as built by S-1 has no guard, which is a guardrail risk the judge recorded; row 8 closes it.
   - **Tier 3** is unattended: API keys, or a headless official client if the owner rules that the terms allow it (G-terms).
-- **Other tools:**
-  - rea bundles are canonical JSON, which external attestation tools could sign [inferred];
-  - SBOM, advisories and support periods stay with each parent (rea ships `SECURITY.md`; leanrea and absurd have SEC-1 0);
-  - CI runs the row 10 lock test, the row 12 kill test and the X-9 protocol in the kit's own repository.
+- **Other tools:** rea bundles are canonical JSON that external attestation tools could sign [inferred]. SBOM, advisories and support periods stay with each parent (rea ships `SECURITY.md`; leanrea and absurd have SEC-1 0). The kit's own CI runs the row 10 lock test, the row 12 kill test and the X-9 protocol.
 
 ## 5. Architecture sketch
 
@@ -134,15 +119,7 @@ Build no new runtime. Ship the parents as a pinned four-tier composition, and us
  TB7: four pinned upstreams · TB8 (D only): upstream maintainers decide what lands, and when
 ```
 
-**Trust boundaries, as numbered in r2-leanrea SEC-1:**
-- **TB1:** artifact bytes into rea's hardened readers, or into host tools (tier 0 has no container).
-- **TB2:** tool output into the model's context, carrying rea's untrusted marker.
-- **TB3:** model to effects. The client's approvals apply in tiers 0-1; the `beforeTool` gate applies in tier 2.
-- **TB4:** the glue to its stores.
-- **TB5:** the product to the provider account. Delegation in tiers 0-1; guarded keys in tier 2.
-- **TB6:** local listeners. None by default.
-- **TB7:** the pinned upstreams.
-- **TB8:** governance. It is new to D, and it is not a security boundary.
+**Trust boundaries** (numbered as in r2-leanrea SEC-1): **TB1** artifact bytes into rea's hardened readers or host tools (tier 0 has no container); **TB2** tool output into model context, with rea's untrusted marker; **TB3** model to effects (the client's approvals in tiers 0-1, the `beforeTool` gate in tier 2); **TB4** the glue to its stores; **TB5** the product to the provider account (delegation in tiers 0-1, guarded keys in tier 2); **TB6** local listeners, none by default; **TB7** the pinned upstreams; **TB8** governance, new to D and not a security boundary.
 
 ## 6. The three critical gaps
 
@@ -163,28 +140,10 @@ Build no new runtime. Ship the parents as a pinned four-tier composition, and us
 
 ## 7. Other gaps
 
-- **Resolves, for every user of the parents, if the PRs merge:**
-  - X-5 (R-1), X-6 (R-4), X-7 in part (R-5);
-  - pre-mortem 11, tar (R-6);
-  - rea's O1, O4 and O8 defects (R-8 to R-10);
-  - N-6, by sending the absurd fork's content upstream (A-1, A-2);
-  - pi-durable's §3.3 holes (P-1 to P-3).
-- **Resolves without any upstream:**
-  - N-12: D builds and owns tier 2 and its kill test;
-  - X-9: D runs the protocol with the skeptic's replacement rule, so N-9 does not apply to it;
-  - X-3 in tier 2, through the row 8 guard;
-  - N-5: one store for findings.
-- **Inherits:**
-  - G-terms; N-4 (the client's loop is not durable);
-  - EPI-2, since no calibration is proposed;
-  - SEC-6: bundles keep target secrets, and rea will not infer secrecy (`rea:AGENTS.md:13`), so this is unlikely to be accepted upstream;
-  - SEC-1 at the parents' levels; X-8 (leanrea is macOS-first; native Windows is not covered); N-8; N-3.
-- **Makes worse:**
-  - four pins to keep current;
-  - no single support contact;
-  - export cost that grows quadratically with long investigations (`skeptic.md` S-1);
-  - Ghidra state lost on resume (W-S1-1);
-  - three state stores in tier 3.
+- **Resolves for every user of the parents, if the PRs merge:** X-5 (R-1), X-6 (R-4), X-7 in part (R-5), pre-mortem 11 tar (R-6), rea's O1, O4 and O8 defects (R-8 to R-10), N-6 by sending the absurd fork's content upstream (A-1, A-2), and pi-durable's §3.3 holes (P-1 to P-3).
+- **Resolves without any upstream:** N-12 (D builds and owns tier 2 and its kill test); X-9 (D runs the protocol with the skeptic's replacement rule, so N-9 does not apply); X-3 in tier 2 (row 8 guard); N-5 (one store for findings).
+- **Inherits:** G-terms; N-4 (the client's loop is not durable); EPI-2 (no calibration is proposed); SEC-6 (bundles keep target secrets, and rea will not infer secrecy, `rea:AGENTS.md:13`, so an upstream fix is unlikely); SEC-1 at the parents' levels; X-8 (leanrea is macOS-first; native Windows not covered); N-3; N-8.
+- **Makes worse:** four pins to keep current; no single support contact; export cost that grows quadratically over long investigations (`skeptic.md` S-1); Ghidra state lost on resume (W-S1-1); three state stores in tier 3.
 
 ## 8. Target RQS-2030 levels
 
@@ -192,17 +151,7 @@ Build no new runtime. Ship the parents as a pinned four-tier composition, and us
 
 **Baseline.** The judge's S-1 row: REL-1 3 · INT-5 2 · EPI-4 2 · PERF-2 2 · AGT-1 1 · SEC-8 2 · AGT-6 2. Tier 2 is blocked by AGT ≈ 1.7 and SEC ≈ 1.5.
 
-**Design intent, if the named PRs merge (capped at 3):**
-
-| Criterion | Target | Depends on |
-|---|---|---|
-| INT-5 | 3 | R-2 |
-| EPI-4 | 3 | R-4 |
-| PERF-2 | 3 | R-7, R-8, or summary detail; measured, not assumed |
-| REL-1 | 3 | Tier 2; rea's own REL-1 would rise from 2 with R-3 |
-| AGT-6 | 3 | Row 7 |
-| AGT-1 | 2 in tier 2, 1 in tiers 0-1 | — |
-| SEC-8 | 2 | Host parsing remains |
+**Design intent if the named PRs merge (capped at 3):** INT-5 3 (R-2); EPI-4 3 (R-4); PERF-2 3 (R-7, R-8 or summary detail, measured, not assumed); REL-1 3 (tier 2; rea's own REL-1 would rise from 2 with R-3); AGT-6 3 (row 7); AGT-1 2 in tier 2 and 1 in tiers 0-1; SEC-8 2 (host parsing remains).
 
 **Decisive criteria:** REL-1, INT-5, AGT-1. **Weakest parents:** leanrea D 40.3 and absurd D 44.7, both with SEC-1 0. Their levels pass through to D unchanged, because D owns no fix for them beyond PRs L-2 and A-3.
 
@@ -245,27 +194,10 @@ The PR register in §3.1 also helps A, B and C, because it shrinks what they wou
 
 ## 11. Size
 
-- **Owned code (estimates):**
-
-  | Part | Lines |
-  |---|---|
-  | Tier 0 | 0 |
-  | Tier 1 config and addendum | ~20 |
-  | Tier 2 | 350-600, plus rows 8 and 10 (~70) |
-  | Mode A recorder (optional) | 200-300 |
-  | Tier 3 | 150-250 |
-  | Kill test and X-9 harness | 400-700 |
-  | **Total** | **≈1.2k-2k (ordinal S-M)** |
-
-- **Upstream code written by the owner's side:**
-  - 4 L-sized or M/H-risk rea PRs: R-2, R-3, R-4, R-11. R-3 and R-4 are each roughly 1-2k lines with tests, an estimate.
-  - About 21 S or M PRs across the four repos.
-  - Once merged, all of it is owned upstream.
+- **Owned code (estimates):** tier 0: 0 lines; tier 1 config and addendum: ~20; tier 2: 350-600, plus rows 8 and 10 (~70); Mode A recorder (optional): 200-300; tier 3: 150-250; kill test and X-9 harness: 400-700. **Total ≈1.2k-2k lines (ordinal S-M).**
+- **Upstream code written by the owner's side:** 4 L-sized or M/H-risk rea PRs (R-2, R-3, R-4, R-11; R-3 and R-4 are each roughly 1-2k lines with tests, an estimate), plus about 21 S or M PRs across the four repos. Once merged, all of it is owned upstream.
 - **Upstream dependencies:** four, pinned, with the churn above. pi-durable, pi-mcp and pi-ai version in lockstep.
-- **People (estimates):**
-  - about 0.25 FTE to keep the kit and bump pins;
-  - about 0.5 FTE for 3 months as human owner of the PRs;
-  - upstream review time, which the owner cannot control.
+- **People (estimates):** about 0.25 FTE to keep the kit and bump pins; about 0.5 FTE for 3 months as human owner of the PRs; plus upstream review time, which the owner cannot control.
 
 ## 12. What would prove it wrong
 
