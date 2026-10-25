@@ -19,3 +19,19 @@ Notes:
 - **Not tested:** the TypeScript SDK running on PGlite, several processes sharing one store, and throughput.
 
 `fence.mjs` and `events.mjs` are design probes, not patches to absurd.
+
+## Two processes on one store: committed data is lost (`two-process.mjs`)
+
+The skeptic found this in round 2b and the moderator reproduced it. Two Node processes opened the same PGlite data directory and each inserted 200 rows. Neither process got an error, and each saw only its own rows. After both had closed, the store was reopened and its contents counted.
+
+| Who ran it | Runs | Committed rows lost |
+|---|---|---|
+| Skeptic | 3 | one process's 200 rows in run 1; none in run 2; 25 of 200 in run 3 |
+| Moderator (table created before the processes start) | 3 | one process's 200 rows in every run |
+| Moderator (each process creates the table) | 2 | none lost; the second process failed with an error that had no message |
+
+```bash
+mkdir -p /tmp/pg && node two-process.mjs $E /tmp/pg/db A 200 & node two-process.mjs $E /tmp/pg/db B 200 & wait
+```
+
+Conclusion: an embedded PGlite store is safe only when something outside PGlite guarantees that just one process opens it, for example an exclusive OS file lock taken when the store is opened.
