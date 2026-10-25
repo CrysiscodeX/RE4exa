@@ -10,6 +10,14 @@ import type { Kernel } from "../src/kernel/kernel.ts";
 import type { AccountView } from "../src/server/api-types.ts";
 import { openTemp } from "./helpers.ts";
 
+// node-pty is optional and ships no Linux prebuild: without its install script (npm ci --ignore-scripts)
+// the addon is absent and Assay uses pipes, so the pty variant has nothing to run.
+const ptyName = "node-pty";
+const ptyLoads = await import(ptyName).then(
+  () => true,
+  () => false,
+);
+
 // The login "terminal" program: prints a prompt, echoes one line of input, exits.
 const LOGIN_SCRIPT = `process.stdout.write("code? "); process.stdin.once("data", d => { console.log("got " + String(d).trim() + " home=" + (process.env.TEST_HOME ?? "none")); process.exit(0); });`;
 
@@ -147,43 +155,50 @@ describe("accounts registry", () => {
     assert.equal(acc.create({ provider: "claude", label: "  ", home: "default" }).label, "Claude (default)");
   });
 
+  const loginRoundTrip = async (acc: ReturnType<typeof make>, mode: null | "auto"): Promise<void> => {
+    const a = acc.create({ provider: "claude", label: "Work", home: "new" });
+    state.signedIn = true;
+    const chunks: string[] = [];
+    let done!: () => void;
+    const finished = new Promise<void>((r) => {
+      done = r;
+    });
+    const r = await acc.login(a.id, (chunk, isDone) => {
+      chunks.push(chunk);
+      if (isDone) done();
+    });
+    assert.equal(r.started, true);
+    assert.equal(r.terminal, mode === null ? "pipes" : "pty");
+    assert.equal(acc.loginRunning(a.id), true);
+    assert.deepEqual(await acc.login(a.id, () => {}), { started: false, terminal: r.terminal }, "one login at a time");
+    // wait for the prompt, then type
+    for (let i = 0; i < 200 && !chunks.join("").includes("code?"); i++) await new Promise((res) => setTimeout(res, 10));
+    acc.input(a.id, "1234\r");
+    await finished;
+    const out = chunks.join("");
+    assert.match(out, /got 1234/);
+    assert.match(out, new RegExp(`home=${a.home!.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`));
+    assert.match(out, /login exited with code 0/);
+    assert.equal(acc.loginRunning(a.id), false);
+    assert.equal(acc.view(a.id).status, "signed-in", "status is re-checked after login");
+    assert.throws(
+      () => acc.input(a.id, "x"),
+      (e: unknown) => isAssayError(e, "not_found"),
+    );
+  };
+
   for (const mode of [null, "auto"] as const) {
-    it(`login runs the official command in the account's home and streams output (${mode === null ? "pipes" : "pty"})`, async () => {
+    const skip = mode === "auto" && !ptyLoads ? "node-pty's native addon is not installed on this host" : false;
+    it(`login runs the official command in the account's home and streams output (${mode === null ? "pipes" : "pty"})`, {
+      skip,
+    }, async () => {
       const acc = make({ pty: mode });
-      const a = acc.create({ provider: "claude", label: "Work", home: "new" });
-      state.signedIn = true;
-      const chunks: string[] = [];
-      let done!: () => void;
-      const finished = new Promise<void>((r) => {
-        done = r;
-      });
-      const r = await acc.login(a.id, (chunk, isDone) => {
-        chunks.push(chunk);
-        if (isDone) done();
-      });
-      assert.equal(r.started, true);
-      assert.equal(r.terminal, mode === null ? "pipes" : "pty");
-      assert.equal(acc.loginRunning(a.id), true);
-      assert.deepEqual(
-        await acc.login(a.id, () => {}),
-        { started: false, terminal: r.terminal },
-        "one login at a time",
-      );
-      // wait for the prompt, then type
-      for (let i = 0; i < 200 && !chunks.join("").includes("code?"); i++)
-        await new Promise((res) => setTimeout(res, 10));
-      acc.input(a.id, "1234\r");
-      await finished;
-      const out = chunks.join("");
-      assert.match(out, /got 1234/);
-      assert.match(out, new RegExp(`home=${a.home!.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`));
-      assert.match(out, /login exited with code 0/);
-      assert.equal(acc.loginRunning(a.id), false);
-      assert.equal(acc.view(a.id).status, "signed-in", "status is re-checked after login");
-      assert.throws(
-        () => acc.input(a.id, "x"),
-        (e: unknown) => isAssayError(e, "not_found"),
-      );
+      // a failed assertion must not leave the login program running (it would keep the test process alive)
+      try {
+        await loginRoundTrip(acc, mode);
+      } finally {
+        acc.close();
+      }
     });
   }
 
@@ -239,10 +254,14 @@ describe("accounts registry", () => {
     const finished = new Promise<void>((r) => {
       done = r;
     });
-    const r = await acc.login(a.id, (_c, d) => d && done());
-    assert.equal(r.terminal, "pipes");
-    acc.cancelLogin(a.id);
-    await finished;
+    try {
+      const r = await acc.login(a.id, (_c, d) => d && done());
+      assert.equal(r.terminal, "pipes");
+      acc.cancelLogin(a.id);
+      await finished;
+    } finally {
+      acc.close();
+    }
   });
 
   it("ensureDefaults creates one default account per installed provider, once", async () => {
