@@ -157,3 +157,43 @@ Two of the skeptic's cross-card weak spots are critical: **X-1** (output-derived
 | A-leanrea | X-2 untrusted content and injection evaluation, SEC-1 threat model, X-9 bytes per answer, X-8 platform reach |
 | A-durable | X-3 model access versus delegated sign-in, X-7 replay from declared effects, X-10 spend and budget, SEC-6 secret handling |
 | A-absurd | X-4 storage split, the lease fence, B-2 event semantics, PRV-4/EVO-4 support period and CRA position |
+
+## J-05 Debate round 2: rebuttals, a spike, and one correction
+
+Files: [round-2-a-rea.md](04-debate/round-2-a-rea.md), [round-2-a-leanrea.md](04-debate/round-2-a-leanrea.md), [round-2-a-durable.md](04-debate/round-2-a-durable.md), [round-2-a-absurd.md](04-debate/round-2-a-absurd.md) and [spikes/pglite/](04-debate/spikes/pglite/).
+
+### Evidence produced this round
+
+The moderator re-ran or checked each item.
+
+- **PGlite spike (absurd advocate).** I re-ran it and got the same results.
+  - The unmodified `absurd.sql` runs on embedded PGlite 0.5.8 (PostgreSQL 18.3 in WASM). It covered spawn, claim, checkpoints, lease expiry and reclaim, events, partitioned queues, cleanup, and data surviving a reopen.
+  - The proposed lease fence rejects every write from an expired lease that has not yet been swept, with error AB004. A timeout of 0 is rejected with AB005.
+  - Sequenced topics fix the misfire caused by a reused event name.
+  - This turns J-02's "PGlite unknown" into **seen**: the same schema can be used embedded and shared. Still untested: several processes on one store, the TypeScript SDK on PGlite, and throughput.
+- **pi-ai identity (durable advocate).** I checked this. Any key containing `sk-ant-oat`, and any token in `ANTHROPIC_OAUTH_TOKEN`, is sent as `claude-cli` (`ai:src/api/anthropic-messages.ts:1015,1061`; `ai:src/providers/anthropic.ts:43`). An API-key mode therefore needs a guard that refuses these tokens.
+- **rea coverage (rea advocate).** "Complete" is only the shape `{status: complete, truncated: false, omitted_count: 0}` (`rea:src/domain/javascript/javascriptApplicationEvidenceSchemas.ts:197-203`). It says nothing about resolution.
+
+### Correction
+
+The rea advocate withdrew its layer-1 claim that rea "missed the `new URL(…, import.meta.url)` worker edge". The fixture had read `worker.js` with `readFile`, which is correctly not counted as a load. `new Worker(new URL(...))` does resolve.
+
+The overclaim that still stands: an unresolved `import(p)` after `import.meta.resolve` is reported under coverage "complete". I added a correction note to [01-anatomy/rea.md](01-anatomy/rea.md). I left the earlier entries in J-02, the idea cards and the pre-mortem as they were, because the point they make still holds: "complete" can be false. Only the example changes.
+
+### Where the advocates now converge
+
+All four advocates accepted both forced merges, each with amendments:
+1. **Durable case file.** The person's official client (Claude SDK or CLI, codex app-server, or ACP) is the host. The product is an MCP server with its own store. This is the inversion A-durable designed for X-3, and it removes the conflict with pi-ai `Models` in the default mode.
+2. **CI sweep and delta gate.** The model-free pass comes first. D-2 is narrowed to an effects and publishing layer.
+3. **S-2 becomes a mandatory spec layer.** It carries the three identity keys: ProbeKey before execution, ObservationId as today's ID, and FindingKey stable across versions. It also carries taint origin, redactions, coverage and reach.
+
+### Where they still disagree
+
+| Topic | Positions |
+|---|---|
+| The case file's store and kernel | A-rea: own SQLite, no pi-durable kernel. A-durable: pi-durable tool tasks. A-absurd: the PGlite schema with the fence. A-leanrea: SQLite by default |
+
+### What I think
+
+- The convergence is real, but it came fast. The same four agents proposed the merges and then accepted them.
+- That is why round 2b asks the skeptic to attack the convergence itself and to sketch "outsider" candidates. Without that, layer 5 would hold two variants of one idea plus the null option. That is not the 3–4 truly different options the owner asked for.

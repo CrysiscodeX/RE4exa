@@ -133,7 +133,7 @@ Licence for all rows is MIT (rea), except where a row says otherwise.
 - **State and lifecycle:** results are retained in O6; runs on caller-selected heap limits [seen: rea:src/application/javascript/JavaScriptArtifactReconstruction.ts:164].
 - **Depends on:** @babel/parser, @babel/types, @jridgewell/trace-mapping, parse5; Linux needs a procps-style `ps` [seen: rea:README.md:188].
 - **RQS:** PUR-2 = 3, confirmed by reading `docs/verification/javascript-module-references-2026-10-15.md`.
-- **Carried defects:** `new URL("./worker.js", import.meta.url)` produced no edge to `worker.js`, while coverage said `complete, truncated:false` [seen, measured on a 3-file fixture]. The source has no `import.meta.resolve` handling [seen: no match in rea:src/domain/javascript or rea:src/application/javascript]. A plain Node package's `main` was labelled an `electron-main` node [seen, measured; whether this is only naming is unknown]. The run took 2.4 s and produced 85 KB of output for 3 files [seen, measured].
+- **Carried defects:** `new URL("./worker.js", import.meta.url)` produced no edge to `worker.js`, while coverage said `complete, truncated:false` [seen, measured on a 3-file fixture]. The source has no `import.meta.resolve` handling [seen: no match in rea:src/domain/javascript or rea:src/application/javascript]. A plain Node package's `main` was labelled an `electron-main` node [seen, measured; whether this is only naming is unknown]. The run took 2.4 s and produced 85 KB of output for 3 files [seen, measured]. **[Correction, round 2]:** the fixture read `worker.js` through `readFile`, which rea does not count as a load; `new Worker(new URL(...))` does resolve. The overclaim that stands is an unresolved `import(p)` after `import.meta.resolve` under coverage "complete", because "complete" only means not truncated (`javascriptApplicationEvidenceSchemas.ts:197-203`). See [round-2-a-rea.md](../04-debate/round-2-a-rea.md).
 - **Verdict:** adapt. This is the most distinctive capability. Transplant it as a provider behind O5, and fix the literal loading forms and the coverage claim.
 
 ### O12 Browser, Electron and V8 runtime observation
@@ -288,7 +288,7 @@ Licence for all rows is MIT (rea), except where a row says otherwise.
 | Other closures | toolEffects 1 file/782; ProviderProcess 116/23,216; ZipArtifactReader 120/20,536; analysisErrorProjection 94/16,907 | same walk (regex, includes type-only imports) |
 | `inspect-artifact` on a 26,936-byte ELF | 2.08 s and 2.19 s wall; 5,691 bytes; same Evidence ID both runs | CLI, n=2 |
 | Same bytes, different path | top-level Evidence ID differs; child ID same | CLI diff |
-| `analyze-javascript-application`, 3 files | 2.40 s; 85,449 bytes; 12 edges; `new URL(…, import.meta.url)` edge missing; coverage "complete" | CLI, n=1 |
+| `analyze-javascript-application`, 3 files | 2.40 s; 85,449 bytes; 12 edges; `readFile(new URL(…))` not counted as a load (correct, see correction above); coverage "complete" | CLI, n=1 |
 | `.tgz` inventory | rejected, `target_unavailable` / `file_format_rejected` | CLI |
 | Identical process captures compared | `status:"changed"` (at_ms 50 vs 40) | `capture-process` ×2, then `compare-process-captures` |
 | Releases in CHANGELOG | 38 (0.2.0 on 2026-07-12 to 6.7.0 on 2026-10-18); 12 BREAKING sections | `grep` on rea:CHANGELOG.md |
