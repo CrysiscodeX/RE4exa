@@ -27,7 +27,11 @@ function seed() {
     t.k.now(),
   );
   putEvidence(t.k, c.id, rec);
-  const cl = recordClaim(t.k, c.id, "fake:a", { text: "depends on lodash", label: "seen", predicate: "pkg.has-dependency" });
+  const cl = recordClaim(t.k, c.id, "fake:a", {
+    text: "depends on lodash",
+    label: "seen",
+    predicate: "pkg.has-dependency",
+  });
   setVerdict(t.k, cl.id, "refuted", { reason: "no such dependency" });
   return { ...t, c };
 }
@@ -39,7 +43,10 @@ test("exports: S-2 JSONL, SARIF, CycloneDX, Markdown", () => {
   assert.deepEqual(sa.runs[0]!.results.map((r) => r.ruleId).sort(), ["assay/claim-refuted", "assay/pkg.dep"]);
   const bom = cyclonedx(s.k, s.c.id, "0.1.0") as { components: { name: string }[]; specVersion: string };
   assert.equal(bom.specVersion, "1.6");
-  assert.deepEqual(bom.components.map((x) => x.name), ["demo", "leftpad"]);
+  assert.deepEqual(
+    bom.components.map((x) => x.name),
+    ["demo", "leftpad"],
+  );
   const md = markdown(s.k, s.c.id);
   assert.match(md, /✖ refuted/);
   assert.match(md, /chain intact/);
@@ -52,13 +59,22 @@ test("signed bundles verify, and any change is detected", () => {
   assert.deepEqual(verifyBundle(structuredClone(b)).records, 1);
   const t1 = structuredClone(b);
   (t1.records[0]!.result as Record<string, unknown>).name = "evil";
-  assert.throws(() => verifyBundle(t1), (e) => isAssayError(e, "bundle_tampered"));
+  assert.throws(
+    () => verifyBundle(t1),
+    (e) => isAssayError(e, "bundle_tampered"),
+  );
   const t2 = structuredClone(b);
   t2.manifest.title = "changed";
-  assert.throws(() => verifyBundle(t2), (e) => isAssayError(e, "bundle_tampered"));
+  assert.throws(
+    () => verifyBundle(t2),
+    (e) => isAssayError(e, "bundle_tampered"),
+  );
   const other = openTemp();
   const otherKey = makeBundle(s.k, s.c.id, other.dir, "0.1.0").signature.public_key;
-  assert.throws(() => verifyBundle(structuredClone(b), otherKey), (e) => isAssayError(e, "bundle_tampered"));
+  assert.throws(
+    () => verifyBundle(structuredClone(b), otherKey),
+    (e) => isAssayError(e, "bundle_tampered"),
+  );
   other.cleanup();
   s.cleanup();
 });

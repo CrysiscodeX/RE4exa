@@ -89,7 +89,13 @@ export function cyclonedx(k: Kernel, caseId: string, version: string): Json {
     for (const [dep, range] of Object.entries((r.dependencies as Record<string, Json> | undefined) ?? {})) {
       if (seen.has(dep)) continue;
       seen.add(dep);
-      components.push({ type: "library", name: dep, version: String(range), scope: "required", properties: [{ name: "assay:declared-by", value: name ?? "" }] });
+      components.push({
+        type: "library",
+        name: dep,
+        version: String(range),
+        scope: "required",
+        properties: [{ name: "assay:declared-by", value: name ?? "" }],
+      });
     }
   }
   return {
@@ -97,7 +103,10 @@ export function cyclonedx(k: Kernel, caseId: string, version: string): Json {
     specVersion: "1.6",
     serialNumber: `urn:uuid:${sha256(caseId).slice(0, 8)}-${sha256(caseId).slice(8, 12)}-4${sha256(caseId).slice(13, 16)}-8${sha256(caseId).slice(17, 20)}-${sha256(caseId).slice(20, 32)}`,
     version: 1,
-    metadata: { tools: { components: [{ type: "application", name: "assay", version }] }, properties: [{ name: "assay:case", value: caseId }] },
+    metadata: {
+      tools: { components: [{ type: "application", name: "assay", version }] },
+      properties: [{ name: "assay:case", value: caseId }],
+    },
     components,
   };
 }
@@ -107,7 +116,14 @@ export function markdown(k: Kernel, caseId: string): string {
   const claims = caseClaims(k, caseId);
   const unknowns = listUnknowns(k, caseId);
   const evidence = caseEvidence(k, caseId);
-  const badge = (v: string | null) => (v === "verified" ? "✔ verified" : v === "refuted" ? "✖ refuted" : v === "unverifiable" ? "? unverifiable" : "· not checked");
+  const badge = (v: string | null) =>
+    v === "verified"
+      ? "✔ verified"
+      : v === "refuted"
+        ? "✖ refuted"
+        : v === "unverifiable"
+          ? "? unverifiable"
+          : "· not checked";
   const lines = [
     `# ${c?.title ?? caseId}`,
     "",
@@ -117,7 +133,9 @@ export function markdown(k: Kernel, caseId: string): string {
     "",
     "| Verdict | Claim | Author | Label |",
     "|---|---|---|---|",
-    ...claims.map((cl) => `| ${badge(cl.verdict)} | ${cl.claim.text.replaceAll("|", "\\|")} | ${cl.author} | ${cl.claim.label} |`),
+    ...claims.map(
+      (cl) => `| ${badge(cl.verdict)} | ${cl.claim.text.replaceAll("|", "\\|")} | ${cl.author} | ${cl.claim.label} |`,
+    ),
     "",
     "## Open questions",
     "",
@@ -127,7 +145,10 @@ export function markdown(k: Kernel, caseId: string): string {
     "",
     "| Observation | Predicate | Path | Confidence | Coverage |",
     "|---|---|---|---|---|",
-    ...evidence.map((e) => `| \`${e.observation_id.slice(0, 15)}…\` | ${e.predicate} | ${e.locator?.path ?? ""} | ${e.confidence} | ${e.coverage?.status ?? ""} |`),
+    ...evidence.map(
+      (e) =>
+        `| \`${e.observation_id.slice(0, 15)}…\` | ${e.predicate} | ${e.locator?.path ?? ""} | ${e.confidence} | ${e.coverage?.status ?? ""} |`,
+    ),
     "",
   ];
   return lines.join("\n");
@@ -157,7 +178,14 @@ export function signingKey(home: string): { privatePem: string; publicPem: strin
 
 export interface Bundle {
   spec: typeof BUNDLE_SPEC;
-  manifest: { case: string; title: string; created_at: number; producer: string; records: { observation_id: string; sha256: string }[]; claims: Json };
+  manifest: {
+    case: string;
+    title: string;
+    created_at: number;
+    producer: string;
+    records: { observation_id: string; sha256: string }[];
+    claims: Json;
+  };
   records: ClaimRecord[];
   signature: { alg: "ed25519"; public_key: string; value: string };
 }
@@ -166,33 +194,60 @@ export function makeBundle(k: Kernel, caseId: string, home: string, version: str
   const c = k.getCase(caseId);
   if (!c) throw new AssayError("not_found", { case: caseId });
   const records = caseEvidence(k, caseId);
-  const claims = caseClaims(k, caseId).map((cl) => ({ text: cl.claim.text, label: cl.claim.label, author: cl.author, verdict: cl.verdict, evidence: cl.verdict_record?.observation_id ?? null }));
+  const claims = caseClaims(k, caseId).map((cl) => ({
+    text: cl.claim.text,
+    label: cl.claim.label,
+    author: cl.author,
+    verdict: cl.verdict,
+    evidence: cl.verdict_record?.observation_id ?? null,
+  }));
   const manifest = {
     case: caseId,
     title: c.title,
     created_at: k.now(),
     producer: `assay ${version}`,
-    records: records.map((r) => ({ observation_id: r.observation_id, sha256: sha256(canonicalize(r as unknown as Json)) })),
+    records: records.map((r) => ({
+      observation_id: r.observation_id,
+      sha256: sha256(canonicalize(r as unknown as Json)),
+    })),
     claims: claims as unknown as Json,
   };
   const key = signingKey(home);
-  const value = sign(null, Buffer.from(canonicalize(manifest as unknown as Json)), createPrivateKey(key.privatePem)).toString("base64");
+  const value = sign(
+    null,
+    Buffer.from(canonicalize(manifest as unknown as Json)),
+    createPrivateKey(key.privatePem),
+  ).toString("base64");
   return { spec: BUNDLE_SPEC, manifest, records, signature: { alg: "ed25519", public_key: key.publicPem, value } };
 }
 
 /** Check signature, record digests and every record's ObservationId. Throws bundle_tampered. */
-export function verifyBundle(b: Bundle, trustedPublicKey?: string): { records: number; claims: number; signer: string } {
+export function verifyBundle(
+  b: Bundle,
+  trustedPublicKey?: string,
+): { records: number; claims: number; signer: string } {
   if (b.spec !== BUNDLE_SPEC) throw new AssayError("bundle_tampered", { why: "unknown spec" });
   const pub = trustedPublicKey ?? b.signature.public_key;
-  const ok = verify(null, Buffer.from(canonicalize(b.manifest as unknown as Json)), createPublicKey(pub), Buffer.from(b.signature.value, "base64"));
+  const ok = verify(
+    null,
+    Buffer.from(canonicalize(b.manifest as unknown as Json)),
+    createPublicKey(pub),
+    Buffer.from(b.signature.value, "base64"),
+  );
   if (!ok) throw new AssayError("bundle_tampered", { why: "signature does not verify" });
   if (b.records.length !== b.manifest.records.length) throw new AssayError("bundle_tampered", { why: "record count" });
   b.records.forEach((r, i) => {
     const m = b.manifest.records[i]!;
-    if (m.observation_id !== r.observation_id || m.sha256 !== sha256(canonicalize(r as unknown as Json))) throw new AssayError("bundle_tampered", { why: "record digest", index: i });
+    if (m.observation_id !== r.observation_id || m.sha256 !== sha256(canonicalize(r as unknown as Json)))
+      throw new AssayError("bundle_tampered", { why: "record digest", index: i });
     const { observation_id: _id, ...rest } = r;
-    if (observationId(rest) !== r.observation_id) throw new AssayError("bundle_tampered", { why: "observation id", index: i });
+    if (observationId(rest) !== r.observation_id)
+      throw new AssayError("bundle_tampered", { why: "observation id", index: i });
     validate(r);
   });
-  return { records: b.records.length, claims: Array.isArray(b.manifest.claims) ? b.manifest.claims.length : 0, signer: sha256(pub).slice(0, 16) };
+  return {
+    records: b.records.length,
+    claims: Array.isArray(b.manifest.claims) ? b.manifest.claims.length : 0,
+    signer: sha256(pub).slice(0, 16),
+  };
 }
