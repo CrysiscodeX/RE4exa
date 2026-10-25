@@ -2,12 +2,7 @@
 
 Advocate: A-absurd. Inputs: [02-framing.md](../02-framing.md), journal J-02, [01-anatomy/](../01-anatomy/). Organ references read *file → organ (verdict)*. Labels: [seen], [inferred], [unknown]. Both cards build on what only absurd brings: multi-worker leases on a shared Postgres, enqueueing inside the caller's transaction, and first-write-wins events and durable sleeps.
 
-**Techniques used:**
-
-- **Combination matrix** (B-1): what becomes possible when two organs write in one Postgres transaction.
-- **Donor-enabled variant** (B-1): Orca's process-host and receipts, and strix's coverage record.
-- **Inversion** (B-2): absurd is obsolete if every run is one process on one laptop, so B-2 targets work that outlives a process, a machine and a person.
-- **Constraint shift, "one schema, embedded or shared"** (B-2). The embedded half is *unknown* until PGlite is tested (absurd.md §4).
+**Techniques used:** **combination matrix** and **donor-enabled variant** (B-1: what two organs gain by writing in one Postgres transaction, plus Orca process-host and receipts and strix coverage); **inversion** (B-2: absurd is obsolete if every run is one process on one laptop, so B-2 targets work that outlives a process, a machine and a person) and **constraint shift, "one schema, embedded or shared"** (B-2; the embedded half is *unknown* until PGlite is tested, absurd.md §4).
 
 Combination matrix (B-1). Each cell is what the pairing adds in one transaction [inferred]:
 
@@ -44,19 +39,13 @@ Combination matrix (B-1). Each cell is what the pairing adds in one transaction 
 
 **Integration surfaces.**
 
-- The SQL function API.
-- Spawn inside the caller's transaction.
+- The SQL function API; spawn inside the caller's transaction.
 - A loopback MCP server of 6 to 8 tools with a per-run bearer token (donors.md 25, pattern).
 - A JSON CLI; webhook → `emit_event`; export as an evidence bundle and an in-toto/SLSA predicate.
 
 **Model accounts.** Most steps use no model. For triage, the operator supplies a key through the provider's official SDK, or signs in through the official CLI, SDK or ACP into one home per account (donors.md 9 and 10). pi-ai's Claude OAuth path is excluded. Workers never rotate accounts.
 
-**Fit for 2030–35.**
-
-- **CRA:** evidence per release, plus a declared negative space.
-- **Agents as callers:** a small MCP surface with bounded JSON.
-- **Durability:** fleet runs survive crashes.
-- **Gap:** this covers only the "shared service" half of "local first".
+**Fit for 2030–35.** CRA: evidence per release plus a declared negative space. Agents as callers: a small MCP surface with bounded JSON. Durability: fleet runs survive crashes. Gap: only the "shared service" half of "local first".
 
 **My top 3 weak spots.**
 
@@ -68,9 +57,7 @@ Combination matrix (B-1). Each cell is what the pairing adds in one transaction 
 
 - A kill test (step *k*, two workers, expired leases, 1,000 artifacts) where the null option with idempotent keys loses, duplicates and orphans no more evidence than B-1.
 - Target teams will not run Postgres.
-- More than 90% of steps are short and deterministic, so a plain queue suffices.
-
-All three are *unknown* today.
+- More than 90% of steps are short and deterministic, so a plain queue suffices. (All three are *unknown* today.)
 
 ## B-2 Standing investigations
 
@@ -109,11 +96,7 @@ The same schema runs embedded for one analyst (*unknown*: PGlite) or on a shared
 - Webhook → `emit_event`; a JSON CLI; evidence bundle export.
 - Each person's own official provider CLI, SDK or ACP in their own home. A handover never moves a credential.
 
-**Fit for 2030–35.**
-
-- **Local first, with an optional cloud,** if the embedded mode works.
-- **Identity across many providers:** one home per person and account, never pooled.
-- **Durability:** runs that last for days.
+**Fit for 2030–35.** Local first with an optional cloud, if the embedded mode works. Identity across many providers: one home per person and account, never pooled. Durability for runs that last days.
 
 **My top 3 weak spots.**
 
