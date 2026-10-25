@@ -130,7 +130,10 @@ async function main(argv: string[]): Promise<number> {
     case "export": {
       const caseId = args[0];
       const format = flag(args, "--format") ?? "md";
-      if (!caseId) return (console.error("usage: assay export <case-id> --format ..."), 2);
+      if (!caseId) {
+        console.error("usage: assay export <case-id> --format ...");
+        return 2;
+      }
       const app = new App({ home, workspace });
       const out = app.exportCase(caseId, format);
       const file = flag(args, "--out");

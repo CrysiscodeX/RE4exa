@@ -346,7 +346,11 @@ export class Orchestrator {
         "verification",
         `Checked ${changed.length} claim(s): ${n("verified")} verified, ${n("refuted")} refuted, ${n("unverifiable")} unverifiable.`,
         {
-          claims: changed.map((c) => ({ id: c.id, verdict: c.verdict })),
+          checked: changed.length,
+          verified: n("verified"),
+          refuted: n("refuted"),
+          unverifiable: n("unverifiable"),
+          claimIds: changed.map((c) => c.id),
         },
       );
     }
@@ -430,10 +434,10 @@ export class Orchestrator {
         runner.text = e.text;
         break;
       case "tool-call":
-        this.log(caseId, "tool-call", e.name, { id: e.id, input: e.input }, workerId);
+        this.log(caseId, "tool-call", e.name, { id: e.id, name: e.name, input: e.input }, workerId);
         break;
       case "tool-result":
-        this.log(caseId, "tool-result", e.summary, { id: e.id, name: e.name, ok: e.ok }, workerId);
+        this.log(caseId, "tool-result", e.summary, { id: e.id, name: e.name, ok: e.ok, summary: e.summary }, workerId);
         break;
       case "usage": {
         const cost = e.costUsd ?? 0;
@@ -631,7 +635,8 @@ export class Orchestrator {
     this.#rt(caseId).workers.set(workerId, runner);
     this.log(caseId, "worker", `Started worker "${params.title}" on ${params.provider}.`, {
       workerId,
-      event: "started",
+      event: "spawned",
+      result: null,
     });
     const p = this.#runTurn(caseId, workerId, runner, att, params.task);
     runner.busy = p;
@@ -654,6 +659,7 @@ export class Orchestrator {
     this.log(caseId, "worker", `Worker "${(t.params as WorkerParams).title}" finished: ${summary.slice(0, 300)}`, {
       workerId,
       event: "done",
+      result: summary.slice(0, 4000),
     });
     const view = this.workerView(workerId);
     if (view) this.deps.emit({ type: "worker", worker: view });
@@ -756,7 +762,7 @@ export class Orchestrator {
 
   workerView(workerId: string): WorkerView | undefined {
     const t: TaskRow | undefined = this.k.getTask(workerId);
-    if (!t || !t.case_id) return undefined;
+    if (!t?.case_id) return undefined;
     const p = t.params as WorkerParams;
     const r = this.#cases.get(t.case_id)?.workers.get(workerId);
     const liveness: WorkerLiveness = p.released

@@ -23,7 +23,9 @@ function emit(rel: string, content: string): void {
 }
 
 function failureModes(): string {
-  const rows = Object.entries(FAILURE_MODES).map(([code, m]) => `| \`${code}\` | ${m.message} | ${m.retryable ? "yes" : "no"} | ${m.fix} |`);
+  const rows = Object.entries(FAILURE_MODES).map(
+    ([code, m]) => `| \`${code}\` | ${m.message} | ${m.retryable ? "yes" : "no"} | ${m.fix} |`,
+  );
   return [
     "# Failure modes",
     "",

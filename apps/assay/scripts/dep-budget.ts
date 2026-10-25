@@ -12,7 +12,10 @@ const ALLOWED: Record<string, string> = {
 };
 const MAX_RUNTIME = Object.keys(ALLOWED).length;
 
-const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")) as { dependencies?: Record<string, string>; optionalDependencies?: Record<string, string> };
+const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")) as {
+  dependencies?: Record<string, string>;
+  optionalDependencies?: Record<string, string>;
+};
 const deps = { ...(pkg.dependencies ?? {}), ...(pkg.optionalDependencies ?? {}) };
 const bad = Object.keys(deps).filter((d) => !(d in ALLOWED) && d !== "node-pty");
 const unpinned = Object.entries(deps).filter(([, v]) => !/^\d+\.\d+\.\d+$/.test(v));

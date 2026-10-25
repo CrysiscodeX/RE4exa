@@ -28,6 +28,7 @@
     "test",
     "bench",
     "ui/src",
+    "ui/mock",
     "scripts"
   ],
   "exclude": [
