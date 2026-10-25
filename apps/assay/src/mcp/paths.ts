@@ -13,6 +13,11 @@ function inside(root: string, p: string): boolean {
 
 const PROTECTED_WRITE = new Set([".git"]);
 
+/** Workspace-relative paths shown to agents use "/" on every platform, as the probes' locators do. */
+export function slashed(rel: string): string {
+  return sep === "/" ? rel : rel.split(sep).join("/");
+}
+
 export function resolveInWorkspace(
   workspace: string,
   p: string,
@@ -43,7 +48,7 @@ export function resolveInWorkspace(
     }
     if (!inside(root, real))
       throw new AssayError("path_outside_workspace", { path: p, why: "symlink leaves workspace" });
-    return { abs: real, rel: relative(root, real) || "." };
+    return { abs: real, rel: slashed(relative(root, real)) || "." };
   }
   if (opts.mustExist !== false && !opts.write) throw pathNotFound(root, p);
   // New file: the deepest existing ancestor must resolve inside the workspace.
@@ -53,7 +58,7 @@ export function resolveInWorkspace(
   if (!inside(root, ancReal))
     throw new AssayError("path_outside_workspace", { path: p, why: "parent leaves workspace" });
   const final = resolve(ancReal, relative(anc, abs));
-  return { abs: final, rel: relative(root, final) };
+  return { abs: final, rel: slashed(relative(root, final)) };
 }
 
 function isDanglingLink(p: string): boolean {

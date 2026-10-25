@@ -22,7 +22,7 @@ import type { ProcessResult, ProcessSpec } from "../vendor/orca-process-host/pro
 import { runProcess } from "../vendor/orca-process-host/run-process.ts";
 import { PREDICATES, predicateCatalog } from "../verifier/predicates.ts";
 import type { HandleStore } from "./handles.ts";
-import { resolveInWorkspace } from "./paths.ts";
+import { resolveInWorkspace, slashed } from "./paths.ts";
 
 export const LIMITS = {
   resultTextBytes: 8192,
@@ -517,7 +517,7 @@ export function builtinHandlers(svc: ToolServices): Record<string, Handler> {
         }
         const st = statSync(abs, { throwIfNoEntry: false });
         if (!st) return;
-        const rel = relative(rootReal, abs) || ".";
+        const rel = slashed(relative(rootReal, abs)) || ".";
         if (st.isDirectory()) {
           for (const d of readdirSync(abs, { withFileTypes: true }).sort((x, y) => (x.name < y.name ? -1 : 1))) {
             if (d.isSymbolicLink()) continue;

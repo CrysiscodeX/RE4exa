@@ -1,7 +1,7 @@
 // "Did you mean …?" for paths that do not exist: agents guess paths, and a bare not_found sends
 // them guessing again (seen in the live benchmark). Bounded walk; skips heavy directories.
 import { readdirSync } from "node:fs";
-import { basename, join, relative } from "node:path";
+import { basename, join, relative, sep } from "node:path";
 import { AssayError } from "../errors.ts";
 
 const SKIP = new Set(["node_modules", ".git", ".hg", ".svn", "dist", "build", ".assay"]);
@@ -47,7 +47,7 @@ export function suggestPaths(root: string, wanted: string, max = 5, limit = 5000
             : distance(name, want) <= Math.max(1, Math.floor(want.length / 4))
               ? 2
               : -1;
-      if (score >= 0) scored.push({ path: relative(root, abs) || ".", score });
+      if (score >= 0) scored.push({ path: relative(root, abs).split(sep).join("/") || ".", score });
       if (e.isDirectory() && !SKIP.has(e.name)) stack.push(abs);
     }
   }
