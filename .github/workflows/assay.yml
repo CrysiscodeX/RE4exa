@@ -46,11 +46,11 @@ jobs:
         run: node --disable-warning=ExperimentalWarning scripts/gen-docs.ts --check
       - name: SBOM
         run: npm sbom --sbom-format cyclonedx --omit dev > sbom.cdx.json && node -e "JSON.parse(require('fs').readFileSync('sbom.cdx.json','utf8'))"
-      - name: Build UI
-        run: npm run build:ui
+      - name: Build and install rehearsal (pack, install the tarball, run the installed CLI)
+        run: node --disable-warning=ExperimentalWarning scripts/install-rehearsal.ts
       - name: Browser end-to-end
         run: |
-          npx playwright install --with-deps chromium
+          npx playwright install --with-deps chromium  # the version pinned in package.json
           npm run e2e
       - name: Benchmark gates (model-free)
         run: node --disable-warning=ExperimentalWarning bench/run.ts --gate

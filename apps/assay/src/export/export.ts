@@ -227,6 +227,8 @@ export function verifyBundle(
   trustedPublicKey?: string,
 ): { records: number; claims: number; signer: string } {
   if (b.spec !== BUNDLE_SPEC) throw new AssayError("bundle_tampered", { why: "unknown spec" });
+  if (b.signature?.alg !== "ed25519")
+    throw new AssayError("bundle_tampered", { why: `unsupported signature algorithm ${String(b.signature?.alg)}` });
   const pub = trustedPublicKey ?? b.signature.public_key;
   const ok = verify(
     null,

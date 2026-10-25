@@ -27,8 +27,39 @@ function flag(args: string[], name: string): string | undefined {
   return i >= 0 ? args[i + 1] : undefined;
 }
 
+const FLAGS: Record<string, { value: string[]; bool: string[] }> = {
+  serve: { value: ["--port", "--workspace", "--home"], bool: ["--demo"] },
+  doctor: { value: ["--workspace", "--home"], bool: [] },
+  sweep: { value: ["--workspace", "--home"], bool: ["--json"] },
+  probe: { value: ["--probe", "--params", "--workspace", "--home"], bool: ["--list"] },
+  verify: { value: ["--bundle", "--key"], bool: [] },
+  export: { value: ["--format", "--out", "--workspace", "--home"], bool: [] },
+  capabilities: { value: ["--workspace", "--home"], bool: [] },
+  forget: { value: ["--workspace", "--home"], bool: ["--all"] },
+};
+
+/** Unknown options are an error, not silently ignored (docs/configuration.md). */
+function checkFlags(cmd: string, args: string[]): string | null {
+  const spec = FLAGS[cmd];
+  if (!spec) return null;
+  for (let i = 0; i < args.length; i++) {
+    const a = args[i]!;
+    if (!a.startsWith("--")) continue;
+    if (spec.value.includes(a)) {
+      if (args[i + 1] === undefined || args[i + 1]!.startsWith("--")) return `${a} needs a value`;
+      i++;
+    } else if (!spec.bool.includes(a)) return `unknown option ${a} for \`assay ${cmd}\``;
+  }
+  return null;
+}
+
 async function main(argv: string[]): Promise<number> {
   const [cmd, ...args] = argv;
+  const bad = cmd ? checkFlags(cmd, args) : null;
+  if (bad) {
+    console.error(`assay: ${bad}\n\n${HELP}`);
+    return 2;
+  }
   const home = flag(args, "--home") ?? defaultHome();
   const workspace = flag(args, "--workspace") ?? process.cwd();
   switch (cmd) {
