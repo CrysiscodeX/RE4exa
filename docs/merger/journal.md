@@ -96,3 +96,18 @@ Five agents wrote [01-anatomy/](01-anatomy/):
 - **Licences.** PandaCode's licence requires a visible "fork of PandaCode" notice, and agent-sandbox-lockdown has no LICENSE file. Both are therefore **pattern only**.
 
 **Housekeeping.** The donor scout added eight blob-filtered donor clones to `GitHub_Repos_Dump`. The rea advocate built a copy of rea in the scratchpad. All of these are deleted at the end of the phase.
+
+## J-03 Layer 3: ten ideas, five families
+
+The cards are summarized in [03-ideas.md](03-ideas.md). Each advocate came back after its anatomy pass, so it kept the context of its own repository. The skeptic was a fresh agent.
+
+**What changed my view.**
+- I expected the four advocates to defend their own repositories' surfaces. They didn't. All four built their cards around **rea's Evidence record**.
+- Nobody proposed rea's 208-tool catalog as the value. I read this as convergence, not as bias from a shared prompt, because:
+  - the prompts asked each advocate to centre its card on its *own* repository;
+  - the absurd and durable advocates still chose rea's record as their payload.
+- **Model-free first pass.** Two advocates arrived at it independently (R-2, L-2). This is the most promising direction so far, because it reframes the cost question. A pass with no model has no token cost. The cost comparison with leanrea then applies only to the residual questions.
+
+**Families.** I grouped the ten cards into five families. Families A (durable record, single node) and B (fleet/CI) are the strongest seeds for candidates. C (long-lived work) and D (effects gateway) may be features, not products. E (null option and spec) holds the baselines every candidate has to beat.
+
+**Moderator decision (method, not product).** Layer 4 tests every card against the skeptic's ten questions, not only the families. Clustering too early would hide weak cards inside strong families.
