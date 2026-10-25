@@ -92,6 +92,26 @@ export const FAILURE_MODES = {
     message: "This action needs the person's approval",
     fix: "Wait for approval in the Assay window",
   },
+  approval_expired: {
+    retryable: true,
+    message: "Nobody answered the approval request in time",
+    fix: "Ask again when the person is at the Assay window, or choose an action without effects",
+  },
+  tool_not_permitted: {
+    retryable: false,
+    message: "This tool is not available to this caller",
+    fix: "Ask the coordinator to call it, or use `tools/list` to see the tools you may call",
+  },
+  tool_failed: {
+    retryable: true,
+    message: "The tool failed unexpectedly",
+    fix: "Check the arguments against the tool's schema and retry; report a bug if it persists",
+  },
+  handle_unknown: {
+    retryable: false,
+    message: "The handle is unknown, belongs to another case, or was evicted",
+    fix: "Re-run the tool that produced it to get a fresh handle",
+  },
   path_outside_workspace: {
     retryable: false,
     message: "The path resolves outside the workspace",
@@ -112,6 +132,11 @@ export const FAILURE_MODES = {
     retryable: false,
     message: "The account is not signed in",
     fix: "Sign in from the Accounts panel; Assay runs the provider's official login",
+  },
+  provider_error: {
+    retryable: true,
+    message: "The agent client failed or broke its protocol",
+    fix: "See the error detail; check the client with `assay doctor`, then retry the turn",
   },
   credential_refused: {
     retryable: false,
