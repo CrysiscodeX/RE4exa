@@ -267,3 +267,22 @@ test("usage is recorded and summarised per account", () => {
   assert.equal(row!.resent, 1);
   cleanup();
 });
+
+test("claimTaskById claims only the named task and respects live leases", () => {
+  const clock = new FakeClock();
+  const { k, cleanup } = openTemp(clock);
+  const a = k.spawnTask({ queue: "q", kind: "x" }).task;
+  const b = k.spawnTask({ queue: "q", kind: "x" }).task;
+  const att = k.claimTaskById(b.id, "w", 100)!;
+  assert.equal(att.taskId, b.id);
+  assert.equal(k.getTask(a.id)!.state, "pending");
+  assert.equal(k.claimTaskById(b.id, "w2", 100), null, "live lease");
+  clock.advance(101);
+  assert.equal(k.claimTaskById(b.id, "w2", 100)!.n, 2, "expired lease is reclaimed");
+  assert.equal(k.claimTaskById("task_missing", "w", 100), null);
+  assert.throws(
+    () => k.claimTaskById(a.id, "w", 0),
+    (e) => isAssayError(e, "invalid_lease"),
+  );
+  cleanup();
+});

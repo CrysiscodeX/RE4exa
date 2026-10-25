@@ -6,7 +6,7 @@ import { existsSync, readFileSync, statSync } from "node:fs";
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import type { AddressInfo } from "node:net";
 import { extname, join, normalize, resolve } from "node:path";
-import { WebSocketServer, type WebSocket } from "ws";
+import { type WebSocket, WebSocketServer } from "ws";
 import { AssayError, isAssayError } from "../errors.ts";
 import type { ServerPush } from "./api-types.ts";
 
@@ -14,7 +14,13 @@ export interface Route {
   method: string;
   /** e.g. "/api/cases/:id/messages" */
   path: string;
-  handler(ctx: { params: Record<string, string>; query: URLSearchParams; body: unknown; req: IncomingMessage; res: ServerResponse }): Promise<unknown> | unknown;
+  handler(ctx: {
+    params: Record<string, string>;
+    query: URLSearchParams;
+    body: unknown;
+    req: IncomingMessage;
+    res: ServerResponse;
+  }): Promise<unknown> | unknown;
 }
 
 export interface ServerOptions {
@@ -23,8 +29,8 @@ export interface ServerOptions {
   uiDir: string;
   sessionKey: Buffer;
   routes: Route[];
-  /** Raw handler for the MCP endpoint (bearer tokens, no cookie). */
-  mcp(req: IncomingMessage, res: ServerResponse, body: unknown): Promise<void>;
+  /** Raw handler for the MCP endpoint (bearer tokens, no cookie); it reads its own body. */
+  mcp(req: IncomingMessage, res: ServerResponse): Promise<unknown>;
   onPushSubscribe(send: (p: ServerPush) => void): () => void;
   version: string;
 }
@@ -127,10 +133,27 @@ export async function startServer(opts: ServerOptions): Promise<RunningServer> {
   };
 
   const statusFor = (e: AssayError): number => {
-    if (e.code === "bad_request" || e.code === "evidence_invalid" || e.code === "prompt_too_large" || e.code === "path_outside_workspace") return 400;
+    if (
+      e.code === "bad_request" ||
+      e.code === "evidence_invalid" ||
+      e.code === "prompt_too_large" ||
+      e.code === "path_outside_workspace"
+    )
+      return 400;
     if (e.code === "unauthorized") return 401;
     if (e.code === "not_found" || e.code === "probe_unknown") return 404;
-    if (["receipt_conflict", "unknown_conflict", "breaker_open", "budget_exceeded", "depth_exceeded", "stale_attempt", "store_locked"].includes(e.code)) return 409;
+    if (
+      [
+        "receipt_conflict",
+        "unknown_conflict",
+        "breaker_open",
+        "budget_exceeded",
+        "depth_exceeded",
+        "stale_attempt",
+        "store_locked",
+      ].includes(e.code)
+    )
+      return 409;
     return 500;
   };
 
@@ -182,19 +205,30 @@ export async function startServer(opts: ServerOptions): Promise<RunningServer> {
     try {
       const url = new URL(req.url ?? "/", "http://x");
       if (url.pathname === "/mcp") {
-        if (!allowedHosts().has(String(req.headers.host ?? "")) || (req.headers.origin !== undefined && !checkHostOrigin(req)))
+        if (
+          !allowedHosts().has(String(req.headers.host ?? "")) ||
+          (req.headers.origin !== undefined && !checkHostOrigin(req))
+        )
           return send(res, 403, { error: { code: "unauthorized", message: "foreign host or origin" } });
-        const body = req.method === "POST" ? await readBody(req) : undefined;
-        return await opts.mcp(req, res, body);
+        await opts.mcp(req, res);
+        return;
       }
-      if (!checkHostOrigin(req)) return send(res, 403, { error: { code: "unauthorized", message: "foreign host or origin" } });
+      if (!checkHostOrigin(req))
+        return send(res, 403, { error: { code: "unauthorized", message: "foreign host or origin" } });
       if (!url.pathname.startsWith("/api/")) return serveStatic(req, res);
       if (url.pathname === "/api/pair" && req.method === "POST") {
         const body = (await readBody(req)) as { code?: string } | undefined;
         const exp = body?.code ? pairCodes.get(body.code) : undefined;
         if (!exp || exp < Date.now()) throw new AssayError("unauthorized", { why: "pairing code invalid or expired" });
         pairCodes.delete(body!.code!);
-        return send(res, 200, { ok: true }, { "set-cookie": `assay_session=${issueSession()}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${SESSION_DAYS * 86400}` });
+        return send(
+          res,
+          200,
+          { ok: true },
+          {
+            "set-cookie": `assay_session=${issueSession()}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${SESSION_DAYS * 86400}`,
+          },
+        );
       }
       if (!validSession(cookie(req, "assay_session"))) throw new AssayError("unauthorized");
       if (url.pathname === "/api/ws-ticket" && req.method === "POST") {
@@ -215,13 +249,22 @@ export async function startServer(opts: ServerOptions): Promise<RunningServer> {
         if (res.headersSent) return;
         if (out && typeof out === "object" && "__download" in (out as object)) {
           const d = out as unknown as { __download: true; body: string; type: string; filename: string };
-          return send(res, 200, d.body, { "content-type": d.type, "content-disposition": `attachment; filename="${d.filename.replace(/[^a-zA-Z0-9._-]/g, "_")}"` });
+          return send(res, 200, d.body, {
+            "content-type": d.type,
+            "content-disposition": `attachment; filename="${d.filename.replace(/[^a-zA-Z0-9._-]/g, "_")}"`,
+          });
         }
         return send(res, r.method === "POST" && r.path.endsWith("/messages") ? 202 : 200, out ?? { ok: true });
       }
       throw new AssayError("not_found", { path: url.pathname });
     } catch (e) {
-      const err = isAssayError(e) ? e : new AssayError("bad_request", { message: String((e as Error)?.message ?? e) }, String((e as Error)?.message ?? e));
+      const err = isAssayError(e)
+        ? e
+        : new AssayError(
+            "bad_request",
+            { message: String((e as Error)?.message ?? e) },
+            String((e as Error)?.message ?? e),
+          );
       if (!isAssayError(e)) process.stderr.write(`assay: ${(e as Error)?.stack ?? e}\n`);
       if (!res.headersSent) send(res, statusFor(err), { error: err.toJSON() });
     }

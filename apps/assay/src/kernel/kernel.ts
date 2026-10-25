@@ -420,6 +420,45 @@ export class Kernel {
     });
   }
 
+  /** Claim one specific pending task (or one whose lease expired). Returns null when it is not claimable. */
+  claimTaskById(taskId: string, worker: string, leaseMs: number): Attempt | null {
+    if (!(leaseMs > 0) || !Number.isFinite(leaseMs)) throw new AssayError("invalid_lease", { leaseMs });
+    return this.tx(() => {
+      const now = this.now();
+      const t = this.getTask(taskId);
+      if (!t) return null;
+      if (t.state === "running") {
+        const cur = this.get<{ lease_until: number }>(
+          "SELECT lease_until FROM attempts WHERE task_id=? AND n=?",
+          taskId,
+          t.attempts,
+        );
+        if (!cur || Number(cur.lease_until) > now) return null;
+        this.run("UPDATE attempts SET state='expired', ended_at=? WHERE task_id=? AND state='running'", now, taskId);
+        const crashes = t.crash_count + 1;
+        if (crashes >= this.maxCrashes) {
+          this.run("UPDATE tasks SET state='parked', crash_count=?, updated_at=? WHERE id=?", crashes, now, taskId);
+          return null;
+        }
+        this.run("UPDATE tasks SET state='pending', crash_count=?, updated_at=? WHERE id=?", crashes, now, taskId);
+      } else if (t.state !== "pending" || t.available_at > now) return null;
+      const n = this.getTask(taskId)!.attempts + 1;
+      const id = newId("att", now);
+      const leaseUntil = now + leaseMs;
+      this.run(
+        "INSERT INTO attempts(id,task_id,n,worker,lease_until,state,started_at) VALUES(?,?,?,?,?,'running',?)",
+        id,
+        taskId,
+        n,
+        worker,
+        leaseUntil,
+        now,
+      );
+      this.run("UPDATE tasks SET state='running', attempts=?, updated_at=? WHERE id=?", n, now, taskId);
+      return { id, taskId, n, worker, leaseUntil };
+    });
+  }
+
   /** The fence: refuse any write from an attempt that is not current or whose lease has expired. */
   fence(att: Attempt): void {
     const r = this.get<Row>(

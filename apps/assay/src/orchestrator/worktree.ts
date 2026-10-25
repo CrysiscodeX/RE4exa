@@ -28,9 +28,15 @@ export async function addWorktree(repo: string, root: string, name: string): Pro
   const base = realpathSync(root);
   const target = resolve(base, name.replace(SAFE, "-"));
   const rel = relative(base, target);
-  if (rel.startsWith("..") || rel.includes(`..${sep}`) || rel === "") throw new AssayError("path_outside_workspace", { target });
+  if (rel.startsWith("..") || rel.includes(`..${sep}`) || rel === "")
+    throw new AssayError("path_outside_workspace", { target });
   const r = await git(repo, ["worktree", "add", "-b", `assay/${name}`, target]);
-  if (r.code !== 0) throw new AssayError("probe_failed", { step: "git worktree add", stderr: r.stderr.slice(0, 500) }, "Could not create the worker's worktree");
+  if (r.code !== 0)
+    throw new AssayError(
+      "probe_failed",
+      { step: "git worktree add", stderr: r.stderr.slice(0, 500) },
+      "Could not create the worker's worktree",
+    );
   return target;
 }
 
