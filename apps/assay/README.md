@@ -87,20 +87,25 @@ The model-free benchmark is `node bench/run.ts --gate`, and it runs in CI. The l
 - **Tier 0:** the official client with Bash and leanrea's skill;
 - **Assay:** enforced mode.
 
-The results are in [`bench/results/live.json`](bench/results/live.json), from 8 tasks × 3 repetitions on Claude Haiku, 24 paired cells, $0.14 in total:
+The results are in [`bench/results/live.json`](bench/results/live.json), from the final version: 8 tasks × 3 repetitions on Claude Haiku, 24 paired cells, $0.16 in total.
 
 | | Tier 0 | Assay |
 |---|---|---|
-| Correct facts | 90 / 105 | 90 / 105 |
-| Cost | $0.090 | **$0.052** |
-| Cost per correct fact | $0.00100 | **$0.00057**: ratio **0.57**, 95% bootstrap 0.46–0.69 |
-| Facts verified by machine | 0 | **16** |
-| Median time per task | 14.4 s | 14.1 s |
+| Correct facts (keyword grading, as in leanrea) | **93 / 105** | 89 / 105 |
+| Cost | $0.093 | **$0.063** |
+| Cost per correct fact | $0.00100 | **$0.00070**: ratio **0.70**, 95% bootstrap 0.58–0.87 |
+| Facts verified by machine | 0 | **80 / 105** (85 of 92 recorded claims verified, 0 refuted) |
+| Median time per task | about 14 s | about 14 s |
 
-So on these tasks Assay is as accurate as the strongest cheap baseline and about 43% cheaper, and part of its answer is checked rather than taken on trust. Three caveats:
-- **The tasks are fixtures** written for this benchmark, not real-world artifacts.
-- **Most recorded claims were not checkable.** Of 63 claims, 13 were verified and 0 refuted; the other 50 used predicates the verifier cannot re-run.
-- **One model and one account** were used for both arms.
+**The target was missed.** M12 was defined in advance as: the whole cost interval at or below parity, *and* accuracy no lower than Tier 0. Cost meets it. Accuracy is 4 facts lower, and all 4 are on one task (`zip-slip`: 6 of 15 against 10 of 15). On that task Tier 0's answers listed benign entries and a sibling `.tar.gz` the question did not ask about. The keyword grader counts each of those as a fact. Assay's shorter answers named the dangerous entries correctly. The grader was not changed after the fact.
+
+What changed between versions:
+- The first full run scored 90 against 90, at a cost ratio of 0.57, with 16 facts verified.
+- Making claims checkable raised machine-verified facts from 16 to 80. Assay's agents now record more claims, which costs some of the saving.
+
+**Caveats:**
+- The tasks are fixtures written for this benchmark, not real-world artifacts.
+- One model and one account were used for both arms.
 
 ## Honest limits
 

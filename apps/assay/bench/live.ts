@@ -287,7 +287,10 @@ const out = {
   spentUsd: +spent.toFixed(4),
   arms,
   ratio,
-  pass: ratio !== null && ratio <= 1.0,
+  ci,
+  pairedCells: paired.length,
+  // M12 passes only when the whole interval is at or below parity and accuracy is not lower
+  pass: ci !== null && ci[1] <= 1.0 && asa.correct >= t0a.correct,
   summary,
   runs,
 };

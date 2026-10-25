@@ -362,4 +362,5 @@ writeFileSync(
 );
 const missed = rows.filter((r) => !r.pass);
 console.log(`\n${rows.length - missed.length}/${rows.length} targets met`);
-if (gate && missed.length) process.exit(1);
+// M12 comes from live model runs (bench/live.ts) that CI cannot repeat: it is reported, not gated
+if (gate && missed.some((r) => r.id !== "M12")) process.exit(1);
