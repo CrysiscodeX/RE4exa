@@ -248,3 +248,32 @@ D contributes the same items upstream instead.
 - **my-jev and laya calibration:** used in A and C.
 
 **Writing.** Each candidate goes to a fresh architect agent with a fixed template ([05-candidates/README.md](05-candidates/README.md)). A fresh agent is used so that no advocate writes its own winner. The judge then reviews all four together.
+
+## J-07 Layer 5 and layer 6: candidates reviewed, options brief written
+
+**Candidates.** Four fresh architect agents wrote [A](05-candidates/A-case-file.md), [B](05-candidates/B-delta-gate.md), [C](05-candidates/C-claim-verifier.md) and [D](05-candidates/D-compose-upstream.md) to one template.
+
+**The judge's review** ([review.md](05-candidates/review.md)) checked 31 citations against the clones.
+- 29 matched.
+- The 2 mismatches were the same slip, a router of 19 rows where the source has 18. I checked the count, which is 18 data rows at `leanrea:SKILL.md:38-55`, and corrected it in the leanrea anatomy and in A and C.
+- The review found no breach of the guardrails.
+
+**Two observations the owner should weigh:**
+1. **The durability engines are not used at run time.** Four architects worked independently, and in three of the four candidates the durability engines pi-durable and absurd contribute designs and test kits but no runtime code. This has to be said plainly. The charter asked about combining all four repositories. The evidence says the two engines are most valuable as **sources of rules**: intent before effect, leases with a fence, sequenced events, conformance kits. As engines they are less valuable, because both have multi-writer defects that were confirmed in the debate. Only D runs all four, and it does so by not merging them.
+2. **"Account credits instead of API keys" is achievable in every candidate.** The person's official client acts as the host. The product calls no model, or the verifier holds no credentials. What stays unknown is whether provider terms allow a third-party product to *launch* that client, or to run it in CI.
+
+**Where the phase stops.** The [options brief](06-options.md) contains:
+- the four candidates side by side;
+- an anatomy of capabilities across them;
+- the trade-offs and combinations that hold together;
+- the judge's recommendation, my amendment, and the strongest dissent;
+- 14 decisions for the owner.
+
+**My amendment to the judge's recommendation.**
+- **The judge recommends** D first, and C built on B's runner. Then choose A or B from the measurements.
+- **I add:** start A's restricted-launch spike in parallel *if* the primary user is interactive (decision 1). That is the one cheap test that covers the owner's stated interest in integrated clients that use account credits.
+
+**What was not done in this phase:**
+- no code beyond the spike probes;
+- no build plan;
+- no measurements against the Tier 0 baseline (that is the first task of whatever comes next).

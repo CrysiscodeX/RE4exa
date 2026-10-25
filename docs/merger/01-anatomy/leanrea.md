@@ -6,7 +6,7 @@ Labels: **[seen]** read in code or docs; **[inferred]** reasoned from what was s
 
 ## 1. What it really is
 
-[seen] leanrea is one Markdown file of 8,374 bytes and 66 lines (leanrea:leanrea/SKILL.md:1-66) plus a benchmark folder of about 120 lines of shell and Python (leanrea:bench/). The file is a prompt. It contains no code that runs by itself and no tool definitions. It gives the agent a few working rules, a 19-row table that maps an artifact type to the command to run first, two copy-and-run recon one-liners, and a list of known traps. The agent then runs ordinary local tools through its own shell (leanrea:leanrea/SKILL.md:8, leanrea:README.md:5). [seen] The README frames it as a replacement for REA (leanrea:README.md:3), and the benchmark compares it with REA's MCP server and with no skill at all (leanrea:bench/BENCHMARK.md:5-9). [inferred] It is best read as condensed expert knowledge about which command answers which question cheaply, written for a model that already knows the tools. It has no state, no evidence store, no integrity checks and no safety boundary of its own. Whatever rules it states depend on the model following prose.
+[seen] leanrea is one Markdown file of 8,374 bytes and 66 lines (leanrea:leanrea/SKILL.md:1-66) plus a benchmark folder of about 120 lines of shell and Python (leanrea:bench/). The file is a prompt. It contains no code that runs by itself and no tool definitions. It gives the agent a few working rules, an 18-row table that maps an artifact type to the command to run first, two copy-and-run recon one-liners, and a list of known traps. The agent then runs ordinary local tools through its own shell (leanrea:leanrea/SKILL.md:8, leanrea:README.md:5). [seen] The README frames it as a replacement for REA (leanrea:README.md:3), and the benchmark compares it with REA's MCP server and with no skill at all (leanrea:bench/BENCHMARK.md:5-9). [inferred] It is best read as condensed expert knowledge about which command answers which question cheaply, written for a model that already knows the tools. It has no state, no evidence store, no integrity checks and no safety boundary of its own. Whatever rules it states depend on the model following prose.
 
 ## 2. Organs
 
@@ -18,7 +18,7 @@ Summary (records follow):
 | L2 | Attention and turn-budget rules | Keep tool output and turn count small | adapt |
 | L3 | Workspace convention | Put extractions on a copy, in a per-target folder, and reuse them | pattern |
 | L4 | Evidence labels (seen/inferred/unknown) | Make each answer claim state its basis | pattern (wording: lift) |
-| L5 | Router: `file`/magic detection plus 19-row command table | Map an artifact type to the cheapest first command | adapt |
+| L5 | Router: `file`/magic detection plus 18-row command table | Map an artifact type to the cheapest first command | adapt |
 | L6 | First-move recon one-liners | Collect a whole inventory in one shell call | adapt |
 | L7 | Trap catalogue and speed patterns | Pass on known pitfalls and search heuristics | lift (text, with notice) |
 | L8 | Runtime and dynamic-analysis row | Point to attach/launch tools | leave |
@@ -67,7 +67,7 @@ Licence for every organ: MIT, © 2026 AICodeKing (leanrea:LICENSE:1-3). A lift k
 - **Verdict**: pattern, with the sentence at :16 lifted as wording. A merged product should store the label as a field on each finding, next to the ledger entry, and test it.
 
 ### L5 Router
-- **Function** [seen]: step order "route by `file -b T` and the magic bytes first, cheapest inventory next, decompile last" (leanrea:leanrea/SKILL.md:12), then a 19-row table (:36-55): Electron/asar, web bundle and source maps, Hermes/bytenode/V8 snapshot, Mach-O, native code logic, ELF/PE, Go, Rust, .NET, Android APK, Flutter snapshot hash, WASM, SQLite, plist/nib/car, pcap/HAR, firmware, website, running app.
+- **Function** [seen]: step order "route by `file -b T` and the magic bytes first, cheapest inventory next, decompile last" (leanrea:leanrea/SKILL.md:12), then an 18-row table (:36-55): Electron/asar, web bundle and source maps, Hermes/bytenode/V8 snapshot, Mach-O, native code logic, ELF/PE, Go, Rust, .NET, Android APK, Flutter snapshot hash, WASM, SQLite, plist/nib/car, pcap/HAR, firmware, website, running app.
 - **How much is magic-byte routing** [seen]: only two magic values are given, Hermes `c6 1f bc 03` (:40) and Flutter/Dart `f5 f5 dc dc` (:48), plus section names for Go (`__go_buildinfo`, `.go.buildinfo`, :44) and Rust (`.dep-v0`, :45). Everything else is routed by `file(1)` output or by path pattern (:38,:41,:46,:47). [inferred] Detection is delegated to libmagic; the table is a command map more than a detector.
 - **Interfaces**: Markdown table; commands are in inline code spans.
 - **State and lifecycle**: none.

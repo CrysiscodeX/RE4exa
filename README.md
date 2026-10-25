@@ -13,6 +13,7 @@ RE4exa is independent and is not affiliated with REA or the other projects studi
 | [`standard/`](standard) | RQS-2030, a quality standard for software that people and AI agents rely on, aimed at 2030-35: 62 criteria in 13 dimensions, red lines, gap and opportunity lenses, re-engineering actions ([read it](standard/RQS-2030.md)) |
 | [`tools/rqs/`](tools/rqs) | Evidence-first reviews against RQS-2030: probes, suggested levels, scoring, reports, comparisons (CLI + MCP) |
 | [`research/rqs-review/`](research/rqs-review) | RQS-2030 applied to the fourteen repositories and RE4exa: scores, 148 gaps, 85 opportunities, a foundation blueprint, reviewer agreement |
+| [`docs/merger/`](docs/merger) | Brainstorm on merging leanrea, rea, pi durable and absurd: anatomy, ideas, two debate rounds, gap register, four candidate concepts and an options brief for the owner |
 | [`skills/`](skills) | Agent skills for rex, dissect and rqs |
 
 RE4exa has no LICENSE file yet, so others cannot legally reuse the code; its own RQS-2030 review

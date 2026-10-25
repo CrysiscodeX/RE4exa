@@ -10,8 +10,8 @@ Start with the [charter](00-charter.md): the question, the roles, the evidence a
 |---|---|---|
 | 0 Charter and sources | [00-charter.md](00-charter.md), [sources.md](sources.md) | done |
 | 1 Anatomy | [01-anatomy/](01-anatomy/) | done |
-| 2 Framing | [02-framing.md](02-framing.md) | draft |
+| 2 Framing | [02-framing.md](02-framing.md) | draft, revised after layer 1 |
 | 3 Divergent ideas | [03-ideas.md](03-ideas.md) | done |
 | 4 Debate and gap register | [04-debate/](04-debate/), [gaps.md](gaps.md) | done |
-| 5 Candidates | [05-candidates/](05-candidates/) | in progress |
-| 6 Options brief | [06-options.md](06-options.md) | — |
+| 5 Candidates | [05-candidates/](05-candidates/) | done |
+| 6 Options brief | [06-options.md](06-options.md) | done: owner decision pending |
