@@ -20,6 +20,7 @@ import {
 import type { Kernel } from "../kernel/kernel.ts";
 import type { ProcessResult, ProcessSpec } from "../vendor/orca-process-host/process-spec.ts";
 import { runProcess } from "../vendor/orca-process-host/run-process.ts";
+import { PREDICATES, predicateCatalog } from "../verifier/predicates.ts";
 import type { HandleStore } from "./handles.ts";
 import { resolveInWorkspace } from "./paths.ts";
 
@@ -101,14 +102,16 @@ export const TOOL_SPECS: ToolSpec[] = [
   },
   {
     name: "assay_record_claim",
-    description:
-      "Record a claim. label=seen needs a predicate the verifier can re-run; cite observation ids you were given.",
+    description: "Record a claim. label=seen needs a predicate the verifier can re-run; cite observation ids you were given.",
     inputSchema: obj(
       {
         text: str(undefined, { maxLength: 2000 }),
         label: { type: "string", enum: ["seen", "inferred", "unknown"] },
-        predicate: str(),
-        params: { type: "object" },
+        predicate: { type: "string", description: `one the verifier can re-run: ${Object.keys(PREDICATES).join(", ")}` },
+        params: {
+          type: "object",
+          description: `params by predicate (workspace-relative paths; literal text, not regex): ${predicateCatalog()}`,
+        },
         path: str(),
         cites: { type: "array", items: { type: "string" }, maxItems: 50 },
       },

@@ -391,3 +391,25 @@ test("bench fixtures and task files are deterministic and match the committed co
     b.cleanup();
   }
 });
+
+test("claims with aliased params (lib, pattern, url, file) are normalised before re-running", async () => {
+  const { normalizeParams, literalFromPattern } = await import("../src/verifier/predicates.ts");
+  assert.deepEqual(normalizeParams("native.links", { file: "pe/agent.exe", lib: "advapi32.dll" }), {
+    path: "pe/agent.exe",
+    library: "advapi32.dll",
+  });
+  assert.deepEqual(normalizeParams("endpoint.present", { path: "a.js", url: "https://x.example.net/i?h=1" }), {
+    path: "a.js",
+    host: "x.example.net",
+  });
+  assert.deepEqual(normalizeParams("file.contains", { path: "a", pattern: "api\\.stable\\.example\\.com/ping" }), {
+    path: "a",
+    text: "api.stable.example.com/ping",
+  });
+  assert.equal(literalFromPattern("https.get\\(.*"), null, "a real regex is not turned into text");
+  assert.deepEqual(
+    normalizeParams("pkg.has-dependency", { path: "p", name: "x", dependency: "y" }),
+    { path: "p", name: "x", dependency: "y" },
+    "the canonical name wins",
+  );
+});

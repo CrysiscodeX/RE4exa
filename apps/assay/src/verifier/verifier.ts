@@ -9,7 +9,7 @@ import type { ClaimRecord } from "../evidence/record.ts";
 import { type AgentClaim, caseClaims, type StoredClaim, setVerdict, type Verdict } from "../evidence/store.ts";
 import type { Kernel } from "../kernel/kernel.ts";
 import { familiesOf } from "../probes/builtin/identify.ts";
-import { checkParams, PREDICATES } from "./predicates.ts";
+import { checkParams, normalizeParams, PREDICATES } from "./predicates.ts";
 
 export interface VerifyOutcome {
   verdict: Verdict | null;
@@ -92,7 +92,7 @@ export function createVerifier(opts: { kernel: Kernel; engine: ProbeEngine; exec
     if (!c.predicate) return unv("the claim names no predicate");
     const spec = PREDICATES[c.predicate];
     if (!spec) return unv(`unsupported predicate ${c.predicate}`);
-    const p: Obj = { ...obj(c.params) };
+    const p: Obj = normalizeParams(c.predicate, { ...obj(c.params) });
     if ((p.path === undefined || p.path === null) && c.subject?.path) p.path = c.subject.path;
     const bad = checkParams(spec, p);
     if (bad) return unv(bad);

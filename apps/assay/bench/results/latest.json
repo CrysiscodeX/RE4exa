@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-25T22:48:46.790Z",
+  "at": "2026-10-25T22:56:12.001Z",
   "node": "v22.22.0",
   "platform": "linux",
   "rows": [
@@ -8,7 +8,7 @@
       "measure": "Work lost per SIGKILL",
       "baseline": "rea: the whole session ledger (in-memory)",
       "target": "0 lost evidence, ≤1 step re-run per kill, 30 kills",
-      "value": "kills=30 re-executed-steps=0 unsafe-interrupted=0 steps-done-at-kill=[0,1,2,7,2,9,9]",
+      "value": "kills=32 re-executed-steps=0 unsafe-interrupted=3 steps-done-at-kill=[0,0,1,5,10,7,9]",
       "pass": true,
       "how": "test/fault-injection.test.ts"
     },
@@ -53,7 +53,7 @@
       "measure": "Time to first evidence (warm, per fixture)",
       "baseline": "rea CLI start 2.1–2.2 s per call",
       "target": "median ≤ 1000 ms",
-      "value": "per-fixture identify/sweep ms: elf=0.6/2.0 pe=0.4/1.3 pe-dll=0.3/1.2 macho=0.3/1.2 macho-fat=0.3/1.3 wasm=0.4/1.4 zip=0.4/1.4 jar=0.3/1.1 apk=0.4/1.2 vsix=0.5/1.7 crx=0.5/1.6 tar=0.5/1.6 tar.gz=0.7/1.6 npm-tgz=0.4/2.5 asar=0.3/1.2 gzip=0.4/0.8 sqlite=0.3/0.8 pdf=0.3/3.8 png=0.3/0.9 jpeg=0.3/0.8 hermes-bytecode=0.3/0.8 plist=0.3/0.8 pcap=0.3/0.9 java-class=0.3/1.0 unknown=0.3/0.8 script=0.3/2.0 javascript=0.4/2.9 typescript=0.4/2.1 json=0.4/1.3 package-json=0.3/1.4 text=0.3/0.6 npm-package=0.6/7.3 directory=0.5/3.0",
+      "value": "per-fixture identify/sweep ms: elf=0.4/1.5 pe=0.3/1.2 pe-dll=0.3/1.1 macho=0.3/1.0 macho-fat=0.3/1.2 wasm=0.3/1.1 zip=0.3/1.3 jar=0.3/1.1 apk=0.3/1.1 vsix=0.3/1.3 crx=0.3/1.1 tar=0.4/4.0 tar.gz=0.4/1.2 npm-tgz=0.4/1.8 asar=0.3/1.1 gzip=0.5/3.3 sqlite=0.3/0.8 pdf=0.3/0.8 png=0.3/0.7 jpeg=0.3/0.8 hermes-bytecode=0.4/0.7 plist=0.3/0.7 pcap=0.3/0.7 java-class=0.3/0.8 unknown=0.4/1.5 script=0.3/1.6 javascript=0.3/1.9 typescript=0.3/1.9 json=0.3/1.0 package-json=0.3/1.4 text=0.3/0.6 npm-package=0.4/5.2 directory=0.4/2.8",
       "pass": true,
       "how": "test/probes-engine.test.ts"
     },
@@ -71,7 +71,7 @@
       "measure": "Bytes an agent loads to start (tools/list)",
       "baseline": "rea default catalog 3,211,385 B",
       "target": "≤ 12,288 B",
-      "value": "7565 B (20 tools)",
+      "value": "7952 B (20 tools)",
       "pass": true,
       "how": "MCP wire capture"
     },
@@ -98,7 +98,7 @@
       "measure": "Speed-up from 4 parallel workers",
       "baseline": "serial",
       "target": "≥ 2.5×",
-      "value": "3.60× (serial 1203 ms, parallel 334 ms; synthetic 300 ms turns)",
+      "value": "3.67× (serial 1203 ms, parallel 328 ms; synthetic 300 ms turns)",
       "pass": true,
       "how": "orchestrator with a 300 ms stub provider"
     },

@@ -171,3 +171,67 @@ export function checkParams(spec: PredicateSpec, params: Record<string, Json>): 
   }
   return null;
 }
+
+// Agents name parameters loosely (the live benchmark saw `lib` for `library` and regex `pattern`
+// for literal text). Map the common aliases onto the schema before checking; the original params
+// stay in the stored claim.
+const ALIASES: Record<string, Record<string, string[]>> = {
+  "*": { path: ["file", "filePath", "file_path", "subject"] },
+  "native.links": { library: ["lib", "dll", "dylib", "so", "name", "needed"] },
+  "pkg.has-dependency": { name: ["dependency", "package", "pkg", "dep"] },
+  "pkg.has-install-script": { hook: ["script", "lifecycle"] },
+  "js.imports": { specifier: ["module", "import", "from", "source"] },
+  "endpoint.present": { host: ["hostname", "domain", "url"] },
+  "archive.contains": { entry: ["file", "member", "name", "entryName"] },
+  "file.identify": { format: ["type", "kind"] },
+  "file.contains": { text: ["string", "needle", "pattern", "substring"] },
+};
+
+const REGEX_META = /[.*+?()[\]{}|^$\\]/;
+
+/** A regex that only escapes metacharacters is literal text; anything else is not re-run. */
+export function literalFromPattern(pattern: string): string | null {
+  const unescaped = pattern.replace(/\\([.*+?()[\]{}|^$\\/-])/g, "$1");
+  const rest = pattern.replace(/\\[.*+?()[\]{}|^$\\/-]/g, "");
+  return REGEX_META.test(rest) ? null : unescaped;
+}
+
+export function normalizeParams(predicate: string, params: Record<string, Json>): Record<string, Json> {
+  const out: Record<string, Json> = { ...params };
+  const maps = { ...(ALIASES["*"] ?? {}), ...(ALIASES[predicate] ?? {}) };
+  for (const [canonical, aliases] of Object.entries(maps)) {
+    if (out[canonical] !== undefined && out[canonical] !== null) continue;
+    for (const a of aliases) {
+      if (out[a] === undefined || out[a] === null) continue;
+      let v = out[a]!;
+      if (predicate === "endpoint.present" && a === "url" && typeof v === "string") {
+        try {
+          v = new URL(v).hostname;
+        } catch {
+          continue;
+        }
+      }
+      if (predicate === "file.contains" && a === "pattern" && typeof v === "string") {
+        const lit = literalFromPattern(v);
+        if (lit === null) continue;
+        v = lit;
+      }
+      out[canonical] = v;
+      delete out[a];
+      break;
+    }
+  }
+  return out;
+}
+
+/** One line per predicate, for the claim tool's description: `native.links{path,library}`. */
+export function predicateCatalog(): string {
+  return Object.values(PREDICATES)
+    .map((p) => {
+      const names = Object.entries(p.params).map(([k, v]) => (v.required ? k : `${k}?`));
+      const groups = (p.oneOf ?? []).map((g) => g.join("|"));
+      const shown = names.filter((n) => !(p.oneOf ?? []).flat().includes(n.replace("?", "")));
+      return `${p.predicate}{${[...shown, ...groups].join(",")}}`;
+    })
+    .join(" ");
+}

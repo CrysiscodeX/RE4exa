@@ -72,6 +72,7 @@ interface Run {
   refuted: number;
   answer: string;
   error?: string;
+  claimDetail?: { predicate: string | null; params: unknown; verdict: string | null; reason: string | null }[];
 }
 const runs: Run[] = [];
 let spent = 0;
@@ -167,6 +168,12 @@ async function assay(t: Task, ws: string): Promise<Omit<Run, "arm" | "task" | "r
       verified: claims.filter((x) => x.verdict === "verified").length,
       refuted: claims.filter((x) => x.verdict === "refuted").length,
       answer,
+      claimDetail: claims.map((x) => ({
+        predicate: x.claim.predicate ?? null,
+        params: x.claim.params ?? null,
+        verdict: x.verdict,
+        reason: x.verdict_record?.reason ?? null,
+      })),
       ...(err ? { error: err.text } : {}),
     };
   } finally {
@@ -285,5 +292,5 @@ const out = {
   runs,
 };
 mkdirSync(join(ROOT, "bench", "results"), { recursive: true });
-writeFileSync(join(ROOT, "bench", "results", "live.json"), `${JSON.stringify(out, null, 2)}\n`);
+writeFileSync(join(ROOT, "bench", "results", arg("--out", "live.json")), `${JSON.stringify(out, null, 2)}\n`);
 console.log(`\n${summary}\nspent $${spent.toFixed(4)} of cap $${CAP}`);

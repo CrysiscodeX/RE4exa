@@ -105,10 +105,12 @@
             ]
           },
           "predicate": {
-            "type": "string"
+            "type": "string",
+            "description": "one the verifier can re-run: file.contains, file.identify, file.hash, pkg.has-dependency, pkg.has-install-script, js.imports, native.links, archive.contains, endpoint.present, cmd.exit"
           },
           "params": {
-            "type": "object"
+            "type": "object",
+            "description": "params by predicate (workspace-relative paths; literal text, not regex): file.contains{path,offset?,text|hex} file.identify{path,format} file.hash{path,sha256} pkg.has-dependency{path,name,scope?} pkg.has-install-script{path,hook?} js.imports{path,specifier} native.links{path,library} archive.contains{path,entry} endpoint.present{path,host} cmd.exit{program,args?,expect}"
           },
           "path": {
             "type": "string"
