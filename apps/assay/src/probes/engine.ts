@@ -17,6 +17,7 @@ import {
 import { isAbsolute, relative, resolve, sep } from "node:path";
 import type { ProbeContext, ProbeDef, ProbeEngine, ProbeOutput, ProbeSubject, SweepReport } from "../contracts.ts";
 import { AssayError, isAssayError } from "../errors.ts";
+import { pathNotFound } from "../mcp/suggest.ts";
 import { canonicalize, type Json } from "../evidence/jcs.ts";
 import { type ClaimRecord, type Confidence, type Finding, makeRecord, probeKey } from "../evidence/record.ts";
 import { evidenceByProbeKey, putEvidence } from "../evidence/store.ts";
@@ -187,7 +188,7 @@ export function createProbeEngine(opts: EngineOptions): AssayProbeEngine {
       real = realpathSync(joined);
     } catch {
       if (!inside(ws, joined)) throw new AssayError("path_outside_workspace", { path: p });
-      throw new AssayError("not_found", { path: p });
+      throw pathNotFound(ws, p);
     }
     if (!inside(ws, real)) throw new AssayError("path_outside_workspace", { path: p, resolved: "outside" });
     const st = statSync(real);

@@ -107,6 +107,7 @@ export const FAILURE_MODES = {
     message: "The path resolves outside the workspace",
     fix: "Use a path inside the workspace",
   },
+  path_not_found: { retryable: false, message: "No such path in the workspace", fix: "Use one of the suggested paths, or list the folder with assay_probe dir.inventory" },
   probe_unknown: { retryable: false, message: "No probe with that id", fix: "List probes with `assay probe --list`" },
   probe_failed: {
     retryable: true,

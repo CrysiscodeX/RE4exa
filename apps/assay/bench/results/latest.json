@@ -1,0 +1,115 @@
+{
+  "at": "2026-10-25T22:25:22.786Z",
+  "node": "v22.22.0",
+  "platform": "linux",
+  "rows": [
+    {
+      "id": "M1",
+      "measure": "Work lost per SIGKILL",
+      "baseline": "rea: the whole session ledger (in-memory)",
+      "target": "0 lost evidence, ≤1 step re-run per kill, 30 kills",
+      "value": "kills=30 re-executed-steps=1 unsafe-interrupted=5 steps-done-at-kill=[0,0,0,5,12,6,6]",
+      "pass": true,
+      "how": "test/fault-injection.test.ts"
+    },
+    {
+      "id": "M6",
+      "measure": "Two processes on one store",
+      "baseline": "PGlite: committed rows lost in 5 of 8 runs",
+      "target": "1000/1000 second opens refused, 0 rows lost",
+      "value": "1000/1000 refused, 0 rows lost",
+      "pass": true,
+      "how": "test/kernel.test.ts (two-process test)"
+    },
+    {
+      "id": "M7",
+      "measure": "Stale-lease writes accepted",
+      "baseline": "absurd: expired, unswept leases accept writes",
+      "target": "0 of 1000",
+      "value": "0 of 1000",
+      "pass": true,
+      "how": "test/kernel.test.ts (fence race)"
+    },
+    {
+      "id": "M8",
+      "measure": "Identity stable across paths and hosts",
+      "baseline": "rea: nested ids change with the path",
+      "target": "100% equal keys",
+      "value": "100% (ProbeKey, ObservationId, FindingKey)",
+      "pass": true,
+      "how": "test/evidence.test.ts, test/probes-engine.test.ts"
+    },
+    {
+      "id": "M9",
+      "measure": "False 'complete' coverage",
+      "baseline": "rea: 'complete' with unresolved imports",
+      "target": "0 on the ablation corpus",
+      "value": "0 of 300",
+      "pass": true,
+      "how": "test/probes-js.test.ts"
+    },
+    {
+      "id": "M10",
+      "measure": "Time to first evidence (warm, per fixture)",
+      "baseline": "rea CLI start 2.1–2.2 s per call",
+      "target": "median ≤ 1000 ms",
+      "value": "per-fixture identify/sweep ms: elf=0.3/1.4 pe=0.4/1.6 pe-dll=0.4/1.4 macho=0.3/1.2 macho-fat=0.3/1.2 wasm=0.4/1.1 zip=0.4/1.2 jar=0.3/1.0 apk=0.3/1.1 vsix=0.3/1.2 crx=0.3/1.0 tar=0.3/1.1 tar.gz=0.4/1.2 npm-tgz=0.5/1.8 asar=0.3/1.1 gzip=0.3/0.8 sqlite=0.4/0.8 pdf=0.3/0.9 png=0.3/0.7 jpeg=0.3/0.8 hermes-bytecode=0.3/0.7 plist=0.3/0.7 pcap=0.3/0.7 java-class=0.3/0.8 unknown=0.3/0.8 script=0.4/4.1 javascript=0.3/2.2 typescript=0.3/1.6 json=0.3/1.1 package-json=0.3/1.3 text=0.3/0.8 npm-package=0.5/6.7 directory=0.6/3.6",
+      "pass": true,
+      "how": "test/probes-engine.test.ts"
+    },
+    {
+      "id": "M5",
+      "measure": "Effects executed from planted instructions",
+      "baseline": "no parent measured it",
+      "target": "0 executed, 100% routed to approval (24 fixtures)",
+      "value": "fixtures=24 attempts=26 executed=0 approval-routed=26",
+      "pass": true,
+      "how": "test/tripwire.test.ts (adversarial fake agent)"
+    },
+    {
+      "id": "M2",
+      "measure": "Bytes an agent loads to start (tools/list)",
+      "baseline": "rea default catalog 3,211,385 B",
+      "target": "≤ 12,288 B",
+      "value": "7565 B (20 tools)",
+      "pass": true,
+      "how": "MCP wire capture"
+    },
+    {
+      "id": "M3",
+      "measure": "Bytes per tool result (median)",
+      "baseline": "rea sends each result twice (178,983 B vs 20,829 B summary)",
+      "target": "median ≤ 8,192 B, one copy",
+      "value": "median 776.5 B, max 3648 B over 36 calls; duplicated payloads: 0",
+      "pass": true,
+      "how": "MCP wire capture on the bench fixtures"
+    },
+    {
+      "id": "M4",
+      "measure": "Verifier on oracle claims",
+      "baseline": "Tier 0 / leanrea: labels only, 0 machine-verified",
+      "target": "false-verified 0; agreement with oracle ≥ 95%",
+      "value": "60/60 agree with the oracle; 38 verified; false-verified 0",
+      "pass": true,
+      "how": "bench/tasks/*.json oracles through the verifier"
+    },
+    {
+      "id": "M11",
+      "measure": "Speed-up from 4 parallel workers",
+      "baseline": "serial",
+      "target": "≥ 2.5×",
+      "value": "3.68× (serial 1201 ms, parallel 326 ms; synthetic 300 ms turns)",
+      "pass": true,
+      "how": "orchestrator with a 300 ms stub provider"
+    },
+    {
+      "id": "M13",
+      "measure": "Server start to first verified claim (browser)",
+      "baseline": "—",
+      "target": "≤ 60,000 ms after `npm ci && npm run build:ui && assay serve`",
+      "value": "1122 ms",
+      "pass": true,
+      "how": "test/e2e/run.ts"
+    }
+  ]
+}

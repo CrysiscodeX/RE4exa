@@ -27,6 +27,7 @@ least one test. Defaults fail closed: an unknown state is reported, never guesse
 | `tool_failed` | The tool failed unexpectedly | yes | Check the arguments against the tool's schema and retry; report a bug if it persists |
 | `handle_unknown` | The handle is unknown, belongs to another case, or was evicted | no | Re-run the tool that produced it to get a fresh handle |
 | `path_outside_workspace` | The path resolves outside the workspace | no | Use a path inside the workspace |
+| `path_not_found` | No such path in the workspace | no | Use one of the suggested paths, or list the folder with assay_probe dir.inventory |
 | `probe_unknown` | No probe with that id | no | List probes with `assay probe --list` |
 | `probe_failed` | The probe could not finish | yes | See the probe's limitations; retry or use another probe |
 | `provider_unavailable` | The agent client is not installed | no | Install the official CLI, then run `assay doctor` |

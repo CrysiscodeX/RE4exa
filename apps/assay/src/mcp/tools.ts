@@ -429,6 +429,18 @@ export function builtinHandlers(svc: ToolServices): Record<string, Handler> {
     },
 
     async assay_fetch(ctx, a) {
+      const h = s(a.handle)!;
+      if (h.startsWith("ob_")) {
+        // agents often pass an evidence id where a handle is expected: give them the record
+        const rec = getEvidence(svc.kernel, h);
+        if (rec)
+          return {
+            text: JSON.stringify(rec).slice(0, LIMITS.fetchPageBytes),
+            data: { observation_id: h } as Json,
+            untrusted: true,
+            origin: `evidence:${h}`,
+          } as HandlerResult;
+      }
       const page = svc.handles.page(s(a.handle)!, ctx.caseId, n(a.offset) ?? 0, n(a.length), LIMITS.fetchPageBytes);
       const range = `chars ${page.offset}..${page.offset + page.length} of ${page.total}`;
       return {

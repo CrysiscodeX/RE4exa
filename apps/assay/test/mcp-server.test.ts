@@ -117,7 +117,7 @@ test("tools/list returns schemas and effect-derived annotations", async () => {
   }
 });
 
-test("tools/call returns content, structuredContent and isError", async () => {
+test("tools/call returns text content only (no structuredContent) and isError", async () => {
   const s = setup();
   try {
     const ok = (await s.handler.handle(
@@ -127,7 +127,7 @@ test("tools/call returns content, structuredContent and isError", async () => {
     const res = ok.result as { content: { type: string; text: string }[]; structuredContent: Json; isError?: boolean };
     assert.equal(res.content[0]!.type, "text");
     assert.match(res.content[0]!.text, /file\.identify/);
-    assert.ok(res.structuredContent && typeof res.structuredContent === "object");
+    assert.equal(res.structuredContent, undefined, "clients may show structuredContent instead of the text");
     assert.equal(res.isError, undefined);
     const bad = (await s.handler.handle(
       rpc(4, "tools/call", { name: "assay_read_file", arguments: { path: "../etc/passwd" } }),

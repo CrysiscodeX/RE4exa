@@ -1,0 +1,20 @@
+{
+  "product": "assay",
+  "version": "0.1.0",
+  "support": {
+    "security_fixes_until": "2031-12-31",
+    "policy": "Security fixes for the latest 0.x line until the date above; a declared successor line is announced at least 12 months before end of support.",
+    "contact": "GitHub private vulnerability reporting on this repository (see SECURITY.md)"
+  },
+  "regulatory": {
+    "eu_cra_role": "manufacturer of a product with digital elements, when distributed commercially; free and open-source non-commercial distribution may fall outside the CRA (assessment is the distributor's; not legal advice)",
+    "sbom": "CycloneDX, generated per release by CI (npm sbom)",
+    "vulnerability_handling": "SECURITY.md",
+    "advisories": "GitHub Security Advisories for this repository"
+  },
+  "data": {
+    "telemetry": "none",
+    "network": "loopback server only; outbound traffic happens only through the official agent clients the person runs",
+    "storage": "ASSAY_HOME (default ~/.assay); delete with `assay forget <case-id> | --all`"
+  }
+}

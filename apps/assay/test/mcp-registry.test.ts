@@ -196,7 +196,7 @@ test("path guard: outside paths, symlink escapes and .git writes are refused", a
       );
     assert.equal(readFileSync(join(outside, "secret.txt"), "utf8"), "top secret");
     assert.ok(!existsSync(join(outside, "new.txt")));
-    assert.equal(errCode(await s.reg.call(s.ctx(), "assay_read_file", { path: "missing.txt" })), "not_found");
+    assert.equal(errCode(await s.reg.call(s.ctx(), "assay_read_file", { path: "missing.txt" })), "path_not_found");
     assert.equal(
       errCode(await s.reg.call(s.ctx(), "assay_exec", { program: "ls", args: [], cwd: "../" })),
       "path_outside_workspace",
@@ -353,4 +353,21 @@ test("exec: argv only, bounded, minimal environment; handler errors become tool_
   } finally {
     s.cleanup();
   }
+});
+
+test("a missing path suggests similar paths in the error the agent reads", async () => {
+  const { mkdtempSync, mkdirSync, writeFileSync, rmSync } = await import("node:fs");
+  const { tmpdir } = await import("node:os");
+  const { join } = await import("node:path");
+  const { suggestPaths, pathNotFound } = await import("../src/mcp/suggest.ts");
+  const root = mkdtempSync(join(tmpdir(), "assay-suggest-"));
+  mkdirSync(join(root, "postinstall", "evil-helper"), { recursive: true });
+  writeFileSync(join(root, "postinstall", "evil-helper", "package.json"), "{}");
+  writeFileSync(join(root, "postinstall", "evil-helper-1.0.0.tgz"), "x");
+  assert.deepEqual(suggestPaths(root, "evil-helper").slice(0, 2), ["postinstall/evil-helper", "postinstall/evil-helper-1.0.0.tgz"]);
+  const e = pathNotFound(root, "evil-helper");
+  assert.equal(e.code, "path_not_found");
+  assert.match(e.message, /Did you mean: postinstall\/evil-helper/);
+  assert.deepEqual(suggestPaths(root, "zzzz-nothing"), []);
+  rmSync(root, { recursive: true, force: true });
 });

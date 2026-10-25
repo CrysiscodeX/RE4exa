@@ -1,0 +1,91 @@
+name: assay
+
+# Assay (apps/assay): typecheck, lint, tests with coverage gates, generated-doc freshness,
+# dependency audit and SBOM, UI build and browser end-to-end tests, model-free benchmark gates.
+# Tests also run on macOS and Windows. Only first-party actions, pinned by commit.
+on:
+  push:
+    paths: ["apps/assay/**", ".github/workflows/assay.yml"]
+  pull_request:
+    paths: ["apps/assay/**", ".github/workflows/assay.yml"]
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: apps/assay
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Check out this commit
+        working-directory: .
+        env:
+          TOKEN: ${{ github.token }}
+        run: |
+          git init -q .
+          git remote add origin "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git fetch -q --depth 1 origin "${GITHUB_SHA}"
+          git checkout -q FETCH_HEAD
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "22.22.0"
+      - run: npm ci --ignore-scripts
+      - name: Dependency budget and audit
+        run: |
+          node --disable-warning=ExperimentalWarning scripts/dep-budget.ts
+          npm audit --omit=dev --audit-level=high
+      - run: npm run typecheck
+      - run: npm run lint
+      - name: Tests with coverage gates
+        run: npm run coverage
+      - name: Generated docs are current (capabilities, reach, failure modes)
+        run: node --disable-warning=ExperimentalWarning scripts/gen-docs.ts --check
+      - name: SBOM
+        run: npm sbom --sbom-format cyclonedx --omit dev > sbom.cdx.json && node -e "JSON.parse(require('fs').readFileSync('sbom.cdx.json','utf8'))"
+      - name: Build UI
+        run: npm run build:ui
+      - name: Browser end-to-end
+        run: |
+          npx playwright install --with-deps chromium
+          npm run e2e
+      - name: Benchmark gates (model-free)
+        run: node --disable-warning=ExperimentalWarning bench/run.ts --gate
+      - name: Self-application
+        run: node --disable-warning=ExperimentalWarning src/cli.ts sweep . --json > self-sweep.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: assay-results
+          path: |
+            apps/assay/test-results/
+            apps/assay/bench/results/
+            apps/assay/sbom.cdx.json
+            apps/assay/self-sweep.json
+
+  platforms:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-14, windows-2022]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - name: Check out this commit
+        working-directory: .
+        shell: bash
+        env:
+          TOKEN: ${{ github.token }}
+        run: |
+          git init -q .
+          git remote add origin "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git fetch -q --depth 1 origin "${GITHUB_SHA}"
+          git checkout -q FETCH_HEAD
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "22.22.0"
+      - run: npm ci --ignore-scripts
+      - run: npm test

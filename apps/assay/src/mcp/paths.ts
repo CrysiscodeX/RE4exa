@@ -4,6 +4,7 @@
 import { existsSync, lstatSync, realpathSync } from "node:fs";
 import { dirname, isAbsolute, relative, resolve, sep } from "node:path";
 import { AssayError } from "../errors.ts";
+import { pathNotFound } from "./suggest.ts";
 
 function inside(root: string, p: string): boolean {
   const rel = relative(root, p);
@@ -44,7 +45,7 @@ export function resolveInWorkspace(
       throw new AssayError("path_outside_workspace", { path: p, why: "symlink leaves workspace" });
     return { abs: real, rel: relative(root, real) || "." };
   }
-  if (opts.mustExist !== false && !opts.write) throw new AssayError("not_found", { path: p });
+  if (opts.mustExist !== false && !opts.write) throw pathNotFound(root, p);
   // New file: the deepest existing ancestor must resolve inside the workspace.
   let anc = dirname(abs);
   while (!existsSync(anc) && anc !== dirname(anc)) anc = dirname(anc);

@@ -77,7 +77,7 @@ test("path guard: .., absolute paths and symlinks that leave the workspace are r
         p,
       );
     await assert.rejects(s.engine.run({ caseId: null, probeId: "file.hash", path: "nope.txt" }), (e) =>
-      isAssayError(e, "not_found"),
+      isAssayError(e, "path_not_found"),
     );
     const viaLink = await s.engine.run({ caseId: null, probeId: "file.hash", path: "link-in" });
     assert.equal(viaLink.locator?.path, "a.txt");

