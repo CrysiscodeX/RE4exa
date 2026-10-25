@@ -197,3 +197,54 @@ All four advocates accepted both forced merges, each with amendments:
 
 - The convergence is real, but it came fast. The same four agents proposed the merges and then accepted them.
 - That is why round 2b asks the skeptic to attack the convergence itself and to sketch "outsider" candidates. Without that, layer 5 would hold two variants of one idea plus the null option. That is not the 3–4 truly different options the owner asked for.
+
+## J-06 Round 2b and the choice of four candidates
+
+**Inputs:** [round-2-skeptic.md](04-debate/round-2-skeptic.md), [round-2-judge.md](04-debate/round-2-judge.md) and the consolidated [gaps.md](gaps.md).
+
+**Round 2b produced one measured result.**
+- **PGlite does not protect a store from a second process.** When two processes opened the same data directory, committed rows were silently lost in 5 of 8 runs across the skeptic's tests and mine. The script and the results are in [the spike](04-debate/spikes/pglite/README.md).
+- In one round the group had gone from "PGlite unknown" (J-02) to "PGlite recommended" (round 2). After a single test of the case the spike had not covered, it was back at "unsafe without an outside lock".
+- The lesson for the method: **a recommendation needs the failure-mode test, not only the success path.**
+
+**The judge's caveat, which I take to be the most important finding of the debate so far.**
+- The only capabilities the merged families have that composition (S-1) does not are:
+  - one commit per probe;
+  - finding keys that survive a version change.
+- Both are changes to rea's own records.
+- If rea accepted them upstream, S-1 would get them too. The margin would then be **ownership and speed**, a maintenance argument, not a capability one.
+- The owner has to see this plainly.
+
+**The convergence, attacked.**
+- **Why the agreement is not convincing on its own:**
+  - Part of it comes from the method, because every advocate could only share rea's Evidence record.
+  - None of it rests on evidence from users.
+- **Two outside candidates** that do not share those assumptions:
+  - **O-1, upstream-first:** no new product.
+  - **O-2, verify after the fact:** a checker with no model that re-runs each claim.
+
+**Decision (moderator, on method): the four candidates for layer 5**
+
+Each is meant to stand on its own and be clearly different from the others.
+
+| # | Candidate | From | Main user | Store (one per candidate; rule N-5) |
+|---|---|---|---|---|
+| A | **Case File**: a local, durable investigation server, run by the person's official agent client | R-1 + D-1 + L-1 (policy) + B-2 (option) | Agent or analyst, interactive | **Own SQLite**, one transaction per probe, with an exclusive lock when the store is opened. The judge rated it best on atomicity and on churn. PGlite is held back by N-1. The pi-durable kernel needs two commits per call |
+| B | **Release Delta Gate**: an unattended, model-free CI sweep with a version-to-version gate | R-2 + L-2 + B-1 + D-2 (publishing) | Platform and supply-chain teams, CI | **SQLite bundle per artifact**, merged into the run report. The multi-worker variant (absurd + fence on Postgres) is an owner decision that changes the store |
+| C | **Claim Verifier**: the agent works freely; a verifier with no model re-runs each `seen` claim | O-2 + S-2 + L-2's router as probes | Reviewers, CI, auditors receiving agent reports | **None needed.** It outputs a file of S-2 records; verification can simply be run again |
+| D | **Compose and contribute upstream**: no new runtime; pinned composition plus upstream changes | S-1 + O-1 | Existing rea and leanrea users | **rea's own ledger** after the proposed append-only-log change is accepted upstream; until then, bundle exports |
+
+**Shared by A, B and C:**
+- the **S-2 claim format, v1**, capped at the record plus two IDs (N-2);
+- the **router pack** (leanrea's table as data);
+- **`reach.json`**.
+
+D contributes the same items upstream instead.
+
+**Donor capabilities, as the owner asked:**
+- **T3's sanctioned delegation.** The person's official client and account drive A and C, using subscription credit and no API key held by the product. B uses delegation only for optional summaries; the terms question goes to the owner.
+- **Orca's process-host and worktree-per-worker.** These are B's runner, and C's re-run harness.
+- **strix's closure discipline:** used in C.
+- **my-jev and laya calibration:** used in A and C.
+
+**Writing.** Each candidate goes to a fresh architect agent with a fixed template ([05-candidates/README.md](05-candidates/README.md)). A fresh agent is used so that no advocate writes its own winner. The judge then reviews all four together.
