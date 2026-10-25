@@ -334,7 +334,7 @@ if (existsSync(live)) {
     id: "M12",
     measure: "Cost per correct-and-verified answer vs Tier 0 (live)",
     baseline: "Tier 0: model + Bash + leanrea skill",
-    target: "≤ 1.0×",
+    target: "whole 95% interval ≤ 1.0× and accuracy ≥ Tier 0",
     value: l.summary ?? "see live.json",
     pass: l.pass === true,
     how: "bench/live.ts",
