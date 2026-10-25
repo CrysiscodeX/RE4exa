@@ -175,43 +175,53 @@ async function assay(t: Task, ws: string): Promise<Omit<Run, "arm" | "task" | "r
   }
 }
 
-for (let rep = 1; rep <= REPS; rep++) {
-  for (const t of tasks) {
-    for (const arm of rep % 2 ? (["tier0", "assay"] as const) : (["assay", "tier0"] as const)) {
-      if (spent >= CAP) break;
-      const ws = tmp(`assay-live-${arm}-`);
-      cpSync(join(ROOT, "bench", "tasks", "fixtures"), ws.dir, { recursive: true });
-      try {
-        const r = arm === "tier0" ? await tier0(t, ws.dir) : await assay(t, ws.dir);
-        spent += r.costUsd;
-        runs.push({ arm, task: t.id, rep, ...r });
-        console.log(
-          `${arm.padEnd(5)} ${t.id.padEnd(16)} $${r.costUsd.toFixed(4)} ${r.ms}ms correct ${r.correct}/${r.facts} verified-facts ${r.verifiedFacts}${r.error ? ` ERROR ${r.error.slice(0, 80)}` : ""}`,
-        );
-      } catch (e) {
-        runs.push({
-          arm,
-          task: t.id,
-          rep,
-          costUsd: 0,
-          ms: 0,
-          correct: 0,
-          facts: 0,
-          verifiedFacts: 0,
-          claims: 0,
-          verified: 0,
-          refuted: 0,
-          answer: "",
-          error: String((e as Error).message),
-        });
-        console.log(`${arm} ${t.id} failed: ${(e as Error).message}`);
-      } finally {
-        ws.cleanup();
+const summarizeOnly = process.argv.includes("--summarize");
+if (summarizeOnly) {
+  // recompute the summary (with the bootstrap interval) from the runs already recorded
+  const prev = JSON.parse(readFileSync(join(ROOT, "bench", "results", "live.json"), "utf8")) as {
+    runs: Run[];
+    spentUsd: number;
+  };
+  runs.push(...prev.runs);
+  spent = prev.spentUsd;
+} else {
+  for (let rep = 1; rep <= REPS; rep++) {
+    for (const t of tasks) {
+      for (const arm of rep % 2 ? (["tier0", "assay"] as const) : (["assay", "tier0"] as const)) {
+        if (spent >= CAP) break;
+        const ws = tmp(`assay-live-${arm}-`);
+        cpSync(join(ROOT, "bench", "tasks", "fixtures"), ws.dir, { recursive: true });
+        try {
+          const r = arm === "tier0" ? await tier0(t, ws.dir) : await assay(t, ws.dir);
+          spent += r.costUsd;
+          runs.push({ arm, task: t.id, rep, ...r });
+          console.log(
+            `${arm.padEnd(5)} ${t.id.padEnd(16)} $${r.costUsd.toFixed(4)} ${r.ms}ms correct ${r.correct}/${r.facts} verified-facts ${r.verifiedFacts}${r.error ? ` ERROR ${r.error.slice(0, 80)}` : ""}`,
+          );
+        } catch (e) {
+          runs.push({
+            arm,
+            task: t.id,
+            rep,
+            costUsd: 0,
+            ms: 0,
+            correct: 0,
+            facts: 0,
+            verifiedFacts: 0,
+            claims: 0,
+            verified: 0,
+            refuted: 0,
+            answer: "",
+            error: String((e as Error).message),
+          });
+          console.log(`${arm} ${t.id} failed: ${(e as Error).message}`);
+        } finally {
+          ws.cleanup();
+        }
       }
     }
   }
 }
-
 const sum = (arm: string, f: (r: Run) => number) => runs.filter((r) => r.arm === arm).reduce((a, r) => a + f(r), 0);
 const arms = ["tier0", "assay"].map((arm) => {
   const cost = sum(arm, (r) => r.costUsd);
@@ -233,7 +243,35 @@ const arms = ["tier0", "assay"].map((arm) => {
 });
 const [t0a, asa] = arms as [(typeof arms)[number], (typeof arms)[number]];
 const ratio = t0a.costPerCorrect && asa.costPerCorrect ? asa.costPerCorrect / t0a.costPerCorrect : null;
-const summary = `model ${MODEL}, ${tasks.length} tasks × ${REPS}: Tier 0 ${t0a.correct}/${t0a.facts} facts, $${t0a.costUsd}, 0 machine-verified; Assay ${asa.correct}/${asa.facts} facts, $${asa.costUsd}, ${asa.verifiedFacts} machine-verified; cost per correct fact ratio Assay/Tier0 = ${ratio?.toFixed(2) ?? "n/a"} (small sample, no interval)`;
+// paired bootstrap over (task, rep) cells of the cost-per-correct-fact ratio
+const cells = new Map<string, Partial<Record<"tier0" | "assay", Run>>>();
+for (const r of runs) cells.set(`${r.task}#${r.rep}`, { ...(cells.get(`${r.task}#${r.rep}`) ?? {}), [r.arm]: r });
+const paired = [...cells.values()].filter((c): c is Record<"tier0" | "assay", Run> => !!c.tier0 && !!c.assay);
+let seed = 7;
+const rnd = () => {
+  seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+  return seed / 0x7fffffff;
+};
+const boot: number[] = [];
+for (let b = 0; b < 10_000 && paired.length; b++) {
+  let ct = 0,
+    ca = 0,
+    nt = 0,
+    na = 0;
+  for (let i = 0; i < paired.length; i++) {
+    const c = paired[Math.floor(rnd() * paired.length)]!;
+    ct += c.tier0.costUsd;
+    ca += c.assay.costUsd;
+    nt += c.tier0.correct;
+    na += c.assay.correct;
+  }
+  if (nt && na) boot.push(ca / na / (ct / nt));
+}
+boot.sort((a, b) => a - b);
+const ci: [number, number] | null = boot.length
+  ? [boot[Math.floor(boot.length * 0.025)]!, boot[Math.floor(boot.length * 0.975)]!]
+  : null;
+const summary = `model ${MODEL}, ${tasks.length} tasks × ${REPS}: Tier 0 ${t0a.correct}/${t0a.facts} facts, $${t0a.costUsd}, 0 machine-verified; Assay ${asa.correct}/${asa.facts} facts, $${asa.costUsd}, ${asa.verifiedFacts} machine-verified; cost per correct fact ratio Assay/Tier0 = ${ratio?.toFixed(2) ?? "n/a"}${ci ? ` [95% bootstrap ${ci[0].toFixed(2)}–${ci[1].toFixed(2)}, ${paired.length} paired cells]` : ""}`;
 const out = {
   at: new Date().toISOString(),
   model: MODEL,

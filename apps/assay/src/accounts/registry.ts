@@ -7,9 +7,10 @@
 // (ASSAY_HOME/accounts/<id>) and the caller passes deleteHome: true.
 
 import type { ChildProcessWithoutNullStreams } from "node:child_process";
-import { mkdirSync, rmSync } from "node:fs";
+import { chmodSync, mkdirSync, rmSync, statSync } from "node:fs";
+import { createRequire } from "node:module";
 import { homedir } from "node:os";
-import { basename, join, resolve } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
 import type { AccountRef, AccountStatus, ProviderAdapter, ProviderId } from "../contracts.ts";
 import { AssayError } from "../errors.ts";
 import type { Json } from "../evidence/jcs.ts";
@@ -128,9 +129,29 @@ const DEFAULT_LABELS: Record<ProviderId, string> = {
   fake: "Fake (demo)",
 };
 
+/**
+ * node-pty spawns through a `spawn-helper` binary on macOS. Its published prebuilds lack the execute
+ * bit (restored only by a build step that `npm ci --ignore-scripts` and some installers skip), so
+ * every spawn fails with "posix_spawnp failed". Restore the bit where we can.
+ */
+function ensureSpawnHelper(name: string): void {
+  if (process.platform === "win32") return;
+  const root = dirname(createRequire(import.meta.url).resolve(`${name}/package.json`));
+  for (const d of ["build/Release", "build/Debug", `prebuilds/${process.platform}-${process.arch}`]) {
+    const p = join(root, d, "spawn-helper");
+    try {
+      const mode = statSync(p).mode;
+      if ((mode & 0o111) !== 0o111) chmodSync(p, mode | 0o755);
+    } catch {
+      // absent (Linux needs no helper) or read-only: a failing spawn falls back to pipes
+    }
+  }
+}
+
 async function loadPty(): Promise<PtySpawn | null> {
   try {
     const name = "node-pty";
+    ensureSpawnHelper(name);
     const mod = (await import(name)) as { spawn?: PtySpawn; default?: { spawn?: PtySpawn } };
     return mod.spawn ?? mod.default?.spawn ?? null;
   } catch {
@@ -280,11 +301,19 @@ export function createAccounts(o: AccountsOptions): Accounts {
       const timer = setTimeout(() => logins.get(id)?.kill(), o.loginTimeoutMs ?? 10 * 60_000);
       timer.unref?.();
       let handle: LoginHandle;
+      let p: PtyLike | null = null;
       if (spawnPty) {
-        const p = spawnPty(cmd.program, cmd.args, { name: "xterm-256color", cols: 100, rows: 30, cwd, env: cmd.env });
-        p.onData((d) => onOutput(d, false));
-        p.onExit((e) => finish(e.exitCode));
-        handle = { kind: "pty", write: (d) => p.write(d), kill: () => p.kill() };
+        try {
+          p = spawnPty(cmd.program, cmd.args, { name: "xterm-256color", cols: 100, rows: 30, cwd, env: cmd.env });
+        } catch {
+          p = null; // the pty could not start (e.g. its helper cannot run): use pipes
+        }
+      }
+      if (p) {
+        const term = p;
+        term.onData((d) => onOutput(d, false));
+        term.onExit((e) => finish(e.exitCode));
+        handle = { kind: "pty", write: (d) => term.write(d), kill: () => term.kill() };
       } else {
         let child: ChildProcessWithoutNullStreams;
         try {

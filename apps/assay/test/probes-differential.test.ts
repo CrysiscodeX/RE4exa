@@ -13,7 +13,7 @@ import { openTemp, tmp } from "./helpers.ts";
 
 const FILE_WORDS: Record<string, RegExp> = {
   elf: /^ELF /,
-  pe: /^PE32\+? executable/,
+  pe: /^(MS-DOS executable )?PE32\+? executable/, // macOS's file(1) names the DOS stub first
   macho: /^Mach-O /,
   "macho-fat": /^Mach-O universal binary/,
   wasm: /WebAssembly/,
@@ -53,6 +53,7 @@ test("differential vs file(1): our identification agrees on every fixture `file`
   try {
     const engine = createProbeEngine({ kernel: store.k, workspace: w.dir, which: () => null });
     let compared = 0;
+    const disagree: string[] = [];
     for (const fx of fixtureSet()) {
       const re = FILE_WORDS[fx.format];
       if (!re || fx.files.length !== 1) continue;
@@ -65,9 +66,10 @@ test("differential vs file(1): our identification agrees on every fixture `file`
         format: string;
       };
       assert.equal(ours.format, fx.format);
-      assert.match(theirs, re, `${fx.name}: file says "${theirs}"`);
+      if (!re.test(theirs)) disagree.push(`${fx.name}: file says "${theirs}"`);
       compared++;
     }
+    assert.deepEqual(disagree, []);
     t.diagnostic(`file(1) agreed on ${compared} fixtures`);
     assert.ok(compared >= 15);
   } finally {

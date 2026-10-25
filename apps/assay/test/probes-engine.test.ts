@@ -269,7 +269,8 @@ test("sweep of every fixture: identified correctly, expected probes ran, unsuppo
   const w = fixtureWorkspace();
   const store = openTemp();
   try {
-    const engine = createProbeEngine({ kernel: store.k, workspace: w.dir, which: () => null });
+    // platform pinned: the expected notExamined reasons below are the Linux ones (readelf is Linux-only)
+    const engine = createProbeEngine({ kernel: store.k, workspace: w.dir, which: () => null, platform: "linux" });
     for (const fx of w.fixtures) {
       const r = await engine.sweep({ caseId: null, path: fx.subject });
       const recs = r.evidence.map((id) => getEvidence(store.k, id)!);
@@ -396,7 +397,7 @@ test("router pack: valid, every row credited to leanrea, probes exist, missing t
   assert.equal(toolStatus(row, row.external[0]!, "darwin", () => "/usr/bin/lipo").available, true);
   assert.equal(which("definitely-not-a-program-xyz"), null);
   // an external probe whose tool is missing fails with "tool missing" instead of running
-  const s = setup();
+  const s = setup([], { platform: "linux" });
   try {
     writeFileSync(join(s.ws, "t.so"), fixtureSet().find((f) => f.name === "elf")!.files[0]!.bytes);
     await assert.rejects(

@@ -225,6 +225,26 @@ describe("accounts registry", () => {
     }
   });
 
+  it("a pty that cannot start (posix_spawnp failed) falls back to pipes", async () => {
+    const acc = createAccounts({
+      kernel: k,
+      home: dir,
+      providers: new Map([["claude", testAdapter("claude", state)]]),
+      pty: () => {
+        throw new Error("posix_spawnp failed.");
+      },
+    });
+    const a = acc.create({ provider: "claude", label: "x", home: "default" });
+    let done!: () => void;
+    const finished = new Promise<void>((r) => {
+      done = r;
+    });
+    const r = await acc.login(a.id, (_c, d) => d && done());
+    assert.equal(r.terminal, "pipes");
+    acc.cancelLogin(a.id);
+    await finished;
+  });
+
   it("ensureDefaults creates one default account per installed provider, once", async () => {
     const acc = make({ providers: ["claude", "codex", "acp", "fake"] });
     const made = await acc.ensureDefaults();
