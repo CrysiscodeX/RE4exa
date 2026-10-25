@@ -1,6 +1,6 @@
 # 02 Framing: who it is for, what it must do, what it must not
 
-This is a draft written before the debate. Layer 1's anatomy and the skeptic's and judge's critiques (layer 4) will change it, and each change is recorded in the journal.
+This is a draft written before the debate (revised after layer 1, see journal J-02). Layer 1's anatomy and the skeptic's and judge's critiques (layer 4) will change it, and each change is recorded in the journal.
 
 ## 1. What the four repos do
 
@@ -32,7 +32,7 @@ These are hypotheses. Layer 1 has to confirm or kill each one.
 2. **Cheap first, deep when needed.** Start with leanrea's plain-tool moves. Bring in rea's heavy parsers only when the cheap path can't answer, and record why.
 3. **Evidence that outlives the tool.** Findings stored as durable, content-addressed records that another run, version or tool can check again.
 4. **Fleet analysis.** Many artifacts, many workers, one ledger, with receipts so that retrying a step does not repeat a side effect. This draws on absurd and Orca.
-5. **Run on the person's own model account.** Integrated clients sign in through the provider's official tooling, which T3 Code demonstrates, so the product uses subscription credits instead of an API key it has to store.
+5. **Run on the person's own model account.** Integrated clients sign in through the provider's official tooling, which T3 Code demonstrates, so the product uses subscription credits instead of an API key it has to store. pi-ai's built-in Claude subscription login is not usable for this, because it presents as Claude Code (layer 1). Whether provider terms allow it is still unknown.
 
 ## 4. Forces through 2030–35
 
@@ -63,8 +63,8 @@ Every candidate states numbers for these:
 
 | Measure | Why | Baseline from the reviews |
 |---|---|---|
-| Bytes an agent must load to start | Context cost | rea about 3.16 MB of catalog; leanrea about 8 KB of skill |
-| Work lost when the process is killed mid-run | Durability | rea: all evidence of the session; pi-durable and absurd: up to the last completed step |
+| Bytes an agent must load to start, and bytes per answer | Context cost (layer 1: per-answer result size matters more than the catalog) | rea 3,211,385 B of default catalog (222,396 B compact; about 3.5k tokens idle with on-demand loading); leanrea 8,374 B of skill |
+| Work lost when the process is killed mid-run, and with two writers | Durability | rea: the whole session ledger; pi-durable: the phase in flight, and with 2 processes silent overwrites; absurd: the step in flight, and expired leases still accept writes |
 | Share of findings with checkable evidence | Epistemic quality | rea has evidence records; leanrea has labels only |
 | Formats covered, and declared not covered | Reach and honesty | from layer 1 |
 | Services required to run | Operations | absurd: Postgres; others: none |
