@@ -294,12 +294,17 @@ test("sweep of every fixture: identified correctly, expected probes ran, unsuppo
     assert.ok(all.questions.some((q) => q.includes("misc/blob.bin") && q.includes("not recognised")));
     assert.ok(all.questions.some((q) => q.includes("dist/bundle.zip") && q.includes("../evil.sh")));
     assert.ok(all.questions.some((q) => q.includes("native add-on")));
-    const budget = await createProbeEngine({ kernel: openTemp().k, workspace: w.dir }).sweep({
-      caseId: null,
-      path: ".",
-      budgetMs: 0,
-    });
-    assert.ok(budget.notExamined.some((n) => /budget/.test(n.reason)));
+    const second = openTemp();
+    try {
+      const budget = await createProbeEngine({ kernel: second.k, workspace: w.dir }).sweep({
+        caseId: null,
+        path: ".",
+        budgetMs: 0,
+      });
+      assert.ok(budget.notExamined.some((n) => /budget/.test(n.reason)));
+    } finally {
+      second.cleanup();
+    }
   } finally {
     store.cleanup();
     w.cleanup();
