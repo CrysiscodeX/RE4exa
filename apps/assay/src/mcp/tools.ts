@@ -102,12 +102,16 @@ export const TOOL_SPECS: ToolSpec[] = [
   },
   {
     name: "assay_record_claim",
-    description: "Record a claim. label=seen needs a predicate the verifier can re-run; cite observation ids you were given.",
+    description:
+      "Record a claim. label=seen needs a predicate the verifier can re-run; cite observation ids you were given.",
     inputSchema: obj(
       {
         text: str(undefined, { maxLength: 2000 }),
         label: { type: "string", enum: ["seen", "inferred", "unknown"] },
-        predicate: { type: "string", description: `one the verifier can re-run: ${Object.keys(PREDICATES).join(", ")}` },
+        predicate: {
+          type: "string",
+          description: `one the verifier can re-run: ${Object.keys(PREDICATES).join(", ")}`,
+        },
         params: {
           type: "object",
           description: `params by predicate (workspace-relative paths; literal text, not regex): ${predicateCatalog()}`,
