@@ -1,0 +1,30 @@
+{
+  "name": "assay",
+  "version": "0.1.0",
+  "description": "Local-first agent workbench: chat with signed-in agent clients, run sub-agents, and get every claim checked against re-runnable evidence",
+  "license": "Apache-2.0",
+  "type": "module",
+  "private": true,
+  "engines": {
+    "node": ">=22.12"
+  },
+  "bin": {
+    "assay": "./bin/assay.mjs"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "lint": "biome check src test bench ui/src",
+    "test": "node --test --test-concurrency=1 --disable-warning=ExperimentalWarning \"test/**/*.test.ts\"",
+    "coverage": "c8 --check-coverage --lines 85 --branches 75 --functions 85 --reporter=text-summary --reporter=json-summary node --test --test-concurrency=1 --disable-warning=ExperimentalWarning \"test/**/*.test.ts\"",
+    "build:ui": "vite build ui",
+    "e2e": "node --disable-warning=ExperimentalWarning test/e2e/run.ts",
+    "serve": "node --disable-warning=ExperimentalWarning src/cli.ts serve",
+    "check": "npm run typecheck && npm run lint && npm run coverage"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.6.3",
+    "@types/node": "22.20.5",
+    "c8": "12.0.0",
+    "typescript": "5.9.3"
+  }
+}
