@@ -286,3 +286,10 @@ test("claimTaskById claims only the named task and respects live leases", () => 
   );
   cleanup();
 });
+
+test("ids minted in the same millisecond sort in minting order", async () => {
+  const { newId } = await import("../src/kernel/ids.ts");
+  const ids = Array.from({ length: 5000 }, () => newId("x", 1_800_000_000_000));
+  assert.deepEqual([...ids].sort(), ids);
+  assert.equal(new Set(ids).size, ids.length);
+});

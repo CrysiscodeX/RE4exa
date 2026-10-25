@@ -39,7 +39,14 @@ export function suggestPaths(root: string, wanted: string, max = 5, limit = 5000
       if (++seen > limit) break;
       const abs = join(dir, e.name);
       const name = e.name.toLowerCase();
-      const score = name === want ? 0 : name.includes(want) || want.includes(name) ? 1 : distance(name, want) <= Math.max(1, Math.floor(want.length / 4)) ? 2 : -1;
+      const score =
+        name === want
+          ? 0
+          : name.includes(want) || want.includes(name)
+            ? 1
+            : distance(name, want) <= Math.max(1, Math.floor(want.length / 4))
+              ? 2
+              : -1;
       if (score >= 0) scored.push({ path: relative(root, abs) || ".", score });
       if (e.isDirectory() && !SKIP.has(e.name)) stack.push(abs);
     }
@@ -56,6 +63,8 @@ export function pathNotFound(root: string, wanted: string): AssayError {
   return new AssayError(
     "path_not_found",
     { path: wanted, suggestions },
-    suggestions.length ? `No such path: ${wanted}. Did you mean: ${suggestions.join(", ")}?` : `No such path: ${wanted}`,
+    suggestions.length
+      ? `No such path: ${wanted}. Did you mean: ${suggestions.join(", ")}?`
+      : `No such path: ${wanted}`,
   );
 }

@@ -24,7 +24,10 @@ const REPS = Number(arg("--reps", "1"));
 const CAP = Number(arg("--cap-usd", "3"));
 const PER_RUN = 0.4;
 const ROOT = join(import.meta.dirname, "..");
-const SKILL = readFileSync("/home/user/GitHub_Repos_Dump/aicodeking__leanrea/leanrea/SKILL.md", "utf8").replace(/^---[\s\S]*?---\n/, "");
+const SKILL = readFileSync("/home/user/GitHub_Repos_Dump/aicodeking__leanrea/leanrea/SKILL.md", "utf8").replace(
+  /^---[\s\S]*?---\n/,
+  "",
+);
 
 interface Oracle {
   predicate: string;
@@ -45,7 +48,8 @@ const tasks = readdirSync(join(ROOT, "bench", "tasks"))
 /** The fact an oracle item checks, as a string an answer must contain. */
 function key(o: Oracle): string | null {
   const p = o.params;
-  for (const k of ["library", "name", "specifier", "host", "entry", "hook", "format", "text"]) if (typeof p[k] === "string") return String(p[k]).toLowerCase();
+  for (const k of ["library", "name", "specifier", "host", "entry", "hook", "format", "text"])
+    if (typeof p[k] === "string") return String(p[k]).toLowerCase();
   return null;
 }
 function grade(t: Task, answer: string): { correct: number; facts: number } {
@@ -88,7 +92,9 @@ async function tier0(t: Task, ws: string): Promise<Omit<Run, "arm" | "task" | "r
       maxBudgetUsd: PER_RUN,
       env: { ...process.env, CLAUDE_AGENT_SDK_CLIENT_APP: "assay-bench/0.1.0" },
       canUseTool: async (name: string, input: Record<string, unknown>) =>
-        allow.has(name) ? { behavior: "allow" as const, updatedInput: input } : { behavior: "deny" as const, message: "not allowed in this benchmark" },
+        allow.has(name)
+          ? { behavior: "allow" as const, updatedInput: input }
+          : { behavior: "deny" as const, message: "not allowed in this benchmark" },
     },
   })) {
     const msg = m as { type: string; total_cost_usd?: number; result?: string };
@@ -111,24 +117,45 @@ async function assay(t: Task, ws: string): Promise<Omit<Run, "arm" | "task" | "r
     if (!acct) throw new Error("no default Claude account");
     const c = app.kernel.createCase({ title: t.id, workspace: ws });
     const t0 = Date.now();
-    await app.orchestrator.sendMessage(c.id, { text: `${t.question} Answer briefly.`, provider: "claude", accountId: acct.id, model: MODEL, mode: "enforced", budgetUsd: PER_RUN });
+    await app.orchestrator.sendMessage(c.id, {
+      text: `${t.question} Answer briefly.`,
+      provider: "claude",
+      accountId: acct.id,
+      model: MODEL,
+      mode: "enforced",
+      budgetUsd: PER_RUN,
+    });
     for (let i = 0; i < 1800; i++) {
       await new Promise((r) => setTimeout(r, 200));
       const tl = app.orchestrator.timeline(c.id);
-      if (tl.some((e) => e.kind === "assistant" || e.kind === "error") && app.orchestrator.caseActivity(c.id) !== "working") break;
+      if (
+        tl.some((e) => e.kind === "assistant" || e.kind === "error") &&
+        app.orchestrator.caseActivity(c.id) !== "working"
+      )
+        break;
     }
     await app.orchestrator.verify(c.id);
     const ms = Date.now() - t0;
     const tl = app.orchestrator.timeline(c.id);
-    const answer = tl.filter((e) => e.kind === "assistant").map((e) => e.text).join("\n");
+    const answer = tl
+      .filter((e) => e.kind === "assistant")
+      .map((e) => e.text)
+      .join("\n");
     const claims = caseClaims(app.kernel, c.id);
-    const cost = Number(app.kernel.get<{ c: number }>("SELECT SUM(COALESCE(cost_usd,0)) AS c FROM usage WHERE case_id=?", c.id)?.c ?? 0);
-    const g = grade(t, `${answer}\n${claims.map((x) => `${x.claim.text} ${JSON.stringify(x.claim.params ?? {})}`).join("\n")}`);
+    const cost = Number(
+      app.kernel.get<{ c: number }>("SELECT SUM(COALESCE(cost_usd,0)) AS c FROM usage WHERE case_id=?", c.id)?.c ?? 0,
+    );
+    const g = grade(
+      t,
+      `${answer}\n${claims.map((x) => `${x.claim.text} ${JSON.stringify(x.claim.params ?? {})}`).join("\n")}`,
+    );
     const verifiedText = claims
       .filter((x) => x.verdict === "verified")
       .map((x) => `${x.claim.text} ${JSON.stringify(x.claim.params ?? {})}`.toLowerCase())
       .join("\n");
-    const verifiedFacts = t.oracle.filter((o) => o.expect === "verified" && key(o) && verifiedText.includes(key(o)!)).length;
+    const verifiedFacts = t.oracle.filter(
+      (o) => o.expect === "verified" && key(o) && verifiedText.includes(key(o)!),
+    ).length;
     const err = tl.find((e) => e.kind === "error");
     if (process.env.ASSAY_LIVE_DEBUG) writeFileSync(`/tmp/claude-0/live-${t.id}.json`, JSON.stringify(tl, null, 1));
     return {
@@ -158,9 +185,25 @@ for (let rep = 1; rep <= REPS; rep++) {
         const r = arm === "tier0" ? await tier0(t, ws.dir) : await assay(t, ws.dir);
         spent += r.costUsd;
         runs.push({ arm, task: t.id, rep, ...r });
-        console.log(`${arm.padEnd(5)} ${t.id.padEnd(16)} $${r.costUsd.toFixed(4)} ${r.ms}ms correct ${r.correct}/${r.facts} verified-facts ${r.verifiedFacts}${r.error ? ` ERROR ${r.error.slice(0, 80)}` : ""}`);
+        console.log(
+          `${arm.padEnd(5)} ${t.id.padEnd(16)} $${r.costUsd.toFixed(4)} ${r.ms}ms correct ${r.correct}/${r.facts} verified-facts ${r.verifiedFacts}${r.error ? ` ERROR ${r.error.slice(0, 80)}` : ""}`,
+        );
       } catch (e) {
-        runs.push({ arm, task: t.id, rep, costUsd: 0, ms: 0, correct: 0, facts: 0, verifiedFacts: 0, claims: 0, verified: 0, refuted: 0, answer: "", error: String((e as Error).message) });
+        runs.push({
+          arm,
+          task: t.id,
+          rep,
+          costUsd: 0,
+          ms: 0,
+          correct: 0,
+          facts: 0,
+          verifiedFacts: 0,
+          claims: 0,
+          verified: 0,
+          refuted: 0,
+          answer: "",
+          error: String((e as Error).message),
+        });
         console.log(`${arm} ${t.id} failed: ${(e as Error).message}`);
       } finally {
         ws.cleanup();
@@ -182,13 +225,27 @@ const arms = ["tier0", "assay"].map((arm) => {
     facts,
     verifiedFacts: sum(arm, (r) => r.verifiedFacts),
     costPerCorrect: correct ? +(cost / correct).toFixed(5) : null,
-    medianMs: [...runs.filter((r) => r.arm === arm).map((r) => r.ms)].sort((a, b) => a - b)[Math.floor(runs.filter((r) => r.arm === arm).length / 2)] ?? null,
+    medianMs:
+      [...runs.filter((r) => r.arm === arm).map((r) => r.ms)].sort((a, b) => a - b)[
+        Math.floor(runs.filter((r) => r.arm === arm).length / 2)
+      ] ?? null,
   };
 });
 const [t0a, asa] = arms as [(typeof arms)[number], (typeof arms)[number]];
 const ratio = t0a.costPerCorrect && asa.costPerCorrect ? asa.costPerCorrect / t0a.costPerCorrect : null;
 const summary = `model ${MODEL}, ${tasks.length} tasks × ${REPS}: Tier 0 ${t0a.correct}/${t0a.facts} facts, $${t0a.costUsd}, 0 machine-verified; Assay ${asa.correct}/${asa.facts} facts, $${asa.costUsd}, ${asa.verifiedFacts} machine-verified; cost per correct fact ratio Assay/Tier0 = ${ratio?.toFixed(2) ?? "n/a"} (small sample, no interval)`;
-const out = { at: new Date().toISOString(), model: MODEL, reps: REPS, capUsd: CAP, spentUsd: +spent.toFixed(4), arms, ratio, pass: ratio !== null && ratio <= 1.0, summary, runs };
+const out = {
+  at: new Date().toISOString(),
+  model: MODEL,
+  reps: REPS,
+  capUsd: CAP,
+  spentUsd: +spent.toFixed(4),
+  arms,
+  ratio,
+  pass: ratio !== null && ratio <= 1.0,
+  summary,
+  runs,
+};
 mkdirSync(join(ROOT, "bench", "results"), { recursive: true });
 writeFileSync(join(ROOT, "bench", "results", "live.json"), `${JSON.stringify(out, null, 2)}\n`);
 console.log(`\n${summary}\nspent $${spent.toFixed(4)} of cap $${CAP}`);

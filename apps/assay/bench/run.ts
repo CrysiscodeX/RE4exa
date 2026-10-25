@@ -4,8 +4,8 @@
 import { spawnSync } from "node:child_process";
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import type { AccountRef, AgentSession, ProviderAdapter, ProviderId } from "../src/contracts.ts";
 import { App } from "../src/app/app.ts";
+import type { AccountRef, AgentSession, ProviderAdapter, ProviderId } from "../src/contracts.ts";
 import { recordClaim } from "../src/evidence/store.ts";
 import { Orchestrator } from "../src/orchestrator/orchestrator.ts";
 import { tmp } from "../test/helpers.ts";
@@ -36,7 +36,11 @@ const median = (xs: number[]) => {
 
 // ---------- metrics printed by the test suites (M1, M4, M5, M10) and assertion-backed ones (M6–M9) ----------
 function runTests(files: string[]): { ok: boolean; metrics: Record<string, string> } {
-  const r = spawnSync(process.execPath, ["--test", "--test-concurrency=1", "--disable-warning=ExperimentalWarning", ...files], { cwd: ROOT, encoding: "utf8", timeout: 600_000 });
+  const r = spawnSync(
+    process.execPath,
+    ["--test", "--test-concurrency=1", "--disable-warning=ExperimentalWarning", ...files],
+    { cwd: ROOT, encoding: "utf8", timeout: 600_000 },
+  );
   const metrics: Record<string, string> = {};
   for (const line of `${r.stdout}\n${r.stderr}`.split("\n")) {
     const m = line.match(/#\s*\\?#\s*(M\d+)\s+(.*)$/) ?? line.match(/^#\s*(M\d+)\s+(.*)$/);
@@ -52,7 +56,10 @@ add({
   baseline: "rea: the whole session ledger (in-memory)",
   target: "0 lost evidence, ≤1 step re-run per kill, 30 kills",
   value: durability.metrics.M1 ?? "not printed",
-  pass: durability.ok && /kills=(\d+)/.test(durability.metrics.M1 ?? "") && Number(/kills=(\d+)/.exec(durability.metrics.M1 ?? "")![1]) >= 30,
+  pass:
+    durability.ok &&
+    /kills=(\d+)/.test(durability.metrics.M1 ?? "") &&
+    Number(/kills=(\d+)/.exec(durability.metrics.M1 ?? "")![1]) >= 30,
   how: "test/fault-injection.test.ts",
 });
 add({
@@ -74,7 +81,12 @@ add({
   how: "test/kernel.test.ts (fence race)",
 });
 
-const probes = runTests(["test/probes-engine.test.ts", "test/probes-js.test.ts", "test/verifier.test.ts", "test/evidence.test.ts"]);
+const probes = runTests([
+  "test/probes-engine.test.ts",
+  "test/probes-js.test.ts",
+  "test/verifier.test.ts",
+  "test/evidence.test.ts",
+]);
 add({
   id: "M8",
   measure: "Identity stable across paths and hosts",
@@ -128,16 +140,27 @@ const server = await app.listen();
 const c = app.kernel.createCase({ title: "bench", workspace: ws.dir });
 const token = app.tokens.issue({ caseId: c.id, caller: "coordinator" });
 let rpcId = 0;
-async function rpc(method: string, params: unknown): Promise<{ bytes: number; body: { result?: Record<string, unknown> } }> {
+async function rpc(
+  method: string,
+  params: unknown,
+): Promise<{ bytes: number; body: { result?: Record<string, unknown> } }> {
   const res = await fetch(`${server.url}/mcp`, {
     method: "POST",
-    headers: { "content-type": "application/json", authorization: `Bearer ${token}`, accept: "application/json, text/event-stream" },
+    headers: {
+      "content-type": "application/json",
+      authorization: `Bearer ${token}`,
+      accept: "application/json, text/event-stream",
+    },
     body: JSON.stringify({ jsonrpc: "2.0", id: ++rpcId, method, params }),
   });
   const text = await res.text();
   return { bytes: Buffer.byteLength(text), body: JSON.parse(text) };
 }
-await rpc("initialize", { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "bench", version: "1" } });
+await rpc("initialize", {
+  protocolVersion: "2025-06-18",
+  capabilities: {},
+  clientInfo: { name: "bench", version: "1" },
+});
 const list = await rpc("tools/list", {});
 add({
   id: "M2",
@@ -151,7 +174,14 @@ add({
 
 const tasks = readdirSync(join(ROOT, "bench", "tasks"))
   .filter((f) => f.endsWith(".json") && !f.startsWith("leanrea-"))
-  .map((f) => JSON.parse(readFileSync(join(ROOT, "bench", "tasks", f), "utf8")) as { id: string; subjectFiles: string[]; oracle: { predicate: string; params: Record<string, unknown>; expect: string }[] });
+  .map(
+    (f) =>
+      JSON.parse(readFileSync(join(ROOT, "bench", "tasks", f), "utf8")) as {
+        id: string;
+        subjectFiles: string[];
+        oracle: { predicate: string; params: Record<string, unknown>; expect: string }[];
+      },
+  );
 const resultBytes: number[] = [];
 let duplicated = 0;
 let calls = 0;
@@ -167,7 +197,12 @@ for (const t of tasks) {
       calls++;
       const res = r.body.result ?? {};
       const text = ((res.content as { text?: string }[] | undefined) ?? []).map((x) => x.text ?? "").join("");
-      if (res.structuredContent && text.length > 200 && JSON.stringify(res.structuredContent).includes(text.slice(0, 200))) duplicated++;
+      if (
+        res.structuredContent &&
+        text.length > 200 &&
+        JSON.stringify(res.structuredContent).includes(text.slice(0, 200))
+      )
+        duplicated++;
     }
   }
 }
@@ -188,7 +223,12 @@ let verifiedTotal = 0;
 let total = 0;
 for (const t of tasks) {
   for (const o of t.oracle) {
-    const cl = recordClaim(app.kernel, c.id, "bench", { text: `${o.predicate} ${JSON.stringify(o.params)}`, label: "seen", predicate: o.predicate, params: o.params as never });
+    const cl = recordClaim(app.kernel, c.id, "bench", {
+      text: `${o.predicate} ${JSON.stringify(o.params)}`,
+      label: "seen",
+      predicate: o.predicate,
+      params: o.params as never,
+    });
     const out = await app.verifier.verify(c.id, { ...cl });
     total++;
     if (out.verdict === "verified") verifiedTotal++;
@@ -217,7 +257,14 @@ async function speedup(workers: number): Promise<{ serialMs: number; parallelMs:
   const account: AccountRef = { id: "a", provider: "fake", label: "a", home: null };
   const adapter: ProviderAdapter = {
     id: "fake",
-    detect: async () => ({ id: "fake", installed: true, version: "x", program: null, enforcement: "enforced", notes: [] }),
+    detect: async () => ({
+      id: "fake",
+      installed: true,
+      version: "x",
+      program: null,
+      enforcement: "enforced",
+      notes: [],
+    }),
     status: async () => ({ signedIn: true, method: null, detail: {} }),
     loginCommand: () => ({ program: "true", args: [], env: {} }),
     start: async (): Promise<AgentSession> => ({
@@ -246,7 +293,8 @@ async function speedup(workers: number): Promise<{ serialMs: number; parallelMs:
   const serialMs = Date.now() - s0;
   const p0 = Date.now();
   for (let i = 0; i < workers; i++) await orch.spawnWorker(cs.id, { task: `task ${i}` });
-  while (orch.workers(cs.id).some((w) => w.status === "working" || w.status === "starting")) await new Promise((r) => setTimeout(r, 10));
+  while (orch.workers(cs.id).some((w) => w.status === "working" || w.status === "starting"))
+    await new Promise((r) => setTimeout(r, 10));
   const parallelMs = Date.now() - p0;
   await orch.shutdown();
   k.close();
@@ -282,11 +330,22 @@ if (existsSync(e2e)) {
 const live = join(OUT, "live.json");
 if (existsSync(live)) {
   const l = JSON.parse(readFileSync(live, "utf8")) as { summary?: string; pass?: boolean };
-  add({ id: "M12", measure: "Cost per correct-and-verified answer vs Tier 0 (live)", baseline: "Tier 0: model + Bash + leanrea skill", target: "≤ 1.0×", value: l.summary ?? "see live.json", pass: l.pass === true, how: "bench/live.ts" });
+  add({
+    id: "M12",
+    measure: "Cost per correct-and-verified answer vs Tier 0 (live)",
+    baseline: "Tier 0: model + Bash + leanrea skill",
+    target: "≤ 1.0×",
+    value: l.summary ?? "see live.json",
+    pass: l.pass === true,
+    how: "bench/live.ts",
+  });
 }
 
 const stamp = new Date().toISOString();
-writeFileSync(join(OUT, "latest.json"), `${JSON.stringify({ at: stamp, node: process.version, platform: process.platform, rows }, null, 2)}\n`);
+writeFileSync(
+  join(OUT, "latest.json"),
+  `${JSON.stringify({ at: stamp, node: process.version, platform: process.platform, rows }, null, 2)}\n`,
+);
 writeFileSync(
   join(OUT, "latest.md"),
   [
@@ -294,7 +353,10 @@ writeFileSync(
     "",
     "| | Measure | Baseline | Target | Result | | How |",
     "|---|---|---|---|---|---|---|",
-    ...rows.map((r) => `| ${r.id} | ${r.measure} | ${r.baseline} | ${r.target} | ${r.value} | ${r.pass ? "pass" : "**miss**"} | ${r.how} |`),
+    ...rows.map(
+      (r) =>
+        `| ${r.id} | ${r.measure} | ${r.baseline} | ${r.target} | ${r.value} | ${r.pass ? "pass" : "**miss**"} | ${r.how} |`,
+    ),
     "",
   ].join("\n"),
 );

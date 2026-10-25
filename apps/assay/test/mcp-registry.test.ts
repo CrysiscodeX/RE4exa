@@ -364,7 +364,10 @@ test("a missing path suggests similar paths in the error the agent reads", async
   mkdirSync(join(root, "postinstall", "evil-helper"), { recursive: true });
   writeFileSync(join(root, "postinstall", "evil-helper", "package.json"), "{}");
   writeFileSync(join(root, "postinstall", "evil-helper-1.0.0.tgz"), "x");
-  assert.deepEqual(suggestPaths(root, "evil-helper").slice(0, 2), ["postinstall/evil-helper", "postinstall/evil-helper-1.0.0.tgz"]);
+  assert.deepEqual(suggestPaths(root, "evil-helper").slice(0, 2), [
+    "postinstall/evil-helper",
+    "postinstall/evil-helper-1.0.0.tgz",
+  ]);
   const e = pathNotFound(root, "evil-helper");
   assert.equal(e.code, "path_not_found");
   assert.match(e.message, /Did you mean: postinstall\/evil-helper/);

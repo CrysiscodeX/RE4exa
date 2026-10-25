@@ -11,7 +11,9 @@
       "!src/vendor/**",
       "!ui/dist/**",
       "!test/fixtures/tripwire/**",
-      "!bench/tasks/fixtures/**"
+      "!bench/tasks/fixtures/**",
+      "!bench/results/**",
+      "!dist/**"
     ]
   },
   "formatter": {

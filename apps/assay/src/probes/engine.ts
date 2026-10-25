@@ -17,11 +17,11 @@ import {
 import { isAbsolute, relative, resolve, sep } from "node:path";
 import type { ProbeContext, ProbeDef, ProbeEngine, ProbeOutput, ProbeSubject, SweepReport } from "../contracts.ts";
 import { AssayError, isAssayError } from "../errors.ts";
-import { pathNotFound } from "../mcp/suggest.ts";
 import { canonicalize, type Json } from "../evidence/jcs.ts";
 import { type ClaimRecord, type Confidence, type Finding, makeRecord, probeKey } from "../evidence/record.ts";
 import { evidenceByProbeKey, putEvidence } from "../evidence/store.ts";
 import type { Kernel } from "../kernel/kernel.ts";
+import { pathNotFound } from "../mcp/suggest.ts";
 import { runProcess } from "../vendor/orca-process-host/run-process.ts";
 import { IDENTIFY_HEAD, type Ident, identifyBytes, identifyDirectory } from "./builtin/identify.ts";
 import { BUILTIN_PROBES } from "./builtin/index.ts";

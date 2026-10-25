@@ -18,6 +18,7 @@ import type { AgentClaim } from "../evidence/store.ts";
 import { caseClaims, listUnknowns, recordClaim } from "../evidence/store.ts";
 import { newId } from "../kernel/ids.ts";
 import type { Attempt, Kernel, TaskRow } from "../kernel/kernel.ts";
+import { log } from "../log.ts";
 import type {
   CostEstimate,
   Mode,
@@ -261,6 +262,7 @@ export class Orchestrator {
     }, 60_000);
     heartbeat.unref();
     const turnStart = this.k.now();
+    log("info", "turn.start", { trace: att.taskId, caseId, workerId, provider: runner.provider });
     try {
       runner.text = "";
       this.#status(caseId, workerId, runner, "working");
@@ -280,11 +282,25 @@ export class Orchestrator {
       );
       this.#claimsFromText(caseId, workerId, runner, finalText, entry.seq);
       this.k.completeTask(att, { stopReason: out.stopReason });
+      log("info", "turn.end", {
+        trace: att.taskId,
+        caseId,
+        workerId,
+        stopReason: out.stopReason,
+        ms: this.k.now() - turnStart,
+      });
       this.#status(caseId, workerId, runner, workerId ? (runner.status === "done" ? "done" : "idle") : "idle");
       this.#rememberSession(caseId, workerId, runner);
       await this.verify(caseId);
     } catch (e) {
       if (this.#closing || this.k.closed) return;
+      log("warn", "turn.failed", {
+        trace: att.taskId,
+        caseId,
+        workerId,
+        code: isAssayError(e) ? e.code : "provider_error",
+        message: String((e as Error)?.message ?? e),
+      });
       const err = isAssayError(e)
         ? e.toJSON()
         : { code: "provider_unavailable", message: String((e as Error)?.message ?? e) };

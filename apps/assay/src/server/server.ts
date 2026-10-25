@@ -8,6 +8,7 @@ import type { AddressInfo } from "node:net";
 import { extname, join, normalize, resolve } from "node:path";
 import { type WebSocket, WebSocketServer } from "ws";
 import { AssayError, isAssayError } from "../errors.ts";
+import { log } from "../log.ts";
 import type { ServerPush } from "./api-types.ts";
 
 export interface Route {
@@ -265,7 +266,9 @@ export async function startServer(opts: ServerOptions): Promise<RunningServer> {
             { message: String((e as Error)?.message ?? e) },
             String((e as Error)?.message ?? e),
           );
-      if (!isAssayError(e)) process.stderr.write(`assay: ${(e as Error)?.stack ?? e}\n`);
+      if (!isAssayError(e))
+        log("error", "http.unhandled", { path: req.url ?? "", stack: String((e as Error)?.stack ?? e) });
+      else log("debug", "http.error", { path: req.url ?? "", code: err.code });
       if (!res.headersSent) send(res, statusFor(err), { error: err.toJSON() });
     }
   });

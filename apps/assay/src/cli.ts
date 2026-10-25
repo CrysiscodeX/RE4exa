@@ -43,6 +43,7 @@ async function main(argv: string[]): Promise<number> {
       console.log(VERSION);
       return 0;
     case "serve": {
+      process.env.ASSAY_LOG ??= "info";
       const app = new App({ home, workspace, demo: args.includes("--demo") });
       const port = flag(args, "--port");
       const server = await app.listen(port ? Number(port) : undefined);

@@ -19,7 +19,9 @@
     "build:ui": "vite build ui",
     "e2e": "node --disable-warning=ExperimentalWarning test/e2e/run.ts && node --test --disable-warning=ExperimentalWarning test/e2e/ui-smoke.test.ts",
     "serve": "node --disable-warning=ExperimentalWarning src/cli.ts serve",
-    "check": "npm run typecheck && npm run lint && npm run coverage"
+    "check": "npm run typecheck && npm run lint && npm run coverage",
+    "build": "node scripts/build.ts",
+    "prepack": "node --disable-warning=ExperimentalWarning scripts/build.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.3",
@@ -43,5 +45,17 @@
   },
   "optionalDependencies": {
     "node-pty": "1.1.0"
-  }
+  },
+  "files": [
+    "bin",
+    "dist",
+    "ui/dist",
+    "docs",
+    "LICENSE",
+    "NOTICE",
+    "SECURITY.md",
+    "support.json",
+    "README.md",
+    "CHANGELOG.md"
+  ]
 }

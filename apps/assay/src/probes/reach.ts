@@ -157,7 +157,8 @@ export function serializeReach(t: ReachTable): string {
 
 const isMain = process.argv[1] !== undefined && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 if (isMain) {
-  const gen = (await import("../../test/fixtures/probes/gen.ts")) as { fixtureSet(): ReachFixture[] };
+  const genPath = "../../test/fixtures/probes/gen.ts"; // dev-only tool; not part of the built package
+  const gen = (await import(genPath)) as { fixtureSet(): ReachFixture[] };
   const table = await computeReach(gen.fixtureSet());
   const text = serializeReach(table);
   if (process.argv.includes("--write")) {

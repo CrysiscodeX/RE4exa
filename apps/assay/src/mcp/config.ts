@@ -42,7 +42,10 @@ export function stdioMcpConfig(proxy: {
   return { mcpServers: { assay: entry } };
 }
 
-export const STDIO_PROXY_PATH = fileURLToPath(new URL("./stdio-proxy.ts", import.meta.url));
+// .ts when run from source with type stripping, .js in the built package
+export const STDIO_PROXY_PATH = fileURLToPath(
+  new URL(import.meta.url.endsWith(".ts") ? "./stdio-proxy.ts" : "./stdio-proxy.js", import.meta.url),
+);
 
 /** The stdio proxy command line for a session (fits SessionOptions.mcp.stdioProxy). */
 export function stdioProxyCommand(

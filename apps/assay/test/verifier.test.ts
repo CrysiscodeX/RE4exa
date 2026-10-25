@@ -108,7 +108,7 @@ test("unverifiable, with the reason: partial census, unsupported predicates, bad
     await expect("file.contains", { path: "elf/tool", text: "a", hex: "61" }, /exactly one of text, hex/);
     await expect("file.hash", { path: "elf/tool", sha256: "xyz" }, /64 hex/);
     await expect("file.identify", { path: "../../etc/passwd", format: "text" }, /outside the workspace/);
-    await expect("file.identify", { path: "no/such/file", format: "text" }, /does not exist/);
+    await expect("file.identify", { path: "no/such/file", format: "text" }, /No such path|does not exist/);
     await expect("native.links", { path: "js-app/src/main.js", library: "libc.so.6" }, /not a supported native binary/);
     await expect("file.identify", { path: "elf/tool", format: "elf" }, /subject changed/, {
       subject: { path: "elf/tool", digest: `sha256:${"1".repeat(64)}` },
