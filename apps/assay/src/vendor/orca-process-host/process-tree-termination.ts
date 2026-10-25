@@ -195,7 +195,7 @@ function readPosixProcessGroupStates(processGroupId: number): Promise<string[] |
       }
       const states = output.split('\n').flatMap((line) => {
         const match = line.trim().match(/^(\d+)\s+(\S+)/)
-        return match && Number(match[1]) === processGroupId ? [match[2]] : []
+        return match && Number(match[1]) === processGroupId ? [match[2]!] : []
       })
       finish(states)
     })

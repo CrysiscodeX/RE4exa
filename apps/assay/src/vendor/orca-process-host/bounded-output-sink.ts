@@ -26,7 +26,7 @@ export function createOutputSink(
       : chunks.length === 0
         ? Buffer.alloc(0)
         : chunks.length === 1
-          ? chunks[0]
+          ? chunks[0]!
           : Buffer.concat(chunks)
   return {
     buffer,
