@@ -1,0 +1,26 @@
+import { readFileSync, rmSync } from 'node:fs';
+const [pkgEntry, sqlPath, dataDir] = process.argv.slice(2);
+const { PGlite } = await import(pkgEntry);
+rmSync(dataDir, { recursive: true, force: true });
+let db = new PGlite(dataDir);
+const q = async (s, p) => (await db.query(s, p)).rows;
+await db.exec(readFileSync(sqlPath, 'utf8'));
+await q("select absurd.create_queue('q')");
+await q("select set_config('absurd.fake_now', '2026-01-01T00:00:00Z', false)");
+const sp = (await q("select * from absurd.spawn_task('q','t','{}'::jsonb)"))[0];
+const ts = (await q("select absurd.uuidv7_timestamp($1) ts", [sp.task_id]))[0].ts;
+console.log('task id embeds time', ts, '(fake_now was 2026-01-01)');
+const c1 = (await q("select run_id from absurd.claim_task('q','w1',30,1)"))[0];
+await q("select set_config('absurd.fake_now', '2026-01-01T00:01:00Z', false)");
+await q("select absurd.extend_claim('q',$1,30)", [c1.run_id]);
+console.log('expired-unswept extend ->', (await q("select claim_expires_at from absurd.r_q where run_id=$1", [c1.run_id]))[0]);
+await q("select absurd.complete_run('q',$1,'{\"late\":true}'::jsonb)", [c1.run_id]).then(()=>console.log('late complete_run after expiry: accepted')).catch(e=>console.log('late complete ERR', e.message));
+const sp2 = (await q("select * from absurd.spawn_task('q','t2','{}'::jsonb)"))[0];
+await q("select absurd.claim_task('q','w1',30,1)");
+await db.close();
+// reopen from disk (simulated restart)
+db = new PGlite(dataDir);
+const rows = await q("select task_name, state from absurd.t_q order by task_name");
+console.log('after reopen', JSON.stringify(rows));
+await db.close();
+rmSync(dataDir, { recursive: true, force: true });
