@@ -542,6 +542,18 @@ export class Kernel {
     });
   }
 
+  /**
+   * At startup the store is held exclusively, so any attempt still marked running belongs to a
+   * process that died. Expire those leases now instead of waiting for them to run out.
+   */
+  expireOrphanedAttempts(): number {
+    return this.tx(() => {
+      const now = this.now();
+      const r = this.run("UPDATE attempts SET lease_until=? WHERE state='running' AND lease_until>?", now, now);
+      return Number(r.changes);
+    });
+  }
+
   unparkTask(taskId: string): void {
     this.run(
       "UPDATE tasks SET state='pending', crash_count=0, updated_at=? WHERE id=? AND state='parked'",
