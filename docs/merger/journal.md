@@ -277,3 +277,13 @@ D contributes the same items upstream instead.
 - no code beyond the spike probes;
 - no build plan;
 - no measurements against the Tier 0 baseline (that is the first task of whatever comes next).
+
+## J-08 Cleanup
+
+**Deleted:**
+- `/home/user/GitHub_Repos_Dump`, which held 14 clones and took 1.4 GB. The commits are pinned in [sources.md](sources.md), so any clone can be made again.
+- The rea build copy and the PGlite data directories in the scratchpad, about 840 MB.
+
+**Kept:** the scratchpad copy of the Review Bench page, because that page is the source of a published artifact.
+
+**Checked afterwards:** no node processes are left running.
