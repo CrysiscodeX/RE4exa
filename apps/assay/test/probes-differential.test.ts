@@ -22,7 +22,7 @@ const FILE_WORDS: Record<string, RegExp> = {
   "tar.gz": /^gzip compressed/,
   "npm-tgz": /^gzip compressed/,
   gzip: /^gzip compressed/,
-  asar: /ASAR|data/,
+  asar: /ASAR|^data$|^Matlab v4 mat-file/, // no ASAR magic in file(1): "data", or macOS's weak Matlab v4 guess
   sqlite: /^SQLite 3/,
   pdf: /^PDF document/,
   png: /^PNG image/,

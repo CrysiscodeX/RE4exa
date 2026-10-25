@@ -211,7 +211,8 @@ describe("codex adapter against the app-server protocol fake", () => {
       program: process.execPath,
       prefixArgs: [
         "-e",
-        "process.stdin.on('data', d => { if (String(d).includes('turn/start')) process.exit(3); const m = JSON.parse(String(d).split('\\n')[0]); if (m.id) process.stdout.write(JSON.stringify({id: m.id, result: {thread: {id: 't'}}}) + '\\n'); })",
+        // one chunk can hold several messages (initialize, initialized, thread/start): answer each line
+        "let b = ''; process.stdin.on('data', d => { b += d; let i; while ((i = b.indexOf('\\n')) >= 0) { const l = b.slice(0, i); b = b.slice(i + 1); if (!l.trim()) continue; if (l.includes('turn/start')) process.exit(3); const m = JSON.parse(l); if (m.id !== undefined && m.method) process.stdout.write(JSON.stringify({id: m.id, result: {thread: {id: 't'}}}) + '\\n'); } })",
       ],
       env: process.env,
       requestTimeoutMs: 5000,
