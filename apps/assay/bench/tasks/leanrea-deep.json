@@ -1,0 +1,23 @@
+{
+  "id": "leanrea-deep",
+  "title": "mac_utils.node: single-instance lock from the disassembly",
+  "credit": "Copied from aicodeking/leanrea, commit 09ba4aa, bench/tasks.json (MIT License, Copyright (c) 2026 AICodeKing). Prompt and answer key unchanged.",
+  "licence": "MIT",
+  "source": "https://github.com/aicodeking/leanrea/blob/09ba4aa/bench/tasks.json",
+  "workspace": null,
+  "subjectFiles": ["mac_utils.node"],
+  "targetsNote": "Targets are not redistributed. leanrea's bench/setup.sh copies them on macOS from Notion.app (7.35.1) and Homebrew's gh (built with go1.27.1); other versions need new keys.",
+  "question": "mac_utils.node in this folder is a macOS Node native addon. Reverse engineer its single-instance lock (requestSingleInstanceLock) precisely from the binary: (1) the exact socket path format and what each variable part is computed from, (2) the wire protocol a second instance uses to send its data, (3) how the first instance authenticates the connecting peer. Keep the answer short.",
+  "grading": "Each key value is a case-insensitive regular expression that must match the answer text (leanrea's grader).",
+  "key": {
+    "prefix": "/tmp/com\\.notion\\.singleinstance\\.",
+    "euid": "geteuid|effective (user|uid)|euid",
+    "hash": "hash",
+    "exe": "proc_pidpath|executable('s)? path|exe(cutable)? path|binary path",
+    "sock": "\\.sock",
+    "len": "length[- ]prefix|4[- ]byte|uint32|size prefix|length header",
+    "peer": "getpeereid",
+    "json": "JSON"
+  },
+  "oracle": []
+}

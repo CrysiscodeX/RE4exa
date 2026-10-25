@@ -1,0 +1,83 @@
+{
+  "id": "elf-facts",
+  "title": "ELF binary facts",
+  "workspace": "fixtures",
+  "subjectFiles": ["elf/tool"],
+  "question": "What does elf/tool link, and which loader does it use?",
+  "oracle": [
+    {
+      "predicate": "native.links",
+      "params": {
+        "path": "elf/tool",
+        "library": "libcurl.so.4"
+      },
+      "expect": "verified"
+    },
+    {
+      "predicate": "native.links",
+      "params": {
+        "path": "elf/tool",
+        "library": "libz"
+      },
+      "expect": "verified"
+    },
+    {
+      "predicate": "native.links",
+      "params": {
+        "path": "elf/tool",
+        "library": "libssl.so.3"
+      },
+      "expect": "refuted"
+    },
+    {
+      "predicate": "file.identify",
+      "params": {
+        "path": "elf/tool",
+        "format": "elf"
+      },
+      "expect": "verified"
+    },
+    {
+      "predicate": "file.contains",
+      "params": {
+        "path": "elf/tool",
+        "text": "/lib64/ld-linux-x86-64.so.2"
+      },
+      "expect": "verified"
+    },
+    {
+      "predicate": "file.contains",
+      "params": {
+        "path": "elf/tool",
+        "hex": "7f454c46",
+        "offset": 0
+      },
+      "expect": "verified"
+    },
+    {
+      "predicate": "file.contains",
+      "params": {
+        "path": "elf/tool",
+        "hex": "4d5a",
+        "offset": 0
+      },
+      "expect": "refuted"
+    },
+    {
+      "predicate": "file.hash",
+      "params": {
+        "path": "elf/tool",
+        "sha256": "87bf9840fff9f18be41cf021b36435699dd268802adba8eca6cddbf379a52496"
+      },
+      "expect": "verified"
+    },
+    {
+      "predicate": "file.hash",
+      "params": {
+        "path": "elf/tool",
+        "sha256": "a327a9a296c853b5a7fe43afc29c2fd1630edb523c506ddeb1bebcb0d2643f75"
+      },
+      "expect": "refuted"
+    }
+  ]
+}

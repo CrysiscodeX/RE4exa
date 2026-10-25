@@ -1,0 +1,19 @@
+{
+  "id": "leanrea-go",
+  "title": "gh: Go toolchain, main path, dependency versions",
+  "credit": "Copied from aicodeking/leanrea, commit 09ba4aa, bench/tasks.json (MIT License, Copyright (c) 2026 AICodeKing). Prompt and answer key unchanged.",
+  "licence": "MIT",
+  "source": "https://github.com/aicodeking/leanrea/blob/09ba4aa/bench/tasks.json",
+  "workspace": null,
+  "subjectFiles": ["gh"],
+  "targetsNote": "Targets are not redistributed. leanrea's bench/setup.sh copies them on macOS from Notion.app (7.35.1) and Homebrew's gh (built with go1.27.1); other versions need new keys.",
+  "question": "gh in this folder is a compiled binary. Without running it, report: the language/toolchain version it was built with, its main package path, and the exact versions of the dependencies github.com/cli/go-gh/v2 and golang.org/x/crypto. Keep the answer short.",
+  "grading": "Each key value is a case-insensitive regular expression that must match the answer text (leanrea's grader).",
+  "key": {
+    "go ver": "go1\\.27\\.1",
+    "path": "github\\.com/cli/cli/v2/cmd/gh",
+    "go-gh": "v2\\.16\\.1",
+    "crypto": "v0\\.57\\.0"
+  },
+  "oracle": []
+}

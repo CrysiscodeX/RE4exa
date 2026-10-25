@@ -74,7 +74,7 @@ function toClaimView(c: StoredClaim): ClaimView {
     verdict: c.verdict,
     reason: c.verdict_record?.reason ?? null,
     observationId: c.verdict_record?.observation_id ?? null,
-    eventSeq: (c as unknown as { event_seq?: number | null }).event_seq ?? null,
+    eventSeq: c.event_seq,
   };
 }
 
@@ -118,6 +118,14 @@ export class App {
     this.approvals = new ApprovalQueue(this.kernel);
     this.approvals.on("approval", (approval) => {
       this.push({ type: "approval", approval });
+      if (approval.caseId && approval.state === "pending" && !this.kernel.closed)
+        this.orchestrator.log(
+          approval.caseId,
+          "approval",
+          `Approval needed: ${approval.action}`,
+          { approvalId: approval.id, reason: approval.reason },
+          approval.workerId,
+        );
       if (approval.caseId) this.#caseChanged(approval.caseId);
     });
     this.engine = createProbeEngine({ kernel: this.kernel, workspace: this.workspace, redact: (v) => redact(v) });
@@ -211,8 +219,25 @@ export class App {
     return this.server ? `${this.server.url}/mcp` : "http://127.0.0.1:0/mcp";
   }
 
+  readonly #pushedEvidence = new Map<string, Set<string>>();
+
   push(p: ServerPush): void {
     for (const l of this.#listeners) l(p);
+    // evidence an agent's tool call produced reaches the inspector without a reload
+    if (p.type === "timeline" && p.entry.kind === "tool-result") this.#pushNewEvidence(p.caseId);
+  }
+
+  #pushNewEvidence(caseId: string): void {
+    let seen = this.#pushedEvidence.get(caseId);
+    if (!seen) {
+      seen = new Set();
+      this.#pushedEvidence.set(caseId, seen);
+    }
+    for (const e of caseEvidence(this.kernel, caseId)) {
+      if (seen.has(e.observation_id)) continue;
+      seen.add(e.observation_id);
+      for (const l of this.#listeners) l({ type: "evidence", caseId, evidence: this.evidenceView(e) });
+    }
   }
 
   #caseChanged(caseId: string): void {
@@ -686,6 +711,8 @@ export class App {
 
   async listen(port?: number): Promise<RunningServer> {
     await this.accounts.ensureDefaults().catch(() => []);
+    // ask each official client whether its account is signed in (pushes `account` updates as they land)
+    void this.accounts.checkAll().catch(() => []);
     this.server = await startServer({
       port: port ?? this.opts.port,
       uiDir: this.uiDir(),

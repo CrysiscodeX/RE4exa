@@ -11,7 +11,6 @@ least one test. Defaults fail closed: an unknown state is reported, never guesse
 | `lease_expired` | The attempt's lease expired before this write | no | None needed: the task is reclaimed and retried by its next attempt |
 | `stale_attempt` | A newer attempt owns this task | no | None needed: only the current attempt may write |
 | `invalid_lease` | Lease length must be a positive number of milliseconds | no | Pass leaseMs > 0 |
-| `task_parked` | The task crashed too many times and was parked | no | Inspect the task's attempts, fix the cause, then unpark it |
 | `effect_interrupted` | An unsafe effect was interrupted and may have partly run | no | Check the target, then retry explicitly with a new key |
 | `receipt_conflict` | A retry key was reused with a different payload | no | Use a new retry key for a different request |
 | `evidence_invalid` | The claim record does not match the S-2 v1 schema | no | See docs/claim-format.md |
@@ -23,7 +22,6 @@ least one test. Defaults fail closed: an unknown state is reported, never guesse
 | `depth_exceeded` | Workers may not start workers of their own | no | Ask the coordinator to start the worker |
 | `prompt_too_large` | The worker task text is over the prompt budget | no | Shorten the task or pass a handle to the material |
 | `approval_denied` | The person denied this action | no | Ask the person, or choose an action without effects |
-| `approval_required` | This action needs the person's approval | no | Wait for approval in the Assay window |
 | `approval_expired` | Nobody answered the approval request in time | yes | Ask again when the person is at the Assay window, or choose an action without effects |
 | `tool_not_permitted` | This tool is not available to this caller | no | Ask the coordinator to call it, or use `tools/list` to see the tools you may call |
 | `tool_failed` | The tool failed unexpectedly | yes | Check the arguments against the tool's schema and retry; report a bug if it persists |
@@ -33,7 +31,7 @@ least one test. Defaults fail closed: an unknown state is reported, never guesse
 | `probe_failed` | The probe could not finish | yes | See the probe's limitations; retry or use another probe |
 | `provider_unavailable` | The agent client is not installed | no | Install the official CLI, then run `assay doctor` |
 | `account_signed_out` | The account is not signed in | no | Sign in from the Accounts panel; Assay runs the provider's official login |
-| `credential_refused` | This credential type is not allowed | no | Use the provider's official client and sign in there |
+| `provider_error` | The agent client failed or broke its protocol | yes | See the error detail; check the client with `assay doctor`, then retry the turn |
 | `unauthorized` | Not paired with this Assay server | no | Open the pairing link printed by `assay serve` |
 | `bad_request` | The request is malformed | no | Check the request against docs/api.md |
 | `not_found` | No such object | no | Check the id |

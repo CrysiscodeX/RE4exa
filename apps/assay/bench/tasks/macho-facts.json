@@ -1,0 +1,57 @@
+{
+  "id": "macho-facts",
+  "title": "Mach-O facts",
+  "workspace": "fixtures",
+  "subjectFiles": ["macho/Updater"],
+  "question": "Which architectures does macho/Updater contain, and what does it link?",
+  "oracle": [
+    {
+      "predicate": "file.identify",
+      "params": {
+        "path": "macho/Updater",
+        "format": "macho-fat"
+      },
+      "expect": "verified"
+    },
+    {
+      "predicate": "file.identify",
+      "params": {
+        "path": "macho/Updater",
+        "format": "mach-o"
+      },
+      "expect": "verified"
+    },
+    {
+      "predicate": "file.identify",
+      "params": {
+        "path": "macho/Updater",
+        "format": "elf"
+      },
+      "expect": "refuted"
+    },
+    {
+      "predicate": "native.links",
+      "params": {
+        "path": "macho/Updater",
+        "library": "Security"
+      },
+      "expect": "verified"
+    },
+    {
+      "predicate": "native.links",
+      "params": {
+        "path": "macho/Updater",
+        "library": "libsparkle.dylib"
+      },
+      "expect": "verified"
+    },
+    {
+      "predicate": "native.links",
+      "params": {
+        "path": "macho/Updater",
+        "library": "/usr/lib/libcurl.4.dylib"
+      },
+      "expect": "refuted"
+    }
+  ]
+}

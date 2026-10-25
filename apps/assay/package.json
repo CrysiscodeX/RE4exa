@@ -13,11 +13,11 @@
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
-    "lint": "biome check src test bench ui/src",
-    "test": "node --test --test-concurrency=1 --disable-warning=ExperimentalWarning \"test/**/*.test.ts\"",
-    "coverage": "c8 --check-coverage --lines 85 --branches 75 --functions 85 --reporter=text-summary --reporter=json-summary node --test --test-concurrency=1 --disable-warning=ExperimentalWarning \"test/**/*.test.ts\"",
+    "lint": "biome check src test bench scripts ui/src ui/mock",
+    "test": "node --test --test-concurrency=1 --disable-warning=ExperimentalWarning \"test/*.test.ts\"",
+    "coverage": "c8 --check-coverage --lines 85 --branches 75 --functions 85 --exclude \"src/vendor/**\" --exclude \"test/**\" --exclude \"ui/**\" --exclude \"bench/**\" --reporter=text-summary --reporter=json-summary node --test --test-concurrency=1 --disable-warning=ExperimentalWarning \"test/*.test.ts\"",
     "build:ui": "vite build ui",
-    "e2e": "node --disable-warning=ExperimentalWarning test/e2e/run.ts",
+    "e2e": "node --disable-warning=ExperimentalWarning test/e2e/run.ts && node --test --disable-warning=ExperimentalWarning test/e2e/ui-smoke.test.ts",
     "serve": "node --disable-warning=ExperimentalWarning src/cli.ts serve",
     "check": "npm run typecheck && npm run lint && npm run coverage"
   },

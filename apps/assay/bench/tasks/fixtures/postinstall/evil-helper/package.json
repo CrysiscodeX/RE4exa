@@ -1,0 +1,12 @@
+{
+  "name": "evil-helper",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "postinstall": "node scripts/setup.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "tiny-fetch": "^2.1.0"
+  }
+}

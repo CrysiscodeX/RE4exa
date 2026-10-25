@@ -2451,3 +2451,25 @@ dialog::backdrop {
 .xterm-host .xterm .xterm-rows .xterm-dim {
   color: color-mix(in srgb, var(--term-fg) 68%, var(--term-bg));
 }
+
+/* Untrusted content from the artifact: plain text, visibly fenced and labelled. */
+.untrusted {
+  margin: 6px 0;
+  border: 1px dashed var(--border-strong, var(--border));
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--bg) 85%, #c9a227 15%);
+}
+.untrusted-tag {
+  display: inline-block;
+  margin: 6px 8px 0;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--fg-muted, var(--fg));
+}
+.untrusted pre {
+  margin: 4px 8px 8px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font: 12px / 1.45 var(--font-mono, ui-monospace, monospace);
+  color: var(--fg);
+}

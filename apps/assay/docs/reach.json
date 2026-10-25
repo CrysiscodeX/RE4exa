@@ -1,0 +1,858 @@
+{
+  "generatedBy": "node src/probes/reach.ts --write",
+  "source": "sweeps of test/fixtures/probes/gen.ts fixtures + src/probes/router-pack.json",
+  "rows": [
+    {
+      "format": "apk",
+      "fixture": "apk",
+      "probes": [
+        "archive.list"
+      ],
+      "router": [
+        "apk"
+      ],
+      "platforms": {
+        "linux": {
+          "status": "covered",
+          "reason": "built-in: archive.list (pure TypeScript)"
+        },
+        "darwin": {
+          "status": "covered",
+          "reason": "built-in: archive.list (pure TypeScript)"
+        },
+        "win32": {
+          "status": "covered",
+          "reason": "built-in: archive.list (pure TypeScript)"
+        }
+      }
+    },
+    {
+      "format": "asar",
+      "fixture": "asar",
+      "probes": [
+        "archive.list"
+      ],
+      "router": [
+        "electron"
+      ],
+      "platforms": {
+        "linux": {
+          "status": "covered",
+          "reason": "built-in: archive.list (pure TypeScript)"
+        },
+        "darwin": {
+          "status": "covered",
+          "reason": "built-in: archive.list (pure TypeScript)"
+        },
+        "win32": {
+          "status": "covered",
+          "reason": "built-in: archive.list (pure TypeScript)"
+        }
+      }
+    },
+    {
+      "format": "crx",
+      "fixture": "crx",
+      "probes": [
+        "archive.list"
+      ],
+      "router": [],
+      "platforms": {
+        "linux": {
+          "status": "covered",
+          "reason": "built-in: archive.list (pure TypeScript)"
+        },
+        "darwin": {
+          "status": "covered",
+          "reason": "built-in: archive.list (pure TypeScript)"
+        },
+        "win32": {
+          "status": "covered",
+          "reason": "built-in: archive.list (pure TypeScript)"
+        }
+      }
+    },
+    {
+      "format": "directory",
+      "fixture": "directory",
+      "probes": [
+        "code.obfuscation",
+        "js.endpoints",
+        "js.imports",
+        "pkg.native-addons"
+      ],
+      "router": [],
+      "platforms": {
+        "linux": {
+          "status": "covered",
+          "reason": "built-in: code.obfuscation, js.endpoints, js.imports, pkg.native-addons (pure TypeScript)"
+        },
+        "darwin": {
+          "status": "covered",
+          "reason": "built-in: code.obfuscation, js.endpoints, js.imports, pkg.native-addons (pure TypeScript)"
+        },
+        "win32": {
+          "status": "covered",
+          "reason": "built-in: code.obfuscation, js.endpoints, js.imports, pkg.native-addons (pure TypeScript)"
+        }
+      }
+    },
+    {
+      "format": "elf",
+      "fixture": "elf",
+      "probes": [
+        "elf.info"
+      ],
+      "router": [
+        "native-logic",
+        "elf-pe",
+        "go",
+        "rust",
+        "flutter"
+      ],
+      "platforms": {
+        "linux": {
+          "status": "covered",
+          "reason": "built-in: elf.info (pure TypeScript)"
+        },
+        "darwin": {
+          "status": "covered",
+          "reason": "built-in: elf.info (pure TypeScript)"
+        },
+        "win32": {
+          "status": "covered",
+          "reason": "built-in: elf.info (pure TypeScript)"
+        }
+      }
+    },
+    {
+      "format": "gzip",
+      "fixture": "gzip",
+      "probes": [],
+      "router": [],
+      "platforms": {
+        "linux": {
+          "status": "partial",
+          "reason": "identified only; no built-in structure probe"
+        },
+        "darwin": {
+          "status": "partial",
+          "reason": "identified only; no built-in structure probe"
+        },
+        "win32": {
+          "status": "partial",
+          "reason": "identified only; no built-in structure probe"
+        }
+      }
+    },
+    {
+      "format": "hermes-bytecode",
+      "fixture": "hermes-bytecode",
+      "probes": [],
+      "router": [
+        "hermes"
+      ],
+      "platforms": {
+        "linux": {
+          "status": "partial",
+          "reason": "identified only; no built-in structure probe; external on linux: hbc-decompiler"
+        },
+        "darwin": {
+          "status": "partial",
+          "reason": "identified only; no built-in structure probe; external on darwin: hbc-decompiler"
+        },
+        "win32": {
+          "status": "partial",
+          "reason": "identified only; no built-in structure probe; external on win32: hbc-decompiler"
+        }
+      }
+    },
+    {
+      "format": "jar",
+      "fixture": "jar",
+      "probes": [
+        "archive.list"
+      ],
+      "router": [],
+      "platforms": {
+        "linux": {
+          "status": "covered",
+          "reason": "built-in: archive.list (pure TypeScript)"
+        },
+        "darwin": {
+          "status": "covered",
+          "reason": "built-in: archive.list (pure TypeScript)"
+        },
+        "win32": {
+          "status": "covered",
+          "reason": "built-in: archive.list (pure TypeScript)"
+        }
+      }
+    },
+    {
+      "format": "java-class",
+      "fixture": "java-class",
+      "probes": [],
+      "router": [],
+      "platforms": {
+        "linux": {
+          "status": "partial",
+          "reason": "identified only; no built-in structure probe"
+        },
+        "darwin": {
+          "status": "partial",
+          "reason": "identified only; no built-in structure probe"
+        },
+        "win32": {
+          "status": "partial",
+          "reason": "identified only; no built-in structure probe"
+        }
+      }
+    },
+    {
+      "format": "javascript",
+      "fixture": "javascript",
+      "probes": [
+        "code.obfuscation",
+        "js.endpoints",
+        "js.imports"
+      ],
+      "router": [
+        "web-bundle"
+      ],
+      "platforms": {
+        "linux": {
+          "status": "covered",
+          "reason": "built-in: code.obfuscation, js.endpoints, js.imports (pure TypeScript)"
+        },
+        "darwin": {
+          "status": "covered",
+          "reason": "built-in: code.obfuscation, js.endpoints, js.imports (pure TypeScript)"
+        },
+        "win32": {
+          "status": "covered",
+          "reason": "built-in: code.obfuscation, js.endpoints, js.imports (pure TypeScript)"
+        }
+      }
+    },
+    {
+      "format": "jpeg",
+      "fixture": "jpeg",
+      "probes": [],
+      "router": [],
+      "platforms": {
+        "linux": {
+          "status": "partial",
+          "reason": "identified only; no built-in structure probe"
+        },
+        "darwin": {
+          "status": "partial",
+          "reason": "identified only; no built-in structure probe"
+        },
+        "win32": {
+          "status": "partial",
+          "reason": "identified only; no built-in structure probe"
+        }
+      }
+    },
+    {
+      "format": "json",
+      "fixture": "json",
+      "probes": [
+        "js.endpoints"
+      ],
+      "router": [],
+      "platforms": {
+        "linux": {
+          "status": "covered",
+          "reason": "built-in: js.endpoints (pure TypeScript)"
+        },
+        "darwin": {
+          "status": "covered",
+          "reason": "built-in: js.endpoints (pure TypeScript)"
+        },
+        "win32": {
+          "status": "covered",
+          "reason": "built-in: js.endpoints (pure TypeScript)"
+        }
+      }
+    },
+    {
+      "format": "macho",
+      "fixture": "macho",
+      "probes": [
+        "macho.info"
+      ],
+      "router": [
+        "macho",
+        "native-logic",
+        "go",
+        "rust"
+      ],
+      "platforms": {
+        "linux": {
+          "status": "covered",
+          "reason": "built-in: macho.info (pure TypeScript)"
+        },
+        "darwin": {
+          "status": "covered",
+          "reason": "built-in: macho.info (pure TypeScript)"
+        },
+        "win32": {
+          "status": "covered",
+          "reason": "built-in: macho.info (pure TypeScript)"
+        }
+      }
+    },
+    {
+      "format": "macho-fat",
+      "fixture": "macho-fat",
+      "probes": [
+        "macho.info"
+      ],
+      "router": [
+        "macho"
+      ],
+      "platforms": {
+        "linux": {
+          "status": "covered",
+          "reason": "built-in: macho.info (pure TypeScript)"
+        },
+        "darwin": {
+          "status": "covered",
+          "reason": "built-in: macho.info (pure TypeScript)"
+        },
+        "win32": {
+          "status": "covered",
+          "reason": "built-in: macho.info (pure TypeScript)"
+        }
+      }
+    },
+    {
+      "format": "npm-package",
+      "fixture": "npm-package",
+      "probes": [
+        "code.obfuscation",
+        "elf.info",
+        "js.endpoints",
+        "js.imports",
+        "pkg.manifest",
+        "pkg.native-addons"
+      ],
+      "router": [],
+      "platforms": {
+        "linux": {
+          "status": "covered",
+          "reason": "built-in: code.obfuscation, elf.info, js.endpoints, js.imports, pkg.manifest, pkg.native-addons (pure TypeScript)"
+        },
+        "darwin": {
+          "status": "covered",
+          "reason": "built-in: code.obfuscation, elf.info, js.endpoints, js.imports, pkg.manifest, pkg.native-addons (pure TypeScript)"
+        },
+        "win32": {
+          "status": "covered",
+          "reason": "built-in: code.obfuscation, elf.info, js.endpoints, js.imports, pkg.manifest, pkg.native-addons (pure TypeScript)"
+        }
+      }
+    },
+    {
+      "format": "npm-tgz",
+      "fixture": "npm-tgz",
+      "probes": [
+        "archive.list",
+        "pkg.manifest",
+        "pkg.native-addons"
+      ],
+      "router": [],
+      "platforms": {
+        "linux": {
+          "status": "covered",
+          "reason": "built-in: archive.list, pkg.manifest, pkg.native-addons (pure TypeScript)"
+        },
+        "darwin": {
+          "status": "covered",
+          "reason": "built-in: archive.list, pkg.manifest, pkg.native-addons (pure TypeScript)"
+        },
+        "win32": {
+          "status": "covered",
+          "reason": "built-in: archive.list, pkg.manifest, pkg.native-addons (pure TypeScript)"
+        }
+      }
+    },
+    {
+      "format": "package-json",
+      "fixture": "package-json",
+      "probes": [
+        "js.endpoints",
+        "pkg.manifest"
+      ],
+      "router": [],
+      "platforms": {
+        "linux": {
+          "status": "covered",
+          "reason": "built-in: js.endpoints, pkg.manifest (pure TypeScript)"
+        },
+        "darwin": {
+          "status": "covered",
+          "reason": "built-in: js.endpoints, pkg.manifest (pure TypeScript)"
+        },
+        "win32": {
+          "status": "covered",
+          "reason": "built-in: js.endpoints, pkg.manifest (pure TypeScript)"
+        }
+      }
+    },
+    {
+      "format": "pcap",
+      "fixture": "pcap",
+      "probes": [],
+      "router": [
+        "pcap"
+      ],
+      "platforms": {
+        "linux": {
+          "status": "partial",
+          "reason": "identified only; no built-in structure probe; external on linux: tshark"
+        },
+        "darwin": {
+          "status": "partial",
+          "reason": "identified only; no built-in structure probe; external on darwin: tshark"
+        },
+        "win32": {
+          "status": "partial",
+          "reason": "identified only; no built-in structure probe; external on win32: tshark"
+        }
+      }
+    },
+    {
+      "format": "pdf",
+      "fixture": "pdf",
+      "probes": [],
+      "router": [],
+      "platforms": {
+        "linux": {
+          "status": "partial",
+          "reason": "identified only; no built-in structure probe"
+        },
+        "darwin": {
+          "status": "partial",
+          "reason": "identified only; no built-in structure probe"
+        },
+        "win32": {
+          "status": "partial",
+          "reason": "identified only; no built-in structure probe"
+        }
+      }
+    },
+    {
+      "format": "pe",
+      "fixture": "pe, pe-dll",
+      "probes": [
+        "pe.info"
+      ],
+      "router": [
+        "native-logic",
+        "elf-pe",
+        "go",
+        "rust",
+        "dotnet"
+      ],
+      "platforms": {
+        "linux": {
+          "status": "covered",
+          "reason": "built-in: pe.info (pure TypeScript)"
+        },
+        "darwin": {
+          "status": "covered",
+          "reason": "built-in: pe.info (pure TypeScript)"
+        },
+        "win32": {
+          "status": "covered",
+          "reason": "built-in: pe.info (pure TypeScript)"
+        }
+      }
+    },
+    {
+      "format": "plist",
+      "fixture": "plist",
+      "probes": [],
+      "router": [
+        "plist"
+      ],
+      "platforms": {
+        "linux": {
+          "status": "partial",
+          "reason": "identified only; no built-in structure probe"
+        },
+        "darwin": {
+          "status": "partial",
+          "reason": "identified only; no built-in structure probe; external on darwin: plutil"
+        },
+        "win32": {
+          "status": "partial",
+          "reason": "identified only; no built-in structure probe"
+        }
+      }
+    },
+    {
+      "format": "png",
+      "fixture": "png",
+      "probes": [],
+      "router": [],
+      "platforms": {
+        "linux": {
+          "status": "partial",
+          "reason": "identified only; no built-in structure probe"
+        },
+        "darwin": {
+          "status": "partial",
+          "reason": "identified only; no built-in structure probe"
+        },
+        "win32": {
+          "status": "partial",
+          "reason": "identified only; no built-in structure probe"
+        }
+      }
+    },
+    {
+      "format": "router:dotnet",
+      "fixture": null,
+      "probes": [
+        "pe.info"
+      ],
+      "router": [
+        "dotnet"
+      ],
+      "platforms": {
+        "linux": {
+          "status": "partial",
+          "reason": "beyond the built-in probes only with external ilspycmd (on PATH)"
+        },
+        "darwin": {
+          "status": "partial",
+          "reason": "beyond the built-in probes only with external ilspycmd (on PATH)"
+        },
+        "win32": {
+          "status": "partial",
+          "reason": "beyond the built-in probes only with external ilspycmd (on PATH)"
+        }
+      }
+    },
+    {
+      "format": "router:go",
+      "fixture": null,
+      "probes": [
+        "file.strings"
+      ],
+      "router": [
+        "go"
+      ],
+      "platforms": {
+        "linux": {
+          "status": "partial",
+          "reason": "beyond the built-in probes only with external go (on PATH)"
+        },
+        "darwin": {
+          "status": "partial",
+          "reason": "beyond the built-in probes only with external go (on PATH)"
+        },
+        "win32": {
+          "status": "partial",
+          "reason": "beyond the built-in probes only with external go (on PATH)"
+        }
+      }
+    },
+    {
+      "format": "router:runtime",
+      "fixture": null,
+      "probes": [],
+      "router": [
+        "runtime"
+      ],
+      "platforms": {
+        "linux": {
+          "status": "not-covered",
+          "reason": "not static: needs the person's approval to run lldb"
+        },
+        "darwin": {
+          "status": "not-covered",
+          "reason": "not static: needs the person's approval to run lldb"
+        },
+        "win32": {
+          "status": "not-covered",
+          "reason": "not static: needs the person's approval to run anything"
+        }
+      }
+    },
+    {
+      "format": "router:rust",
+      "fixture": null,
+      "probes": [
+        "file.strings"
+      ],
+      "router": [
+        "rust"
+      ],
+      "platforms": {
+        "linux": {
+          "status": "partial",
+          "reason": "beyond the built-in probes only with external cargo-audit (on PATH)"
+        },
+        "darwin": {
+          "status": "partial",
+          "reason": "beyond the built-in probes only with external cargo-audit (on PATH)"
+        },
+        "win32": {
+          "status": "partial",
+          "reason": "beyond the built-in probes only with external cargo-audit (on PATH)"
+        }
+      }
+    },
+    {
+      "format": "router:website",
+      "fixture": null,
+      "probes": [],
+      "router": [
+        "website"
+      ],
+      "platforms": {
+        "linux": {
+          "status": "not-covered",
+          "reason": "not static: needs the person's approval to run curl"
+        },
+        "darwin": {
+          "status": "not-covered",
+          "reason": "not static: needs the person's approval to run curl"
+        },
+        "win32": {
+          "status": "not-covered",
+          "reason": "not static: needs the person's approval to run curl"
+        }
+      }
+    },
+    {
+      "format": "script",
+      "fixture": "script",
+      "probes": [
+        "code.obfuscation",
+        "js.endpoints",
+        "js.imports"
+      ],
+      "router": [],
+      "platforms": {
+        "linux": {
+          "status": "covered",
+          "reason": "built-in: code.obfuscation, js.endpoints, js.imports (pure TypeScript)"
+        },
+        "darwin": {
+          "status": "covered",
+          "reason": "built-in: code.obfuscation, js.endpoints, js.imports (pure TypeScript)"
+        },
+        "win32": {
+          "status": "covered",
+          "reason": "built-in: code.obfuscation, js.endpoints, js.imports (pure TypeScript)"
+        }
+      }
+    },
+    {
+      "format": "sqlite",
+      "fixture": "sqlite",
+      "probes": [],
+      "router": [
+        "sqlite"
+      ],
+      "platforms": {
+        "linux": {
+          "status": "partial",
+          "reason": "identified only; no built-in structure probe; external on linux: sqlite3"
+        },
+        "darwin": {
+          "status": "partial",
+          "reason": "identified only; no built-in structure probe; external on darwin: sqlite3"
+        },
+        "win32": {
+          "status": "partial",
+          "reason": "identified only; no built-in structure probe; external on win32: sqlite3"
+        }
+      }
+    },
+    {
+      "format": "tar",
+      "fixture": "tar",
+      "probes": [
+        "archive.list"
+      ],
+      "router": [],
+      "platforms": {
+        "linux": {
+          "status": "covered",
+          "reason": "built-in: archive.list (pure TypeScript)"
+        },
+        "darwin": {
+          "status": "covered",
+          "reason": "built-in: archive.list (pure TypeScript)"
+        },
+        "win32": {
+          "status": "covered",
+          "reason": "built-in: archive.list (pure TypeScript)"
+        }
+      }
+    },
+    {
+      "format": "tar.gz",
+      "fixture": "tar.gz",
+      "probes": [
+        "archive.list"
+      ],
+      "router": [],
+      "platforms": {
+        "linux": {
+          "status": "covered",
+          "reason": "built-in: archive.list (pure TypeScript)"
+        },
+        "darwin": {
+          "status": "covered",
+          "reason": "built-in: archive.list (pure TypeScript)"
+        },
+        "win32": {
+          "status": "covered",
+          "reason": "built-in: archive.list (pure TypeScript)"
+        }
+      }
+    },
+    {
+      "format": "text",
+      "fixture": "text",
+      "probes": [],
+      "router": [],
+      "platforms": {
+        "linux": {
+          "status": "partial",
+          "reason": "identified only; no built-in structure probe"
+        },
+        "darwin": {
+          "status": "partial",
+          "reason": "identified only; no built-in structure probe"
+        },
+        "win32": {
+          "status": "partial",
+          "reason": "identified only; no built-in structure probe"
+        }
+      }
+    },
+    {
+      "format": "typescript",
+      "fixture": "typescript",
+      "probes": [
+        "code.obfuscation",
+        "js.endpoints",
+        "js.imports"
+      ],
+      "router": [],
+      "platforms": {
+        "linux": {
+          "status": "covered",
+          "reason": "built-in: code.obfuscation, js.endpoints, js.imports (pure TypeScript)"
+        },
+        "darwin": {
+          "status": "covered",
+          "reason": "built-in: code.obfuscation, js.endpoints, js.imports (pure TypeScript)"
+        },
+        "win32": {
+          "status": "covered",
+          "reason": "built-in: code.obfuscation, js.endpoints, js.imports (pure TypeScript)"
+        }
+      }
+    },
+    {
+      "format": "unknown",
+      "fixture": "unknown",
+      "probes": [],
+      "router": [
+        "firmware"
+      ],
+      "platforms": {
+        "linux": {
+          "status": "partial",
+          "reason": "identified only; no built-in structure probe; external on linux: binwalk"
+        },
+        "darwin": {
+          "status": "partial",
+          "reason": "identified only; no built-in structure probe; external on darwin: binwalk"
+        },
+        "win32": {
+          "status": "partial",
+          "reason": "identified only; no built-in structure probe"
+        }
+      }
+    },
+    {
+      "format": "vsix",
+      "fixture": "vsix",
+      "probes": [
+        "archive.list"
+      ],
+      "router": [],
+      "platforms": {
+        "linux": {
+          "status": "covered",
+          "reason": "built-in: archive.list (pure TypeScript)"
+        },
+        "darwin": {
+          "status": "covered",
+          "reason": "built-in: archive.list (pure TypeScript)"
+        },
+        "win32": {
+          "status": "covered",
+          "reason": "built-in: archive.list (pure TypeScript)"
+        }
+      }
+    },
+    {
+      "format": "wasm",
+      "fixture": "wasm",
+      "probes": [
+        "wasm.info"
+      ],
+      "router": [
+        "wasm"
+      ],
+      "platforms": {
+        "linux": {
+          "status": "covered",
+          "reason": "built-in: wasm.info (pure TypeScript)"
+        },
+        "darwin": {
+          "status": "covered",
+          "reason": "built-in: wasm.info (pure TypeScript)"
+        },
+        "win32": {
+          "status": "covered",
+          "reason": "built-in: wasm.info (pure TypeScript)"
+        }
+      }
+    },
+    {
+      "format": "zip",
+      "fixture": "zip",
+      "probes": [
+        "archive.list"
+      ],
+      "router": [],
+      "platforms": {
+        "linux": {
+          "status": "covered",
+          "reason": "built-in: archive.list (pure TypeScript)"
+        },
+        "darwin": {
+          "status": "covered",
+          "reason": "built-in: archive.list (pure TypeScript)"
+        },
+        "win32": {
+          "status": "covered",
+          "reason": "built-in: archive.list (pure TypeScript)"
+        }
+      }
+    }
+  ]
+}

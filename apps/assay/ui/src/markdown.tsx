@@ -38,7 +38,7 @@ export function inline(text: string, keyBase = "i"): ReactNode[] {
 
 const LIST = /^\s{0,3}([-*+]|\d{1,9}[.)])\s+(.*)$/;
 
-export function Markdown(props: { text: string }): ReactNode {
+function MarkdownBlocks(props: { text: string }): ReactNode {
   const lines = props.text.replace(/\r\n?/g, "\n").split("\n");
   const blocks: ReactNode[] = [];
   let para: string[] = [];
@@ -125,4 +125,70 @@ export function Markdown(props: { text: string }): ReactNode {
   }
   flush();
   return <div className="md">{blocks}</div>;
+}
+
+// Text that came from the artifact arrives wrapped in Assay's untrusted-content envelope. It is shown
+// as a labelled, plain-text block and never rendered as Markdown.
+const ENVELOPE = /<untrusted-content id="(u-[0-9a-f]+)" origin="([^"]*)">([\s\S]*?)<\/untrusted-content id="\1">/g;
+
+export interface TextPart {
+  untrusted: boolean;
+  text: string;
+  origin?: string;
+  /** Offset in the source text; stable, so it doubles as a React key. */
+  at: number;
+}
+
+export function splitUntrusted(text: string): TextPart[] {
+  const out: TextPart[] = [];
+  let last = 0;
+  for (const m of text.matchAll(ENVELOPE)) {
+    if (m.index > last) out.push({ untrusted: false, text: text.slice(last, m.index), at: last });
+    out.push({ untrusted: true, text: (m[3] ?? "").trim(), origin: m[2] ?? "", at: m.index });
+    last = m.index + m[0].length;
+  }
+  if (last < text.length) out.push({ untrusted: false, text: text.slice(last), at: last });
+  return out;
+}
+
+export function UntrustedBlock(props: { text: string; origin: string }): ReactNode {
+  return (
+    <div className="untrusted" role="note" aria-label={`Untrusted content from ${props.origin || "the artifact"}`}>
+      <span className="untrusted-tag">untrusted · {props.origin || "artifact"}</span>
+      <pre>{props.text}</pre>
+    </div>
+  );
+}
+
+/** Plain text with untrusted envelopes shown as labelled blocks (for worker results and tool text). */
+export function PlainWithUntrusted(props: { text: string; className?: string }): ReactNode {
+  const parts = splitUntrusted(props.text);
+  if (parts.length === 1 && !parts[0]!.untrusted) return <p className={props.className}>{props.text}</p>;
+  return (
+    <div className={props.className}>
+      {parts.map((p) =>
+        p.untrusted ? (
+          <UntrustedBlock key={`u${p.at}`} text={p.text} origin={p.origin ?? ""} />
+        ) : p.text.trim() ? (
+          <p key={`t${p.at}`}>{p.text.trim()}</p>
+        ) : null,
+      )}
+    </div>
+  );
+}
+
+export function Markdown(props: { text: string }): ReactNode {
+  const parts = splitUntrusted(props.text);
+  if (parts.length === 1 && !parts[0]!.untrusted) return <MarkdownBlocks text={props.text} />;
+  return (
+    <>
+      {parts.map((p) =>
+        p.untrusted ? (
+          <UntrustedBlock key={`u${p.at}`} text={p.text} origin={p.origin ?? ""} />
+        ) : (
+          <MarkdownBlocks key={`m${p.at}`} text={p.text} />
+        ),
+      )}
+    </>
+  );
 }

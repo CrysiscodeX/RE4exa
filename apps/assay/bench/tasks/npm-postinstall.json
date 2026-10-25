@@ -1,0 +1,88 @@
+{
+  "id": "npm-postinstall",
+  "title": "npm package with a postinstall script",
+  "workspace": "fixtures",
+  "subjectFiles": ["postinstall/evil-helper", "postinstall/evil-helper-1.0.0.tgz"],
+  "question": "Does installing evil-helper run code, and what does that code contact?",
+  "oracle": [
+    {
+      "predicate": "pkg.has-install-script",
+      "params": {
+        "path": "postinstall/evil-helper",
+        "hook": "postinstall"
+      },
+      "expect": "verified"
+    },
+    {
+      "predicate": "pkg.has-install-script",
+      "params": {
+        "path": "postinstall/evil-helper",
+        "hook": "preinstall"
+      },
+      "expect": "refuted"
+    },
+    {
+      "predicate": "pkg.has-install-script",
+      "params": {
+        "path": "postinstall/evil-helper-1.0.0.tgz"
+      },
+      "expect": "verified"
+    },
+    {
+      "predicate": "pkg.has-dependency",
+      "params": {
+        "path": "postinstall/evil-helper-1.0.0.tgz",
+        "name": "tiny-fetch"
+      },
+      "expect": "verified"
+    },
+    {
+      "predicate": "pkg.has-dependency",
+      "params": {
+        "path": "postinstall/evil-helper",
+        "name": "lodash"
+      },
+      "expect": "refuted"
+    },
+    {
+      "predicate": "endpoint.present",
+      "params": {
+        "path": "postinstall/evil-helper/scripts/setup.js",
+        "host": "collect.badhost.example.net"
+      },
+      "expect": "verified"
+    },
+    {
+      "predicate": "endpoint.present",
+      "params": {
+        "path": "postinstall/evil-helper/scripts/setup.js",
+        "host": "cdn.example.org"
+      },
+      "expect": "refuted"
+    },
+    {
+      "predicate": "js.imports",
+      "params": {
+        "path": "postinstall/evil-helper/scripts/setup.js",
+        "specifier": "https"
+      },
+      "expect": "verified"
+    },
+    {
+      "predicate": "js.imports",
+      "params": {
+        "path": "postinstall/evil-helper/scripts/setup.js",
+        "specifier": "child_process"
+      },
+      "expect": "refuted"
+    },
+    {
+      "predicate": "archive.contains",
+      "params": {
+        "path": "postinstall/evil-helper-1.0.0.tgz",
+        "entry": "package/scripts/setup.js"
+      },
+      "expect": "verified"
+    }
+  ]
+}

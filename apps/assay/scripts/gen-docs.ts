@@ -1,6 +1,4 @@
-// Generates docs that must stay in sync with the code: the failure-mode register (from
-// src/errors.ts), the capability statement (src/mcp/capabilities.ts) and the reach table
-// (src/probes/reach.ts). `--check` fails when a committed file differs.
+// Generates docs/failure-modes.md from src/errors.ts. `--check` fails when the committed file differs.
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { FAILURE_MODES } from "../src/errors.ts";
@@ -42,14 +40,6 @@ function failureModes(): string {
 
 emit("docs/failure-modes.md", failureModes());
 
-const extra = [
-  ["src/mcp/capabilities.ts", "docs/capabilities.json"],
-  ["src/probes/reach.ts", "docs/reach.json"],
-] as const;
-for (const [mod, out] of extra) {
-  if (!existsSync(join(root, mod))) continue;
-  const m = (await import(join(root, mod))) as { generate?: () => unknown | Promise<unknown> };
-  if (typeof m.generate !== "function") continue;
-  emit(out, `${JSON.stringify(await m.generate(), null, 2)}\n`);
-}
+// docs/capabilities.json and docs/reach.json have their own staleness tests
+// (test/mcp-config.test.ts, test/probes-reach.test.ts) and writers (--write on their modules).
 if (stale) process.exit(1);

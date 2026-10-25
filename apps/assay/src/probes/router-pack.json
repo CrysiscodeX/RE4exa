@@ -1,0 +1,408 @@
+{
+  "_credit": "Adapted from aicodeking/leanrea (MIT, Copyright (c) 2026 AICodeKing), commit 09ba4aa, leanrea/SKILL.md router rows at lines 38-55 and its rules and traps. Rewritten as data for Assay.",
+  "version": "1",
+  "rows": [
+    {
+      "id": "electron",
+      "target": "Electron app (app.asar)",
+      "detect": { "formats": ["asar"], "names": ["*.asar"], "markers": [] },
+      "probes": ["archive.list", "pkg.manifest", "js.imports", "js.endpoints", "pkg.native-addons"],
+      "external": [
+        {
+          "id": "asar-list",
+          "program": "npx",
+          "args": ["-y", "@electron/asar", "list", "{path}"],
+          "platforms": ["linux", "darwin", "win32"],
+          "fallback": "archive.list reads the ASAR header in TypeScript",
+          "outputCap": 262144
+        }
+      ],
+      "consent": "approval",
+      "traps": [
+        "rg skips hidden and ignored files and bundlers hide code in .webpack/ and .vite/: search extracted trees with rg -uu",
+        "app-specific IPC wrappers hide channel names: also collect quoted \"ns:channel\" strings from the main entry",
+        "native add-ons live in app.asar.unpacked/, outside the archive",
+        "npx -y downloads a package: it needs the person's approval"
+      ],
+      "source": "leanrea@09ba4aa SKILL.md:38"
+    },
+    {
+      "id": "web-bundle",
+      "target": "Web bundle / minified JS",
+      "detect": { "formats": ["javascript"], "names": ["*.js", "*.mjs", "*.cjs", "*.map"], "markers": [] },
+      "probes": ["js.imports", "js.endpoints", "code.obfuscation", "file.strings"],
+      "external": [],
+      "consent": "none",
+      "traps": [
+        "find sourceMappingURL first: a map with sourcesContent holds the original sources",
+        "never print a minified file: slice around the needle",
+        "webpack module ids hide names: grep the ids, then slice around the hit"
+      ],
+      "source": "leanrea@09ba4aa SKILL.md:39"
+    },
+    {
+      "id": "hermes",
+      "target": "Hermes / bytenode / V8 snapshot",
+      "detect": { "formats": ["hermes-bytecode"], "names": ["index.android.bundle", "*.hbc", "*.jsc"], "markers": [] },
+      "probes": ["file.identify", "file.strings"],
+      "external": [
+        {
+          "id": "hbc-decompile",
+          "program": "hbc-decompiler",
+          "args": ["{path}"],
+          "platforms": ["linux", "darwin", "win32"],
+          "fallback": "file.strings on the bytecode",
+          "outputCap": 4194304
+        }
+      ],
+      "consent": "none",
+      "traps": ["bytenode .jsc files cannot be decompiled: use strings and runtime hooks"],
+      "source": "leanrea@09ba4aa SKILL.md:40"
+    },
+    {
+      "id": "macho",
+      "target": "Mach-O",
+      "detect": { "formats": ["macho", "macho-fat"], "names": [], "markers": [] },
+      "probes": ["macho.info", "file.strings"],
+      "external": [
+        {
+          "id": "lipo-info",
+          "program": "lipo",
+          "args": ["-info", "{path}"],
+          "platforms": ["darwin"],
+          "fallback": "macho.info lists fat slices",
+          "outputCap": 65536
+        },
+        {
+          "id": "otool-L",
+          "program": "otool",
+          "args": ["-L", "{path}"],
+          "platforms": ["darwin"],
+          "fallback": "macho.info lists LC_LOAD_DYLIB",
+          "outputCap": 262144
+        },
+        {
+          "id": "nm-exports",
+          "program": "nm",
+          "args": ["-gU", "{path}"],
+          "platforms": ["darwin"],
+          "fallback": "none built in: exported symbols of Mach-O are not parsed",
+          "outputCap": 1048576
+        },
+        {
+          "id": "codesign-entitlements",
+          "program": "codesign",
+          "args": ["-d", "--entitlements", ":-", "{path}"],
+          "platforms": ["darwin"],
+          "fallback": "macho.info only detects LC_CODE_SIGNATURE",
+          "outputCap": 262144
+        }
+      ],
+      "consent": "none",
+      "traps": [
+        "thin a fat binary first (lipo -thin arm64) before disassembling",
+        "nm -u (imports) is the capability map: read it before any disassembly"
+      ],
+      "source": "leanrea@09ba4aa SKILL.md:41"
+    },
+    {
+      "id": "native-logic",
+      "target": "Native code logic",
+      "detect": { "formats": ["elf", "macho", "pe"], "names": [], "markers": [] },
+      "probes": ["file.strings"],
+      "external": [
+        {
+          "id": "objdump-d",
+          "program": "objdump",
+          "args": ["-d", "--no-show-raw-insn", "-C", "{path}"],
+          "platforms": ["linux", "darwin", "win32"],
+          "fallback": "none built in: Assay does not disassemble",
+          "outputCap": 8388608
+        },
+        {
+          "id": "otool-tV",
+          "program": "otool",
+          "args": ["-tV", "{path}"],
+          "platforms": ["darwin"],
+          "fallback": "none built in: Assay does not disassemble",
+          "outputCap": 8388608
+        }
+      ],
+      "consent": "none",
+      "traps": [
+        "dump a disassembly once to a file, then grep that file",
+        "read the call/string trail of one function, not every instruction",
+        "static reading is not observed execution"
+      ],
+      "source": "leanrea@09ba4aa SKILL.md:42"
+    },
+    {
+      "id": "elf-pe",
+      "target": "ELF / PE",
+      "detect": { "formats": ["elf", "pe"], "names": [], "markers": [] },
+      "probes": ["elf.info", "pe.info"],
+      "external": [
+        {
+          "id": "readelf-d",
+          "program": "readelf",
+          "args": ["-dW", "{path}"],
+          "platforms": ["linux"],
+          "fallback": "elf.info reads the dynamic section",
+          "outputCap": 262144
+        },
+        {
+          "id": "nm-D",
+          "program": "nm",
+          "args": ["-D", "--defined-only", "{path}"],
+          "platforms": ["linux"],
+          "fallback": "elf.info counts exported dynamic symbols",
+          "outputCap": 1048576
+        },
+        {
+          "id": "objdump-x",
+          "program": "objdump",
+          "args": ["-x", "{path}"],
+          "platforms": ["linux", "darwin", "win32"],
+          "fallback": "pe.info reads headers, imports and exports",
+          "outputCap": 1048576
+        }
+      ],
+      "consent": "none",
+      "traps": ["PE resources (icons, manifests, version info) are not parsed by pe.info: use objdump -x or wrestool"],
+      "source": "leanrea@09ba4aa SKILL.md:43"
+    },
+    {
+      "id": "go",
+      "target": "Go binary",
+      "detect": { "formats": ["elf", "macho", "pe"], "names": [], "markers": ["go-buildinfo", "go"] },
+      "probes": ["file.strings"],
+      "external": [
+        {
+          "id": "go-version-m",
+          "program": "go",
+          "args": ["version", "-m", "{path}"],
+          "platforms": ["linux", "darwin", "win32"],
+          "fallback": "file.strings with pattern \"Go buildinf|^path\\t|^mod\\t|^dep\\t\"",
+          "outputCap": 262144
+        }
+      ],
+      "consent": "none",
+      "traps": ["symbols survive stripping: go tool nm T | rg main\\."],
+      "source": "leanrea@09ba4aa SKILL.md:44"
+    },
+    {
+      "id": "rust",
+      "target": "Rust binary",
+      "detect": { "formats": ["elf", "macho", "pe"], "names": [], "markers": ["rust", "rust-cargo-auditable"] },
+      "probes": ["file.strings"],
+      "external": [
+        {
+          "id": "cargo-audit-bin",
+          "program": "cargo-audit",
+          "args": ["audit", "bin", "{path}"],
+          "platforms": ["linux", "darwin", "win32"],
+          "fallback": "file.strings with pattern \"/rustc/[0-9a-f]{40}\" and \"-[0-9]+\\.[0-9]+\\.[0-9]+/src\"",
+          "outputCap": 262144
+        }
+      ],
+      "consent": "none",
+      "traps": ["dependency lists exist only when built with cargo-auditable (.dep-v0)"],
+      "source": "leanrea@09ba4aa SKILL.md:45"
+    },
+    {
+      "id": "dotnet",
+      "target": ".NET assembly",
+      "detect": { "formats": ["pe"], "names": ["*.dll", "*.exe"], "markers": ["dotnet-clr"] },
+      "probes": ["pe.info"],
+      "external": [
+        {
+          "id": "ilspycmd",
+          "program": "ilspycmd",
+          "args": ["{path}"],
+          "platforms": ["linux", "darwin", "win32"],
+          "fallback": "pe.info reports the CLR header only",
+          "outputCap": 8388608
+        }
+      ],
+      "consent": "none",
+      "traps": ["NativeAOT and IL2CPP builds are native code: use the native rows", "P/Invoke targets: rg DllImport"],
+      "source": "leanrea@09ba4aa SKILL.md:46"
+    },
+    {
+      "id": "apk",
+      "target": "Android APK",
+      "detect": { "formats": ["apk"], "names": ["*.apk"], "markers": [] },
+      "probes": ["archive.list"],
+      "external": [
+        {
+          "id": "unzip-l",
+          "program": "unzip",
+          "args": ["-l", "{path}"],
+          "platforms": ["linux", "darwin", "win32"],
+          "fallback": "archive.list reads the zip central directory",
+          "outputCap": 1048576
+        },
+        {
+          "id": "jadx",
+          "program": "jadx",
+          "args": ["--show-bad-code", "-d", "{out}", "{path}"],
+          "platforms": ["linux", "darwin", "win32"],
+          "fallback": "none built in: Assay does not decompile dex",
+          "outputCap": 262144
+        }
+      ],
+      "consent": "approval",
+      "traps": [
+        "lib/*/libflutter.so means Flutter (Dart AOT): use the Flutter row",
+        "libhermes.so means React Native: use the Hermes row",
+        "jadx writes an output tree: it needs the person's approval"
+      ],
+      "source": "leanrea@09ba4aa SKILL.md:47"
+    },
+    {
+      "id": "flutter",
+      "target": "Flutter snapshot hash",
+      "detect": { "formats": ["elf"], "names": ["libapp.so"], "markers": [] },
+      "probes": ["file.contains", "file.strings"],
+      "external": [],
+      "consent": "none",
+      "traps": ["find magic f5 f5 dc dc in libapp.so: the 32 hex chars at +20 are the snapshot hash"],
+      "source": "leanrea@09ba4aa SKILL.md:48"
+    },
+    {
+      "id": "wasm",
+      "target": "WebAssembly",
+      "detect": { "formats": ["wasm"], "names": ["*.wasm"], "markers": [] },
+      "probes": ["wasm.info"],
+      "external": [
+        {
+          "id": "wasm-objdump-x",
+          "program": "wasm-objdump",
+          "args": ["-x", "{path}"],
+          "platforms": ["linux", "darwin", "win32"],
+          "fallback": "wasm.info reads imports and exports",
+          "outputCap": 1048576
+        }
+      ],
+      "consent": "none",
+      "traps": ["components (version != 1) are not core modules"],
+      "source": "leanrea@09ba4aa SKILL.md:49"
+    },
+    {
+      "id": "sqlite",
+      "target": "SQLite database",
+      "detect": { "formats": ["sqlite"], "names": ["*.db", "*.sqlite", "*.sqlite3"], "markers": [] },
+      "probes": ["file.identify"],
+      "external": [
+        {
+          "id": "sqlite3-schema",
+          "program": "sqlite3",
+          "args": ["-readonly", "{path}", ".schema"],
+          "platforms": ["linux", "darwin", "win32"],
+          "fallback": "none built in: the schema is not parsed",
+          "outputCap": 1048576
+        }
+      ],
+      "consent": "none",
+      "traps": ["copy the db plus its -wal file before reading: an open WAL holds recent rows"],
+      "source": "leanrea@09ba4aa SKILL.md:50"
+    },
+    {
+      "id": "plist",
+      "target": "plist / nib / car",
+      "detect": { "formats": ["plist"], "names": ["*.plist", "*.nib", "*.car"], "markers": [] },
+      "probes": ["file.identify", "file.strings"],
+      "external": [
+        {
+          "id": "plutil-p",
+          "program": "plutil",
+          "args": ["-p", "{path}"],
+          "platforms": ["darwin"],
+          "fallback": "file.strings on the binary plist",
+          "outputCap": 1048576
+        }
+      ],
+      "consent": "none",
+      "traps": ["Info.plist holds the bundle id, URL schemes and privacy strings"],
+      "source": "leanrea@09ba4aa SKILL.md:51"
+    },
+    {
+      "id": "pcap",
+      "target": "pcap / HAR",
+      "detect": { "formats": ["pcap", "pcapng"], "names": ["*.pcap", "*.pcapng", "*.har"], "markers": [] },
+      "probes": ["file.identify", "js.endpoints"],
+      "external": [
+        {
+          "id": "tshark-conv",
+          "program": "tshark",
+          "args": ["-r", "{path}", "-q", "-z", "conv,tcp"],
+          "platforms": ["linux", "darwin", "win32"],
+          "fallback": "none built in for pcap; a HAR is JSON and js.endpoints lists its URLs",
+          "outputCap": 1048576
+        }
+      ],
+      "consent": "none",
+      "traps": ["TLS payloads are opaque: use SNI and DNS names, not bodies"],
+      "source": "leanrea@09ba4aa SKILL.md:52"
+    },
+    {
+      "id": "firmware",
+      "target": "Firmware image",
+      "detect": { "formats": ["unknown"], "names": ["*.bin", "*.img", "*.fw"], "markers": [] },
+      "probes": ["file.strings"],
+      "external": [
+        {
+          "id": "binwalk-scan",
+          "program": "binwalk",
+          "args": ["{path}"],
+          "platforms": ["linux", "darwin"],
+          "fallback": "none built in: embedded images are not carved",
+          "outputCap": 1048576
+        }
+      ],
+      "consent": "none",
+      "traps": ["after extraction (binwalk -e, needs approval) route each extracted binary through this table again"],
+      "source": "leanrea@09ba4aa SKILL.md:53"
+    },
+    {
+      "id": "website",
+      "target": "Website",
+      "detect": { "formats": [], "names": [], "markers": ["url"] },
+      "probes": [],
+      "external": [
+        {
+          "id": "curl",
+          "program": "curl",
+          "args": ["-sL", "{url}"],
+          "platforms": ["linux", "darwin", "win32"],
+          "fallback": "none: Assay probes do not use the network",
+          "outputCap": 4194304
+        }
+      ],
+      "consent": "approval",
+      "traps": [
+        "runtime behaviour needs a headless browser with a network log, which is execution, not static reading"
+      ],
+      "source": "leanrea@09ba4aa SKILL.md:54"
+    },
+    {
+      "id": "runtime",
+      "target": "Running app / runtime",
+      "detect": { "formats": [], "names": [], "markers": ["process"] },
+      "probes": [],
+      "external": [
+        {
+          "id": "lldb-attach",
+          "program": "lldb",
+          "args": ["-p", "{pid}"],
+          "platforms": ["darwin", "linux"],
+          "fallback": "none: attaching to a process is execution and needs approval",
+          "outputCap": 1048576
+        }
+      ],
+      "consent": "approval",
+      "traps": ["Electron --inspect works only if the RunAsNode/inspect fuses allow it"],
+      "source": "leanrea@09ba4aa SKILL.md:55"
+    }
+  ]
+}

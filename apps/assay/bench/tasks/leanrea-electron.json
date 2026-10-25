@@ -1,0 +1,20 @@
+{
+  "id": "leanrea-electron",
+  "title": "Notion app.asar: microphone / meeting detection",
+  "credit": "Copied from aicodeking/leanrea, commit 09ba4aa, bench/tasks.json (MIT License, Copyright (c) 2026 AICodeKing). Prompt and answer key unchanged.",
+  "licence": "MIT",
+  "source": "https://github.com/aicodeking/leanrea/blob/09ba4aa/bench/tasks.json",
+  "workspace": null,
+  "subjectFiles": ["app.asar", "app.asar.unpacked/"],
+  "targetsNote": "Targets are not redistributed. leanrea's bench/setup.sh copies them on macOS from Notion.app (7.35.1) and Homebrew's gh (built with go1.27.1); other versions need new keys.",
+  "question": "app.asar in this folder is the Notion desktop app (Electron). Find out how Notion detects that another app is using the microphone (meeting detection). Report: (1) the native module file and the native function(s) it calls, (2) the main-process class that drives detection and its two modes, (3) the IPC channel a renderer sends to START detection, (4) the IPC channel main broadcasts when the process list changes. Keep the answer short; cite file paths.",
+  "grading": "Each key value is a case-insensitive regular expression that must match the answer text (leanrea's grader).",
+  "key": {
+    "native fn": "getRunningInputAudioProcesses",
+    "module": "mac_utils",
+    "class": "AudioController",
+    "start ch": "notion:initialize-running-input-audio-process-detection",
+    "event ch": "notion:running-input-audio-processes-changed-v2"
+  },
+  "oracle": []
+}

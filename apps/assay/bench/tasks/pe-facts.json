@@ -1,0 +1,57 @@
+{
+  "id": "pe-facts",
+  "title": "PE facts",
+  "workspace": "fixtures",
+  "subjectFiles": ["pe/agent.exe", "pe/helper.dll"],
+  "question": "Which DLLs does agent.exe import, and does it touch the network or the registry?",
+  "oracle": [
+    {
+      "predicate": "native.links",
+      "params": {
+        "path": "pe/agent.exe",
+        "library": "wininet.dll"
+      },
+      "expect": "verified"
+    },
+    {
+      "predicate": "native.links",
+      "params": {
+        "path": "pe/agent.exe",
+        "library": "ADVAPI32.dll"
+      },
+      "expect": "verified"
+    },
+    {
+      "predicate": "native.links",
+      "params": {
+        "path": "pe/agent.exe",
+        "library": "ws2_32.dll"
+      },
+      "expect": "refuted"
+    },
+    {
+      "predicate": "file.identify",
+      "params": {
+        "path": "pe/agent.exe",
+        "format": "pe"
+      },
+      "expect": "verified"
+    },
+    {
+      "predicate": "file.identify",
+      "params": {
+        "path": "pe/helper.dll",
+        "format": "elf"
+      },
+      "expect": "refuted"
+    },
+    {
+      "predicate": "file.contains",
+      "params": {
+        "path": "pe/agent.exe",
+        "text": "InternetOpenUrlW"
+      },
+      "expect": "verified"
+    }
+  ]
+}

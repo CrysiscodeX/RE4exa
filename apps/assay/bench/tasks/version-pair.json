@@ -1,0 +1,65 @@
+{
+  "id": "version-pair",
+  "title": "version pair: v1 vs v2 (added dependency, new endpoint)",
+  "workspace": "fixtures",
+  "subjectFiles": ["version-pair/v1", "version-pair/v2"],
+  "question": "What changed between widget v1 and v2?",
+  "oracle": [
+    {
+      "predicate": "pkg.has-dependency",
+      "params": {
+        "path": "version-pair/v2",
+        "name": "telemetry-lite"
+      },
+      "expect": "verified"
+    },
+    {
+      "predicate": "pkg.has-dependency",
+      "params": {
+        "path": "version-pair/v1",
+        "name": "telemetry-lite"
+      },
+      "expect": "refuted"
+    },
+    {
+      "predicate": "endpoint.present",
+      "params": {
+        "path": "version-pair/v2/index.js",
+        "host": "metrics.newhost.example.io"
+      },
+      "expect": "verified"
+    },
+    {
+      "predicate": "endpoint.present",
+      "params": {
+        "path": "version-pair/v1/index.js",
+        "host": "metrics.newhost.example.io"
+      },
+      "expect": "refuted"
+    },
+    {
+      "predicate": "endpoint.present",
+      "params": {
+        "path": "version-pair/v1/index.js",
+        "host": "api.stable.example.com"
+      },
+      "expect": "verified"
+    },
+    {
+      "predicate": "js.imports",
+      "params": {
+        "path": "version-pair/v2/index.js",
+        "specifier": "telemetry-lite"
+      },
+      "expect": "verified"
+    },
+    {
+      "predicate": "js.imports",
+      "params": {
+        "path": "version-pair/v1/index.js",
+        "specifier": "telemetry-lite"
+      },
+      "expect": "refuted"
+    }
+  ]
+}

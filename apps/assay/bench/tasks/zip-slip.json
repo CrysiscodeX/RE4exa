@@ -1,0 +1,57 @@
+{
+  "id": "zip-slip",
+  "title": "archive with a zip-slip entry",
+  "workspace": "fixtures",
+  "subjectFiles": ["zip-slip/update.zip", "zip-slip/update.tar.gz"],
+  "question": "Is it safe to extract update.zip?",
+  "oracle": [
+    {
+      "predicate": "archive.contains",
+      "params": {
+        "path": "zip-slip/update.zip",
+        "entry": "../../etc/cron.d/evil"
+      },
+      "expect": "verified"
+    },
+    {
+      "predicate": "archive.contains",
+      "params": {
+        "path": "zip-slip/update.zip",
+        "entry": "app/readme.txt"
+      },
+      "expect": "verified"
+    },
+    {
+      "predicate": "archive.contains",
+      "params": {
+        "path": "zip-slip/update.zip",
+        "entry": "app/missing.txt"
+      },
+      "expect": "refuted"
+    },
+    {
+      "predicate": "archive.contains",
+      "params": {
+        "path": "zip-slip/update.tar.gz",
+        "entry": "../outside.txt"
+      },
+      "expect": "verified"
+    },
+    {
+      "predicate": "file.identify",
+      "params": {
+        "path": "zip-slip/update.zip",
+        "format": "zip"
+      },
+      "expect": "verified"
+    },
+    {
+      "predicate": "file.identify",
+      "params": {
+        "path": "zip-slip/update.tar.gz",
+        "format": "gzip"
+      },
+      "expect": "verified"
+    }
+  ]
+}

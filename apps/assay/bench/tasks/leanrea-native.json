@@ -1,0 +1,23 @@
+{
+  "id": "leanrea-native",
+  "title": "mac_utils.node: exports, TCC check, single-instance lock",
+  "credit": "Copied from aicodeking/leanrea, commit 09ba4aa, bench/tasks.json (MIT License, Copyright (c) 2026 AICodeKing). Prompt and answer key unchanged.",
+  "licence": "MIT",
+  "source": "https://github.com/aicodeking/leanrea/blob/09ba4aa/bench/tasks.json",
+  "workspace": null,
+  "subjectFiles": ["mac_utils.node"],
+  "targetsNote": "Targets are not redistributed. leanrea's bench/setup.sh copies them on macOS from Notion.app (7.35.1) and Homebrew's gh (built with go1.27.1); other versions need new keys.",
+  "question": "mac_utils.node in this folder is a macOS Node native addon from a desktop app. Report: (1) every JS-callable function name it exports, (2) exactly how checkAudioCaptureAccess decides the permission state (framework, function, service name), (3) how requestSingleInstanceLock works (mechanism and filesystem path). Keep the answer short.",
+  "grading": "Each key value is a case-insensitive regular expression that must match the answer text (leanrea's grader).",
+  "key": {
+    "TCC fw": "TCC\\.framework|TCC framework",
+    "preflight": "TCCAccessPreflight",
+    "service": "kTCCServiceAudioCapture",
+    "socket": "(unix|domain|AF_UNIX|local) ?(domain )?socket",
+    "path": "/tmp/com\\.notion\\.singleinstance",
+    "fn1": "isWindowOccluded",
+    "fn2": "getProcessesAccessingSpeakersWithResult",
+    "fn3": "isSchemeHandlerPresent"
+  },
+  "oracle": []
+}

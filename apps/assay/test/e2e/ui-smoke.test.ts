@@ -11,7 +11,7 @@ import { after, before, test } from "node:test";
 import { fileURLToPath } from "node:url";
 
 const require = createRequire(import.meta.url);
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const SHOTS = join(ROOT, "test-results", "ui");
 const AXE = readFileSync(join(ROOT, "node_modules", "axe-core", "axe.min.js"), "utf8");
 
@@ -39,7 +39,7 @@ interface Page {
   getByRole(r: string, o?: object): Locator;
   getByText(t: string | RegExp, o?: object): Locator;
   keyboard: { press(k: string): Promise<void>; type(t: string): Promise<void> };
-  waitForFunction(f: string, a?: unknown, o?: object): Promise<unknown>;
+  waitForFunction(f: string | (() => unknown), a?: unknown, o?: object): Promise<unknown>;
   on(e: string, cb: (x: { type(): string; text(): string }) => void): void;
   setViewportSize(s: { width: number; height: number }): Promise<void>;
 }
@@ -182,7 +182,9 @@ test("send a message, see streaming text, approve, see claim chips", async () =>
     .getByRole("button", { name: /Claim unverifiable: The default build does not access the network/ })
     .waitFor();
   await page.getByRole("button", { name: /Claim verified: libfoo 2\.4\.1 adds 3 exported symbols/ }).waitFor();
-  await page.waitForFunction("window.__announced.some((t) => t.startsWith('Turn in'))");
+  await page.waitForFunction(() =>
+    (window as unknown as { __announced: string[] }).__announced.some((t) => t.startsWith("Turn in")),
+  );
   const said = await page.evaluate(() => (window as unknown as { __announced: string[] }).__announced);
   assert.ok(
     said.some((t) => t.startsWith("Approval needed: exec")),
@@ -239,7 +241,7 @@ test("keyboard: sidebar arrows and Escape closes the palette", async () => {
   await page.keyboard.press("Control+k");
   await page.getByRole("combobox", { name: "Type a command" }).waitFor();
   await page.keyboard.press("Escape");
-  await page.waitForFunction("!document.querySelector('dialog[open]')");
+  await page.waitForFunction(() => !document.querySelector("dialog[open]"));
 });
 
 test("dark theme passes axe", async () => {
@@ -261,8 +263,8 @@ test("command palette toggles the theme; light theme passes axe", async () => {
   const badPalette = await axe(page, "palette");
   assert.equal(badPalette.length, 0, `palette axe: ${badPalette.map((v) => v.id).join(", ")}`);
   await input.press("Enter");
-  await page.waitForFunction("document.documentElement.dataset.theme === 'light'");
-  await page.waitForFunction("!document.querySelector('dialog[open]')");
+  await page.waitForFunction(() => document.documentElement.dataset.theme === "light");
+  await page.waitForFunction(() => !document.querySelector("dialog[open]"));
   await page.screenshot({ path: join(SHOTS, "light.png") });
   const bad = await axe(page, "light");
   assert.equal(bad.length, 0, `light axe: ${bad.map((v) => v.id).join(", ")}`);

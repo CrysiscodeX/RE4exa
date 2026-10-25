@@ -27,11 +27,6 @@ export const FAILURE_MODES = {
     message: "Lease length must be a positive number of milliseconds",
     fix: "Pass leaseMs > 0",
   },
-  task_parked: {
-    retryable: false,
-    message: "The task crashed too many times and was parked",
-    fix: "Inspect the task's attempts, fix the cause, then unpark it",
-  },
   effect_interrupted: {
     retryable: false,
     message: "An unsafe effect was interrupted and may have partly run",
@@ -87,11 +82,6 @@ export const FAILURE_MODES = {
     message: "The person denied this action",
     fix: "Ask the person, or choose an action without effects",
   },
-  approval_required: {
-    retryable: false,
-    message: "This action needs the person's approval",
-    fix: "Wait for approval in the Assay window",
-  },
   approval_expired: {
     retryable: true,
     message: "Nobody answered the approval request in time",
@@ -137,11 +127,6 @@ export const FAILURE_MODES = {
     retryable: true,
     message: "The agent client failed or broke its protocol",
     fix: "See the error detail; check the client with `assay doctor`, then retry the turn",
-  },
-  credential_refused: {
-    retryable: false,
-    message: "This credential type is not allowed",
-    fix: "Use the provider's official client and sign in there",
   },
   unauthorized: {
     retryable: false,

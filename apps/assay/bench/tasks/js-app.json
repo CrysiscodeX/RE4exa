@@ -1,0 +1,89 @@
+{
+  "id": "js-app",
+  "title": "JS app with dynamic import, worker URL and endpoints",
+  "workspace": "fixtures",
+  "subjectFiles": ["js-app/src"],
+  "question": "Which modules and hosts does js-app load or contact?",
+  "oracle": [
+    {
+      "predicate": "js.imports",
+      "params": {
+        "path": "js-app/src/main.js",
+        "specifier": "./util.js"
+      },
+      "expect": "verified"
+    },
+    {
+      "predicate": "js.imports",
+      "params": {
+        "path": "js-app/src/main.js",
+        "specifier": "./worker.js"
+      },
+      "expect": "verified"
+    },
+    {
+      "predicate": "js.imports",
+      "params": {
+        "path": "js-app/src/main.js",
+        "specifier": "./plugins/a.js"
+      },
+      "expect": "unverifiable"
+    },
+    {
+      "predicate": "js.imports",
+      "params": {
+        "path": "js-app/src/main.js",
+        "specifier": "lodash"
+      },
+      "expect": "unverifiable"
+    },
+    {
+      "predicate": "js.imports",
+      "params": {
+        "path": "js-app/src/util.js",
+        "specifier": "node:fs"
+      },
+      "expect": "verified"
+    },
+    {
+      "predicate": "js.imports",
+      "params": {
+        "path": "js-app/src/util.js",
+        "specifier": "axios"
+      },
+      "expect": "refuted"
+    },
+    {
+      "predicate": "endpoint.present",
+      "params": {
+        "path": "js-app/src/main.js",
+        "host": "api.telemetry-example.io"
+      },
+      "expect": "verified"
+    },
+    {
+      "predicate": "endpoint.present",
+      "params": {
+        "path": "js-app/src/main.js",
+        "host": "live.example.org"
+      },
+      "expect": "verified"
+    },
+    {
+      "predicate": "endpoint.present",
+      "params": {
+        "path": "js-app/src/main.js",
+        "host": "legacy.example.net"
+      },
+      "expect": "unverifiable"
+    },
+    {
+      "predicate": "endpoint.present",
+      "params": {
+        "path": "js-app/src/main.js",
+        "host": "evil.example.com"
+      },
+      "expect": "refuted"
+    }
+  ]
+}

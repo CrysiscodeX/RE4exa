@@ -7,7 +7,7 @@ import type { SweepReport } from "../../src/contracts.ts";
 import type { ApprovalView, CaseDetail, ClaimView, TimelineEntry, WorkerView } from "../../src/server/api-types.ts";
 import { api, streamKey, useData } from "./api.ts";
 import { Icon, ProviderIcon } from "./icons.tsx";
-import { Markdown } from "./markdown.tsx";
+import { Markdown, PlainWithUntrusted } from "./markdown.tsx";
 import { Liveness, StatusDot, VERDICT_GLYPH, verdictName } from "./status.tsx";
 import { clock, copyText, cx, json, providerName, usd } from "./util.ts";
 import { forkAt, openEvidence, openWorker, toast, toastError } from "./view.ts";
@@ -169,7 +169,7 @@ function WorkerCard(props: { entry: TimelineEntry; worker: WorkerView | undefine
         ) : null}
       </header>
       {w && !done ? <p className="muted small">{w.task}</p> : null}
-      {done && strOf(d.result) ? <p className="worker-result">{strOf(d.result)}</p> : null}
+      {done && strOf(d.result) ? <PlainWithUntrusted className="worker-result" text={strOf(d.result) ?? ""} /> : null}
     </article>
   );
 }
@@ -456,7 +456,7 @@ export function WorkerHeader(props: { worker: WorkerView; accountLabel: string }
         <span className="muted small push">{usd(w.costUsd, 3)}</span>
       </div>
       <p className="muted small">{w.task}</p>
-      {w.result ? <p className="worker-result">{w.result}</p> : null}
+      {w.result ? <PlainWithUntrusted className="worker-result" text={w.result} /> : null}
     </div>
   );
 }

@@ -260,6 +260,7 @@ export class Orchestrator {
       }
     }, 60_000);
     heartbeat.unref();
+    const turnStart = this.k.now();
     try {
       runner.text = "";
       this.#status(caseId, workerId, runner, "working");
@@ -268,12 +269,22 @@ export class Orchestrator {
       );
       const finalText = out.text || runner.text;
       const entry = this.log(caseId, "assistant", finalText, { stopReason: out.stopReason }, workerId);
+      // claims recorded through tools during this turn belong to this message and to this provider/account
+      this.k.run(
+        "UPDATE claims SET event_seq=?, author=? WHERE case_id=? AND event_seq IS NULL AND author=? AND created_at>=?",
+        entry.seq,
+        `${runner.provider}:${runner.accountId}${workerId ? `:${workerId}` : ""}`,
+        caseId,
+        workerId ?? "coordinator",
+        turnStart,
+      );
       this.#claimsFromText(caseId, workerId, runner, finalText, entry.seq);
       this.k.completeTask(att, { stopReason: out.stopReason });
       this.#status(caseId, workerId, runner, workerId ? (runner.status === "done" ? "done" : "idle") : "idle");
       this.#rememberSession(caseId, workerId, runner);
-      if (!workerId) await this.verify(caseId);
+      await this.verify(caseId);
     } catch (e) {
+      if (this.#closing || this.k.closed) return;
       const err = isAssayError(e)
         ? e.toJSON()
         : { code: "provider_unavailable", message: String((e as Error)?.message ?? e) };
@@ -336,7 +347,7 @@ export class Orchestrator {
           verdict: c.verdict,
           reason: c.verdict_record?.reason ?? null,
           observationId: c.verdict_record?.observation_id ?? null,
-          eventSeq: null,
+          eventSeq: c.event_seq,
         },
       });
     if (changed.length) {
@@ -952,11 +963,25 @@ export class Orchestrator {
     return listUnknowns(this.k, caseId).filter((u) => u.status === "open").length;
   }
 
+  #closing = false;
+
+  /** Stop every session and wait (briefly) for turns in flight, so nothing writes after the store closes. */
   async shutdown(): Promise<void> {
+    this.#closing = true;
+    const busy: Promise<unknown>[] = [];
     for (const rt of this.#cases.values()) {
-      for (const r of [rt.coordinator, ...rt.workers.values()])
-        if (r) await this.#closeRunner(r).catch(() => undefined);
+      for (const r of [rt.coordinator, ...rt.workers.values()]) {
+        if (!r) continue;
+        if (r.busy) busy.push(r.busy.catch(() => undefined));
+        await r.session.interrupt().catch(() => undefined);
+        await this.#closeRunner(r).catch(() => undefined);
+      }
     }
+    await Promise.race([Promise.all(busy), new Promise((r) => setTimeout(r, 3000))]);
     this.#cases.clear();
+  }
+
+  get closing(): boolean {
+    return this.#closing;
   }
 }

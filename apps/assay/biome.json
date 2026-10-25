@@ -9,7 +9,9 @@
       "scripts/**",
       "ui/mock/**",
       "!src/vendor/**",
-      "!ui/dist/**"
+      "!ui/dist/**",
+      "!test/fixtures/tripwire/**",
+      "!bench/tasks/fixtures/**"
     ]
   },
   "formatter": {

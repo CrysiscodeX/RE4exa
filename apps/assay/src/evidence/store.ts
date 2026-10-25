@@ -190,6 +190,8 @@ export interface StoredClaim {
   claim: AgentClaim;
   verdict: Verdict | null;
   verdict_record: { observation_id?: string; reason: string; probe?: string } | null;
+  /** Seq of the assistant message the claim belongs to, when known. */
+  event_seq: number | null;
   created_at: number;
 }
 
@@ -214,7 +216,16 @@ export function recordClaim(
     eventSeq,
     k.now(),
   );
-  return { id, case_id: caseId, author, claim, verdict: null, verdict_record: null, created_at: k.now() };
+  return {
+    id,
+    case_id: caseId,
+    author,
+    claim,
+    verdict: null,
+    verdict_record: null,
+    event_seq: eventSeq,
+    created_at: k.now(),
+  };
 }
 
 export function setVerdict(k: Kernel, claimId: string, verdict: Verdict, record: StoredClaim["verdict_record"]): void {
@@ -248,6 +259,7 @@ function rowToClaim(r: Row): StoredClaim {
     claim: JSON.parse(r.record as string) as AgentClaim,
     verdict: (r.verdict as Verdict | null) ?? null,
     verdict_record: r.verdict_record ? JSON.parse(r.verdict_record as string) : null,
+    event_seq: r.event_seq === null || r.event_seq === undefined ? null : Number(r.event_seq),
     created_at: Number(r.created_at),
   };
 }

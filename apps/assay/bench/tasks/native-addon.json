@@ -1,0 +1,57 @@
+{
+  "id": "native-addon",
+  "title": "package with a native add-on",
+  "workspace": "fixtures",
+  "subjectFiles": ["native-addon/fast-hash"],
+  "question": "Does fast-hash ship native code, what does it link, and does it build at install time?",
+  "oracle": [
+    {
+      "predicate": "pkg.has-install-script",
+      "params": {
+        "path": "native-addon/fast-hash",
+        "hook": "install"
+      },
+      "expect": "verified"
+    },
+    {
+      "predicate": "pkg.has-dependency",
+      "params": {
+        "path": "native-addon/fast-hash",
+        "name": "node-gyp-build"
+      },
+      "expect": "verified"
+    },
+    {
+      "predicate": "native.links",
+      "params": {
+        "path": "native-addon/fast-hash/build/Release/fast_hash.node",
+        "library": "libcrypto.so.3"
+      },
+      "expect": "verified"
+    },
+    {
+      "predicate": "native.links",
+      "params": {
+        "path": "native-addon/fast-hash/build/Release/fast_hash.node",
+        "library": "libssl.so.3"
+      },
+      "expect": "refuted"
+    },
+    {
+      "predicate": "file.identify",
+      "params": {
+        "path": "native-addon/fast-hash/build/Release/fast_hash.node",
+        "format": "elf"
+      },
+      "expect": "verified"
+    },
+    {
+      "predicate": "file.identify",
+      "params": {
+        "path": "native-addon/fast-hash/build/Release/fast_hash.node",
+        "format": "pe"
+      },
+      "expect": "refuted"
+    }
+  ]
+}
