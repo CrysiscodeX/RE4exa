@@ -312,7 +312,18 @@ export function createAccounts(o: AccountsOptions): Accounts {
       if (p) {
         const term = p;
         term.onData((d) => onOutput(d, false));
-        term.onExit((e) => finish(e.exitCode));
+        term.onExit((e) => {
+          finish(e.exitCode);
+          // On Windows node-pty closes the pseudoconsole and stops its conout worker thread only in
+          // kill(); after a natural exit both would leak (and keep the process from exiting).
+          if (process.platform === "win32") {
+            try {
+              term.kill();
+            } catch {
+              // already released
+            }
+          }
+        });
         handle = { kind: "pty", write: (d) => term.write(d), kill: () => term.kill() };
       } else {
         let child: ChildProcessWithoutNullStreams;
