@@ -16,7 +16,7 @@ import {
   setVerdict,
   wilson,
 } from "../src/evidence/store.ts";
-import { openTemp } from "../src/testing/helpers.ts";
+import { FakeClock, openTemp } from "../src/testing/helpers.ts";
 
 const probe = { id: "file.identify", version: "1" };
 const digest = subjectDigest(new TextEncoder().encode("hello"));
@@ -177,4 +177,26 @@ test("claims carry verdicts, and verdicts feed calibration with Wilson intervals
   const [lo, hi] = wilson(0, 0);
   assert.deepEqual([lo, hi], [0, 1]);
   cleanup();
+});
+
+test("rows written in the same millisecond come back in the order they were written", () => {
+  const t = openTemp(new FakeClock());
+  try {
+    const c = t.k.createCase({ title: "ties" });
+    const recs = [1, 2, 3, 4, 5].map((n) => rec({ result: { format: `f${n}` } }));
+    // Write them in reverse id order, so neither id order nor an accident of the index matches.
+    recs.sort((a, b) => (a.observation_id < b.observation_id ? 1 : -1));
+    for (const r of recs) putEvidence(t.k, c.id, r);
+    assert.deepEqual(
+      caseEvidence(t.k, c.id).map((r) => r.observation_id),
+      recs.map((r) => r.observation_id),
+    );
+    const claims = ["z", "a", "m"].map((s) => recordClaim(t.k, c.id, "fake:a", { text: s, label: "seen" }).id);
+    assert.deepEqual(
+      caseClaims(t.k, c.id).map((x) => x.id),
+      claims,
+    );
+  } finally {
+    t.cleanup();
+  }
 });

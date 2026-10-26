@@ -1,5 +1,6 @@
 {
   "name": "re4exa",
+  "version": "0.0.0",
   "private": true,
   "description": "RE4exa workspace: packages/core (shared engine) and the apps built on it (Assay; reax).",
   "license": "Apache-2.0",

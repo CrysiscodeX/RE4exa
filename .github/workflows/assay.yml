@@ -69,8 +69,11 @@ jobs:
         run: npm run coverage
       - name: Generated docs are current (capabilities, reach, failure modes)
         run: node --conditions=source --disable-warning=ExperimentalWarning scripts/gen-docs.ts --check
-      - name: SBOM
-        run: npm sbom --sbom-format cyclonedx --omit dev > sbom.cdx.json && node -e "JSON.parse(require('fs').readFileSync('sbom.cdx.json','utf8'))"
+      - name: SBOM (Assay and what it ships with, not the other workspaces)
+        working-directory: .
+        run: |
+          npm sbom --workspace assay --sbom-format cyclonedx --omit dev > apps/assay/sbom.cdx.json
+          node -e "const n=JSON.parse(require('fs').readFileSync('apps/assay/sbom.cdx.json','utf8')).components.map(c=>c.name); if(!n.includes('assay')||!n.includes('core')||n.includes('reax')) process.exit(1)"
       - name: Build and install rehearsal (pack core and Assay, install both tarballs, run the installed CLI)
         run: node --conditions=source --disable-warning=ExperimentalWarning scripts/install-rehearsal.ts
       - name: Browser end-to-end

@@ -42,7 +42,7 @@ export function getEvidence(k: Kernel, id: string): ClaimRecord | undefined {
 
 export function evidenceByProbeKey(k: Kernel, probeKey: string): ClaimRecord | undefined {
   const r = k.get<{ record: string }>(
-    "SELECT record FROM evidence WHERE probe_key=? ORDER BY created_at LIMIT 1",
+    "SELECT record FROM evidence WHERE probe_key=? ORDER BY created_at, rowid LIMIT 1",
     probeKey,
   );
   return r ? (JSON.parse(r.record) as ClaimRecord) : undefined;
@@ -51,7 +51,7 @@ export function evidenceByProbeKey(k: Kernel, probeKey: string): ClaimRecord | u
 export function caseEvidence(k: Kernel, caseId: string): ClaimRecord[] {
   return k
     .all<{ record: string }>(
-      "SELECT e.record FROM case_evidence c JOIN evidence e ON e.observation_id=c.observation_id WHERE c.case_id=? AND c.delivered=1 ORDER BY e.created_at",
+      "SELECT e.record FROM case_evidence c JOIN evidence e ON e.observation_id=c.observation_id WHERE c.case_id=? AND c.delivered=1 ORDER BY e.created_at, c.rowid",
       caseId,
     )
     .map((r) => JSON.parse(r.record) as ClaimRecord);
@@ -103,7 +103,7 @@ export function latestUnknown(k: Kernel, caseId: string, id: string): Unknown | 
 export function listUnknowns(k: Kernel, caseId: string): Unknown[] {
   return k
     .all<Row>(
-      "SELECT u.* FROM unknowns u WHERE u.case_id=? AND u.rev=(SELECT MAX(rev) FROM unknowns WHERE case_id=u.case_id AND id=u.id) ORDER BY u.at",
+      "SELECT u.* FROM unknowns u WHERE u.case_id=? AND u.rev=(SELECT MAX(rev) FROM unknowns WHERE case_id=u.case_id AND id=u.id) ORDER BY u.at, u.rowid",
       caseId,
     )
     .map(
@@ -248,7 +248,7 @@ export function getClaim(k: Kernel, id: string): StoredClaim | undefined {
 }
 
 export function caseClaims(k: Kernel, caseId: string): StoredClaim[] {
-  return k.all<Row>("SELECT * FROM claims WHERE case_id=? ORDER BY created_at", caseId).map(rowToClaim);
+  return k.all<Row>("SELECT * FROM claims WHERE case_id=? ORDER BY created_at, rowid", caseId).map(rowToClaim);
 }
 
 function rowToClaim(r: Row): StoredClaim {

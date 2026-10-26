@@ -217,7 +217,7 @@ export class Kernel {
   }
 
   listCases(): CaseRow[] {
-    return this.all<Row>("SELECT * FROM cases ORDER BY created_at DESC").map(
+    return this.all<Row>("SELECT * FROM cases ORDER BY created_at DESC, rowid DESC").map(
       (r) => ({ ...r, meta: parse(r.meta) }) as unknown as CaseRow,
     );
   }
@@ -367,7 +367,7 @@ export class Kernel {
       where.push(`${col}=?`);
       args.push(val);
     }
-    const sql = `SELECT id FROM tasks ${where.length ? `WHERE ${where.join(" AND ")}` : ""} ORDER BY created_at`;
+    const sql = `SELECT id FROM tasks ${where.length ? `WHERE ${where.join(" AND ")}` : ""} ORDER BY created_at, rowid`;
     return this.all<{ id: string }>(sql, ...args).map((r) => this.getTask(r.id)!);
   }
 
@@ -398,7 +398,7 @@ export class Kernel {
         );
       }
       const next = this.get<Row>(
-        "SELECT id, attempts FROM tasks WHERE queue=? AND state='pending' AND available_at<=? ORDER BY available_at, created_at LIMIT 1",
+        "SELECT id, attempts FROM tasks WHERE queue=? AND state='pending' AND available_at<=? ORDER BY available_at, created_at, rowid LIMIT 1",
         queue,
         now,
       );
@@ -675,7 +675,7 @@ export class Kernel {
   }
 
   intents(taskId: string): Row[] {
-    return this.all("SELECT * FROM intents WHERE task_id=? ORDER BY created_at", taskId);
+    return this.all("SELECT * FROM intents WHERE task_id=? ORDER BY created_at, rowid", taskId);
   }
 
   // ---------- receipts: idempotent replay of requests (Orca) ----------
