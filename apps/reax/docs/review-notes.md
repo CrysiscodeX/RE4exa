@@ -77,7 +77,7 @@ approval for each run, scope limits (`scope.md`), no network for the instrumente
 approved. Review: what an approved session can reach, how approval is bound to one target, and
 how a session is torn down on daemon crash.
 
-### SR-8. Secrets found inside targets
+### SR-8. Secrets found inside targets (see also ledger row REA-A6.4)
 Plan §3.5: secrets found in targets are stored encrypted at rest; model-facing output shows a
 fingerprint and type only; revealing a value is an approval-gated operation. Review: key storage
 per platform, what the reveal operation logs, and whether reveal should exist at all.
@@ -96,3 +96,10 @@ model's suggestions into an `annotate` approval that a user accepts without read
 ### SR-11. Annotation write-back to engine projects
 Plan §3.5: rename, retype, comment and bookmark only, with snapshots before each write session.
 Review that no operation can reach byte-level patching through an engine's scripting interface.
+
+### SR-12. Network access for live browser observation (phase 3)
+Live page observation (rea family C20, leanrea C38) needs network, but plan §3.6 runs every engine
+with the network off. Candidate design: a separate approval-gated sandbox profile that allows
+only the target origin through a recording proxy, with the CDP port on loopback and closed when
+the job ends. Review what the instrumented page can reach and what the recording keeps. Status:
+open; must be decided before phase 3.

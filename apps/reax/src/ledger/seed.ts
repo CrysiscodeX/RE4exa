@@ -529,6 +529,7 @@ export function leanreaParity(root: string, phases: PhaseMap): ParityRow[] {
 
 const PROFILE_OWNED_LIMIT = ["title", "evidence", "severity", "kind", "source", "subject"] as const;
 const PROFILE_OWNED_PARITY = ["title", "kind", "family", "source"] as const;
+const UNSTATED = new Set(["unrated", "unknown"]);
 
 /** Merge freshly extracted rows into the existing ones: keep triage, refresh profile-owned fields,
  * add new rows, mark vanished ones orphaned. Rows not produced by the seeder (reax's own rows)
@@ -553,10 +554,11 @@ export function merge<T extends { source: SourceRef | null; orphaned?: boolean }
       continue;
     }
     const merged = { ...old } as T;
-    for (const field of owned) merged[field] = f[field];
+    // The profile wins for the fields it owns, but only where it states a value: a severity or
+    // kind the profile leaves "unrated"/"unknown" keeps the triaged one. Category, fix, phase,
+    // platforms, wont and note are triage and are never overwritten.
+    for (const field of owned) if (!UNSTATED.has(f[field] as unknown as string)) merged[field] = f[field];
     delete merged.orphaned;
-    // A category set by the classifier may be overridden by hand; keep the old one unless the
-    // profile itself states an area (rea §9A), in which case the profile wins.
     out.push(merged);
   }
   for (const old of existing) {

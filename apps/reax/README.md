@@ -12,6 +12,7 @@ when something counts as done.
 | `docs/ledger/sources/rea-6.8.0-tools.json` | rea's public tool names and annotation hints, captured over MCP `tools/list`. No descriptions, schemas or code. |
 | `scripts/seed-register.ts` | Re-seeds the ledger from the profiles. Keeps triage, marks vanished rows orphaned. |
 | `scripts/parity-check.ts` | Computes each row's status from the JUnit reports of every CI lane. |
+| `docs/plan.md` | The plan, with §14: the changes the register's triage found. |
 | `docs/decisions/` | Decisions that deviate from or refine the plan. |
 | `docs/review-notes.md` | Security items recorded for review. |
 
@@ -22,7 +23,10 @@ names, in one CI run. Skipped tests count as not run; a failing tagged test make
 regressed; a tag that names no row fails the check. Status is never committed.
 
 Not done yet:
-- the limitation rows are untriaged (`phase: null`, `fix: null`);
+- the limitation rows are triaged (phase, fix, severity, kind) as a draft: written by an agent from
+  the plan and profiles, spot-checked on 19 rows, not yet reviewed by a person. Eight wont
+  candidates stay gated until a person decides. The plan changes the triage found are in
+  [`docs/plan.md`](docs/plan.md) §14;
 - `docs/operations.md` and the operation registry arrive in phase 1;
 - the phase 0c benchmark harness, which leanrea's benchmark rows wait on.
 

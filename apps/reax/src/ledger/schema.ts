@@ -62,6 +62,8 @@ export interface LimitationRow {
   wont: { reason: string; reviewer: string } | null;
   /** Set by the seeder when the profile no longer contains the row; never deleted silently. */
   orphaned?: boolean;
+  /** A triage caveat: an unconfirmed source, a row that may be a duplicate, a doubt about scope. */
+  note?: string;
 }
 
 export interface ParityRow {
