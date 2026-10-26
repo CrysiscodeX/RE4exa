@@ -1,0 +1,10 @@
+// The instruction every arm gets after the task question. Identical across arms, so the grader
+// reads every answer the same way.
+export const ANSWER_FORMAT = `When you are done, end your answer with one fenced block whose info string is "claims", holding a
+JSON array. Each element is one fact you are claiming:
+  {"predicate": "...", "subject": "<file name>", "value": "<string, or null for none>", "label": "observed" | "inferred" | "unknown"}
+Use "observed" only for what you read from the file itself. One element per value: a list of
+libraries or symbols is one claim per item. Predicates: file.format (elf, pe, macho, macho-fat,
+wasm), native.arch, native.bits, native.links, native.interpreter, native.exports, native.symtab
+(true/false), debug.dwarf (true/false), debug.comp_dir, cpp.function (demangled, qualified),
+strings.contains. Claim only what you checked.`;

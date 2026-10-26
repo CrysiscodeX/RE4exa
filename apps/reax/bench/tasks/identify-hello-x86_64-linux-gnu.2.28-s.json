@@ -1,0 +1,37 @@
+{
+ "id": "identify-hello-x86_64-linux-gnu.2.28-s",
+ "class": "cheap",
+ "question": "What file format and CPU architecture is hello-x86_64-linux-gnu.2.28-s, and is it 32- or 64-bit?",
+ "subjects": [
+  {
+   "file": "hello-x86_64-linux-gnu.2.28-s",
+   "sha256": "e11ab716d5bfdef2ecef7f21e78817ab3263423d7636b00aa94bbbcc2c877a4d"
+  }
+ ],
+ "oracle": [
+  {
+   "predicate": "file.format",
+   "subject": "hello-x86_64-linux-gnu.2.28-s",
+   "value": "elf",
+   "expect": true
+  },
+  {
+   "predicate": "native.arch",
+   "subject": "hello-x86_64-linux-gnu.2.28-s",
+   "value": "x86_64",
+   "expect": true
+  },
+  {
+   "predicate": "native.arch",
+   "subject": "hello-x86_64-linux-gnu.2.28-s",
+   "value": "aarch64",
+   "expect": false
+  },
+  {
+   "predicate": "native.bits",
+   "subject": "hello-x86_64-linux-gnu.2.28-s",
+   "value": "64",
+   "expect": true
+  }
+ ]
+}

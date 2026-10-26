@@ -1,0 +1,54 @@
+{
+ "id": "exports-lib-x86_64-windows-gnu-s.dll",
+ "class": "medium",
+ "question": "Which reax_* symbols does lib-x86_64-windows-gnu-s.dll export?",
+ "subjects": [
+  {
+   "file": "lib-x86_64-windows-gnu-s.dll",
+   "sha256": "93cf3477ba72e161e5a3b5cd8a9a2d36bada7e68e3f59472b7e2a3a26bb63903"
+  }
+ ],
+ "oracle": [
+  {
+   "predicate": "native.exports",
+   "subject": "lib-x86_64-windows-gnu-s.dll",
+   "value": "reax_add",
+   "expect": true,
+   "complete": true
+  },
+  {
+   "predicate": "native.exports",
+   "subject": "lib-x86_64-windows-gnu-s.dll",
+   "value": "reax_apply",
+   "expect": true,
+   "complete": true
+  },
+  {
+   "predicate": "native.exports",
+   "subject": "lib-x86_64-windows-gnu-s.dll",
+   "value": "reax_counter",
+   "expect": true,
+   "complete": true
+  },
+  {
+   "predicate": "native.exports",
+   "subject": "lib-x86_64-windows-gnu-s.dll",
+   "value": "reax_mul",
+   "expect": true,
+   "complete": true
+  },
+  {
+   "predicate": "native.exports",
+   "subject": "lib-x86_64-windows-gnu-s.dll",
+   "value": "reax_version",
+   "expect": true,
+   "complete": true
+  },
+  {
+   "predicate": "native.exports",
+   "subject": "lib-x86_64-windows-gnu-s.dll",
+   "value": "reax_hidden",
+   "expect": false
+  }
+ ]
+}

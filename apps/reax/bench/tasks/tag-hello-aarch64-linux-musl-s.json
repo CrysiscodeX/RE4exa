@@ -1,0 +1,19 @@
+{
+ "id": "tag-hello-aarch64-linux-musl-s",
+ "class": "cheap",
+ "question": "hello-aarch64-linux-musl-s embeds a build tag string that starts with \"reax-fixture-tag-\". What is it?",
+ "subjects": [
+  {
+   "file": "hello-aarch64-linux-musl-s",
+   "sha256": "d05f7ca5a9075eab58ae0220da2664eef3d9e63d9a712404b3675adb105da393"
+  }
+ ],
+ "oracle": [
+  {
+   "predicate": "strings.contains",
+   "subject": "hello-aarch64-linux-musl-s",
+   "value": "reax-fixture-tag-7f3a",
+   "expect": true
+  }
+ ]
+}

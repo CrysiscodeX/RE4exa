@@ -1,0 +1,37 @@
+{
+ "id": "identify-hello-aarch64-linux-musl-s",
+ "class": "cheap",
+ "question": "What file format and CPU architecture is hello-aarch64-linux-musl-s, and is it 32- or 64-bit?",
+ "subjects": [
+  {
+   "file": "hello-aarch64-linux-musl-s",
+   "sha256": "d05f7ca5a9075eab58ae0220da2664eef3d9e63d9a712404b3675adb105da393"
+  }
+ ],
+ "oracle": [
+  {
+   "predicate": "file.format",
+   "subject": "hello-aarch64-linux-musl-s",
+   "value": "elf",
+   "expect": true
+  },
+  {
+   "predicate": "native.arch",
+   "subject": "hello-aarch64-linux-musl-s",
+   "value": "aarch64",
+   "expect": true
+  },
+  {
+   "predicate": "native.arch",
+   "subject": "hello-aarch64-linux-musl-s",
+   "value": "x86_64",
+   "expect": false
+  },
+  {
+   "predicate": "native.bits",
+   "subject": "hello-aarch64-linux-musl-s",
+   "value": "64",
+   "expect": true
+  }
+ ]
+}

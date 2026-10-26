@@ -1,0 +1,37 @@
+{
+ "id": "identify-hello-x86_64-windows-gnu-s.exe",
+ "class": "cheap",
+ "question": "What file format and CPU architecture is hello-x86_64-windows-gnu-s.exe, and is it 32- or 64-bit?",
+ "subjects": [
+  {
+   "file": "hello-x86_64-windows-gnu-s.exe",
+   "sha256": "2df148a63029afc45b14c6c308b456456c89a83cf02120bacb51965ff01f09c3"
+  }
+ ],
+ "oracle": [
+  {
+   "predicate": "file.format",
+   "subject": "hello-x86_64-windows-gnu-s.exe",
+   "value": "pe",
+   "expect": true
+  },
+  {
+   "predicate": "native.arch",
+   "subject": "hello-x86_64-windows-gnu-s.exe",
+   "value": "x86_64",
+   "expect": true
+  },
+  {
+   "predicate": "native.arch",
+   "subject": "hello-x86_64-windows-gnu-s.exe",
+   "value": "aarch64",
+   "expect": false
+  },
+  {
+   "predicate": "native.bits",
+   "subject": "hello-x86_64-windows-gnu-s.exe",
+   "value": "64",
+   "expect": true
+  }
+ ]
+}

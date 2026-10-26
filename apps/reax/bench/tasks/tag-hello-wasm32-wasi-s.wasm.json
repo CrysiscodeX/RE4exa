@@ -1,0 +1,19 @@
+{
+ "id": "tag-hello-wasm32-wasi-s.wasm",
+ "class": "cheap",
+ "question": "hello-wasm32-wasi-s.wasm embeds a build tag string that starts with \"reax-fixture-tag-\". What is it?",
+ "subjects": [
+  {
+   "file": "hello-wasm32-wasi-s.wasm",
+   "sha256": "b6fd763f1d5cd048416a2418c00d00c1084b9c7e0b790fcf95b6db3c8c667cc8"
+  }
+ ],
+ "oracle": [
+  {
+   "predicate": "strings.contains",
+   "subject": "hello-wasm32-wasi-s.wasm",
+   "value": "reax-fixture-tag-7f3a",
+   "expect": true
+  }
+ ]
+}

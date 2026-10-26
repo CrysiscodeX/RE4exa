@@ -1,0 +1,32 @@
+{
+ "id": "links-hello-x86_64-linux-musl-s",
+ "class": "medium",
+ "question": "Which shared libraries or DLLs does hello-x86_64-linux-musl-s load at run time, and which program interpreter does it name?",
+ "subjects": [
+  {
+   "file": "hello-x86_64-linux-musl-s",
+   "sha256": "cae817a607ad30718ed786b5e58e67e66962cd4c7c74d3ca9aa21b3c763546d8"
+  }
+ ],
+ "oracle": [
+  {
+   "predicate": "native.links",
+   "subject": "hello-x86_64-linux-musl-s",
+   "value": null,
+   "expect": true,
+   "complete": true
+  },
+  {
+   "predicate": "native.links",
+   "subject": "hello-x86_64-linux-musl-s",
+   "value": "libssl.so.3",
+   "expect": false
+  },
+  {
+   "predicate": "native.interpreter",
+   "subject": "hello-x86_64-linux-musl-s",
+   "value": null,
+   "expect": true
+  }
+ ]
+}

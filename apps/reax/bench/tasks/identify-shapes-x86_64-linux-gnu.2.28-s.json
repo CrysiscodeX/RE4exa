@@ -1,0 +1,37 @@
+{
+ "id": "identify-shapes-x86_64-linux-gnu.2.28-s",
+ "class": "cheap",
+ "question": "What file format and CPU architecture is shapes-x86_64-linux-gnu.2.28-s, and is it 32- or 64-bit?",
+ "subjects": [
+  {
+   "file": "shapes-x86_64-linux-gnu.2.28-s",
+   "sha256": "6c2d34fea67436a04d7c8cd194fe7f85909fa0cc1e6eb4fe260315826f2dcd08"
+  }
+ ],
+ "oracle": [
+  {
+   "predicate": "file.format",
+   "subject": "shapes-x86_64-linux-gnu.2.28-s",
+   "value": "elf",
+   "expect": true
+  },
+  {
+   "predicate": "native.arch",
+   "subject": "shapes-x86_64-linux-gnu.2.28-s",
+   "value": "x86_64",
+   "expect": true
+  },
+  {
+   "predicate": "native.arch",
+   "subject": "shapes-x86_64-linux-gnu.2.28-s",
+   "value": "aarch64",
+   "expect": false
+  },
+  {
+   "predicate": "native.bits",
+   "subject": "shapes-x86_64-linux-gnu.2.28-s",
+   "value": "64",
+   "expect": true
+  }
+ ]
+}

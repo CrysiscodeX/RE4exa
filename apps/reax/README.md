@@ -13,6 +13,7 @@ when something counts as done.
 | `scripts/seed-register.ts` | Re-seeds the ledger from the profiles. Keeps triage, marks vanished rows orphaned. |
 | `scripts/parity-check.ts` | Computes each row's status from the JUnit reports of every CI lane. |
 | `fixtures/` | The fixture corpus: C and C++ sources written for reax, built with zig 0.15.2 (pinned by wheel hash) for ELF, PE, Mach-O (thin and universal) and WebAssembly; 17 fixtures, 732 KB, digests in `manifest.json`. `scripts/fixtures.ts --check` rebuilds them byte-identical (CI lane `linux-fixtures`). |
+| `bench/` | Benchmark: `make-tasks.ts` writes 30 tasks whose oracle comes from LLVM's tools; `src/bench/grade.ts` grades every arm's claims block the same way; `run.ts` runs cells (fake arm only so far); `PREREG.md` fixes the rules before any live run. |
 | `docs/engine-research.md` | Open replacements for the engines rea uses, per operation and target class, with versions, licences and gaps (desk research). |
 | `docs/plan.md` | The plan, with §14: the changes the register's triage found. |
 | `docs/decisions/` | Decisions that deviate from or refine the plan. |
@@ -30,7 +31,9 @@ Not done yet:
   candidates stay gated until a person decides. The plan changes the triage found are in
   [`docs/plan.md`](docs/plan.md) §14;
 - `docs/operations.md` and the operation registry arrive in phase 1;
-- the phase 0c benchmark harness (in progress), which leanrea's benchmark rows wait on.
+- live benchmark arms: `bench/` has the grader, 30 LLVM-oracle tasks, the fake arm and
+  `PREREG.md`; the reax, rea and leanrea arms are not implemented, so leanrea's benchmark rows
+  (except grading, LEAN-C56) stay open.
 
 ## Commands (Node 24.15+, from a checkout after `npm ci` at the repository root)
 

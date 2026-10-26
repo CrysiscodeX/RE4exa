@@ -1,0 +1,75 @@
+{
+ "id": "links-hello-x86_64-windows-gnu-s.exe",
+ "class": "medium",
+ "question": "Which shared libraries or DLLs does hello-x86_64-windows-gnu-s.exe load at run time?",
+ "subjects": [
+  {
+   "file": "hello-x86_64-windows-gnu-s.exe",
+   "sha256": "2df148a63029afc45b14c6c308b456456c89a83cf02120bacb51965ff01f09c3"
+  }
+ ],
+ "oracle": [
+  {
+   "predicate": "native.links",
+   "subject": "hello-x86_64-windows-gnu-s.exe",
+   "value": "KERNEL32.dll",
+   "expect": true,
+   "complete": true
+  },
+  {
+   "predicate": "native.links",
+   "subject": "hello-x86_64-windows-gnu-s.exe",
+   "value": "api-ms-win-crt-environment-l1-1-0.dll",
+   "expect": true,
+   "complete": true
+  },
+  {
+   "predicate": "native.links",
+   "subject": "hello-x86_64-windows-gnu-s.exe",
+   "value": "api-ms-win-crt-heap-l1-1-0.dll",
+   "expect": true,
+   "complete": true
+  },
+  {
+   "predicate": "native.links",
+   "subject": "hello-x86_64-windows-gnu-s.exe",
+   "value": "api-ms-win-crt-math-l1-1-0.dll",
+   "expect": true,
+   "complete": true
+  },
+  {
+   "predicate": "native.links",
+   "subject": "hello-x86_64-windows-gnu-s.exe",
+   "value": "api-ms-win-crt-private-l1-1-0.dll",
+   "expect": true,
+   "complete": true
+  },
+  {
+   "predicate": "native.links",
+   "subject": "hello-x86_64-windows-gnu-s.exe",
+   "value": "api-ms-win-crt-runtime-l1-1-0.dll",
+   "expect": true,
+   "complete": true
+  },
+  {
+   "predicate": "native.links",
+   "subject": "hello-x86_64-windows-gnu-s.exe",
+   "value": "api-ms-win-crt-stdio-l1-1-0.dll",
+   "expect": true,
+   "complete": true
+  },
+  {
+   "predicate": "native.links",
+   "subject": "hello-x86_64-windows-gnu-s.exe",
+   "value": "api-ms-win-crt-string-l1-1-0.dll",
+   "expect": true,
+   "complete": true
+  },
+  {
+   "predicate": "native.links",
+   "subject": "hello-x86_64-windows-gnu-s.exe",
+   "value": "libssl.so.3",
+   "expect": false
+  }
+ ]
+}

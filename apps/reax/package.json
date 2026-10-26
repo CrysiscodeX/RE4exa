@@ -10,12 +10,13 @@
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
-    "lint": "biome check src test scripts",
+    "lint": "biome check src test scripts bench",
     "test": "node ../../scripts/with-source.mjs node --test --test-concurrency=1 --disable-warning=ExperimentalWarning \"test/*.test.ts\"",
     "seed": "node --conditions=source --disable-warning=ExperimentalWarning scripts/seed-register.ts",
     "parity": "node --conditions=source --disable-warning=ExperimentalWarning scripts/parity-check.ts",
     "test:lane": "node scripts/test-lane.mjs",
-    "seed:check": "node --conditions=source --disable-warning=ExperimentalWarning scripts/seed-register.ts --check"
+    "seed:check": "node --conditions=source --disable-warning=ExperimentalWarning scripts/seed-register.ts --check",
+    "bench": "node --conditions=source --disable-warning=ExperimentalWarning bench/run.ts"
   },
   "dependencies": {
     "@re4exa/core": "0.1.0"

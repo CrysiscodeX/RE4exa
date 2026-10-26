@@ -1,0 +1,33 @@
+{
+ "id": "identify-hello-universal-macos-s",
+ "class": "cheap",
+ "question": "What kind of file is hello-universal-macos-s, and which CPU architectures does it contain?",
+ "subjects": [
+  {
+   "file": "hello-universal-macos-s",
+   "sha256": "86c3d9fdd52e652d00c63251a793fecfc3512d50ea95e6306bf849ed7bd8449d"
+  }
+ ],
+ "oracle": [
+  {
+   "predicate": "file.format",
+   "subject": "hello-universal-macos-s",
+   "value": "macho-fat",
+   "expect": true
+  },
+  {
+   "predicate": "native.arch",
+   "subject": "hello-universal-macos-s",
+   "value": "x86_64",
+   "expect": true,
+   "complete": true
+  },
+  {
+   "predicate": "native.arch",
+   "subject": "hello-universal-macos-s",
+   "value": "aarch64",
+   "expect": true,
+   "complete": true
+  }
+ ]
+}

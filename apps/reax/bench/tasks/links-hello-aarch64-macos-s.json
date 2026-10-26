@@ -1,0 +1,26 @@
+{
+ "id": "links-hello-aarch64-macos-s",
+ "class": "medium",
+ "question": "Which shared libraries or DLLs does hello-aarch64-macos-s load at run time?",
+ "subjects": [
+  {
+   "file": "hello-aarch64-macos-s",
+   "sha256": "fd3673868142d5a585f60b9f0668aed22ca4f0343c5c138a1beac01eedbe834f"
+  }
+ ],
+ "oracle": [
+  {
+   "predicate": "native.links",
+   "subject": "hello-aarch64-macos-s",
+   "value": "/usr/lib/libSystem.B.dylib",
+   "expect": true,
+   "complete": true
+  },
+  {
+   "predicate": "native.links",
+   "subject": "hello-aarch64-macos-s",
+   "value": "libssl.so.3",
+   "expect": false
+  }
+ ]
+}

@@ -1,0 +1,26 @@
+{
+ "id": "links-hello-x86_64-macos-s",
+ "class": "medium",
+ "question": "Which shared libraries or DLLs does hello-x86_64-macos-s load at run time?",
+ "subjects": [
+  {
+   "file": "hello-x86_64-macos-s",
+   "sha256": "25be9286bb4d3d78c7817e41298c3a560db9bc2d2236d14f1d2136a7597b40ef"
+  }
+ ],
+ "oracle": [
+  {
+   "predicate": "native.links",
+   "subject": "hello-x86_64-macos-s",
+   "value": "/usr/lib/libSystem.B.dylib",
+   "expect": true,
+   "complete": true
+  },
+  {
+   "predicate": "native.links",
+   "subject": "hello-x86_64-macos-s",
+   "value": "libssl.so.3",
+   "expect": false
+  }
+ ]
+}

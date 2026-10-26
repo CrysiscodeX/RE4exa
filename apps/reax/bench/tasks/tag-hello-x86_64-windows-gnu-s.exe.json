@@ -1,0 +1,19 @@
+{
+ "id": "tag-hello-x86_64-windows-gnu-s.exe",
+ "class": "cheap",
+ "question": "hello-x86_64-windows-gnu-s.exe embeds a build tag string that starts with \"reax-fixture-tag-\". What is it?",
+ "subjects": [
+  {
+   "file": "hello-x86_64-windows-gnu-s.exe",
+   "sha256": "2df148a63029afc45b14c6c308b456456c89a83cf02120bacb51965ff01f09c3"
+  }
+ ],
+ "oracle": [
+  {
+   "predicate": "strings.contains",
+   "subject": "hello-x86_64-windows-gnu-s.exe",
+   "value": "reax-fixture-tag-7f3a",
+   "expect": true
+  }
+ ]
+}

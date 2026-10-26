@@ -1,0 +1,37 @@
+{
+ "id": "identify-hello-x86_64-linux-musl-s",
+ "class": "cheap",
+ "question": "What file format and CPU architecture is hello-x86_64-linux-musl-s, and is it 32- or 64-bit?",
+ "subjects": [
+  {
+   "file": "hello-x86_64-linux-musl-s",
+   "sha256": "cae817a607ad30718ed786b5e58e67e66962cd4c7c74d3ca9aa21b3c763546d8"
+  }
+ ],
+ "oracle": [
+  {
+   "predicate": "file.format",
+   "subject": "hello-x86_64-linux-musl-s",
+   "value": "elf",
+   "expect": true
+  },
+  {
+   "predicate": "native.arch",
+   "subject": "hello-x86_64-linux-musl-s",
+   "value": "x86_64",
+   "expect": true
+  },
+  {
+   "predicate": "native.arch",
+   "subject": "hello-x86_64-linux-musl-s",
+   "value": "aarch64",
+   "expect": false
+  },
+  {
+   "predicate": "native.bits",
+   "subject": "hello-x86_64-linux-musl-s",
+   "value": "64",
+   "expect": true
+  }
+ ]
+}

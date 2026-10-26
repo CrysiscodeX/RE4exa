@@ -1,0 +1,37 @@
+{
+ "id": "identify-hello-wasm32-wasi-s.wasm",
+ "class": "cheap",
+ "question": "What file format and CPU architecture is hello-wasm32-wasi-s.wasm, and is it 32- or 64-bit?",
+ "subjects": [
+  {
+   "file": "hello-wasm32-wasi-s.wasm",
+   "sha256": "b6fd763f1d5cd048416a2418c00d00c1084b9c7e0b790fcf95b6db3c8c667cc8"
+  }
+ ],
+ "oracle": [
+  {
+   "predicate": "file.format",
+   "subject": "hello-wasm32-wasi-s.wasm",
+   "value": "wasm",
+   "expect": true
+  },
+  {
+   "predicate": "native.arch",
+   "subject": "hello-wasm32-wasi-s.wasm",
+   "value": "wasm32",
+   "expect": true
+  },
+  {
+   "predicate": "native.arch",
+   "subject": "hello-wasm32-wasi-s.wasm",
+   "value": "x86_64",
+   "expect": false
+  },
+  {
+   "predicate": "native.bits",
+   "subject": "hello-wasm32-wasi-s.wasm",
+   "value": "32",
+   "expect": true
+  }
+ ]
+}

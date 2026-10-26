@@ -1,0 +1,54 @@
+{
+ "id": "exports-lib-aarch64-macos-s.dylib",
+ "class": "medium",
+ "question": "Which reax_* symbols does lib-aarch64-macos-s.dylib export?",
+ "subjects": [
+  {
+   "file": "lib-aarch64-macos-s.dylib",
+   "sha256": "bbcf526f05d7f52fb599d09006da54e69896078c4d7c4405f1ac29d47e569957"
+  }
+ ],
+ "oracle": [
+  {
+   "predicate": "native.exports",
+   "subject": "lib-aarch64-macos-s.dylib",
+   "value": "reax_add",
+   "expect": true,
+   "complete": true
+  },
+  {
+   "predicate": "native.exports",
+   "subject": "lib-aarch64-macos-s.dylib",
+   "value": "reax_apply",
+   "expect": true,
+   "complete": true
+  },
+  {
+   "predicate": "native.exports",
+   "subject": "lib-aarch64-macos-s.dylib",
+   "value": "reax_counter",
+   "expect": true,
+   "complete": true
+  },
+  {
+   "predicate": "native.exports",
+   "subject": "lib-aarch64-macos-s.dylib",
+   "value": "reax_mul",
+   "expect": true,
+   "complete": true
+  },
+  {
+   "predicate": "native.exports",
+   "subject": "lib-aarch64-macos-s.dylib",
+   "value": "reax_version",
+   "expect": true,
+   "complete": true
+  },
+  {
+   "predicate": "native.exports",
+   "subject": "lib-aarch64-macos-s.dylib",
+   "value": "reax_hidden",
+   "expect": false
+  }
+ ]
+}

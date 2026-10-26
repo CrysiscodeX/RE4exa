@@ -1,0 +1,54 @@
+{
+ "id": "exports-lib-wasm32-freestanding-s.wasm",
+ "class": "medium",
+ "question": "Which reax_* symbols does lib-wasm32-freestanding-s.wasm export?",
+ "subjects": [
+  {
+   "file": "lib-wasm32-freestanding-s.wasm",
+   "sha256": "7bb0d5245b3607a5b62ab10765bb1a8b25c7e9df6da5606c617d5ab0b69c453d"
+  }
+ ],
+ "oracle": [
+  {
+   "predicate": "native.exports",
+   "subject": "lib-wasm32-freestanding-s.wasm",
+   "value": "reax_add",
+   "expect": true,
+   "complete": true
+  },
+  {
+   "predicate": "native.exports",
+   "subject": "lib-wasm32-freestanding-s.wasm",
+   "value": "reax_apply",
+   "expect": true,
+   "complete": true
+  },
+  {
+   "predicate": "native.exports",
+   "subject": "lib-wasm32-freestanding-s.wasm",
+   "value": "reax_counter",
+   "expect": true,
+   "complete": true
+  },
+  {
+   "predicate": "native.exports",
+   "subject": "lib-wasm32-freestanding-s.wasm",
+   "value": "reax_mul",
+   "expect": true,
+   "complete": true
+  },
+  {
+   "predicate": "native.exports",
+   "subject": "lib-wasm32-freestanding-s.wasm",
+   "value": "reax_version",
+   "expect": true,
+   "complete": true
+  },
+  {
+   "predicate": "native.exports",
+   "subject": "lib-wasm32-freestanding-s.wasm",
+   "value": "reax_hidden",
+   "expect": false
+  }
+ ]
+}

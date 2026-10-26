@@ -5,8 +5,12 @@
       "src/**",
       "test/**",
       "scripts/**",
+      "bench/**",
       "!dist/**",
-      "!reports/**"
+      "!reports/**",
+      "!bench/tasks/**",
+      "!bench/oracle-facts.json",
+      "!**/*.md"
     ]
   },
   "formatter": {

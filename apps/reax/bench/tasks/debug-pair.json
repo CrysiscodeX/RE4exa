@@ -1,0 +1,47 @@
+{
+ "id": "debug-pair",
+ "class": "deep",
+ "question": "Compare hello-x86_64-linux-gnu.2.28-s and hello-x86_64-linux-gnu.2.28-g: which has a symbol table, which has DWARF debug info, and what compile directory does the debug build record?",
+ "subjects": [
+  {
+   "file": "hello-x86_64-linux-gnu.2.28-s",
+   "sha256": "e11ab716d5bfdef2ecef7f21e78817ab3263423d7636b00aa94bbbcc2c877a4d"
+  },
+  {
+   "file": "hello-x86_64-linux-gnu.2.28-g",
+   "sha256": "b208698b31ba7dccf93d56b6376a132ca047db873af1c6311196ba1af802c293"
+  }
+ ],
+ "oracle": [
+  {
+   "predicate": "native.symtab",
+   "subject": "hello-x86_64-linux-gnu.2.28-g",
+   "value": "true",
+   "expect": true
+  },
+  {
+   "predicate": "native.symtab",
+   "subject": "hello-x86_64-linux-gnu.2.28-s",
+   "value": "false",
+   "expect": true
+  },
+  {
+   "predicate": "debug.dwarf",
+   "subject": "hello-x86_64-linux-gnu.2.28-g",
+   "value": "true",
+   "expect": true
+  },
+  {
+   "predicate": "debug.dwarf",
+   "subject": "hello-x86_64-linux-gnu.2.28-s",
+   "value": "false",
+   "expect": true
+  },
+  {
+   "predicate": "debug.comp_dir",
+   "subject": "hello-x86_64-linux-gnu.2.28-g",
+   "value": "/tmp/reax-fixture-build",
+   "expect": true
+  }
+ ]
+}

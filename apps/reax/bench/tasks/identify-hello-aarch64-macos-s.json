@@ -1,0 +1,37 @@
+{
+ "id": "identify-hello-aarch64-macos-s",
+ "class": "cheap",
+ "question": "What file format and CPU architecture is hello-aarch64-macos-s, and is it 32- or 64-bit?",
+ "subjects": [
+  {
+   "file": "hello-aarch64-macos-s",
+   "sha256": "fd3673868142d5a585f60b9f0668aed22ca4f0343c5c138a1beac01eedbe834f"
+  }
+ ],
+ "oracle": [
+  {
+   "predicate": "file.format",
+   "subject": "hello-aarch64-macos-s",
+   "value": "macho",
+   "expect": true
+  },
+  {
+   "predicate": "native.arch",
+   "subject": "hello-aarch64-macos-s",
+   "value": "aarch64",
+   "expect": true
+  },
+  {
+   "predicate": "native.arch",
+   "subject": "hello-aarch64-macos-s",
+   "value": "x86_64",
+   "expect": false
+  },
+  {
+   "predicate": "native.bits",
+   "subject": "hello-aarch64-macos-s",
+   "value": "64",
+   "expect": true
+  }
+ ]
+}

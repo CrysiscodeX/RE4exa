@@ -1,0 +1,37 @@
+{
+ "id": "identify-hello-x86_64-macos-g",
+ "class": "cheap",
+ "question": "What file format and CPU architecture is hello-x86_64-macos-g, and is it 32- or 64-bit?",
+ "subjects": [
+  {
+   "file": "hello-x86_64-macos-g",
+   "sha256": "f686b168405c3f3c2a5fbad9bcae5cb468b43a82593422371751950d9d9b8b66"
+  }
+ ],
+ "oracle": [
+  {
+   "predicate": "file.format",
+   "subject": "hello-x86_64-macos-g",
+   "value": "macho",
+   "expect": true
+  },
+  {
+   "predicate": "native.arch",
+   "subject": "hello-x86_64-macos-g",
+   "value": "x86_64",
+   "expect": true
+  },
+  {
+   "predicate": "native.arch",
+   "subject": "hello-x86_64-macos-g",
+   "value": "aarch64",
+   "expect": false
+  },
+  {
+   "predicate": "native.bits",
+   "subject": "hello-x86_64-macos-g",
+   "value": "64",
+   "expect": true
+  }
+ ]
+}
