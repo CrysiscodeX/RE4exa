@@ -1,0 +1,111 @@
+name: reax
+
+# reax (apps/reax): one test lane per platform, each writing a JUnit report; an aggregation job
+# reads every lane's report and computes each ledger row's status (scripts/parity-check.ts). A row
+# is covered only when its positive and negative tests passed on every platform it names, so no
+# single lane can claim it. Only first-party actions, pinned by commit.
+on:
+  push:
+    paths:
+      - "apps/reax/**"
+      - "packages/core/**"
+      - "docs/profiles/**"
+      - "scripts/with-source.mjs"
+      - "package.json"
+      - "package-lock.json"
+      - "tsconfig.base.json"
+      - ".github/workflows/reax.yml"
+  pull_request:
+    paths:
+      - "apps/reax/**"
+      - "packages/core/**"
+      - "docs/profiles/**"
+      - "scripts/with-source.mjs"
+      - "package.json"
+      - "package-lock.json"
+      - "tsconfig.base.json"
+      - ".github/workflows/reax.yml"
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: apps/reax
+
+jobs:
+  lane:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-15, windows-2025]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    steps:
+      - name: Check out this commit
+        working-directory: .
+        shell: bash
+        env:
+          TOKEN: ${{ github.token }}
+        run: |
+          git init -q .
+          git remote add origin "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git fetch -q --depth 1 origin "${GITHUB_SHA}"
+          git checkout -q FETCH_HEAD
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "24.22.1"
+      - name: Install (workspace root)
+        working-directory: .
+        run: npm ci --ignore-scripts
+      - name: Typecheck and lint
+        if: runner.os == 'Linux'
+        run: |
+          npm run typecheck
+          npm run lint
+      - name: The seeded ledger matches the profiles
+        run: npm run seed:check
+      - name: Tests (JUnit report for this lane)
+        run: npm run test:lane
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: reax-junit-${{ matrix.os }}
+          path: apps/reax/reports/*.xml
+          if-no-files-found: error
+
+  parity:
+    needs: lane
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Check out this commit
+        working-directory: .
+        env:
+          TOKEN: ${{ github.token }}
+        run: |
+          git init -q .
+          git remote add origin "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git fetch -q --depth 1 origin "${GITHUB_SHA}"
+          git checkout -q FETCH_HEAD
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "24.22.1"
+      - name: Install (workspace root)
+        working-directory: .
+        run: npm ci --ignore-scripts
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          pattern: reax-junit-*
+          merge-multiple: true
+          path: apps/reax/reports
+      # Phase 0b gate: reax's own ledger rows. The full phase-0 gate (which adds leanrea's
+      # benchmark rows) turns on with the phase 0c harness.
+      - name: Ledger status from every lane, phase 0b gate
+        run: npm run parity -- --gate-phase 0 --gate-kind reax-infra
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: reax-parity
+          path: apps/reax/reports/

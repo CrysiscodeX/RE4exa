@@ -1,0 +1,2764 @@
+{
+ "source": "rea-agents@6.8.0 (npm), MCP tools/list over stdio, captured 2026-10-26; family from docs/profiles/rea.md \u00a75 or the rule named in mapped_by",
+ "cleanroom": "Public interface only: tool names, the family they belong to, and their MCP annotation hints. No descriptions, schemas or code.",
+ "tool_count": 229,
+ "tools": [
+  {
+   "name": "address_name",
+   "family": "REA-C07",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "address_to_file_offset",
+   "family": "REA-C07",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "analyze_function",
+   "family": "REA-C08",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "analyze_javascript_application",
+   "family": "REA-C19",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "analyze_swift_types",
+   "family": "REA-C12",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "analyze_web_bundle",
+   "family": "REA-C19",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "annotate_native_function",
+   "family": "REA-C10",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": true,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "batch_decompile",
+   "family": "REA-C08",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "binary_overview",
+   "family": "REA-C07",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "binary_session",
+   "family": "REA-C05",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "build_call_path",
+   "family": "REA-C09",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "build_reconstruction_obligation_ledger",
+   "family": "REA-C32",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "capture_adb_screen",
+   "family": "REA-C26",
+   "mapped_by": "rule:adb",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": false,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "capture_browser_scenario",
+   "family": "REA-C20",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": true,
+    "idempotentHint": false,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "capture_electron_scenario",
+   "family": "REA-C21",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": true,
+    "idempotentHint": false,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "capture_native_ui_scenario",
+   "family": "REA-C18",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": true,
+    "idempotentHint": false,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "capture_process_scenario",
+   "family": "REA-C22",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": true,
+    "idempotentHint": false,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "capture_web_screenshot",
+   "family": "REA-C20",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "close_binary",
+   "family": "REA-C05",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": true,
+    "idempotentHint": false,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "close_frida_session",
+   "family": "REA-C16",
+   "mapped_by": "rule:frida",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": true,
+    "idempotentHint": false,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "close_gdb_session",
+   "family": "REA-C15",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": true,
+    "idempotentHint": false,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "close_rizin_debug_session",
+   "family": "REA-C15",
+   "mapped_by": "rule:^(start|close)_rizin_debug_session$|^rizin_debug_",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": true,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "collect_adb_bugreport",
+   "family": "REA-C26",
+   "mapped_by": "rule:adb",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": false,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "comment",
+   "family": "REA-C10",
+   "mapped_by": "rule:^comment$",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "compare_application_versions",
+   "family": "REA-C19",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "compare_artifacts",
+   "family": "REA-C17",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "compare_bundles",
+   "family": "REA-C19",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "compare_functions",
+   "family": "REA-C11",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "compare_javascript_export_shapes",
+   "family": "REA-C19",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "compare_managed_members",
+   "family": "REA-C23",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "compare_process_captures",
+   "family": "REA-C22",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "compare_source_to_bundle",
+   "family": "REA-C19",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "compare_wasm_interfaces",
+   "family": "REA-C29",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "compare_web_captures",
+   "family": "REA-C20",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "compare_web_screenshots",
+   "family": "REA-C20",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "correlate_static_and_runtime",
+   "family": "REA-C21",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "current_address",
+   "family": "REA-C06",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "current_document",
+   "family": "REA-C05",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "current_procedure",
+   "family": "REA-C06",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "cutter_command",
+   "family": "REA-C15",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": true,
+    "idempotentHint": false,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "decode_android_resources",
+   "family": "REA-C24",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "decode_interface_builder",
+   "family": "REA-C17",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "decode_signal_recording",
+   "family": "REA-C28",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "decompile_all",
+   "family": "REA-C08",
+   "mapped_by": "profile",
+   "since": "6.8.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": false,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "decompile_jeb_item",
+   "family": "REA-C25",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "demangle_swift",
+   "family": "REA-C12",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "discover_webmcp_tools",
+   "family": "REA-C20",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "evaluate_reconstruction_coverage",
+   "family": "REA-C32",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": true,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "execute_rizin_command",
+   "family": "REA-C15",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": true,
+    "idempotentHint": false,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "export_environment_bundle",
+   "family": "REA-C43",
+   "mapped_by": "profile",
+   "since": "6.8.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": false,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "export_evidence_bundle",
+   "family": "REA-C30",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": true,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "export_web_scripts",
+   "family": "REA-C20",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": false,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "extract_artifact",
+   "family": "REA-C17",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": false,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "extract_firmware",
+   "family": "REA-C27",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": false,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "find_changed_behavior",
+   "family": "REA-C11",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "find_xrefs_to_name",
+   "family": "REA-C09",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "frida_session_status",
+   "family": "REA-C16",
+   "mapped_by": "rule:frida",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "gdb_console",
+   "family": "REA-C15",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": true,
+    "idempotentHint": false,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "gdb_session_status",
+   "family": "REA-C15",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": true,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "get_call_graph",
+   "family": "REA-C09",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "get_evidence_bundle",
+   "family": "REA-C30",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": true,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "get_navigation_context",
+   "family": "REA-C06",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "get_objc_classes",
+   "family": "REA-C12",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "get_objc_protocols",
+   "family": "REA-C12",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "goto_address",
+   "family": "REA-C06",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "identify_flutter_build",
+   "family": "REA-C24",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "import_evidence_bundle",
+   "family": "REA-C30",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "import_managed_reconstruction",
+   "family": "REA-C23",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "inline_comment",
+   "family": "REA-C10",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "inspect_adb_client",
+   "family": "REA-C26",
+   "mapped_by": "rule:adb",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "inspect_adb_device",
+   "family": "REA-C26",
+   "mapped_by": "rule:adb",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "inspect_adb_display",
+   "family": "REA-C26",
+   "mapped_by": "rule:adb",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "inspect_adb_package",
+   "family": "REA-C26",
+   "mapped_by": "rule:adb",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "inspect_adb_window",
+   "family": "REA-C26",
+   "mapped_by": "rule:adb",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "inspect_address_context",
+   "family": "REA-C08",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "inspect_analysis_settings",
+   "family": "REA-C45",
+   "mapped_by": "rule:analysis_settings$",
+   "since": "6.8.0",
+   "hints": {
+    "readOnlyHint": true,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "inspect_analysis_view",
+   "family": "REA-C30",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "inspect_android_class",
+   "family": "REA-C24",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "inspect_android_method",
+   "family": "REA-C24",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "inspect_android_package",
+   "family": "REA-C24",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "inspect_apk_signature",
+   "family": "REA-C45",
+   "mapped_by": "rule:head-format",
+   "since": "6.8.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "inspect_apktool_client",
+   "family": "REA-C24",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "inspect_apple_ips",
+   "family": "REA-C45",
+   "mapped_by": "rule:head-format",
+   "since": "6.8.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "inspect_artifact",
+   "family": "REA-C17",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "inspect_asset_catalog",
+   "family": "REA-C17",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "inspect_binary_layout",
+   "family": "REA-C13",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "inspect_byte_entropy",
+   "family": "REA-C45",
+   "mapped_by": "rule:head-format",
+   "since": "6.8.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "inspect_dart_aot",
+   "family": "REA-C24",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "inspect_desktop_application",
+   "family": "REA-C17",
+   "mapped_by": "profile",
+   "since": "6.8.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "inspect_devicetree",
+   "family": "REA-C45",
+   "mapped_by": "rule:head-format",
+   "since": "6.8.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "inspect_electron_fuses",
+   "family": "REA-C19",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "inspect_electron_page",
+   "family": "REA-C21",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "inspect_elf_notes",
+   "family": "REA-C45",
+   "mapped_by": "rule:head-format",
+   "since": "6.8.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "inspect_erlang_beam",
+   "family": "REA-C45",
+   "mapped_by": "rule:head-format",
+   "since": "6.8.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "inspect_evm_interface",
+   "family": "REA-C29",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "inspect_firmware_regions",
+   "family": "REA-C27",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "inspect_go_binary",
+   "family": "REA-C14",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "inspect_gpu_code_objects",
+   "family": "REA-C45",
+   "mapped_by": "rule:head-format",
+   "since": "6.8.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "inspect_il2cpp_metadata",
+   "family": "REA-C45",
+   "mapped_by": "rule:head-format",
+   "since": "6.8.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "inspect_jeb_client",
+   "family": "REA-C25",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "inspect_kernel_module",
+   "family": "REA-C45",
+   "mapped_by": "rule:head-format",
+   "since": "6.8.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "inspect_keyed_archive",
+   "family": "REA-C17",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "inspect_macho",
+   "family": "REA-C12",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "inspect_managed_artifact",
+   "family": "REA-C23",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "inspect_managed_members",
+   "family": "REA-C23",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "inspect_managed_native_boundaries",
+   "family": "REA-C23",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "inspect_model_artifact",
+   "family": "REA-C45",
+   "mapped_by": "profile",
+   "since": "6.8.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "inspect_native_api",
+   "family": "REA-C12",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": false,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "inspect_native_data_type",
+   "family": "REA-C12",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "inspect_native_dispatch_metadata",
+   "family": "REA-C12",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "inspect_native_exports",
+   "family": "REA-C45",
+   "mapped_by": "rule:head-format",
+   "since": "6.8.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "inspect_native_instruction",
+   "family": "REA-C08",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "inspect_native_load_image",
+   "family": "REA-C12",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "inspect_packet_capture",
+   "family": "REA-C28",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "inspect_packet_fields",
+   "family": "REA-C28",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "inspect_pcap_capture",
+   "family": "REA-C28",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "inspect_pcap_client",
+   "family": "REA-C28",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "inspect_pe_certificates",
+   "family": "REA-C45",
+   "mapped_by": "rule:head-format",
+   "since": "6.8.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "inspect_pe_imports",
+   "family": "REA-C45",
+   "mapped_by": "rule:head-format",
+   "since": "6.8.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "inspect_pe_load_config",
+   "family": "REA-C45",
+   "mapped_by": "rule:head-format",
+   "since": "6.8.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "inspect_pe_resources",
+   "family": "REA-C14",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "inspect_plist",
+   "family": "REA-C17",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "inspect_python_pyc",
+   "family": "REA-C45",
+   "mapped_by": "rule:head-format",
+   "since": "6.8.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "inspect_recorded_crash",
+   "family": "REA-C13",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "inspect_rust_binary",
+   "family": "REA-C14",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "inspect_signal_decoders",
+   "family": "REA-C28",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "inspect_signature",
+   "family": "REA-C12",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "inspect_sqlite_database",
+   "family": "REA-C29",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "inspect_wasm_artifact",
+   "family": "REA-C29",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "inspect_web_event_listeners",
+   "family": "REA-C20",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "inspect_web_network_capture",
+   "family": "REA-C20",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "inspect_web_page",
+   "family": "REA-C20",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "inspect_with_objdump",
+   "family": "REA-C15",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "install_adb_package",
+   "family": "REA-C26",
+   "mapped_by": "rule:adb",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": true,
+    "idempotentHint": false,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "instrument_with_frida",
+   "family": "REA-C16",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": true,
+    "idempotentHint": false,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "list_adb_devices",
+   "family": "REA-C26",
+   "mapped_by": "rule:adb",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "list_adb_directory",
+   "family": "REA-C26",
+   "mapped_by": "rule:adb",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "list_adb_features",
+   "family": "REA-C26",
+   "mapped_by": "rule:adb",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "list_adb_packages",
+   "family": "REA-C26",
+   "mapped_by": "rule:adb",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "list_adb_processes",
+   "family": "REA-C26",
+   "mapped_by": "rule:adb",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "list_adb_services",
+   "family": "REA-C26",
+   "mapped_by": "rule:adb",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "list_architectures",
+   "family": "REA-C07",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "list_bookmarks",
+   "family": "REA-C06",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "list_browser_targets",
+   "family": "REA-C20",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "list_cutter_sessions",
+   "family": "REA-C15",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "list_documents",
+   "family": "REA-C05",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "list_electron_targets",
+   "family": "REA-C21",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "list_frida_devices",
+   "family": "REA-C16",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "list_frida_processes",
+   "family": "REA-C16",
+   "mapped_by": "rule:frida",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "list_javascript_runtime_targets",
+   "family": "REA-C21",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "list_jeb_units",
+   "family": "REA-C25",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "list_names",
+   "family": "REA-C07",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "list_procedures",
+   "family": "REA-C07",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "list_segments",
+   "family": "REA-C07",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "list_strings",
+   "family": "REA-C07",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "list_unknowns",
+   "family": "REA-C31",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": true,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "load_frida_script",
+   "family": "REA-C16",
+   "mapped_by": "rule:frida",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": true,
+    "idempotentHint": false,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "match_native_functions",
+   "family": "REA-C11",
+   "mapped_by": "profile",
+   "since": "6.8.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "next_address",
+   "family": "REA-C06",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "observe_javascript_runtime",
+   "family": "REA-C21",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "observe_native_calls",
+   "family": "REA-C18",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": true,
+    "idempotentHint": false,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "observe_native_ui",
+   "family": "REA-C18",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "observe_web_execution",
+   "family": "REA-C20",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": true,
+    "idempotentHint": false,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "observe_web_session",
+   "family": "REA-C20",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "open_binary",
+   "family": "REA-C05",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "open_bundle_resources",
+   "family": "REA-C45",
+   "mapped_by": "profile",
+   "since": "6.8.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "open_jeb_project",
+   "family": "REA-C25",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": false,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "prev_address",
+   "family": "REA-C06",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "procedure_address",
+   "family": "REA-C07",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "procedure_assembly",
+   "family": "REA-C08",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "procedure_callees",
+   "family": "REA-C09",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "procedure_callers",
+   "family": "REA-C09",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "procedure_info",
+   "family": "REA-C07",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "procedure_pseudo_code",
+   "family": "REA-C08",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "procedure_references",
+   "family": "REA-C09",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "project_android_application_graph",
+   "family": "REA-C24",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "project_apple_application_graph",
+   "family": "REA-C18",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "project_harmony_application_graph",
+   "family": "REA-C24",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "project_managed_application_graph",
+   "family": "REA-C23",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "pull_adb_file",
+   "family": "REA-C26",
+   "mapped_by": "rule:adb",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": false,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "pull_adb_package",
+   "family": "REA-C26",
+   "mapped_by": "rule:adb",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": false,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "push_adb_file",
+   "family": "REA-C26",
+   "mapped_by": "rule:adb",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": true,
+    "idempotentHint": false,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "read_adb_logcat",
+   "family": "REA-C26",
+   "mapped_by": "rule:adb",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "read_adb_setting",
+   "family": "REA-C26",
+   "mapped_by": "rule:adb",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "read_bytes",
+   "family": "REA-C07",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "read_function_instructions",
+   "family": "REA-C08",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "reconcile_javascript_runtime",
+   "family": "REA-C21",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "record_unknown",
+   "family": "REA-C31",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": false,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "recover_javascript_sources",
+   "family": "REA-C19",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": false,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "resolve_adb_packages",
+   "family": "REA-C26",
+   "mapped_by": "rule:adb",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "resolve_containing_procedure",
+   "family": "REA-C07",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "resolve_native_call_targets",
+   "family": "REA-C09",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "resume_frida_session",
+   "family": "REA-C16",
+   "mapped_by": "rule:frida",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": true,
+    "idempotentHint": false,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "rizin_debug_command",
+   "family": "REA-C15",
+   "mapped_by": "rule:^(start|close)_rizin_debug_session$|^rizin_debug_",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": true,
+    "idempotentHint": false,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "rizin_debug_session_status",
+   "family": "REA-C15",
+   "mapped_by": "rule:^(start|close)_rizin_debug_session$|^rizin_debug_",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "search_android_classes",
+   "family": "REA-C24",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "search_bytes",
+   "family": "REA-C07",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "search_procedures",
+   "family": "REA-C07",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "search_strings",
+   "family": "REA-C07",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "set_address_name",
+   "family": "REA-C10",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": true,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "set_addresses_names",
+   "family": "REA-C10",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": true,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "set_bookmark",
+   "family": "REA-C06",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": true,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "set_comment",
+   "family": "REA-C10",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": true,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "set_inline_comment",
+   "family": "REA-C10",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": true,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "start_adb_activity",
+   "family": "REA-C26",
+   "mapped_by": "rule:adb",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": true,
+    "idempotentHint": false,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "start_adb_app",
+   "family": "REA-C26",
+   "mapped_by": "rule:adb",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": true,
+    "idempotentHint": false,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "start_frida_session",
+   "family": "REA-C16",
+   "mapped_by": "rule:frida",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": false,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "start_gdb_session",
+   "family": "REA-C15",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": false,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "start_rizin_debug_session",
+   "family": "REA-C15",
+   "mapped_by": "rule:^(start|close)_rizin_debug_session$|^rizin_debug_",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": true,
+    "idempotentHint": false,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "stop_adb_app",
+   "family": "REA-C26",
+   "mapped_by": "rule:adb",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": true,
+    "idempotentHint": false,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "trace_android_references",
+   "family": "REA-C24",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "trace_application_feature",
+   "family": "REA-C19",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "trace_call_path",
+   "family": "REA-C09",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": false,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "trace_dylib_resolution",
+   "family": "REA-C12",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "trace_feature",
+   "family": "REA-C09",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": false,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "trace_javascript_semantics",
+   "family": "REA-C19",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "trace_native_ui_action",
+   "family": "REA-C18",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "trace_native_values",
+   "family": "REA-C09",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "trace_web_module_imports",
+   "family": "REA-C20",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "trace_web_source_location",
+   "family": "REA-C20",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "uninstall_adb_package",
+   "family": "REA-C26",
+   "mapped_by": "rule:adb",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": true,
+    "idempotentHint": false,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "unload_frida_script",
+   "family": "REA-C16",
+   "mapped_by": "rule:frida",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": false,
+    "openWorldHint": true
+   }
+  },
+  {
+   "name": "unset_bookmark",
+   "family": "REA-C06",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": true,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "update_analysis_settings",
+   "family": "REA-C45",
+   "mapped_by": "rule:analysis_settings$",
+   "since": "6.8.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "update_unknown",
+   "family": "REA-C31",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": false,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "verify_managed_native_boundaries",
+   "family": "REA-C23",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "verify_reconstruction",
+   "family": "REA-C32",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "verify_unknown_resolution",
+   "family": "REA-C31",
+   "mapped_by": "profile",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": true,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  },
+  {
+   "name": "xrefs",
+   "family": "REA-C09",
+   "mapped_by": "rule:^xrefs$",
+   "since": "6.7.0",
+   "hints": {
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false
+   }
+  }
+ ],
+ "prompts": [
+  "investigate_feature",
+  "compare_application_versions",
+  "verify_reconstruction",
+  "trace_crash",
+  "audit_residual_unknowns",
+  "prepare_bounded_process_capture"
+ ],
+ "profile_names_not_in_catalog": []
+}

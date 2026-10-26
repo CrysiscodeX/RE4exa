@@ -16,6 +16,7 @@ RE4exa is independent and is not affiliated with REA or the other projects studi
 | [`docs/merger/`](docs/merger) | Brainstorm on merging leanrea, rea, pi durable and absurd: anatomy, ideas, two debate rounds, gap register, four candidate concepts and an options brief for the owner |
 | [`apps/assay/`](apps/assay) | **Assay**, the product built from the merger: a local agent workbench (Orca-like UI, sub-agents, your own signed-in Claude/Codex/ACP accounts, chat) where every claim is re-run against model-free evidence; durable cases, approvals, exports; measured benchmark |
 | [`packages/core/`](packages/core) | **@re4exa/core**, the shared engine under Assay and reax: durable SQLite kernel, evidence records, model-free probes, verifier, policy (npm workspace; Node 24.15+) |
+| [`apps/reax/`](apps/reax) | **reax** (in development, phase 0): the clean-room replacement for rea and leanrea. So far: the limitation register and parity ledger seeded from `docs/profiles`, and a CI gate that computes each row's status from every platform lane's test report |
 | [`skills/`](skills) | Agent skills for rex, dissect and rqs |
 
 RE4exa has no LICENSE file yet, so others cannot legally reuse the code; its own RQS-2030 review

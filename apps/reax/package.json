@@ -1,0 +1,23 @@
+{
+  "name": "reax",
+  "version": "0.0.1",
+  "description": "Clean-room reverse-engineering toolkit for agents (replaces rea and leanrea). In development: phase 0.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "private": true,
+  "engines": {
+    "node": ">=24.15"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "lint": "biome check src test scripts",
+    "test": "node ../../scripts/with-source.mjs node --test --test-concurrency=1 --disable-warning=ExperimentalWarning \"test/*.test.ts\"",
+    "seed": "node --conditions=source --disable-warning=ExperimentalWarning scripts/seed-register.ts",
+    "parity": "node --conditions=source --disable-warning=ExperimentalWarning scripts/parity-check.ts",
+    "test:lane": "node scripts/test-lane.mjs",
+    "seed:check": "node --conditions=source --disable-warning=ExperimentalWarning scripts/seed-register.ts --check"
+  },
+  "dependencies": {
+    "@re4exa/core": "0.1.0"
+  }
+}
