@@ -74,8 +74,45 @@ jobs:
           path: apps/reax/reports/*.xml
           if-no-files-found: error
 
+  # The fixture corpus rebuilt with the pinned zig must match the committed bytes. zig's install
+  # path is recorded in debug info, so it goes to the fixed path scripts/fixtures.ts expects.
+  fixtures:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Check out this commit
+        working-directory: .
+        env:
+          TOKEN: ${{ github.token }}
+        run: |
+          git init -q .
+          git remote add origin "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git fetch -q --depth 1 origin "${GITHUB_SHA}"
+          git checkout -q FETCH_HEAD
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "24.22.1"
+      - name: Install (workspace root)
+        working-directory: .
+        run: npm ci --ignore-scripts
+      - name: Install zig (wheel pinned by hash)
+        env:
+          PIP_BREAK_SYSTEM_PACKAGES: "1"
+        run: python3 -m pip install --no-deps --require-hashes --target /tmp/reax-zig -r fixtures/zig-requirements.txt
+      - name: Tests with the corpus rebuild (lane linux-fixtures)
+        env:
+          REAX_FIXTURES_REBUILD: "1"
+          REAX_LANE_SUFFIX: fixtures
+        run: npm run test:lane
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: reax-junit-fixtures
+          path: apps/reax/reports/*.xml
+          if-no-files-found: error
+
   parity:
-    needs: lane
+    needs: [lane, fixtures]
     if: always()
     runs-on: ubuntu-24.04
     timeout-minutes: 10

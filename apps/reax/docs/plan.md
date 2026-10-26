@@ -337,7 +337,7 @@ Every rea family (C01–C46, and the HEAD-only C45 subfamilies) lands on a tool,
 | **2 (engine depth)** | C06 Hopper navigation/bookmarks (bookmarks as `pm_bookmark`, navigation on the Hopper adapter); C08 decompile/disassemble; C09 xrefs, call graph, call paths, value tracing; C10 annotations (via `annotate`); C11 function comparison and matching; C15 objdump/rizin/Cutter/GDB sessions (raw commands approval-gated); C19 deep (bundle recovery, version/export comparison); C23 ILSpy depth; C24 JADX/Apktool/blutter; C27 firmware (binwalk/unblob); C28 pcap/tshark and EVM; C29 EVM selectors; C33 snapshot cache; C38 provider registry; C41 the 6 prompts (generated from the planner); C44 source-to-artifact comparison; C45 `match_functions`, analysis settings, `decompile_all`; capability detection (capa, FLOSS, yara-x) |
 | **3 (runtime and devices, off by default)** | C16 Frida; C18 native UI observation and app graph; C20 browser/CDP, HAR/SAZ (static HAR under `read`); C21 Electron/V8 runtime and static↔runtime correlation; C22 process capture and comparison (timing separated from content); C26 ADB device operations (`reax.device`, mutating); C28 sigrok signals; C43 agent environments (`environment-serve`) |
 | **Cross-cutting** | C01/C02 MCP stdio and HTTP; C05 sessions and targets; C39 owned-process supervision; C46 logging, catalog digests, optional metrics |
-| **Reviewed `wont`** | Binary Ninja provider (no open equal; recorded with a reason); commercial engines (IDA, Hopper, JEB, Kuna) available only on a detected licensed install |
+| **Reviewed `wont`** | Binary Ninja provider (no open equal; recorded with a reason); commercial engines (IDA, Hopper, JEB) available only on a detected licensed install. (Kuna was listed here by mistake: it is an open Apache-2.0 decompiler; see §14.) |
 
 ## 9. Phases and gates (documented breadth first)
 Each phase is committed only when its gate is green, and the parity and limitation ledgers are regenerated at each gate. **The first execution covers 0a–0c.**
@@ -446,3 +446,19 @@ T3-5 (reax delegates no work to sub-agents).
 
 **Scope question:** approval-gated reveal of secrets found in targets [REA-A6.4] sits close to the
 §13 exclusion of credential extraction. Recorded as SR-8; decide before phase 1 ships reveal.
+
+**Engines (from docs/engine-research.md, phase 0c)**
+- Kuna (Noelo-Lab/kuna, Apache-2.0, Rust, v1.982 on 2026-10-26) is open source, not commercial.
+  It becomes a phase 2 adapter for ELF and thin Mach-O (decompile, assembly, call edges, exact
+  xrefs, strings) and a second decompiler to cross-check Ghidra. Pin the version and run it with
+  one job: more than one job changes 40-60% of function bodies (per its author and rea).
+- Ghidra 12.2 needs JDK 25, but its own Dockerfile installs JDK 21: reax builds its own engine
+  image. No tagged BinExport build exists for Ghidra 12, and ReVa's newest release targets Ghidra
+  12.1.3, so the ReVa differential check pins that Ghidra until a 12.2 build appears.
+- angr's pyvex dependency includes GPL-2.0-or-later code: angr runs only as a separate process.
+- A publicly distributed engine image carries OpenJDK's GPL-with-classpath-exception notice in
+  third-party.md.
+- Gaps with no open equal (G1-G8 in engine-research.md) stay commercial-only adapters or
+  reviewed wonts: IDA Lumina and vendor FLIRT, scripted Windows and remote debugging, Hopper's
+  shared GUI cursor, JEB's combined Dalvik analysis and debugger, and JEB's WASM, EVM, PLC and
+  SASS decompilers.

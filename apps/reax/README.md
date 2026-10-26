@@ -12,6 +12,8 @@ when something counts as done.
 | `docs/ledger/sources/rea-6.8.0-tools.json` | rea's public tool names and annotation hints, captured over MCP `tools/list`. No descriptions, schemas or code. |
 | `scripts/seed-register.ts` | Re-seeds the ledger from the profiles. Keeps triage, marks vanished rows orphaned. |
 | `scripts/parity-check.ts` | Computes each row's status from the JUnit reports of every CI lane. |
+| `fixtures/` | The fixture corpus: C and C++ sources written for reax, built with zig 0.15.2 (pinned by wheel hash) for ELF, PE, Mach-O (thin and universal) and WebAssembly; 17 fixtures, 732 KB, digests in `manifest.json`. `scripts/fixtures.ts --check` rebuilds them byte-identical (CI lane `linux-fixtures`). |
+| `docs/engine-research.md` | Open replacements for the engines rea uses, per operation and target class, with versions, licences and gaps (desk research). |
 | `docs/plan.md` | The plan, with §14: the changes the register's triage found. |
 | `docs/decisions/` | Decisions that deviate from or refine the plan. |
 | `docs/review-notes.md` | Security items recorded for review. |
@@ -28,7 +30,7 @@ Not done yet:
   candidates stay gated until a person decides. The plan changes the triage found are in
   [`docs/plan.md`](docs/plan.md) §14;
 - `docs/operations.md` and the operation registry arrive in phase 1;
-- the phase 0c benchmark harness, which leanrea's benchmark rows wait on.
+- the phase 0c benchmark harness (in progress), which leanrea's benchmark rows wait on.
 
 ## Commands (Node 24.15+, from a checkout after `npm ci` at the repository root)
 
