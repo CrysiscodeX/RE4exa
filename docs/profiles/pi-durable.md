@@ -23,7 +23,7 @@ Where the prior notes (`docs/merger/01-anatomy/pi-durable.md`) cite the same lin
 - `session/transaction.ts:279-281`
 - `types.ts:1179-1189`
 
-README line numbers below are @1.4.0 unless marked otherwise.
+README line numbers below are @1.4.0 unless marked otherwise. (corrected 2026-10-26) Checked against a clone at `fdce48e`: the pinned README has 869 lines. 1.4.0 adds two lines after pin line 79 (the `HarnessOptions.identity` paragraph), one after pin line 761 (the IndexedDB table row) and four after pin line 764 (the IndexedDB paragraph). The pin line number is therefore the 1.4.0 number minus 2 for lines 82-763, minus 3 for lines 765-767, and minus 7 for lines 772 onward. Example: README:790 @1.4.0 = README:783 @fdce48e. Lines 80-81, 764 and 768-771 @1.4.0 do not exist at the pin. Spec line numbers below were checked at `fdce48e` (`docs/spec.md`, 5,618 lines).
 
 ## 1. Identity card
 
@@ -39,7 +39,7 @@ README line numbers below are @1.4.0 unless marked otherwise.
 | First commit | 2026-09-18, `0801601` "feat(durable): move Pico into dedicated package" | code shows: GitHub commits page 6 |
 | Releases | 17 npm versions: 0.0.1 (2026-09-19); lockstep 0.86.0 to 0.99.2 (2026-09-19 to 09-30); 1.0.0 (2026-10-01) to 1.4.0 (2026-10-21). 1.4.0 is `latest`. Six 1.x releases (1.0.3, 1.0.4, 1.1.0, 1.2.0 and 1.4.0, plus Unreleased on main) carry "Breaking Changes" sections | code shows: npm `time`; `durable:CHANGELOG.md` @1.4.0 |
 | Size @1.4.0 | 84 TypeScript source files, about 27,250 lines. Tarball: 339 files, 3.52 MB unpacked. Largest files: `harness/scheduler.ts` 2,507; `testing/storage-conformance.ts` 1,682; `types.ts` 1,274; `env/node.ts` 1,235; `storage/indexeddb.ts` 1,208; `session/session.ts` 1,123; `session/transaction.ts` 1,071 | code shows: source-map count |
-| Size @fdce48e | 26,028 lines in `src` (prior notes). `docs/spec.md`: 5,618 lines (prior notes), 303,143 characters (WebFetch). `test/`: 86 files plus `examples/` and `fixtures/` (GitHub listing, possibly truncated). The prior notes count 70 `*.test.ts` | prior notes; code shows: GitHub tree |
+| Size @fdce48e | 26,028 lines in `src` (prior notes). `docs/spec.md`: 5,618 lines (prior notes), 303,143 characters (WebFetch). `test/`: 86 files plus `examples/` (32 scripts, `00-conversation.ts` to `31-reload-and-restart.ts`) and `fixtures/` (2 files): 70 `*.test.ts` and 16 support and bench scripts (corrected 2026-10-26: confirmed in a clone at `fdce48e`; the listing was not truncated) | code shows: clone at `fdce48e` |
 | Runtime | Node >= 22.19 (`node:sqlite`), Cloudflare Workers/Durable Objects, browser (IndexedDB) | code shows: npm `engines`; README:761-767 |
 | Dependents | In the monorepo only `pi-env` depends on it. **`pi-coding-agent` 1.4.0 does not** (its deps: pi-agent-core, pi-ai, pi-codemode, pi-mcp, pi-tui). External: Cloudflare Agents SDK `PiHarness` (search result, not opened); `disler/durable-pi` (280 stars, 1 commit, pins 1.0.3) | code shows: `npm view … dependencies`; GitHub page |
 | npm downloads | **Not obtained.** api.npmjs.org and npmjs.com were blocked from this environment on 2026-10-26 | gap |
@@ -51,7 +51,7 @@ README line numbers below are @1.4.0 unless marked otherwise.
 - **author says.** "A durable agent harness. Conversations, model turns, tool calls, and your own state are committed to storage before anything is shown. If the process dies mid-turn, reopening the storage picks the work up where it stopped." (`durable:README.md:5` @1.4.0). The README marks it "**Experimental.** The API changes without notice between releases." (`:3`).
 - **author says** (Earendil post "Pi Durable", earendil.com/posts/pi-durable/, 2026-10-01). The post was not opened (DNS failure). Wording comes from search-engine summaries of the page: "a new experimental package for long-running, durable, and malleable agents that can run anywhere". Its "Why Pi Durable?" section lists needs for a harness that runs anywhere, is reachable from different surfaces, supports infinitely long conversations, survives catastrophic internal and external failures, and lets multiple humans steer the same agents. Third-party summaries also say it "does not replace the Pi coding agent" and is "a framework for building any agentic application, coding agents included".
 - **author says (origin).** The package came from an internal prototype called **Pico**:
-  - First path commit: "feat(durable): move Pico into dedicated package" (2026-09-18).
+  - First path commit: "feat(durable): move Pico into dedicated package" (`0801601`, 2026-09-18). (corrected 2026-10-26) **code shows** this commit moved the prototype out of `packages/agent/src/pico` and `packages/agent/docs/pico-v5*.md` (renames R099/R100). Its design started there on 2026-09-15 ("docs(agent): replace obsolete Pico prototypes with Pico5 design", `56cd598`). So pi-durable began as a Pico5 rewrite inside pi-agent-core three days before it became its own package.
   - Commits "docs: revise Pico5 immutable revision design" and "align Pico5 with canonical immutable tracker" (Sep 23-29).
   - The SQLite class comment still reads "Portable SQLite implementation of the Pico storage contract" (`durable:src/storage/sqlite/storage.ts:151` @1.4.0).
   - Spec §13 lists, as a non-goal, a "compatibility layer for earlier harness prototypes".
@@ -134,7 +134,7 @@ Each decision gives: what (code shows), why (author says, or inferred), and cons
 - *Why (author says):*
   - "a phase reruns from its top after a restart, so work after the wait goes in the next phase" (README:162).
   - Spec §5.2 "Effect sandwich": "Reopening in an intent phase means the effect may have happened."
-  - Spec §13: no resumable stacks. Resume "doesn't restore a suspended JavaScript stack", per third-party summaries.
+  - (corrected 2026-10-26) Spec §13 does not list resumable stacks; its 11 non-goals are at `docs/spec.md:5604-5618` @fdce48e. The no-stack-restore point comes from third-party summaries ("doesn't restore a suspended JavaScript stack") and from README:162. **author says** it in spec §5.6 for sleeps: "Work before the sleep is not exactly-once" (`docs/spec.md:2433`).
 - *Consequence:*
   - No event-sourced replay of user code, unlike Temporal. Developers must split effects at phase boundaries.
   - It is easy to implement on any store with atomic multi-row writes.
@@ -149,7 +149,7 @@ Each decision gives: what (code shows), why (author says, or inferred), and cons
 
   Recovery (`execute` phase, `:180-198`) reruns only `if (replay === "safe" && tool?.replay === "safe")`. Otherwise it settles the call with "Tool X was interrupted and may have partially run" and a `failed` ending, which also aborts owned conversations. An abort after a restart distinguishes `interrupted` (intent committed) from `abandoned` (not started) (`:200-211`).
 - *Why:*
-  - **author says** the commit "durably records the final arguments and resolved replay policy before execution" and that "Omitted `replay` is `unsafe`" (spec §7.3/§8.4 at the pin).
+  - **author says** the commit "durably records the final arguments and resolved replay policy before execution" and that "Omitted `replay` is `unsafe`" (spec §7.3, `docs/spec.md:3456` and `:3152` @fdce48e; corrected 2026-10-26: both quotes are in §7.3, not §8.4).
   - **inferred** for the *dual* check: a call recorded `unsafe` must not be upgraded by a later redefinition, and a tool redefined as `unsafe` must not be rerun on the strength of an old record.
 - *Consequence:*
   - The harness never re-executes an unsafe effect, so the harness is at-most-once for those tools.
@@ -222,7 +222,7 @@ Each decision gives: what (code shows), why (author says, or inferred), and cons
 - *Consequence:* see §9.1.
 
 **D13. Durability knobs are left at backend defaults.**
-- **code shows** SQLite: WAL with `synchronous=NORMAL`, so the newest commit can be lost on power or host failure (README:765; chord pragmas per prior notes). Busy timeout 5 s (prior notes).
+- **code shows** SQLite: WAL with `synchronous=NORMAL`, so the newest commit can be lost on power or host failure (README:765; `chord:src/sqlite/node.ts:237-238` @fdce48e). Each commit is `BEGIN IMMEDIATE` (`chord:src/sqlite/node.ts:144`). Busy timeout 5 s (`DEFAULT_BUSY_TIMEOUT_MS = 5_000`, `chord:src/sqlite/node.ts:15`). Confirmed in a clone, 2026-10-26.
 - **code shows** JSONL: `fsync` defaults to false (`storage/jsonl/storage.ts:78-79, 257`). With it, each sidecar is flushed before the main marker (`:295-302`). JSONL keeps the whole history in memory (README:766).
 - Durable Object: commits are the object's storage transactions (README:767).
 - *Consequence:* "durable" means durable across a process crash by default, not across power loss.
@@ -361,10 +361,10 @@ Licence for all rows: MIT (pi monorepo). Copy the root notice: the npm tarball l
 ## 8. Documentation, notes and metadata: what it journals and how
 
 - **Docs.**
-  - README: 877 lines @1.4.0.
+  - README: 876 lines @1.4.0 (869 at the pin; corrected 2026-10-26).
   - Normative `docs/spec.md`: about 5.6k lines, sections 1-13, with goals as invariants, a footguns list (§12) and non-goals (§13).
   - CHANGELOG with dated, detailed breaking-change notes.
-  - 32 examples (prior notes).
+  - 32 examples (`test/examples/00-…` to `31-…`, confirmed in a clone at `fdce48e`).
   - The spec is not in the npm tarball.
 - **Persistent records** (SQLite schema v2, `migrations.ts:14-112` @1.4.0; all STRICT):
   - `metadata`: singleton `next_id` (TEXT), `next_seq`.
