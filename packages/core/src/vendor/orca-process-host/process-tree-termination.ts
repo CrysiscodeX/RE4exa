@@ -1,4 +1,5 @@
 import { spawn as nodeSpawn, type ChildProcess } from 'node:child_process'
+import { readdirSync, readFileSync } from 'node:fs'
 import { admitProcessTreeKill } from './process-tree-kill-gate.ts'
 import { windowsSystem32Binary } from './windows-system-binary.ts'
 
@@ -154,7 +155,39 @@ async function waitForPosixProcessGroupQuiescence(processGroupId: number): Promi
   }
 }
 
+/**
+ * Change 4 (re4exa): on Linux, read process states from /proc instead of running `ps`, so the
+ * host works where procps is not installed (rea needed a procps `ps` on PATH, rea §9A A7.2).
+ * Fields of /proc/<pid>/stat after the command name's closing parenthesis: state, ppid, pgrp.
+ * Returns null when /proc cannot be read, so the caller falls back to the group-exists check.
+ */
+export function readLinuxProcessGroupStates(processGroupId: number, procRoot = '/proc'): string[] | null {
+  let entries: string[]
+  try {
+    entries = readdirSync(procRoot)
+  } catch {
+    return null
+  }
+  const states: string[] = []
+  for (const entry of entries) {
+    if (!/^[1-9][0-9]*$/.test(entry)) continue
+    let stat: string
+    try {
+      stat = readFileSync(`${procRoot}/${entry}/stat`, 'utf8')
+    } catch {
+      continue // the process exited while we looked
+    }
+    const fields = stat.slice(stat.lastIndexOf(')') + 2).split(' ')
+    if (Number(fields[2]) === processGroupId && fields[0]) states.push(fields[0])
+  }
+  return states
+}
+
 function readPosixProcessGroupStates(processGroupId: number): Promise<string[] | null> {
+  if (process.platform === 'linux') {
+    const states = readLinuxProcessGroupStates(processGroupId)
+    if (states) return Promise.resolve(states)
+  }
   return new Promise((resolve) => {
     let probe: ChildProcess
     try {

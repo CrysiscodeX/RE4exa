@@ -1,0 +1,1951 @@
+//// contracts.d.ts
+import type { Json } from "./evidence/jcs.ts";
+import type { ClaimRecord, Coverage, Finding } from "./evidence/record.ts";
+export interface ProbeSubject {
+    /** Workspace-relative path; the engine resolves and guards it. */
+    path: string;
+    /** Absolute path, already checked to be inside the workspace. */
+    abs: string;
+    /** sha256:<hex> of the file's bytes (for directories: of the sorted listing of child digests). */
+    digest: string;
+    size: number;
+    kind: "file" | "directory";
+}
+export interface ProbeContext {
+    subject: ProbeSubject;
+    params: Json;
+    /** Read up to `max` bytes from the subject (or a path inside a directory subject). */
+    read(relPath?: string, max?: number): Promise<Uint8Array>;
+    /** Run an external tool: argv only, no shell, bounded time and output (vendored Orca process-host). */
+    exec(program: string, args: string[], opts?: {
+        timeoutMs?: number;
+        maxOutputBytes?: number;
+    }): Promise<{
+        code: number | null;
+        stdout: string;
+        stderr: string;
+        timedOut: boolean;
+        truncated: boolean;
+    }>;
+    /** Abort when the case is cancelled. */
+    signal: AbortSignal;
+}
+export interface ProbeOutput {
+    result: Json;
+    coverage?: Coverage | null;
+    limitations?: string[];
+    findings?: Finding[];
+    /** Not hashed: timings, tool versions. */
+    volatile?: Json;
+    locator?: {
+        offset?: number;
+        symbol?: string;
+    };
+}
+export interface ProbeDef {
+    id: string;
+    version: string;
+    /** The predicate recorded in evidence, e.g. "file.identify", "pkg.manifest", "elf.imports". */
+    predicate: string;
+    summary: string;
+    /** Which subjects it applies to, decided from the cheap identification result. */
+    appliesTo(ident: {
+        format: string;
+        kind: "file" | "directory";
+    }): boolean;
+    /** Platforms where it runs; the reach table records the rest as not covered. */
+    platforms: ("linux" | "darwin" | "win32")[];
+    /** External programs it needs; missing ones make it unavailable, never silently wrong. */
+    requires?: string[];
+    cost: "cheap" | "medium" | "heavy";
+    run(ctx: ProbeContext): Promise<ProbeOutput>;
+}
+export interface ProbeEngine {
+    list(): ProbeDef[];
+    /** Run one probe on a subject; returns the stored evidence record (reuses it when the ProbeKey already exists). */
+    run(input: {
+        caseId: string | null;
+        probeId: string;
+        path: string;
+        params?: Json;
+        producerId?: string;
+    }): Promise<ClaimRecord>;
+    /** Identify a subject and run every cheap applicable probe (the model-free first pass). */
+    sweep(input: {
+        caseId: string | null;
+        path: string;
+        depth?: number;
+        budgetMs?: number;
+    }): Promise<SweepReport>;
+}
+export interface SweepReport {
+    subject: string;
+    evidence: string[];
+    findings: (Finding & {
+        observation_id: string;
+    })[];
+    /** Questions the sweep could not close; each becomes an Unknown. */
+    questions: string[];
+    notExamined: {
+        what: string;
+        reason: string;
+    }[];
+    elapsedMs: number;
+}
+export type Effect = "none" | "read" | "write" | "exec" | "network" | "spawn" | "publish";
+export interface ToolContext {
+    caseId: string;
+    /** "coordinator" or the worker id that is calling. */
+    caller: string;
+    workspace: string;
+    /** Resolves when the person approves; rejects with approval_denied. Policy calls this, tools need not. */
+    approve(action: string, detail: Json): Promise<void>;
+    signal: AbortSignal;
+}
+export interface ToolResult {
+    /** Short text for the model. Keep under ~8 KB; put bulk behind a handle. */
+    text: string;
+    /** Machine-readable payload (also returned as MCP structuredContent). */
+    data?: Json;
+    /** Handle the model can pass to `assay_fetch` for the full payload. */
+    handle?: string;
+    /** True when the text came from the target (file contents, tool output): it is wrapped as untrusted. */
+    untrusted?: boolean;
+    isError?: boolean;
+}
+export interface ToolDef {
+    name: string;
+    description: string;
+    inputSchema: Json;
+    effect: Effect;
+    /** Only the coordinator may call it (worker management). */
+    coordinatorOnly?: boolean;
+    handler(ctx: ToolContext, args: Record<string, Json>): Promise<ToolResult>;
+}
+
+//// errors.d.ts
+export interface FailureMode {
+    readonly retryable: boolean;
+    readonly message: string;
+    readonly fix: string;
+}
+export declare const CORE_FAILURE_MODES: {
+    readonly store_locked: {
+        readonly retryable: false;
+        readonly message: "Another process holds this store open";
+        readonly fix: "Stop the other process that owns this store, or use a different home directory";
+    };
+    readonly store_schema_newer: {
+        readonly retryable: false;
+        readonly message: "The store was written by a newer version";
+        readonly fix: "Upgrade; opening a store with an older version is refused (downgrade only through export and import)";
+    };
+    readonly store_schema_mismatch: {
+        readonly retryable: false;
+        readonly message: "The store has not been migrated to this version yet";
+        readonly fix: "Open it once as the owner (start the server or run any command), then open readers";
+    };
+    readonly store_read_only: {
+        readonly retryable: false;
+        readonly message: "This store connection is a reader and cannot write";
+        readonly fix: "Send the write to the store's owner process";
+    };
+    readonly lease_expired: {
+        readonly retryable: false;
+        readonly message: "The attempt's lease expired before this write";
+        readonly fix: "None needed: the task is reclaimed and retried by its next attempt";
+    };
+    readonly stale_attempt: {
+        readonly retryable: false;
+        readonly message: "A newer attempt owns this task";
+        readonly fix: "None needed: only the current attempt may write";
+    };
+    readonly invalid_lease: {
+        readonly retryable: false;
+        readonly message: "Lease length must be a positive number of milliseconds";
+        readonly fix: "Pass leaseMs > 0";
+    };
+    readonly write_op_unknown: {
+        readonly retryable: false;
+        readonly message: "The writer has no handler for this write operation";
+        readonly fix: "Register a handler for the operation with the owner's WriteBatcher";
+    };
+    readonly checkpoint_too_large: {
+        readonly retryable: false;
+        readonly message: "A checkpoint is larger than the store allows, or the task has too many";
+        readonly fix: "Store large results as evidence or blobs and checkpoint a reference to them";
+    };
+    readonly effect_interrupted: {
+        readonly retryable: false;
+        readonly message: "An unsafe effect was interrupted and may have partly run";
+        readonly fix: "Check the target, then retry explicitly with a new key";
+    };
+    readonly receipt_conflict: {
+        readonly retryable: false;
+        readonly message: "A retry key was reused with a different payload";
+        readonly fix: "Use a new retry key for a different request";
+    };
+    readonly evidence_invalid: {
+        readonly retryable: false;
+        readonly message: "The claim record does not match the claim-record schema";
+        readonly fix: "See the claim-format document of the app that wrote it";
+    };
+    readonly evidence_confidence: {
+        readonly retryable: false;
+        readonly message: "Only the runner may record observed or derived evidence";
+        readonly fix: "Agents record analyst-inference; the verifier upgrades claims it can re-run";
+    };
+    readonly evidence_missing: {
+        readonly retryable: false;
+        readonly message: "A cited evidence record does not exist or was never delivered";
+        readonly fix: "Cite an observation id returned by a probe";
+    };
+    readonly unknown_conflict: {
+        readonly retryable: false;
+        readonly message: "The unknown changed since it was read";
+        readonly fix: "Read the latest revision and retry";
+    };
+    readonly budget_exceeded: {
+        readonly retryable: false;
+        readonly message: "The run's budget is spent";
+        readonly fix: "Raise the budget for this case, or stop";
+    };
+    readonly approval_denied: {
+        readonly retryable: false;
+        readonly message: "The person denied this action";
+        readonly fix: "Ask the person, or choose an action without effects";
+    };
+    readonly approval_expired: {
+        readonly retryable: true;
+        readonly message: "Nobody answered the approval request in time";
+        readonly fix: "Ask again when the person can answer, or choose an action without effects";
+    };
+    readonly handle_unknown: {
+        readonly retryable: false;
+        readonly message: "The handle is unknown, belongs to another case, or was evicted";
+        readonly fix: "Re-run the tool that produced it to get a fresh handle";
+    };
+    readonly path_outside_workspace: {
+        readonly retryable: false;
+        readonly message: "The path resolves outside the workspace";
+        readonly fix: "Use a path inside the workspace";
+    };
+    readonly path_exists: {
+        readonly retryable: false;
+        readonly message: "The destination already exists";
+        readonly fix: "Choose a new destination path, or remove the existing file first";
+    };
+    readonly path_not_found: {
+        readonly retryable: false;
+        readonly message: "No such path in the workspace";
+        readonly fix: "Use one of the suggested paths, or list the folder";
+    };
+    readonly probe_unknown: {
+        readonly retryable: false;
+        readonly message: "No probe with that id";
+        readonly fix: "List the available probes";
+    };
+    readonly probe_failed: {
+        readonly retryable: true;
+        readonly message: "The probe could not finish";
+        readonly fix: "See the probe's limitations; retry or use another probe";
+    };
+    readonly bad_request: {
+        readonly retryable: false;
+        readonly message: "The request is malformed";
+        readonly fix: "Check the request against the API documentation";
+    };
+    readonly not_found: {
+        readonly retryable: false;
+        readonly message: "No such object";
+        readonly fix: "Check the id";
+    };
+};
+export type CoreFailureCode = keyof typeof CORE_FAILURE_MODES;
+/** Codes contributed by apps, by interface augmentation (see the header). */
+export interface AppFailureCodes {
+}
+export type FailureCode = CoreFailureCode | Extract<keyof AppFailureCodes, string>;
+/** Register an app's codes, or reword a core code for that app. Later definitions win. */
+export declare function defineFailureModes(table: Record<string, FailureMode>): void;
+/** Every registered code: core codes plus whatever the running app defined. */
+export declare function failureModes(): Readonly<Record<string, FailureMode>>;
+export declare class CoreError extends Error {
+    readonly code: FailureCode;
+    readonly retryable: boolean;
+    readonly detail: Record<string, unknown> | undefined;
+    constructor(code: FailureCode, detail?: Record<string, unknown>, message?: string);
+    toJSON(): Record<string, unknown>;
+}
+export declare function isCoreError(e: unknown, code?: FailureCode): e is CoreError;
+
+//// evidence/jcs.d.ts
+export type Json = null | boolean | number | string | Json[] | {
+    [k: string]: Json;
+};
+export declare function canonicalize(value: unknown): string;
+
+//// evidence/record.d.ts
+import { type Json } from "./jcs.ts";
+/** The spec every new record is written with. */
+export declare const SPEC = "re4exa.claim/2";
+/** Older specs that are still read. Ids hash each record's own spec, so old records keep verifying. */
+export declare const LEGACY_SPECS: readonly ["assay.claim/1"];
+export type ClaimSpec = typeof SPEC | (typeof LEGACY_SPECS)[number];
+export type Confidence = "observed" | "derived" | "inferred" | "analyst-inference";
+export type ProducerKind = "runner" | "verifier" | "agent" | "person";
+export type Taint = "target" | "user" | "system";
+export interface Coverage {
+    /** "complete" is allowed only when unresolved and unclaimed are both 0. */
+    status: "complete" | "partial" | "none";
+    examined: number;
+    skipped: {
+        what: string;
+        reason: string;
+    }[];
+    unresolved: number;
+    unclaimed: number;
+    forms?: Record<string, {
+        found: number;
+        resolved: number;
+    }>;
+}
+export interface Finding {
+    key: string;
+    class: string;
+    label: string;
+}
+export interface ClaimRecord {
+    spec: ClaimSpec;
+    observation_id: string;
+    probe_key: string | null;
+    probe: {
+        id: string;
+        version: string;
+    } | null;
+    predicate: string;
+    subject: {
+        digest: string;
+        format?: string;
+    } | null;
+    params: Json;
+    result: Json;
+    confidence: Confidence;
+    producer: {
+        kind: ProducerKind;
+        id: string;
+    };
+    taint: Taint;
+    redactions: {
+        pointer: string;
+        fingerprint: string;
+        kind: string;
+    }[];
+    nested: string[];
+    limitations: string[];
+    coverage: Coverage | null;
+    /** Not hashed: where the subject was found, how long it took, which host. */
+    locator?: {
+        path?: string;
+        offset?: number;
+        symbol?: string;
+    } | undefined;
+    volatile?: Json | undefined;
+    ext?: {
+        findings?: Finding[];
+    } | undefined;
+    created_at: number;
+}
+export type ClaimInput = Omit<ClaimRecord, "spec" | "observation_id" | "created_at" | "redactions" | "nested" | "limitations" | "coverage" | "taint"> & Partial<Pick<ClaimRecord, "redactions" | "nested" | "limitations" | "coverage" | "taint">>;
+export declare function probeKey(probe: {
+    id: string;
+    version: string;
+}, params: Json, subjectDigest: string | null, profile?: Json): string;
+export declare function observationId(r: Omit<ClaimRecord, "observation_id">): string;
+export declare function findingKey(cls: string, normalized: Json): string;
+/** Build a record: validates, enforces the confidence rule, normalises coverage, computes the id. */
+export declare function makeRecord(input: ClaimInput, now: number): ClaimRecord;
+export declare function validate(r: Omit<ClaimRecord, "observation_id"> & {
+    observation_id?: string;
+}): void;
+export declare function subjectDigest(bytes: Uint8Array): string;
+
+//// evidence/store.d.ts
+import type { Kernel } from "../kernel/kernel.ts";
+import { type Json } from "./jcs.ts";
+import { type ClaimRecord } from "./record.ts";
+export declare function putEvidence(k: Kernel, caseId: string | null, rec: ClaimRecord, eventSeq?: number | null): ClaimRecord;
+export declare function getEvidence(k: Kernel, id: string): ClaimRecord | undefined;
+export declare function evidenceByProbeKey(k: Kernel, probeKey: string): ClaimRecord | undefined;
+export declare function caseEvidence(k: Kernel, caseId: string): ClaimRecord[];
+export declare function requireDelivered(k: Kernel, caseId: string, ids: string[]): void;
+export interface Unknown {
+    id: string;
+    rev: number;
+    question: string;
+    status: "open" | "resolved" | "dismissed";
+    origin: string;
+    answer?: string | undefined;
+    evidence?: string[] | undefined;
+    hash: string;
+}
+export declare function openUnknown(k: Kernel, caseId: string, input: {
+    question: string;
+    origin: string;
+    eventSeq?: number | null;
+}): Unknown;
+export declare function latestUnknown(k: Kernel, caseId: string, id: string): Unknown | undefined;
+export declare function listUnknowns(k: Kernel, caseId: string): Unknown[];
+export declare function resolveUnknown(k: Kernel, caseId: string, id: string, expectedRev: number, input: {
+    answer: string;
+    evidence: string[];
+    status?: "resolved" | "dismissed";
+}): Unknown;
+export type ClaimLabel = "seen" | "inferred" | "unknown";
+export type Verdict = "verified" | "refuted" | "unverifiable";
+export interface AgentClaim {
+    text: string;
+    label: ClaimLabel;
+    predicate?: string | undefined;
+    params?: Json | undefined;
+    subject?: {
+        path?: string;
+        digest?: string;
+    } | undefined;
+    cites?: string[] | undefined;
+    question_class?: string | undefined;
+}
+export interface StoredClaim {
+    id: string;
+    case_id: string;
+    author: string;
+    claim: AgentClaim;
+    verdict: Verdict | null;
+    verdict_record: {
+        observation_id?: string;
+        reason: string;
+        probe?: string;
+    } | null;
+    /** Seq of the assistant message the claim belongs to, when known. */
+    event_seq: number | null;
+    created_at: number;
+}
+export declare function recordClaim(k: Kernel, caseId: string, author: string, claim: AgentClaim, eventSeq?: number | null): StoredClaim;
+export declare function setVerdict(k: Kernel, claimId: string, verdict: Verdict, record: StoredClaim["verdict_record"]): void;
+export declare function getClaim(k: Kernel, id: string): StoredClaim | undefined;
+export declare function caseClaims(k: Kernel, caseId: string): StoredClaim[];
+export declare function wilson(successes: number, n: number, z?: number): [number, number];
+export interface CalibrationRow {
+    producer: string;
+    question_class: string;
+    verified: number;
+    refuted: number;
+    unverifiable: number;
+    precision: number | null;
+    interval: [number, number];
+    status: "ok" | "insufficient" | "demoted";
+}
+/** Precision = verified / (verified + refuted). Below n=30 the row is INSUFFICIENT; a lower bound under 0.8 demotes the producer. */
+export declare function calibration(k: Kernel): CalibrationRow[];
+
+//// kernel/ids.d.ts
+export declare function uuidv7(nowMs?: number): string;
+export declare function sha256(data: string | Uint8Array): string;
+export declare function newId(prefix: string, nowMs?: number): string;
+
+//// kernel/kernel.d.ts
+import { DatabaseSync } from "node:sqlite";
+export type Clock = () => number;
+export type TaskState = "pending" | "running" | "completed" | "failed" | "cancelled" | "parked";
+export type ReplayPolicy = "safe" | "keyed" | "unsafe";
+export interface TaskRow {
+    id: string;
+    queue: string;
+    kind: string;
+    params: unknown;
+    state: TaskState;
+    case_id: string | null;
+    parent_id: string | null;
+    idem_key: string | null;
+    attempts: number;
+    crash_count: number;
+    max_attempts: number;
+    result: unknown;
+    error: unknown;
+    available_at: number;
+    created_at: number;
+    updated_at: number;
+}
+export interface Attempt {
+    id: string;
+    taskId: string;
+    n: number;
+    worker: string;
+    leaseUntil: number;
+}
+export interface CaseRow {
+    id: string;
+    title: string;
+    workspace: string | null;
+    parent_case: string | null;
+    forked_at: number | null;
+    status: string;
+    created_at: number;
+    meta: Record<string, unknown>;
+}
+export interface CaseEvent {
+    case_id: string;
+    seq: number;
+    kind: string;
+    body: unknown;
+    at: number;
+    prev_hash: string;
+    hash: string;
+}
+export interface KernelOptions {
+    path: string;
+    clock?: Clock;
+    maxCrashes?: number;
+    /** owner (default): the one writer, runs migrations. reader: read-only, any number at once. */
+    mode?: "owner" | "reader";
+    /** How long a reader waits on a busy store, in ms. Default 5000. */
+    busyTimeoutMs?: number;
+    /** Largest checkpoint value (serialised JSON bytes). Default 1 MiB. */
+    maxCheckpointBytes?: number;
+    /** Most checkpoints one task may hold. Default 10,000. */
+    maxCheckpointsPerTask?: number;
+}
+type Row = Record<string, unknown>;
+export declare class Kernel {
+    #private;
+    readonly db: DatabaseSync;
+    readonly path: string;
+    readonly now: Clock;
+    readonly maxCrashes: number;
+    readonly mode: "owner" | "reader";
+    readonly limits: {
+        checkpointBytes: number;
+        checkpointsPerTask: number;
+    };
+    private constructor();
+    static open(opts: KernelOptions): Kernel;
+    close(): void;
+    get closed(): boolean;
+    /**
+     * An app's or a component's own schema, versioned separately from core's (`schema_version:<ns>`).
+     * Pending migrations and the version bump commit in one transaction, so a failure part-way leaves
+     * the store as it was; the store is copied aside first.
+     */
+    migrateNamespace(ns: string, migrations: string[]): {
+        from: number;
+        to: number;
+        backup: string | null;
+    };
+    /**
+     * Copy the whole store to `dest` page by page (SQLite's online backup), so an export never holds
+     * the store in memory as one string (rea's bundles failed above V8's string limit). Refuses to
+     * overwrite an existing file.
+     */
+    exportTo(dest: string): Promise<{
+        pages: number;
+    }>;
+    run(sql: string, ...params: unknown[]): {
+        changes: number | bigint;
+        lastInsertRowid: number | bigint;
+    };
+    get<T = Row>(sql: string, ...params: unknown[]): T | undefined;
+    all<T = Row>(sql: string, ...params: unknown[]): T[];
+    /** Synchronous transaction; nested calls use savepoints. */
+    tx<T>(fn: () => T): T;
+    meta(k: string): string | undefined;
+    setMeta(k: string, v: string): void;
+    createCase(input: {
+        title: string;
+        workspace?: string | null;
+        meta?: Record<string, unknown>;
+        id?: string;
+    }): CaseRow;
+    getCase(id: string): CaseRow | undefined;
+    listCases(): CaseRow[];
+    updateCase(id: string, patch: {
+        title?: string;
+        status?: string;
+        meta?: Record<string, unknown>;
+    }): void;
+    appendEvent(caseId: string, kind: string, body: unknown): CaseEvent;
+    events(caseId: string, afterSeq?: number, limit?: number): CaseEvent[];
+    /** Recompute the chain; returns the first broken seq, or null when intact. */
+    verifyChain(caseId: string): number | null;
+    /** Fork a case at event `atSeq`: a new case whose log is a re-chained copy of events 1..atSeq. */
+    forkCase(caseId: string, atSeq: number, title?: string): CaseRow;
+    spawnTask(input: {
+        queue: string;
+        kind: string;
+        params?: unknown;
+        caseId?: string | null;
+        parentId?: string | null;
+        idempotencyKey?: string | null;
+        maxAttempts?: number;
+        availableAt?: number;
+    }): {
+        task: TaskRow;
+        created: boolean;
+    };
+    getTask(id: string): TaskRow | undefined;
+    listTasks(filter?: {
+        queue?: string;
+        caseId?: string;
+        parentId?: string;
+        state?: TaskState;
+    }): TaskRow[];
+    /**
+     * Claim the next runnable task. A running task whose lease has expired counts as crashed:
+     * its attempt is closed, its crash count rises, and after `maxCrashes` it is parked.
+     */
+    claimTask(queue: string, worker: string, leaseMs: number): Attempt | null;
+    /** Claim one specific pending task (or one whose lease expired). Returns null when it is not claimable. */
+    claimTaskById(taskId: string, worker: string, leaseMs: number): Attempt | null;
+    /** The fence: refuse any write from an attempt that is not current or whose lease has expired. */
+    fence(att: Attempt): void;
+    extendLease(att: Attempt, leaseMs: number): Attempt;
+    /** First write wins: a checkpoint computed once is reused by every later attempt. */
+    checkpoint<T>(att: Attempt, name: string, compute: () => T | Promise<T>): Promise<T>;
+    /** Run `body` inside the fence so its writes and the checkpoint land in one transaction. */
+    commitStep<T>(att: Attempt, name: string, body: () => T): T;
+    completeTask(att: Attempt, result: unknown): void;
+    failTask(att: Attempt, error: unknown, opts?: {
+        retryDelayMs?: number;
+        final?: boolean;
+    }): TaskState;
+    cancelTask(taskId: string): void;
+    /**
+     * At startup the store is held exclusively, so any attempt still marked running belongs to a
+     * process that died. Expire those leases now instead of waiting for them to run out.
+     */
+    expireOrphanedAttempts(): number;
+    unparkTask(taskId: string): void;
+    /**
+     * Record intent, run the effect, record the outcome. After a crash between the two records,
+     * the next attempt applies the replay policy: `safe` re-runs, `keyed` re-runs with the same
+     * idempotency key (the target must dedupe), `unsafe` settles as interrupted and throws.
+     */
+    runEffect<T>(att: Attempt, spec: {
+        name: string;
+        replay: ReplayPolicy;
+        key?: string;
+        args?: unknown;
+    }, fn: (key: string) => Promise<T> | T): Promise<T>;
+    intents(taskId: string): Row[];
+    withReceipt<T>(key: string, payload: unknown, fn: () => Promise<T> | T): Promise<{
+        result: T;
+        replayed: boolean;
+    }>;
+    publish(topic: string, dedupeKey: string, payload: unknown): {
+        seq: number;
+        created: boolean;
+    };
+    readTopic(topic: string, afterSeq: number, limit?: number): {
+        seq: number;
+        payload: unknown;
+    }[];
+    send(msg: {
+        to: string;
+        from: string;
+        kind: string;
+        body: unknown;
+        caseId?: string | null;
+    }): number;
+    inbox(recipient: string, opts?: {
+        includeAcked?: boolean;
+    }): {
+        id: number;
+        from: string;
+        kind: string;
+        body: unknown;
+        at: number;
+    }[];
+    ack(recipient: string, ids: number[]): void;
+    setBudget(scope: string, limit: {
+        usd?: number;
+        tokens?: number;
+        calls?: number;
+    }): void;
+    budget(scope: string): {
+        limit: {
+            usd?: number;
+            tokens?: number;
+            calls?: number;
+        };
+        spent: {
+            usd: number;
+            tokens: number;
+            calls: number;
+        };
+    } | undefined;
+    /** Throws `budget_exceeded` before spending when the delta would cross a limit. */
+    checkBudget(scope: string, delta: {
+        usd?: number;
+        tokens?: number;
+        calls?: number;
+    }): void;
+    spend(scope: string, delta: {
+        usd?: number;
+        tokens?: number;
+        calls?: number;
+    }): void;
+    recordUsage(u: {
+        caseId?: string | null;
+        accountId?: string | null;
+        provider: string;
+        model?: string | null;
+        workerId?: string | null;
+        inputTokens?: number;
+        outputTokens?: number;
+        costUsd?: number | null;
+        resent?: boolean;
+    }): void;
+    usageSummary(by?: "account_id" | "provider" | "case_id" | "worker_id"): Row[];
+}
+export {};
+
+//// kernel/schema.d.ts
+export declare const MIGRATIONS: string[];
+export declare const SCHEMA_VERSION: number;
+
+//// kernel/writer.d.ts
+import type { MessagePort } from "node:worker_threads";
+import type { Kernel } from "./kernel.ts";
+export interface WriteOp {
+    op: string;
+    args?: unknown;
+}
+export type WriteHandler = (k: Kernel, args: unknown) => unknown;
+export interface WriterOptions {
+    /** Most operations committed in one transaction. Default 256. */
+    maxRows?: number;
+    /** Longest a request waits for its batch to fill, in ms. Default 5. */
+    maxMs?: number;
+}
+export interface WriterStats {
+    batches: number;
+    committed: number;
+    rejected: number;
+    largestBatch: number;
+}
+export declare class WriteBatcher {
+    #private;
+    readonly stats: WriterStats;
+    constructor(kernel: Kernel, handlers: Record<string, WriteHandler>, opts?: WriterOptions);
+    submit(ops: WriteOp[]): Promise<unknown[]>;
+    /** Commit one batch now. Further queued requests are scheduled after yielding to the event loop. */
+    flush(): void;
+    /** Serve write requests arriving on a port (from a worker thread's `writerClient`). */
+    attach(port: MessagePort): void;
+    /** Commit everything still queued, then refuse new requests. */
+    close(): void;
+}
+/** The worker-thread side: send write operations to the owner and wait for them to commit. */
+export declare function writerClient(port: MessagePort): {
+    submit(ops: WriteOp[]): Promise<unknown[]>;
+    close(): void;
+};
+
+//// mcp/handles.d.ts
+export interface HandleEntry {
+    id: string;
+    caseId: string;
+    text: string;
+    bytes: number;
+    untrusted: boolean;
+    origin: string;
+    createdAt: number;
+}
+export interface HandlePage {
+    handle: string;
+    text: string;
+    /** Offsets and lengths count UTF-16 code units of the stored text. */
+    offset: number;
+    length: number;
+    total: number;
+    nextOffset: number | null;
+    untrusted: boolean;
+    origin: string;
+}
+export interface HandleStoreOptions {
+    /** Total bytes kept across all handles. Default 64 MiB. */
+    maxBytes?: number;
+    /** Largest single payload. Default 16 MiB; larger payloads are cut and marked. */
+    maxEntryBytes?: number;
+    now?: () => number;
+}
+export declare const DEFAULT_PAGE_BYTES: number;
+export declare class HandleStore {
+    #private;
+    readonly maxBytes: number;
+    readonly maxEntryBytes: number;
+    constructor(opts?: HandleStoreOptions);
+    get bytes(): number;
+    get size(): number;
+    put(caseId: string, text: string, meta?: {
+        untrusted?: boolean;
+        origin?: string;
+    }): string;
+    get(handle: string, caseId: string): HandleEntry;
+    /** One page of a payload; `length` defaults to roughly `DEFAULT_PAGE_BYTES` of UTF-8. */
+    page(handle: string, caseId: string, offset?: number, length?: number, maxBytes?: number): HandlePage;
+    dropCase(caseId: string): void;
+}
+
+//// mcp/paths.d.ts
+/** Workspace-relative paths shown to agents use "/" on every platform, as the probes' locators do. */
+export declare function slashed(rel: string): string;
+export declare function resolveInWorkspace(workspace: string, p: string, opts?: {
+    write?: boolean;
+    mustExist?: boolean;
+}): {
+    abs: string;
+    rel: string;
+};
+
+//// mcp/suggest.d.ts
+import { CoreError } from "../errors.ts";
+/** Up to `max` workspace-relative paths whose name resembles the last segment of `wanted`. */
+export declare function suggestPaths(root: string, wanted: string, max?: number, limit?: number): string[];
+/** The path_not_found error, with suggestions in both the detail and the message the agent reads. */
+export declare function pathNotFound(root: string, wanted: string): CoreError;
+
+//// policy/approvals.d.ts
+import { EventEmitter } from "node:events";
+import type { Json } from "../evidence/jcs.ts";
+import type { Kernel } from "../kernel/kernel.ts";
+import type { AutoRule } from "./taint.ts";
+/** What a person sees when deciding: one pending (or settled) request. */
+export interface ApprovalView {
+    id: string;
+    caseId: string | null;
+    workerId: string | null;
+    action: string;
+    detail: unknown;
+    /** Why approval is needed, e.g. "session read untrusted content", "effect: exec". */
+    reason: string;
+    state: "pending" | "approved" | "denied" | "expired";
+    createdAt: number;
+}
+export interface ApprovalRequest {
+    caseId: string | null;
+    workerId: string | null;
+    action: string;
+    detail: Json;
+    /** Why approval is needed, e.g. "effect exec; session read untrusted content". */
+    reason: string;
+    /** Overrides the queue's default timeout. */
+    timeoutMs?: number;
+    /** Aborting expires the request. */
+    signal?: AbortSignal;
+}
+export interface ApprovalDecisionEvent {
+    id: string;
+    state: ApprovalView["state"];
+    note: string | null;
+}
+export interface ApprovalQueueOptions {
+    /** Default 10 minutes. */
+    timeoutMs?: number;
+    /** Append an "approval" event to the case log on request and decision. Default true. */
+    logEvents?: boolean;
+}
+export declare class ApprovalQueue extends EventEmitter {
+    #private;
+    readonly kernel: Kernel;
+    readonly timeoutMs: number;
+    readonly logEvents: boolean;
+    constructor(kernel: Kernel, opts?: ApprovalQueueOptions);
+    /** Resolves on approve; rejects `approval_denied` on deny, `approval_expired` on timeout or abort. */
+    request(input: ApprovalRequest): Promise<void>;
+    /** The person's decision. Throws `not_found` for an unknown id, `bad_request` when already decided. */
+    decide(id: string, decision: "approve" | "deny", note?: string): ApprovalView;
+    get(id: string): ApprovalView | undefined;
+    pending(caseId?: string): ApprovalView[];
+    list(caseId: string, limit?: number): ApprovalView[];
+    rules(caseId: string): AutoRule[];
+    addRule(caseId: string, rule: AutoRule): AutoRule[];
+    removeRule(caseId: string, tool: string): AutoRule[];
+    /** Expire everything this process is waiting on (server shutdown). */
+    close(): void;
+}
+
+//// policy/env.d.ts
+export declare function minimalEnv(): NodeJS.ProcessEnv;
+
+//// policy/redact.d.ts
+import type { Json } from "../evidence/jcs.ts";
+export declare const DETECTOR_VERSION = "re4exa.redact/1";
+export interface Redaction {
+    /** RFC 6901 JSON pointer of the string that held the secret. */
+    pointer: string;
+    fingerprint: string;
+    kind: string;
+}
+/** Shannon entropy in bits per character. */
+export declare function entropy(s: string): number;
+export declare function fingerprint(secret: string): string;
+/** Redact one string. `found` receives one entry per secret (pointer filled in by the caller). */
+export declare function redactString(input: string, pointer?: string): {
+    text: string;
+    redactions: Redaction[];
+};
+/** Redact every string in a JSON value. The input is not modified. */
+export declare function redact(value: Json): {
+    value: Json;
+    redactions: Redaction[];
+};
+
+//// policy/taint.d.ts
+import type { Effect } from "../contracts.ts";
+export interface EnvelopeResult {
+    text: string;
+    id: string;
+    /** Closing or opening tag look-alikes rewritten inside the content. */
+    neutralised: number;
+    /** Unicode tag characters (U+E0000..U+E007F) removed. */
+    tagChars: number;
+    /** Bidi control characters removed. */
+    bidi: number;
+    /** Zero-width characters removed. */
+    zeroWidth: number;
+}
+/** Remove hidden characters and neutralise envelope look-alikes, without wrapping. */
+export declare function sanitizeUntrusted(text: string): Omit<EnvelopeResult, "id">;
+export declare function newEnvelopeId(): string;
+/** Wrap target-derived text. Each call uses a new random id. */
+export declare function envelope(text: string, origin: string): EnvelopeResult;
+/** Byte overhead of an envelope around empty text (for budgeting result sizes). */
+export declare function envelopeOverhead(origin: string): number;
+export declare class SessionTaint {
+    #private;
+    static key(caseId: string, caller: string): string;
+    /** Record that this caller has read untrusted content from `origin`. */
+    mark(caseId: string, caller: string, origin: string): void;
+    isTainted(caseId: string, caller: string): boolean;
+    sources(caseId: string, caller: string): string[];
+    /** Only for a brand-new provider session; taint is never cleared within one. */
+    clear(caseId: string, caller: string): void;
+}
+export type Decision = "allow" | "approve" | "deny";
+export interface AutoRule {
+    /** Tool name the rule covers, e.g. "assay_exec". */
+    tool: string;
+    /** "approve" (default) skips the approval prompt; "deny" refuses the tool outright. */
+    action?: "approve" | "deny";
+    /** Keep auto-approving after the caller has read untrusted content. Default false. */
+    evenWhenTainted?: boolean;
+}
+export interface DecideInput {
+    effect: Effect;
+    /** Tool being called; needed to match auto rules. */
+    tool?: string;
+    tainted: boolean;
+    mode: "enforced" | "open";
+    /** Rules the person added for this case. */
+    autoRules?: AutoRule[];
+}
+/** The decision with a human-readable reason. Both modes apply the same rules to Assay's own tools. */
+export declare function explain(input: DecideInput): {
+    decision: Decision;
+    reason: string;
+};
+export declare function decide(input: DecideInput): Decision;
+
+//// probes/builtin/archive.d.ts
+import { type AssayProbe } from "../util.ts";
+export interface ArchiveEntry {
+    name: string;
+    size: number;
+    type: "file" | "dir" | "symlink" | "hardlink" | "other";
+    compressedSize?: number;
+    method?: number;
+    linkTarget?: string;
+    unpacked?: boolean;
+    /** Offset of the entry's data in the (decompressed) archive bytes; not part of the result. */
+    dataOffset?: number;
+}
+export interface ArchiveListing {
+    container: "zip" | "tar" | "tar.gz" | "asar" | "gzip";
+    entries: ArchiveEntry[];
+    total: number;
+    truncated: boolean;
+    notes: string[];
+    /** Bytes before the zip data (CRX header, self-extractor stub). */
+    prefixBytes?: number;
+}
+/** Bytes of an archive read into memory; larger archives are reported, not parsed. */
+export declare const ARCHIVE_CAP: number;
+/** Decompressed size limit for gzip (bomb guard). */
+export declare const GUNZIP_CAP: number;
+export declare function parseZip(b: Uint8Array, max?: number): ArchiveListing;
+export declare function parseTar(b: Uint8Array, max?: number, container?: "tar" | "tar.gz"): ArchiveListing;
+export declare function gunzipBounded(b: Uint8Array, cap?: number): Uint8Array;
+export declare function tarEntryData(tar: Uint8Array, e: ArchiveEntry, max: number): Uint8Array;
+export declare function parseAsar(b: Uint8Array, max?: number): ArchiveListing;
+/** Why an entry name would escape the extraction directory, or null. */
+export declare function zipSlip(name: string): string | null;
+export declare function listArchive(b: Uint8Array, max?: number): ArchiveListing;
+export declare const archiveList: AssayProbe;
+
+//// probes/builtin/bytes.d.ts
+import type { Json } from "../../evidence/jcs.ts";
+import { type AssayProbe } from "../util.ts";
+export declare const fileHash: AssayProbe;
+/** Bytes scanned by file.strings and file.contains. */
+export declare const SCAN_CAP: number;
+export declare function extractStrings(b: Uint8Array, min: number, limit: number, re: RegExp | null): {
+    strings: {
+        offset: number;
+        value: string;
+    }[];
+    total: number;
+    matched: number;
+    truncated: boolean;
+};
+export declare const fileStrings: AssayProbe;
+export declare function parseNeedle(p: Record<string, Json>): Uint8Array;
+export declare const fileContains: AssayProbe;
+
+//// probes/builtin/elf.d.ts
+import { type Finding } from "../../evidence/record.ts";
+import { type AssayProbe } from "../util.ts";
+/** Bytes of a binary read into memory for the native parsers. */
+export declare const NATIVE_CAP: number;
+export interface ElfInfo {
+    bits: 32 | 64;
+    endian: "little" | "big";
+    type: string;
+    machine: string;
+    entry: string;
+    interpreter: string | null;
+    needed: string[];
+    soname: string | null;
+    rpath: string | null;
+    runpath: string | null;
+    exports: {
+        count: number;
+        first: string[];
+    };
+    imports: {
+        count: number;
+        first: string[];
+    };
+    sections: string[];
+    markers: string[];
+    notes: string[];
+}
+export declare function parseElf(b: Uint8Array, firstN?: number): ElfInfo;
+export declare function libFindings(libs: string[]): Finding[];
+export declare const elfInfo: AssayProbe;
+
+//// probes/builtin/identify.d.ts
+import { type AssayProbe, type JsonObject } from "../util.ts";
+export interface Ident {
+    format: string;
+    families: string[];
+    mime: string;
+    details: JsonObject;
+}
+/** Bytes file.identify reads from the start of a file. */
+export declare const IDENTIFY_HEAD: number;
+export declare function familiesOf(format: string): string[];
+/** Identify bytes. `head` is the start of the file (whole file when size <= head length). Never throws. */
+export declare function identifyBytes(head: Uint8Array, name: string, size: number): Ident;
+export declare function identifyDirectory(abs: string): Ident;
+export declare const fileIdentify: AssayProbe;
+
+//// probes/builtin/index.d.ts
+import type { AssayProbe } from "../util.ts";
+export declare const BUILTIN_PROBES: AssayProbe[];
+
+//// probes/builtin/js-tokens.d.ts
+export type TokType = "ident" | "string" | "template" | "punct" | "number" | "regex" | "private";
+export interface Tok {
+    t: TokType;
+    /** Identifier name, punctuator, decoded string value, or cooked template chunk. */
+    v: string;
+    /** Offset of the token in the source. */
+    s: number;
+    line: number;
+    /** Template chunk followed by a `${` substitution. */
+    sub?: boolean;
+    /** Template chunk position: whole (no substitutions), head, middle or tail. */
+    part?: "whole" | "head" | "middle" | "tail";
+}
+export interface TokenizeResult {
+    tokens: Tok[];
+    unterminated: {
+        kind: "string" | "template" | "comment" | "regex";
+        offset: number;
+        line: number;
+    }[];
+    truncated: boolean;
+}
+export declare function cook(raw: string): string;
+export declare function tokenize(src: string, maxTokens?: number): TokenizeResult;
+
+//// probes/builtin/js.d.ts
+import { type AssayProbe } from "../util.ts";
+import { type Tok } from "./js-tokens.ts";
+/** Bytes of one source file the JS probes read. */
+export declare const JS_CAP: number;
+export declare const FORMS: readonly ["static-import", "export-from", "require", "dynamic-import", "worker-url", "import-meta-resolve", "create-require", "process-dlopen"];
+export type Form = (typeof FORMS)[number];
+export interface ImportSite {
+    specifier: string;
+    form: Form;
+    line: number;
+    file?: string;
+}
+export interface OpenSite {
+    form: Form;
+    line: number;
+    snippet: string;
+    file?: string;
+}
+export interface Census {
+    imports: ImportSite[];
+    unresolved: OpenSite[];
+    unclaimed: OpenSite[];
+    forms: Record<Form, {
+        found: number;
+        resolved: number;
+    }>;
+}
+export declare function specifierKind(s: string): string;
+export declare function census(src: string, toks: Tok[]): Census;
+interface FileCensus extends Census {
+    skipped: {
+        what: string;
+        reason: string;
+    }[];
+}
+export declare function censusText(text: string, label: string, clipped: boolean): FileCensus & {
+    tokens: Tok[];
+};
+export declare const jsImports: AssayProbe;
+export declare function hostOf(authority: string): string | null;
+export interface UrlHit {
+    url: string;
+    host: string;
+    scheme: string | null;
+    line: number;
+    file?: string;
+}
+export declare function endpointsFrom(toks: Tok[]): {
+    urls: UrlHit[];
+    dynamic: number;
+};
+export declare const jsEndpoints: AssayProbe;
+export declare function obfuscationMetrics(text: string, toks: Tok[]): {
+    bytes: number;
+    lines: number;
+    maxLineLength: number;
+    longLineShare: number;
+    entropy: number;
+    escapesPerKiB: number;
+    escapes: number;
+    identifiers: number;
+    hexIdentifierShare: number;
+    hexIdentifiers: number;
+    evalLike: number;
+};
+export declare function obfuscationVerdict(m: ReturnType<typeof obfuscationMetrics>): {
+    verdict: string;
+    signals: string[];
+};
+export declare const codeObfuscation: AssayProbe;
+export {};
+
+//// probes/builtin/macho.d.ts
+import { type AssayProbe } from "../util.ts";
+export interface MachOSlice {
+    cpu: string;
+    bits: 32 | 64;
+    endian: "little" | "big";
+    filetype: string;
+    dylibs: {
+        name: string;
+        kind: string;
+        current: string;
+        compat: string;
+    }[];
+    id: string | null;
+    rpaths: string[];
+    codeSignature: boolean;
+    encrypted: boolean;
+    uuid: string | null;
+    platform: string | null;
+    minOs: string | null;
+    markers: string[];
+    error?: string;
+}
+export interface MachOInfo {
+    fat: boolean;
+    slices: MachOSlice[];
+}
+export declare function parseThin(b: Uint8Array): MachOSlice;
+export declare function parseMachO(b: Uint8Array): MachOInfo;
+export declare const machoInfo: AssayProbe;
+
+//// probes/builtin/pe.d.ts
+import { type AssayProbe } from "../util.ts";
+export interface PeInfo {
+    machine: string;
+    bits: 32 | 64;
+    kind: "exe" | "dll";
+    subsystem: string;
+    timestamp: number;
+    timestampIso: string;
+    entryRva: number;
+    sections: string[];
+    imports: {
+        dll: string;
+        functions: string[];
+        delay?: boolean;
+    }[];
+    exports: {
+        dll: string | null;
+        count: number;
+        names: string[];
+    };
+    markers: string[];
+    notes: string[];
+}
+export declare function parsePe(b: Uint8Array): PeInfo;
+export declare const peInfo: AssayProbe;
+
+//// probes/builtin/pkg.d.ts
+import { type AssayProbe } from "../util.ts";
+export declare const INSTALL_HOOKS: readonly ["preinstall", "install", "postinstall", "prepare"];
+export declare const pkgManifest: AssayProbe;
+export declare const pkgNativeAddons: AssayProbe;
+export declare const dirInventory: AssayProbe;
+
+//// probes/builtin/wasm.d.ts
+import { type AssayProbe } from "../util.ts";
+export interface WasmInfo {
+    version: number;
+    sections: {
+        id: number;
+        name: string;
+        size: number;
+    }[];
+    imports: {
+        module: string;
+        name: string;
+        kind: string;
+    }[];
+    exports: {
+        name: string;
+        kind: string;
+    }[];
+    customSections: string[];
+    truncated: boolean;
+}
+export declare function parseWasm(b: Uint8Array, cap?: number): WasmInfo;
+export declare const wasmInfo: AssayProbe;
+
+//// probes/diff.d.ts
+import type { Finding } from "../evidence/record.ts";
+export interface FindingDiff<F extends Finding = Finding> {
+    added: F[];
+    removed: F[];
+    unchanged: {
+        before: F;
+        after: F;
+    }[];
+}
+/** Findings present only after (added), only before (removed), or in both (unchanged), each once per key. */
+export declare function diffFindings<F extends Finding>(before: F[], after: F[]): FindingDiff<F>;
+
+//// probes/engine.d.ts
+import type { ProbeDef, ProbeEngine, ProbeSubject } from "../contracts.ts";
+import { type Json } from "../evidence/jcs.ts";
+import { type ClaimRecord } from "../evidence/record.ts";
+import type { Kernel } from "../kernel/kernel.ts";
+import { type Platform } from "./router.ts";
+export type Redactor = (value: Json) => {
+    value: Json;
+    redactions: ClaimRecord["redactions"];
+};
+export interface EngineOptions {
+    /** Producer id recorded on runner evidence (outside the observation-id hash). Default "runner". */
+    producerId?: string;
+    kernel: Kernel;
+    workspace: string;
+    redact?: Redactor;
+    clock?: () => number;
+    platform?: Platform;
+    /** Extra probes (plug-ins, tests). They default to confidence "derived" and are not swept. */
+    probes?: ProbeDef[];
+    /** Per-probe time limit. */
+    timeoutMs?: number;
+    /** Cancels every running probe (the case was cancelled). */
+    signal?: AbortSignal;
+    /** Let the sweep run external tools that need no consent and are on PATH (default false). */
+    runExternal?: boolean;
+    /** PATH lookup (tests inject one). */
+    which?: (program: string) => string | null;
+}
+export interface AssayProbeEngine extends ProbeEngine {
+    readonly workspace: string;
+    resolve(path: string): ProbeSubject;
+    run(input: {
+        caseId: string | null;
+        probeId: string;
+        path: string;
+        params?: Json;
+        producerId?: string;
+        signal?: AbortSignal;
+    }): Promise<ClaimRecord>;
+}
+export declare function createProbeEngine(opts: EngineOptions): AssayProbeEngine;
+
+//// probes/reach.d.ts
+import { type Platform } from "./router.ts";
+export declare const PLATFORMS: Platform[];
+export interface ReachFixture {
+    name: string;
+    format: string;
+    subject: string;
+    files: {
+        rel: string;
+        bytes: Uint8Array;
+    }[];
+    probes: string[];
+}
+export interface ReachCell {
+    status: "covered" | "partial" | "not-covered";
+    reason: string;
+}
+export interface ReachRow {
+    format: string;
+    fixture: string | null;
+    probes: string[];
+    router: string[];
+    platforms: Record<Platform, ReachCell>;
+}
+export interface ReachTable {
+    generatedBy: string;
+    source: string;
+    rows: ReachRow[];
+}
+export declare function computeReach(fixtures: ReachFixture[]): Promise<ReachTable>;
+export declare function serializeReach(t: ReachTable): string;
+
+//// probes/router.d.ts
+import { type AssayProbe } from "./util.ts";
+export type Platform = "linux" | "darwin" | "win32";
+export interface ExternalTool {
+    id: string;
+    program: string;
+    args: string[];
+    platforms: Platform[];
+    fallback: string;
+    outputCap: number;
+}
+export interface RouterRow {
+    id: string;
+    target: string;
+    detect: {
+        formats: string[];
+        names: string[];
+        markers: string[];
+    };
+    probes: string[];
+    external: ExternalTool[];
+    consent: "none" | "approval";
+    traps: string[];
+    source: string;
+}
+export interface RouterPack {
+    version: string;
+    rows: RouterRow[];
+}
+export declare function loadRouterPack(): RouterPack;
+export declare function validatePack(p: RouterPack, builtinIds?: Set<string>): string[];
+/**
+ * Rows whose detect clause matches. A format match is required; markers (from the format probes)
+ * must match when the row lists any; names must match when the format is "unknown" or when the
+ * row lists only exact names (e.g. libapp.so). Otherwise names are hints.
+ */
+export declare function matchRows(ident: {
+    format: string;
+    name?: string;
+    markers?: string[];
+}, pack?: RouterPack): RouterRow[];
+/** Locate a program on PATH (PATHEXT on Windows). */
+export declare function which(program: string, env?: NodeJS.ProcessEnv, platform?: string): string | null;
+export declare function externalProbeId(row: RouterRow, tool: ExternalTool): string;
+/** External tools a probe can run on a file: only {path} placeholders. */
+export declare function runnableOnFile(tool: ExternalTool): boolean;
+export interface ToolStatus {
+    row: RouterRow;
+    tool: ExternalTool;
+    probeId: string;
+    available: boolean;
+    reason: string;
+}
+export declare function toolStatus(row: RouterRow, tool: ExternalTool, platform: Platform, lookup?: (p: string) => string | null): ToolStatus;
+/** Probe definitions for every external tool that takes only the file path. */
+export declare function externalProbes(pack?: RouterPack): AssayProbe[];
+/** Traps worth telling an agent about for this format. */
+export declare function trapsFor(ident: {
+    format: string;
+    name?: string;
+    markers?: string[];
+}): {
+    row: string;
+    trap: string;
+}[];
+
+//// probes/util.d.ts
+import type { ProbeDef } from "../contracts.ts";
+import type { Json } from "../evidence/jcs.ts";
+import type { Confidence } from "../evidence/record.ts";
+/** A built-in probe: the shared ProbeDef plus how the engine records and sweeps it. */
+export interface AssayProbe extends ProbeDef {
+    confidence: Confidence;
+    /** "root": run on the sweep subject; "each": run on every file the sweep walks (and on a file root). */
+    sweep: ("root" | "each")[];
+    /** The result depends on the file name (extension), so the name joins the ProbeKey profile. */
+    nameSensitive?: boolean;
+    /** "approval": the person must approve each run (router rows whose tool downloads or executes code). */
+    consent?: "none" | "approval";
+}
+export type JsonObject = {
+    [k: string]: Json;
+};
+export declare function fail(reason: string, detail?: Record<string, unknown>): never;
+export declare function u8(b: Uint8Array, o: number): number;
+export declare function u16(b: Uint8Array, o: number, le?: boolean): number;
+export declare function u32(b: Uint8Array, o: number, le?: boolean): number;
+/** 64-bit read as {hi, lo}; callers decide what a large value means. */
+export declare function u64parts(b: Uint8Array, o: number, le?: boolean): {
+    hi: number;
+    lo: number;
+};
+/** 64-bit read that fails above 2^53 (offsets and sizes in real files never get there). */
+export declare function u64(b: Uint8Array, o: number, le?: boolean): number;
+export declare function slice(b: Uint8Array, o: number, n: number): Uint8Array;
+export declare function utf8(b: Uint8Array): string;
+/** NUL-terminated string starting at `o`, at most `max` bytes, never past `end`. */
+export declare function cstr(b: Uint8Array, o: number, max?: number, end?: number): string;
+export declare function asciiAt(b: Uint8Array, o: number, s: string): boolean;
+export declare function bytesAt(b: Uint8Array, o: number, sig: number[]): boolean;
+export declare function toHex(b: Uint8Array): string;
+export declare function isObject(v: unknown): v is JsonObject;
+export declare function params(p: Json): JsonObject;
+export declare function numParam(p: JsonObject, name: string, def: number, min: number, max: number): number;
+export declare function strParam(p: JsonObject, name: string, maxLen?: number): string | undefined;
+export declare function basenameOf(p: string): string;
+export declare function extOf(p: string): string;
+/** Pack a value into the Json type (drops undefined, maps non-finite numbers to null). */
+export declare function json(v: unknown): Json;
+/** Sort and deduplicate. */
+export declare function uniq(xs: string[]): string[];
+
+//// probes/walk.d.ts
+export interface WalkEntry {
+    /** Path relative to the walk root, with forward slashes. */
+    rel: string;
+    abs: string;
+    size: number;
+}
+export interface WalkResult {
+    files: WalkEntry[];
+    dirs: number;
+    skipped: {
+        what: string;
+        reason: string;
+    }[];
+}
+/** Directories a sweep does not descend into. */
+export declare const SKIP_DIRS: Record<string, string>;
+export interface WalkOptions {
+    maxFiles?: number;
+    maxDepth?: number;
+    skipDirs?: Record<string, string>;
+    /** Only keep files for which this returns true (others are silently ignored, not "skipped"). */
+    filter?: (rel: string) => boolean;
+}
+export declare function walkDir(root: string, opts?: WalkOptions): WalkResult;
+
+//// vendor/orca-process-host/bounded-output-sink.d.ts
+import { Buffer } from 'node:buffer';
+/**
+ * Collects output up to a cap, so a chatty child cannot grow the heap.
+ *
+ * Accepts strings as well as buffers: a stream someone called `setEncoding` on
+ * emits strings, and concatenating those as buffers throws inside a `data`
+ * handler, where the rejection has nowhere to go and the caller just hangs.
+ */
+export declare function createOutputSink(maxBytes: number, outputCapture?: 'head' | 'tail'): {
+    write: (chunk: Buffer | string) => void;
+    buffer: () => Buffer;
+    text: () => string;
+    truncated: () => boolean;
+};
+
+//// vendor/orca-process-host/cancel-process-acquisition.d.ts
+type ExitProvenConnection = {
+    close: () => Promise<boolean>;
+};
+export declare function cancelProcessAcquisition(input: {
+    cancel: () => void;
+    connection: () => ExitProvenConnection | null;
+    exitProven: () => boolean;
+    finished: Promise<void>;
+}): Promise<boolean>;
+export {};
+
+//// vendor/orca-process-host/child-termination-reporter.d.ts
+export type ChildTerminationReporter = {
+    report: () => void;
+    reportIf: (confirmed: boolean) => void;
+};
+export declare function createChildTerminationReporter(callback?: () => void): ChildTerminationReporter;
+
+//// vendor/orca-process-host/close-process-registry.d.ts
+export declare function closeProcessRegistry(input: {
+    attempts: number;
+    hasEntries: () => boolean;
+    entryIds: () => Iterable<string>;
+    closeEntry: (id: string) => Promise<boolean>;
+    failureMessage: string;
+}): Promise<void>;
+
+//// vendor/orca-process-host/fork-process.d.ts
+import { type SpawnOptions as NodeSpawnOptions } from 'node:child_process';
+import type { SpawnedProcess } from './process-spec.ts';
+/**
+ * What `spawnProcess` cannot express: a Node child with an IPC channel, started from a module
+ * path rather than a program, optionally under a different Node/Electron binary than this
+ * process's own.
+ *
+ * `fork` is the right primitive for that and there is no spawn-based substitute — the existing
+ * launch paths and their tests are written against `fork`'s contract (module path resolution,
+ * `execPath` override, inherited `execArgv`), and a spawn rewrite would change all three.
+ */
+export type ForkSpec = {
+    /** Node module to run as the child's entry point. */
+    modulePath: string;
+    args?: readonly string[];
+    cwd?: string;
+    env?: NodeJS.ProcessEnv;
+    /** Keep the child in its own POSIX process group so it outlives this process. */
+    detached?: boolean;
+    /** Must keep an `'ipc'` slot; without one the child gets no channel and cannot `send`. */
+    stdio?: NodeSpawnOptions['stdio'];
+    /** Run a different Node/Electron binary — e.g. a relocated executable image. */
+    execPath?: string;
+};
+export declare function forkProcess(spec: ForkSpec): SpawnedProcess;
+
+//// vendor/orca-process-host/growing-byte-buffer.d.ts
+export declare class GrowingByteBuffer {
+    private storage;
+    private start;
+    private length;
+    get byteLength(): number;
+    append(bytes: Buffer | Uint8Array): void;
+    appendRetainedSuffix(bytes: Buffer | Uint8Array, maxBytes: number): void;
+    indexOfByte(value: number, byteOffset?: number): number;
+    takePrefixString(byteLength: number, encoding?: BufferEncoding): string;
+    discardPrefix(byteLength: number): void;
+    retainSuffix(maxBytes: number): void;
+    toString(encoding?: BufferEncoding): string;
+    toBuffer(): Buffer;
+    takeString(encoding?: BufferEncoding): string;
+    takeBuffer(): Buffer;
+    clear(): void;
+    private reclaimHeadRoom;
+}
+
+//// vendor/orca-process-host/posix-lsof-probe.d.ts
+export declare const RELAY_LSOF_PROBE_JS: string;
+
+//// vendor/orca-process-host/process-spec.d.ts
+import type { ChildProcess, ChildProcessWithoutNullStreams, SpawnOptions as NodeSpawnOptions, StdioOptions } from 'node:child_process';
+export type ChildProcessHandle = ChildProcess;
+export type SpawnedProcess = ChildProcess;
+/** Centralizes host execution settings so argument encoding and tree ownership stay consistent. */
+export type ProcessSpec = {
+    /**
+     * Program to run. On Windows this should already be an absolute path —
+     * spawning by bare name depends on the child's PATH, which under Group Policy
+     * or a stripped Electron environment can resolve to nothing.
+     */
+    program: string;
+    args?: readonly string[];
+    cwd?: string;
+    env?: NodeJS.ProcessEnv;
+    /** Kill the process (and, on Windows, its console) after this long. */
+    timeoutMs?: number | null;
+    /** Written to stdin then closed. Omit to leave stdin empty and closed. */
+    input?: string;
+    /** Cap on captured stdout/stderr; output past it is discarded. */
+    maxOutputBytes?: number;
+    /** Capture stdout as bytes without decoding; stdout stays empty in this mode. */
+    captureStdoutAsBytes?: boolean;
+    /** Stop a parser command as soon as captured output exceeds its cap. */
+    killOnOutputLimit?: boolean;
+    /** Kills the process when aborted; the result still reports the exit. */
+    signal?: AbortSignal;
+    /** Keep the child in its own POSIX process group for tree termination. */
+    detached?: boolean;
+    /** Preserve a caller-owned Windows command line such as a cmd.exe invocation. */
+    windowsVerbatimArguments?: boolean;
+    /** Streaming callers may suppress child output for auxiliary processes. */
+    stdio?: NodeSpawnOptions['stdio'];
+    /** Bun and Node require JSON for an IPC channel shared between the two runtimes. */
+    serialization?: NodeSpawnOptions['serialization'];
+    /** Await tree termination or observed root exit, then settle at the final deadline if unverified. */
+    terminationBarrier?: boolean | ProcessTerminationBarrier;
+    /** Called once when the child exits or tree termination is verified. */
+    onChildTerminated?: () => void;
+    /** Every raw stderr chunk as it arrives, including any past the capture cap. */
+    onStderr?: (chunk: Buffer | string) => void;
+};
+export type PipedChildProcess = ChildProcessWithoutNullStreams;
+export type PipedProcessSpec = Omit<ProcessSpec, 'stdio'> & {
+    stdio?: 'pipe' | ['pipe', 'pipe', 'pipe', ...Exclude<StdioOptions, string>];
+};
+export type PipedProcessSpawner = (spec: PipedProcessSpec) => PipedChildProcess;
+export type ProcessTerminationBarrier = {
+    observeStderr?: (chunk: Buffer | string) => void;
+    signal: (child: ChildProcess, signal?: NodeJS.Signals) => Promise<boolean>;
+    force: (child: ChildProcess) => Promise<boolean>;
+};
+export type ProcessResult = {
+    code: number | null;
+    signal: NodeJS.Signals | null;
+    stdout: string;
+    stdoutBytes?: Buffer;
+    stderr: string;
+    /** True when the process was killed by `timeoutMs` rather than exiting. */
+    timedOut: boolean;
+    /** True when stdout or stderr exceeded `maxOutputBytes` and was clipped. */
+    outputTruncated?: boolean;
+};
+export declare const DEFAULT_PROCESS_TIMEOUT_MS = 30000;
+export declare const DEFAULT_MAX_OUTPUT_BYTES: number;
+
+//// vendor/orca-process-host/process-tree-kill-gate.d.ts
+/**
+ * Seam that lets the main process decide, and record, the tree-kills issued
+ * from code it does not own.
+ *
+ * Why a seam and not a direct call: `signalProcessTree` is the choke point every
+ * `runProcess` termination funnels through, and the codex app-server and
+ * ephemeral-VM kills are shared with the CLI — all of them live outside
+ * `src/main` and cannot import the own-Chromium guard or the crash breadcrumb
+ * store. Main registers the guard at startup; everywhere else this admits every
+ * kill and records nothing.
+ */
+/** Blast radius, not mechanism: `win-taskkill-tree` is addressed by pid and walks
+ *  whatever tree that pid has *now*, so it can land on a recycled pid that is
+ *  since one of Orca's own Chromium processes. A process group can only contain
+ *  processes Orca itself put there. */
+export type ProcessTreeKillScope = 'win-taskkill-tree' | 'posix-process-group';
+export type ProcessTreeKill = {
+    pid: number;
+    site: string;
+    scope: ProcessTreeKillScope;
+};
+/** False means the caller must not walk that pid's tree — main is accounting for
+ *  it. Killing the root through its own child handle stays correct and required:
+ *  a handle cannot land on the recycled pid the refusal is about. */
+type ProcessTreeKillGate = (kill: ProcessTreeKill) => boolean;
+export declare function setProcessTreeKillGate(next: ProcessTreeKillGate | null): void;
+export declare function admitProcessTreeKill(kill: ProcessTreeKill): boolean;
+export {};
+
+//// vendor/orca-process-host/process-tree-termination.d.ts
+import { type ChildProcess } from 'node:child_process';
+/**
+ * Signal the child's whole tree.
+ *
+ * POSIX precondition: the child must have been spawned `detached`. The signal
+ * goes to the process group `-child.pid`, so a child that is not its own group
+ * leader would hand it to whatever group it inherited instead.
+ *
+ * Runs in every host — Electron main, the daemon, the relay, the CLI — so the
+ * own-Chromium guard arrives through `process-tree-kill-gate`, which main
+ * installs and every other host leaves admitting. The exit check below is what
+ * keeps the Windows branch off a pid that is no longer ours on those hosts.
+ *
+ * Both arms ask before walking the tree, so a refused pid never gets a
+ * pid-addressed kill; that also means the recorded crumb says "about to kill",
+ * not "killed". The root is still killed through its handle, which cannot reach
+ * the recycled pid the refusal was about, so a refusal is never a leak. Main's
+ * gate only ever refuses the `win-taskkill-tree` scope — a POSIX group holds
+ * only what Orca put in it — so the POSIX refusal arm is the seam's contract,
+ * not something any installed gate exercises today.
+ */
+export declare function signalProcessTree(child: ChildProcess, signal?: NodeJS.Signals): Promise<boolean>;
+export declare function forceTerminateProcessTree(child: ChildProcess): Promise<boolean>;
+/** A stubbed child leaves both undefined; only a real code or signal proves exit. */
+export declare function childProcessHasExited(child: ChildProcess): boolean;
+/**
+ * Change 4 (re4exa): on Linux, read process states from /proc instead of running `ps`, so the
+ * host works where procps is not installed (rea needed a procps `ps` on PATH, rea §9A A7.2).
+ * Fields of /proc/<pid>/stat after the command name's closing parenthesis: state, ppid, pgrp.
+ * Returns null when /proc cannot be read, so the caller falls back to the group-exists check.
+ */
+export declare function readLinuxProcessGroupStates(processGroupId: number, procRoot?: string): string[] | null;
+
+//// vendor/orca-process-host/retryable-process-exit-proof.d.ts
+export declare class RetryableProcessExitProof<Result> {
+    private inFlight;
+    private readonly isProven;
+    constructor(isProven: (result: Result) => boolean);
+    run(proveExit: () => Promise<Result>): Promise<Result>;
+    private clear;
+}
+
+//// vendor/orca-process-host/run-process.d.ts
+import { type ChildProcess } from 'node:child_process';
+export { WindowsCmdLineBreakError } from './windows-command-line.ts';
+import type { PipedChildProcess, PipedProcessSpec, ProcessSpec, ProcessResult } from './process-spec.ts';
+/**
+ * Start a child process. Use for long-lived or streaming children.
+ *
+ * The caller owns the returned streams, including their `error` events — an
+ * unhandled one is an uncaught exception that takes the main process down.
+ * `runProcess` handles that for you; here it cannot, because a blanket handler
+ * would also defeat callers that track and remove their own listeners.
+ */
+export declare function spawnProcess(spec: PipedProcessSpec): PipedChildProcess;
+export declare function spawnProcess(spec: ProcessSpec): ChildProcess;
+/**
+ * Run a child process to completion and capture its output.
+ *
+ * Never rejects on a non-zero exit — the exit code is data. Rejects only when
+ * the process could not be started at all.
+ * Tail capture keeps final diagnostics without changing termination policy.
+ */
+export declare function runProcess(spec: ProcessSpec, outputCapture?: 'head' | 'tail'): Promise<ProcessResult>;
+/**
+ * Synchronous variant, for the call sites that genuinely cannot await — CLI
+ * entry points and teardown paths that run while the event loop is stopping.
+ *
+ * Prefer `runProcess`. This exists so those callers still get the Windows
+ * invariants (hidden console, correct `.cmd` argv) instead of reaching for
+ * `execFileSync` and re-deciding them.
+ */
+export declare function runProcessSync(spec: ProcessSpec): ProcessResult;
+
+//// vendor/orca-process-host/spawn-observer.d.ts
+/**
+ * Diagnostic seam for counting every child process started through this
+ * package. `src/main/diagnostics/main-thread-churn-probe` registers itself here
+ * under ORCA_MAIN_THREAD_DIAGNOSTICS=1; with nothing registered every spawn
+ * pays one undefined check, so production behaviour is unchanged.
+ *
+ * Why a seam rather than a direct import: run-process.ts also runs in the
+ * terminal daemon, the relay and the CLI, none of which may depend on main.
+ */
+export type SpawnObserver = (command: string, args: readonly string[], blockMs: number) => void;
+export declare function setSpawnObserver(next: SpawnObserver | null): void;
+export declare function notifySpawnObserver(command: string, args: readonly string[], blockMs: number): void;
+export declare function hasSpawnObserver(): boolean;
+
+//// vendor/orca-process-host/spawn-resolution.d.ts
+import type { SpawnOptions as NodeSpawnOptions } from 'node:child_process';
+import type { ProcessSpec } from './process-spec.ts';
+export type ResolvedSpawn = {
+    file: string;
+    args: readonly string[];
+    options: NodeSpawnOptions;
+};
+/**
+ * Translate a spec into the exact `child_process.spawn` call to make.
+ *
+ * Exported so the Windows branch is testable from macOS/Linux: the decisions
+ * below are the whole point of the spawn chokepoint, and they must not be
+ * observable only on the platform that breaks.
+ *
+ * Pure except on the win32 `.cmd` branch, where shim resolution does a `stat`
+ * and (on a cache miss) one bounded read of the shim itself. Both are inside
+ * try/catch and any failure falls back to the cmd.exe path, so the function
+ * still cannot throw or reach anything but the program path it was handed.
+ */
+export declare function resolveSpawn(spec: ProcessSpec, platform: NodeJS.Platform): ResolvedSpawn;
+
+//// vendor/orca-process-host/windows-cmd-shim-resolution.d.ts
+export type ParsedWindowsCmdShim = {
+    kind: 'node';
+    script: string;
+    nodePathPrefix?: string;
+} | {
+    kind: 'direct';
+    target: string;
+};
+/**
+ * Recognise a generated shim. Pure, so the shapes are testable off Windows.
+ *
+ * Returns paths exactly as the shim spells them, relative to its own directory.
+ */
+export declare function parseWindowsCmdShim(contents: string): ParsedWindowsCmdShim | null;
+export type WindowsCmdShimResolution = {
+    /** Executable to spawn in place of the `.cmd`. */
+    program: string;
+    /** Arguments the shim inserts ahead of the caller's own argv. */
+    prefixArgs: readonly string[];
+    /** Set only when the shim itself mutates the environment (pnpm's NODE_PATH). */
+    env?: NodeJS.ProcessEnv;
+};
+/**
+ * Resolve `program` to the executable its shim body would have launched, or
+ * null to keep the `cmd.exe /c` path.
+ *
+ * `env` is the environment the child will actually receive, because both the
+ * PATH lookup for `node` and the NODE_PATH prepend depend on it.
+ */
+export declare function resolveWindowsCmdShim(program: string, env: NodeJS.ProcessEnv): WindowsCmdShimResolution | null;
+
+//// vendor/orca-process-host/windows-command-line.d.ts
+/**
+ * Windows command-line construction.
+ *
+ * Two parsers read the line Orca hands to CreateProcess, and they disagree:
+ *
+ * - The target program's own startup code (`CommandLineToArgvW`, which the CRT and
+ *   Node both use) understands `\"` as a literal quote and `\\` as a literal
+ *   backslash.
+ * - `cmd.exe` — unavoidable for a `.cmd`/`.bat` target — does NOT. It counts `"`
+ *   naively to track quote state, and inside that state it still expands `%VAR%`.
+ *
+ * So a `\"` written for the first parser silently flips cmd's quote parity, and
+ * every later `&` `|` `<` `>` on the line stops being data and becomes an
+ * operator. Measured on Windows 11 with a real `.cmd` shim: `["a b", 'c"d',
+ * "e%F%g", "h&i", "j^k"]` came back as `["a b", 'c"d', "e^%F^%g", "h"]` — the
+ * `&` truncated the argument AND ran the remainder as a command.
+ *
+ * The encoding below satisfies both parsers at once and round-trips all of the
+ * adversarial cases; see windows-command-line.test.ts for the corpus.
+ */
+/** Quote one argument for `CommandLineToArgvW`. */
+export declare function quoteWindowsArgument(value: string): string;
+/**
+ * Quote one argument that has to survive a cmd hop as well.
+ *
+ * Separate from `quoteWindowsArgument` rather than a boolean parameter: the
+ * two differ only in whether `%` is neutralised, and a flag there is easy to
+ * pass by accident — `values.map(quoteWindowsArgument)` hands `map`'s index in
+ * as the flag, which is exactly how this was first written.
+ */
+export declare function quoteWindowsCmdArgument(value: string): string;
+/**
+ * Decode a command line the way `CommandLineToArgvW` does, e.g. one read back from
+ * the process table. `""` inside a quoted run yields a literal quote.
+ */
+export declare function parseWindowsCommandLine(line: string): string[];
+/** Thrown before spawn when a `.cmd`/`.bat` target would receive a line break. Typed so
+ * callers can tell the user the batch file is the limit, not the agent. */
+export declare class WindowsCmdLineBreakError extends Error {
+    constructor();
+}
+export declare function validateWindowsCmdArguments(values: readonly string[]): void;
+/**
+ * Build the argv Node should spawn to run `program` with `args` through
+ * `cmd.exe`, for targets cmd must interpret (`.cmd`, `.bat`).
+ *
+ * Callers must pass the result with `windowsVerbatimArguments: true` so Node
+ * hands the line through untouched, and must NOT set `shell: true` — that
+ * concatenates arguments without escaping (Node warns DEP0190) and silently
+ * disables `windowsHide`.
+ *
+ * `/d` skips AutoRun commands from the registry, which would otherwise run
+ * arbitrary user configuration before our command. `/v:off` pins delayed
+ * expansion off so a `!` in an argument stays literal even where the Command
+ * Processor registry default turns it on. `/s` makes cmd strip exactly the
+ * outer quote pair and treat the rest verbatim.
+ */
+export declare function buildWindowsCmdShimCommandLine(program: string, args: readonly string[]): string;
+/** Whether `program` is a target Windows can only start through `cmd.exe`. */
+export declare function isCmdInterpretedProgram(program: string): boolean;
+
+//// vendor/orca-process-host/windows-system-binary.d.ts
+export declare function windowsPowerShellPath(env?: NodeJS.ProcessEnv): string;
+export declare function windowsSystem32Binary(fileName: string, env?: NodeJS.ProcessEnv): string;
+
+//// verifier/predicates.d.ts
+import type { Json } from "../evidence/jcs.ts";
+export interface ParamSpec {
+    type: "string" | "number" | "string[]";
+    required?: boolean;
+    doc: string;
+}
+export interface PredicateSpec {
+    predicate: string;
+    summary: string;
+    /** Probe(s) used to re-run the claim. */
+    probes: string[];
+    params: Record<string, ParamSpec>;
+    /** Exactly one of each group must be present. */
+    oneOf?: string[][];
+    verified: string;
+    refuted: string;
+    unverifiable: string;
+}
+export declare const PREDICATES: Record<string, PredicateSpec>;
+/** Null when the params fit the schema, else the reason they do not. */
+export declare function checkParams(spec: PredicateSpec, params: Record<string, Json>): string | null;
+/** A regex that only escapes metacharacters is literal text; anything else is not re-run. */
+export declare function literalFromPattern(pattern: string): string | null;
+export declare function normalizeParams(predicate: string, params: Record<string, Json>): Record<string, Json>;
+/** One line per predicate, for the claim tool's description: `native.links{path,library}`. */
+export declare function predicateCatalog(): string;
+
+//// verifier/verifier.d.ts
+import type { ProbeEngine } from "../contracts.ts";
+import { type AgentClaim, type StoredClaim, type Verdict } from "../evidence/store.ts";
+import type { Kernel } from "../kernel/kernel.ts";
+export interface VerifyOutcome {
+    verdict: Verdict | null;
+    reason: string;
+    observation_id?: string;
+    probe?: string;
+}
+/** Runs a command in the approval-gated sandbox (wired by the lead). Rejects with approval_denied. */
+export type ExecFn = (req: {
+    caseId: string;
+    claimId: string;
+    program: string;
+    args: string[];
+}) => Promise<{
+    code: number | null;
+    observation_id?: string;
+}>;
+export interface Verifier {
+    verify(caseId: string, claim: StoredClaim): Promise<VerifyOutcome>;
+    verifyCase(caseId: string): Promise<(VerifyOutcome & {
+        claimId: string;
+    })[]>;
+}
+export declare function negationIn(text: string): boolean;
+export declare function createVerifier(opts: {
+    kernel: Kernel;
+    engine: ProbeEngine;
+    exec?: ExecFn;
+    /** Producer id on evidence the verifier records. Default "verifier". */
+    producerId?: string;
+}): Verifier;
+export interface ClaimBlockError {
+    block: number;
+    index: number | null;
+    reason: string;
+}
+/** Extract ```assay-claims fenced JSON arrays from assistant text; bad entries are skipped and reported. */
+export declare function parseClaimBlocks(text: string): {
+    claims: AgentClaim[];
+    errors: ClaimBlockError[];
+};

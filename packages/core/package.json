@@ -22,7 +22,8 @@
     "coverage": "node ../../scripts/with-source.mjs c8 --check-coverage --lines 85 --branches 75 --functions 85 --exclude \"src/vendor/**\" --exclude \"src/testing/**\" --exclude \"test/**\" --reporter=text-summary --reporter=json-summary node --test --test-concurrency=1 --disable-warning=ExperimentalWarning \"test/*.test.ts\"",
     "gen-docs": "node --disable-warning=ExperimentalWarning scripts/gen-docs.ts",
     "build": "node --disable-warning=ExperimentalWarning scripts/build.ts",
-    "prepack": "node --disable-warning=ExperimentalWarning scripts/build.ts"
+    "prepack": "node --disable-warning=ExperimentalWarning scripts/build.ts",
+    "api": "node --disable-warning=ExperimentalWarning scripts/api.ts --check"
   },
   "files": [
     "dist",

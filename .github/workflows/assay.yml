@@ -59,6 +59,7 @@ jobs:
           npm run lint
           npm run coverage
           node --disable-warning=ExperimentalWarning scripts/gen-docs.ts --check
+          npm run api
       - name: Dependency budget and audit
         run: |
           node --disable-warning=ExperimentalWarning scripts/dep-budget.ts
