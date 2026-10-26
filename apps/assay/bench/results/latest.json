@@ -1,6 +1,6 @@
 {
-  "at": "2026-10-25T23:43:23.432Z",
-  "node": "v22.22.0",
+  "at": "2026-10-26T17:17:36.669Z",
+  "node": "v24.22.1",
   "platform": "linux",
   "rows": [
     {
@@ -8,9 +8,9 @@
       "measure": "Work lost per SIGKILL",
       "baseline": "rea: the whole session ledger (in-memory)",
       "target": "0 lost evidence, ≤1 step re-run per kill, 30 kills",
-      "value": "kills=32 re-executed-steps=0 unsafe-interrupted=3 steps-done-at-kill=[0,1,2,3,12,4,10]",
+      "value": "kills=30 re-executed-steps=0 unsafe-interrupted=1 steps-done-at-kill=[0,0,0,8,3,3,16]",
       "pass": true,
-      "how": "test/fault-injection.test.ts"
+      "how": "packages/core/test/fault-injection.test.ts"
     },
     {
       "id": "M6",
@@ -19,7 +19,7 @@
       "target": "1000/1000 second opens refused, 0 rows lost",
       "value": "1000/1000 refused, 0 rows lost",
       "pass": true,
-      "how": "test/kernel.test.ts (two-process test)"
+      "how": "packages/core/test/kernel.test.ts (two-process test)"
     },
     {
       "id": "M7",
@@ -28,7 +28,7 @@
       "target": "0 of 1000",
       "value": "0 of 1000",
       "pass": true,
-      "how": "test/kernel.test.ts (fence race)"
+      "how": "packages/core/test/kernel.test.ts (fence race)"
     },
     {
       "id": "M8",
@@ -37,7 +37,7 @@
       "target": "100% equal keys",
       "value": "100% (ProbeKey, ObservationId, FindingKey)",
       "pass": true,
-      "how": "test/evidence.test.ts, test/probes-engine.test.ts"
+      "how": "packages/core/test/evidence.test.ts, packages/core/test/probes-engine.test.ts"
     },
     {
       "id": "M9",
@@ -46,16 +46,16 @@
       "target": "0 on the ablation corpus",
       "value": "0 of 300",
       "pass": true,
-      "how": "test/probes-js.test.ts"
+      "how": "packages/core/test/probes-js.test.ts"
     },
     {
       "id": "M10",
       "measure": "Time to first evidence (warm, per fixture)",
       "baseline": "rea CLI start 2.1–2.2 s per call",
       "target": "median ≤ 1000 ms",
-      "value": "per-fixture identify/sweep ms: elf=0.4/1.5 pe=0.4/1.3 pe-dll=0.3/1.6 macho=0.3/1.2 macho-fat=0.3/1.1 wasm=0.4/1.2 zip=0.3/1.1 jar=0.3/1.0 apk=0.3/1.0 vsix=0.3/1.0 crx=0.3/1.1 tar=0.3/1.1 tar.gz=0.4/1.1 npm-tgz=0.5/2.2 asar=0.3/1.1 gzip=0.4/0.8 sqlite=0.3/0.8 pdf=0.3/1.2 png=0.4/0.8 jpeg=0.3/0.8 hermes-bytecode=0.3/0.8 plist=0.3/0.8 pcap=0.3/0.8 java-class=0.3/0.8 unknown=0.4/0.9 script=0.3/1.6 javascript=0.3/2.0 typescript=0.3/1.7 json=0.3/1.0 package-json=0.3/1.3 text=0.3/0.7 npm-package=0.5/4.7 directory=0.6/3.8",
+      "value": "per-fixture identify/sweep ms: elf=0.4/1.4 pe=0.4/1.4 pe-dll=0.3/1.6 macho=0.4/1.5 macho-fat=0.4/1.4 wasm=0.3/1.4 zip=0.4/1.2 jar=0.5/1.4 apk=0.3/1.5 vsix=0.5/2.6 crx=0.3/1.3 tar=0.4/1.5 tar.gz=0.6/1.8 npm-tgz=0.6/3.1 asar=0.3/1.3 gzip=0.4/0.8 sqlite=0.4/1.0 pdf=0.3/0.8 png=0.4/0.7 jpeg=0.3/0.9 hermes-bytecode=0.3/0.8 plist=0.3/0.8 pcap=0.3/0.8 java-class=0.4/0.9 unknown=0.5/1.0 script=0.4/2.4 javascript=0.3/2.1 typescript=0.4/1.6 json=0.3/3.1 package-json=0.5/1.5 text=0.4/1.3 npm-package=0.5/5.3 directory=0.5/3.3",
       "pass": true,
-      "how": "test/probes-engine.test.ts"
+      "how": "packages/core/test/probes-engine.test.ts"
     },
     {
       "id": "M5",
@@ -98,7 +98,7 @@
       "measure": "Speed-up from 4 parallel workers",
       "baseline": "serial",
       "target": "≥ 2.5×",
-      "value": "3.74× (serial 1204 ms, parallel 322 ms; synthetic 300 ms turns)",
+      "value": "3.63× (serial 1203 ms, parallel 331 ms; synthetic 300 ms turns)",
       "pass": true,
       "how": "orchestrator with a 300 ms stub provider"
     },
@@ -107,7 +107,7 @@
       "measure": "Server start to first verified claim (browser)",
       "baseline": "—",
       "target": "≤ 60,000 ms after `npm ci && npm run build:ui && assay serve`",
-      "value": "1746 ms",
+      "value": "1129 ms",
       "pass": true,
       "how": "test/e2e/run.ts"
     },

@@ -9,6 +9,7 @@ const ALLOWED: Record<string, string> = {
   react: "UI",
   "react-dom": "UI",
   "@xterm/xterm": "terminal view for raw agent streams and official login flows",
+  "@re4exa/core": "the shared engine (workspace package; published and installed alongside)",
 };
 const MAX_RUNTIME = Object.keys(ALLOWED).length;
 

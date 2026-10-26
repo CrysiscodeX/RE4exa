@@ -1,4 +1,4 @@
-// Generates docs/failure-modes.md from src/errors.ts. `--check` fails when the committed file differs.
+// Generates docs/failure-modes.md from src/errors.ts (core codes plus Assay's own). `--check` fails when the committed file differs.
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { FAILURE_MODES } from "../src/errors.ts";
@@ -27,9 +27,10 @@ function failureModes(): string {
   return [
     "# Failure modes",
     "",
-    "Every error Assay reports carries one of these codes. Generated from `src/errors.ts` by",
-    "`node scripts/gen-docs.ts`; `test/failure-modes.test.ts` checks that each code is raised by at",
-    "least one test. Defaults fail closed: an unknown state is reported, never guessed.",
+    "Every error Assay reports carries one of these codes: the shared engine's codes",
+    "(`@re4exa/core/errors`) and Assay's own. Generated from `src/errors.ts` by `node scripts/gen-docs.ts`.",
+    "Each code is raised by at least one test (core codes in `packages/core/test`, Assay codes in",
+    "`test/`). Defaults fail closed: an unknown state is reported, never guessed.",
     "",
     "| Code | Meaning | Retryable | What to do |",
     "|---|---|---|---|",

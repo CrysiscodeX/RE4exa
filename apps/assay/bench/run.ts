@@ -4,9 +4,9 @@
 import { spawnSync } from "node:child_process";
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { recordClaim } from "@re4exa/core/evidence/store";
 import { App } from "../src/app/app.ts";
 import type { AccountRef, AgentSession, ProviderAdapter, ProviderId } from "../src/contracts.ts";
-import { recordClaim } from "../src/evidence/store.ts";
 import { Orchestrator } from "../src/orchestrator/orchestrator.ts";
 import { tmp } from "../test/helpers.ts";
 
@@ -38,8 +38,13 @@ const median = (xs: number[]) => {
 function runTests(files: string[]): { ok: boolean; metrics: Record<string, string> } {
   const r = spawnSync(
     process.execPath,
-    ["--test", "--test-concurrency=1", "--disable-warning=ExperimentalWarning", ...files],
-    { cwd: ROOT, encoding: "utf8", timeout: 600_000 },
+    ["--test", "--test-reporter=tap", "--test-concurrency=1", "--disable-warning=ExperimentalWarning", ...files],
+    {
+      cwd: ROOT,
+      encoding: "utf8",
+      timeout: 600_000,
+      env: { ...process.env, NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ""} --conditions=source`.trim() },
+    },
   );
   const metrics: Record<string, string> = {};
   for (const line of `${r.stdout}\n${r.stderr}`.split("\n")) {
@@ -49,7 +54,9 @@ function runTests(files: string[]): { ok: boolean; metrics: Record<string, strin
   return { ok: r.status === 0, metrics };
 }
 
-const durability = runTests(["test/fault-injection.test.ts", "test/kernel.test.ts"]);
+// Durability, identity and probe metrics come from the shared engine's own suites.
+const CORE_TEST = join(ROOT, "..", "..", "packages", "core", "test");
+const durability = runTests([join(CORE_TEST, "fault-injection.test.ts"), join(CORE_TEST, "kernel.test.ts")]);
 add({
   id: "M1",
   measure: "Work lost per SIGKILL",
@@ -60,7 +67,7 @@ add({
     durability.ok &&
     /kills=(\d+)/.test(durability.metrics.M1 ?? "") &&
     Number(/kills=(\d+)/.exec(durability.metrics.M1 ?? "")![1]) >= 30,
-  how: "test/fault-injection.test.ts",
+  how: "packages/core/test/fault-injection.test.ts",
 });
 add({
   id: "M6",
@@ -69,7 +76,7 @@ add({
   target: "1000/1000 second opens refused, 0 rows lost",
   value: durability.ok ? "1000/1000 refused, 0 rows lost" : "test failed",
   pass: durability.ok,
-  how: "test/kernel.test.ts (two-process test)",
+  how: "packages/core/test/kernel.test.ts (two-process test)",
 });
 add({
   id: "M7",
@@ -78,15 +85,12 @@ add({
   target: "0 of 1000",
   value: durability.ok ? "0 of 1000" : "test failed",
   pass: durability.ok,
-  how: "test/kernel.test.ts (fence race)",
+  how: "packages/core/test/kernel.test.ts (fence race)",
 });
 
-const probes = runTests([
-  "test/probes-engine.test.ts",
-  "test/probes-js.test.ts",
-  "test/verifier.test.ts",
-  "test/evidence.test.ts",
-]);
+const probes = runTests(
+  ["probes-engine", "probes-js", "verifier", "evidence"].map((t) => join(CORE_TEST, `${t}.test.ts`)),
+);
 add({
   id: "M8",
   measure: "Identity stable across paths and hosts",
@@ -94,7 +98,7 @@ add({
   target: "100% equal keys",
   value: probes.ok ? "100% (ProbeKey, ObservationId, FindingKey)" : "test failed",
   pass: probes.ok,
-  how: "test/evidence.test.ts, test/probes-engine.test.ts",
+  how: "packages/core/test/evidence.test.ts, packages/core/test/probes-engine.test.ts",
 });
 add({
   id: "M9",
@@ -103,7 +107,7 @@ add({
   target: "0 on the ablation corpus",
   value: probes.ok ? "0 of 300" : "test failed",
   pass: probes.ok,
-  how: "test/probes-js.test.ts",
+  how: "packages/core/test/probes-js.test.ts",
 });
 const m10 = probes.metrics.M10 ?? "";
 // either "sweep-median-max=5.3ms" or per-fixture "name=identify/sweep" pairs; take the slowest sweep
@@ -117,7 +121,7 @@ add({
   target: "median ≤ 1000 ms",
   value: m10 || "not printed",
   pass: sweepMs <= 1000,
-  how: "test/probes-engine.test.ts",
+  how: "packages/core/test/probes-engine.test.ts",
 });
 const tripwire = runTests(["test/tripwire.test.ts"]);
 add({
@@ -252,7 +256,7 @@ home.cleanup();
 // ---------- M11: parallel workers (orchestration overhead, synthetic 300 ms tasks) ----------
 async function speedup(workers: number): Promise<{ serialMs: number; parallelMs: number }> {
   const t = tmp("assay-bench-par-");
-  const { Kernel } = await import("../src/kernel/kernel.ts");
+  const { Kernel } = await import("@re4exa/core/kernel/kernel");
   const k = Kernel.open({ path: join(t.dir, "a.db") });
   const account: AccountRef = { id: "a", provider: "fake", label: "a", home: null };
   const adapter: ProviderAdapter = {

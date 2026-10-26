@@ -15,6 +15,8 @@
 import { tmpdir } from "node:os";
 import { Readable, Writable } from "node:stream";
 import * as acp from "@agentclientprotocol/sdk";
+import type { Json } from "@re4exa/core/evidence/jcs";
+import { spawnProcess } from "@re4exa/core/vendor/orca-process-host/run-process";
 import type {
   AccountRef,
   AccountStatus,
@@ -25,9 +27,7 @@ import type {
   SessionOptions,
 } from "../contracts.ts";
 import { AssayError } from "../errors.ts";
-import type { Json } from "../evidence/jcs.ts";
 import { acpMcpServers } from "../mcp/config.ts";
-import { spawnProcess } from "../vendor/orca-process-host/run-process.ts";
 import {
   ASSAY_CLIENT_NAME,
   ASSAY_VERSION,

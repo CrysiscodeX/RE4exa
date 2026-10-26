@@ -22,7 +22,7 @@ Assay is one Node process that owns one SQLite store. It serves a loopback web U
 
 ## Modules
 
-Each module states its invariant in its header comment.
+Each module states its invariant in its header comment. Since docs/decisions/0004 the engine-agnostic modules (`kernel/`, `evidence/`, `probes/`, `verifier/`, `policy/`, the path and handle utilities of `mcp/`, `vendor/orca-process-host` and the base failure codes) live in the shared package [`packages/core`](../../packages/core), imported as `@re4exa/core/...`; the rest are under `src/`.
 
 | Module | Job | Origin |
 |---|---|---|

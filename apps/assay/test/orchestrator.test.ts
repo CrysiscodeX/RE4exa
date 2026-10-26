@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { caseClaims, recordClaim } from "@re4exa/core/evidence/store";
+import type { Kernel } from "@re4exa/core/kernel/kernel";
 import type {
   AccountRef,
   AgentSession,
@@ -9,8 +11,6 @@ import type {
   ToolDef,
 } from "../src/contracts.ts";
 import { isAssayError } from "../src/errors.ts";
-import { caseClaims, recordClaim } from "../src/evidence/store.ts";
-import type { Kernel } from "../src/kernel/kernel.ts";
 import { Orchestrator } from "../src/orchestrator/orchestrator.ts";
 import type { ServerPush } from "../src/server/api-types.ts";
 import { openTemp } from "./helpers.ts";

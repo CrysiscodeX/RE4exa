@@ -12,6 +12,7 @@
 // A worker (it sees assay_worker_done but not assay_spawn_worker) reports done at the end of a turn.
 // `script` replaces the commands with explicit steps.
 
+import type { Json } from "@re4exa/core/evidence/jcs";
 import type {
   AccountRef,
   AccountStatus,
@@ -22,7 +23,6 @@ import type {
   SessionOptions,
 } from "../contracts.ts";
 import { AssayError } from "../errors.ts";
-import type { Json } from "../evidence/jcs.ts";
 import { type McpCallResult, McpHttpClient, type McpTool, resultText } from "./mcp-client.ts";
 import { estimateTokens, summarize } from "./util.ts";
 

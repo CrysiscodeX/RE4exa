@@ -12,6 +12,8 @@
 //   Status comes from the official `claude auth status`; sign-in is the official `claude auth login`.
 
 import type { CanUseTool, Options, PermissionResult, SDKMessage, SDKUserMessage } from "@anthropic-ai/claude-agent-sdk";
+import type { Json } from "@re4exa/core/evidence/jcs";
+import { runProcess } from "@re4exa/core/vendor/orca-process-host/run-process";
 import type {
   AccountRef,
   AccountStatus,
@@ -22,9 +24,7 @@ import type {
   SessionOptions,
 } from "../contracts.ts";
 import { AssayError } from "../errors.ts";
-import type { Json } from "../evidence/jcs.ts";
 import { claudeMcpConfig } from "../mcp/config.ts";
-import { runProcess } from "../vendor/orca-process-host/run-process.ts";
 import {
   ASSAY_CLIENT_NAME,
   ASSAY_VERSION,

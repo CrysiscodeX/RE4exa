@@ -4,11 +4,8 @@ import { randomBytes } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { basename, join, resolve } from "node:path";
-import { type Accounts, createAccounts } from "../accounts/registry.ts";
-import type { ProviderId } from "../contracts.ts";
-import { AssayError } from "../errors.ts";
-import type { Json } from "../evidence/jcs.ts";
-import { type Finding, makeRecord, probeKey } from "../evidence/record.ts";
+import type { Json } from "@re4exa/core/evidence/jcs";
+import { type Finding, makeRecord, probeKey } from "@re4exa/core/evidence/record";
 import {
   calibration,
   caseClaims,
@@ -18,20 +15,25 @@ import {
   openUnknown,
   putEvidence,
   type StoredClaim,
-} from "../evidence/store.ts";
+} from "@re4exa/core/evidence/store";
+import { sha256 } from "@re4exa/core/kernel/ids";
+import { Kernel } from "@re4exa/core/kernel/kernel";
+import { ApprovalQueue } from "@re4exa/core/policy/approvals";
+import { minimalEnv } from "@re4exa/core/policy/env";
+import { redact } from "@re4exa/core/policy/redact";
+import { diffFindings } from "@re4exa/core/probes/diff";
+import { createProbeEngine } from "@re4exa/core/probes/engine";
+import { runProcess } from "@re4exa/core/vendor/orca-process-host/run-process";
+import { createVerifier, parseClaimBlocks } from "@re4exa/core/verifier/verifier";
+import { type Accounts, createAccounts } from "../accounts/registry.ts";
+import type { ProviderId } from "../contracts.ts";
+import { AssayError } from "../errors.ts";
 import { cyclonedx, makeBundle, markdown, s2Jsonl, sarif } from "../export/export.ts";
-import { sha256 } from "../kernel/ids.ts";
-import { Kernel } from "../kernel/kernel.ts";
 import { capabilityStatement } from "../mcp/capabilities.ts";
 import { stdioProxyCommand } from "../mcp/config.ts";
 import { createToolRegistry } from "../mcp/registry.ts";
 import { createMcpHandler, mountHttp, queueApprover, TokenRegistry } from "../mcp/server.ts";
 import { Orchestrator } from "../orchestrator/orchestrator.ts";
-import { ApprovalQueue } from "../policy/approvals.ts";
-import { minimalEnv } from "../policy/env.ts";
-import { redact } from "../policy/redact.ts";
-import { diffFindings } from "../probes/diff.ts";
-import { createProbeEngine } from "../probes/engine.ts";
 import { createProviders, type ProviderRegistry } from "../providers/index.ts";
 import type {
   AppState,
@@ -44,8 +46,6 @@ import type {
   UnknownView,
 } from "../server/api-types.ts";
 import { type Route, type RunningServer, startServer } from "../server/server.ts";
-import { runProcess } from "../vendor/orca-process-host/run-process.ts";
-import { createVerifier, parseClaimBlocks } from "../verifier/verifier.ts";
 import { RECIPES } from "./recipes.ts";
 
 export const VERSION = "0.1.0";
@@ -129,8 +129,14 @@ export class App {
         );
       if (approval.caseId) this.#caseChanged(approval.caseId);
     });
-    this.engine = createProbeEngine({ kernel: this.kernel, workspace: this.workspace, redact: (v) => redact(v) });
+    this.engine = createProbeEngine({
+      kernel: this.kernel,
+      workspace: this.workspace,
+      redact: (v) => redact(v),
+      producerId: "assay-runner",
+    });
     this.verifier = createVerifier({
+      producerId: "assay-verifier",
       kernel: this.kernel,
       engine: this.engine,
       // cmd.exit claims are re-run only after the person approves, through the same queue as agents' effects

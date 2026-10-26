@@ -1,0 +1,19 @@
+@re4exa/core
+Copyright 2026 the RE4exa contributors. Licensed under the Apache License, Version 2.0 (see LICENSE).
+
+This package includes or adapts work from the following projects. Each keeps its own licence.
+
+- stablyai/orca, commit 997d34b0, MIT, Copyright (c) 2026 Lovecast Inc.
+  Vendored: src/vendor/orca-process-host (subprocess execution, output bounds, cancellation,
+  process-tree termination); see its README for the recorded changes.
+- earendil-works/absurd, commit 3cfc64f, Apache-2.0, Copyright Earendil Inc.
+  Adapted in src/kernel: task/run/checkpoint state machine, claims with leases, first-write-wins
+  checkpoints, events. Re-implemented in TypeScript on SQLite with a lease fence and sequenced topics.
+- earendil-works/pi (packages/durable), commit fdce48e, MIT, Copyright (c) 2025 Mario Zechner.
+  Adapted in src/kernel: intent recorded before each effect with replay policies, crash-loop
+  parking, request dedupe, storage conformance-kit shape.
+- morluto/rea, commit b4938ae, MIT, Copyright (c) 2026 morluto.
+  Adapted in src/evidence: the evidence and residual-unknown model (rewritten to the S-2 claim
+  format), effect classes, observed/derived/inferred confidence classes.
+- aicodeking/leanrea, commit 09ba4aa, MIT, Copyright (c) 2026 AICodeKing.
+  Adapted in src/probes: the artifact router as data (router-pack.json) and its trap list.

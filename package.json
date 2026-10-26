@@ -1,0 +1,26 @@
+{
+  "name": "re4exa",
+  "private": true,
+  "description": "RE4exa workspace: packages/core (shared engine) and the apps built on it (Assay; reax).",
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=24.15"
+  },
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "test": "npm test --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.6.3",
+    "@types/node": "24.19.2",
+    "c8": "12.0.0",
+    "typescript": "5.9.3"
+  }
+}

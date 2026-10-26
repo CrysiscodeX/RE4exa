@@ -11,13 +11,13 @@ import { chmodSync, mkdirSync, rmSync, statSync } from "node:fs";
 import { createRequire } from "node:module";
 import { homedir } from "node:os";
 import { basename, dirname, join, resolve } from "node:path";
+import type { Json } from "@re4exa/core/evidence/jcs";
+import { newId } from "@re4exa/core/kernel/ids";
+import type { Kernel } from "@re4exa/core/kernel/kernel";
+import { spawnProcess } from "@re4exa/core/vendor/orca-process-host/run-process";
 import type { AccountRef, AccountStatus, ProviderAdapter, ProviderId } from "../contracts.ts";
 import { AssayError } from "../errors.ts";
-import type { Json } from "../evidence/jcs.ts";
-import { newId } from "../kernel/ids.ts";
-import type { Kernel } from "../kernel/kernel.ts";
 import type { AccountView } from "../server/api-types.ts";
-import { spawnProcess } from "../vendor/orca-process-host/run-process.ts";
 
 type Status = AccountView["status"];
 

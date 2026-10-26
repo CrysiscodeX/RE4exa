@@ -12,7 +12,7 @@ Assay follows Semantic Versioning, with these meanings.
 What each contract promises:
 
 - **Store.** Migrations only move forward. An Assay that is older than the store refuses to open it (`store_schema_newer`).
-- **Claim format.** The version is in each record (`spec`). `assay.claim/1` records stay readable by every later version.
+- **Claim format.** The version is in each record (`spec`). New records use `re4exa.claim/2`; `assay.claim/1` records stay readable by every later version.
 - **Migration guides.** Every breaking change ships with one, in this file.
 
 ## 0.1.0 (unreleased)

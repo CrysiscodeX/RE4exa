@@ -2,8 +2,8 @@
 
 import { existsSync, mkdirSync, realpathSync } from "node:fs";
 import { join, relative, resolve, sep } from "node:path";
+import { runProcess } from "@re4exa/core/vendor/orca-process-host/run-process";
 import { AssayError } from "../errors.ts";
-import { runProcess } from "../vendor/orca-process-host/run-process.ts";
 
 const SAFE = /[^a-zA-Z0-9._-]+/g;
 

@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { makeRecord, probeKey, subjectDigest } from "@re4exa/core/evidence/record";
+import { openUnknown, putEvidence, recordClaim, setVerdict } from "@re4exa/core/evidence/store";
 import { isAssayError } from "../src/errors.ts";
-import { makeRecord, probeKey, subjectDigest } from "../src/evidence/record.ts";
-import { putEvidence, recordClaim, setVerdict } from "../src/evidence/store.ts";
 import { cyclonedx, makeBundle, markdown, s2Jsonl, sarif, verifyBundle } from "../src/export/export.ts";
 import { openTemp } from "./helpers.ts";
 
@@ -86,4 +86,73 @@ test("signed bundles verify, and any change is detected", () => {
   );
   other.cleanup();
   s.cleanup();
+});
+
+test("exports cover every verdict, nameless manifests, repeated dependencies and findings with no path", () => {
+  const t = openTemp();
+  const c = t.k.createCase({ title: "" });
+  const probe = { id: "pkg.manifest", version: "1" };
+  const put = (
+    result: Record<string, unknown>,
+    bytes: string,
+    ext?: { findings: { key: string; class: string; label: string }[] },
+  ) => {
+    const digest = subjectDigest(new TextEncoder().encode(bytes));
+    putEvidence(
+      t.k,
+      c.id,
+      makeRecord(
+        {
+          probe,
+          probe_key: probeKey(probe, null, digest),
+          predicate: "pkg.manifest",
+          subject: { digest },
+          params: null,
+          result: result as never,
+          confidence: "observed",
+          producer: { kind: "runner", id: "test-runner" },
+          ...(ext ? { ext } : {}),
+        },
+        t.k.now(),
+      ),
+    );
+  };
+  put({ dependencies: { shared: "^1" } }, "a", { findings: [{ key: "fk_np", class: "pkg.dep", label: "no path" }] });
+  put({ name: "second", dependencies: { shared: "^2" } }, "b");
+  const verdicts = ["verified", "unverifiable", null] as const;
+  for (const v of verdicts) {
+    const cl = recordClaim(t.k, c.id, "fake:a", { text: `claim ${v} with a | pipe`, label: "seen" });
+    if (v) setVerdict(t.k, cl.id, v, { reason: `because ${v}` });
+  }
+  openUnknown(t.k, c.id, { question: "what is shared?", origin: "test" });
+
+  const results = (
+    sarif(t.k, c.id, "0.1.0") as { runs: { results: { ruleId: string; level: string; locations?: unknown[] }[] }[] }
+  ).runs[0]!.results;
+  assert.deepEqual(
+    results.map((r) => r.ruleId),
+    ["assay/claim-unverifiable", "assay/pkg.dep"],
+    "only refuted and unverifiable claims are reported; verified and unchecked ones are not",
+  );
+  assert.equal(results[0]!.level, "note");
+  assert.deepEqual(results[1]!.locations, [], "a finding with no path has no location");
+
+  const comps = (
+    cyclonedx(t.k, c.id, "0.1.0") as {
+      components: { name: string; version: string; properties: { value: string }[] }[];
+    }
+  ).components;
+  assert.deepEqual(
+    comps.map((x) => x.name),
+    ["shared", "second"],
+    "a dependency declared by two manifests appears once; a nameless manifest adds no component of its own",
+  );
+  assert.equal(comps[0]!.properties[0]!.value, "", "declared-by is empty for a nameless manifest");
+
+  const md = markdown(t.k, c.id);
+  assert.match(md, /^# case_/, "a case with no title is headed by its id");
+  for (const badge of ["✔ verified", "? unverifiable", "· not checked"]) assert.ok(md.includes(badge), badge);
+  assert.ok(md.includes("with a \\| pipe"), "pipes in claim text are escaped in the table");
+  assert.match(md, /- what is shared\?/);
+  t.cleanup();
 });

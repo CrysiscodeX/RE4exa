@@ -3,12 +3,12 @@ import { chmodSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
+import { ApprovalQueue } from "@re4exa/core/policy/approvals";
+import { createProbeEngine } from "@re4exa/core/probes/engine";
+import { bytesOf } from "@re4exa/core/testing/harness";
 import type { ToolContext } from "../src/contracts.ts";
 import { AssayError } from "../src/errors.ts";
 import { createToolRegistry } from "../src/mcp/registry.ts";
-import { ApprovalQueue } from "../src/policy/approvals.ts";
-import { createProbeEngine } from "../src/probes/engine.ts";
-import { bytesOf } from "./fixtures/probes/harness.ts";
 import { openTemp } from "./helpers.ts";
 
 // Router rows with consent: approval (here `npx -y @electron/asar`, which downloads and runs a package) must

@@ -4,11 +4,11 @@
 import { readFileSync, statSync } from "node:fs";
 import type { ProbeDef, ProbeEngine, SweepReport } from "../../../../src/contracts.ts";
 import { AssayError } from "../../../../src/errors.ts";
-import type { Json } from "../../../../src/evidence/jcs.ts";
-import { type ClaimRecord, makeRecord, probeKey, subjectDigest } from "../../../../src/evidence/record.ts";
-import { evidenceByProbeKey, putEvidence } from "../../../../src/evidence/store.ts";
-import type { Kernel } from "../../../../src/kernel/kernel.ts";
-import { resolveInWorkspace } from "../../../../src/mcp/paths.ts";
+import type { Json } from "@re4exa/core/evidence/jcs";
+import { type ClaimRecord, makeRecord, probeKey, subjectDigest } from "@re4exa/core/evidence/record";
+import { evidenceByProbeKey, putEvidence } from "@re4exa/core/evidence/store";
+import type { Kernel } from "@re4exa/core/kernel/kernel";
+import { resolveInWorkspace } from "@re4exa/core/mcp/paths";
 
 function strings(buf: Uint8Array, min = 4): string[] {
   const out: string[] = [];

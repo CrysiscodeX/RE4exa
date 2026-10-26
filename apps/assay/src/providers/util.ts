@@ -8,8 +8,8 @@
 
 import { accessSync, constants, statSync } from "node:fs";
 import { delimiter, isAbsolute, join } from "node:path";
-import type { Json } from "../evidence/jcs.ts";
-import { runProcess } from "../vendor/orca-process-host/run-process.ts";
+import type { Json } from "@re4exa/core/evidence/jcs";
+import { runProcess } from "@re4exa/core/vendor/orca-process-host/run-process";
 
 export const ASSAY_CLIENT_NAME = "assay";
 export const ASSAY_VERSION = "0.1.0";

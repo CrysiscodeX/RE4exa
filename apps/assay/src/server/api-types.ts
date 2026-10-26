@@ -54,17 +54,9 @@ export interface WorkerView {
   costUsd: number;
 }
 
-export interface ApprovalView {
-  id: string;
-  caseId: string | null;
-  workerId: string | null;
-  action: string;
-  detail: unknown;
-  /** Why approval is needed, e.g. "session read untrusted content", "effect: exec". */
-  reason: string;
-  state: "pending" | "approved" | "denied" | "expired";
-  createdAt: number;
-}
+import type { ApprovalView } from "@re4exa/core/policy/approvals";
+
+export type { ApprovalView };
 
 export interface ClaimView {
   id: string;

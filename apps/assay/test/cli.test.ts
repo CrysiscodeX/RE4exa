@@ -25,14 +25,21 @@ test("CLI: version, help, unknown options rejected, sweep, probe list, forget", 
   const missing = run(["export", "case_x", "--format"], h.dir);
   assert.equal(missing.status, 2);
   const sweep = run(
-    ["sweep", join(import.meta.dirname, "..", "src", "kernel"), "--workspace", join(import.meta.dirname, "..")],
+    ["sweep", join(import.meta.dirname, "..", "src", "providers"), "--workspace", join(import.meta.dirname, "..")],
     h.dir,
   );
   assert.equal(sweep.status, 0, sweep.stderr);
   assert.match(sweep.stdout, /evidence records/);
   // Output over a pipe is complete: process.exit used to drop all but the first 64 KiB.
   const big = run(
-    ["sweep", join(import.meta.dirname, "..", "src"), "--json", "--workspace", join(import.meta.dirname, "..")],
+    // core's source is large enough to exceed one 64 KiB pipe buffer of JSON
+    [
+      "sweep",
+      join(import.meta.dirname, "..", "..", "..", "packages", "core", "src"),
+      "--json",
+      "--workspace",
+      join(import.meta.dirname, "..", "..", ".."),
+    ],
     h.dir,
   );
   assert.equal(big.status, 0, big.stderr);

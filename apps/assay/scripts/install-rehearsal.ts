@@ -15,15 +15,19 @@ const sh = (cmd: string, args: string[], cwd: string) => {
   }
   return r.stdout.trim();
 };
+// Assay depends on the shared engine, published as its own package; pack both and install them together.
+const coreRoot = join(root, "..", "..", "packages", "core");
+const coreTgz = join(coreRoot, sh("npm", ["pack", "--silent"], coreRoot).split("\n").pop()!);
 const tgzName = sh("npm", ["pack", "--silent"], root).split("\n").pop()!;
 const tgz = join(root, tgzName);
 const digest = createHash("sha256").update(readFileSync(tgz)).digest("hex");
 const dir = mkdtempSync(join(tmpdir(), "assay-install-"));
 writeFileSync(join(dir, "package.json"), JSON.stringify({ name: "rehearsal", version: "0.0.0", private: true }));
-sh("npm", ["install", "--ignore-scripts", "--no-audit", "--no-fund", tgz], dir);
+sh("npm", ["install", "--ignore-scripts", "--no-audit", "--no-fund", coreTgz, tgz], dir);
 const version = sh("npx", ["--no-install", "assay", "version"], dir);
 const home = join(dir, ".assay-home");
 const sweep = sh("npx", ["--no-install", "assay", "sweep", "node_modules/assay/docs", "--home", home], dir);
 console.log(`installed ${tgzName} (sha256 ${digest}); assay ${version}; ${sweep.split("\n")[0]}`);
 rmSync(dir, { recursive: true, force: true });
 rmSync(tgz, { force: true });
+rmSync(coreTgz, { force: true });

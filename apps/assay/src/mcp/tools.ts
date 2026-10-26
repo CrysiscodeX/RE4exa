@@ -5,10 +5,8 @@
 import { createHash } from "node:crypto";
 import { closeSync, mkdirSync, openSync, readdirSync, readSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
-import type { Effect, ProbeEngine, ToolContext, ToolDef, ToolResult } from "../contracts.ts";
-import { AssayError } from "../errors.ts";
-import type { Json } from "../evidence/jcs.ts";
-import type { ClaimRecord } from "../evidence/record.ts";
+import type { Json } from "@re4exa/core/evidence/jcs";
+import type { ClaimRecord } from "@re4exa/core/evidence/record";
 import {
   caseEvidence,
   getEvidence,
@@ -16,14 +14,16 @@ import {
   recordClaim,
   requireDelivered,
   resolveUnknown,
-} from "../evidence/store.ts";
-import type { Kernel } from "../kernel/kernel.ts";
-import { minimalEnv } from "../policy/env.ts";
-import type { ProcessResult, ProcessSpec } from "../vendor/orca-process-host/process-spec.ts";
-import { runProcess } from "../vendor/orca-process-host/run-process.ts";
-import { PREDICATES, predicateCatalog } from "../verifier/predicates.ts";
-import type { HandleStore } from "./handles.ts";
-import { resolveInWorkspace, slashed } from "./paths.ts";
+} from "@re4exa/core/evidence/store";
+import type { Kernel } from "@re4exa/core/kernel/kernel";
+import type { HandleStore } from "@re4exa/core/mcp/handles";
+import { resolveInWorkspace, slashed } from "@re4exa/core/mcp/paths";
+import { minimalEnv } from "@re4exa/core/policy/env";
+import type { ProcessResult, ProcessSpec } from "@re4exa/core/vendor/orca-process-host/process-spec";
+import { runProcess } from "@re4exa/core/vendor/orca-process-host/run-process";
+import { PREDICATES, predicateCatalog } from "@re4exa/core/verifier/predicates";
+import type { Effect, ProbeEngine, ToolContext, ToolDef, ToolResult } from "../contracts.ts";
+import { AssayError } from "../errors.ts";
 
 export const LIMITS = {
   resultTextBytes: 8192,

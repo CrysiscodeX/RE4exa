@@ -10,15 +10,15 @@
 //   5. any failure becomes an isError result carrying the AssayError JSON (code, message, fix).
 
 import { createHash } from "node:crypto";
+import type { Json } from "@re4exa/core/evidence/jcs";
+import type { Kernel } from "@re4exa/core/kernel/kernel";
+import { HandleStore } from "@re4exa/core/mcp/handles";
+import type { ApprovalQueue } from "@re4exa/core/policy/approvals";
+import { redact, redactString } from "@re4exa/core/policy/redact";
+import { type AutoRule, envelope, envelopeOverhead, explain, SessionTaint } from "@re4exa/core/policy/taint";
+import type { ProcessResult, ProcessSpec } from "@re4exa/core/vendor/orca-process-host/process-spec";
 import type { Effect, ProbeEngine, ToolContext, ToolDef, ToolResult } from "../contracts.ts";
 import { AssayError, isAssayError } from "../errors.ts";
-import type { Json } from "../evidence/jcs.ts";
-import type { Kernel } from "../kernel/kernel.ts";
-import type { ApprovalQueue } from "../policy/approvals.ts";
-import { redact, redactString } from "../policy/redact.ts";
-import { type AutoRule, envelope, envelopeOverhead, explain, SessionTaint } from "../policy/taint.ts";
-import type { ProcessResult, ProcessSpec } from "../vendor/orca-process-host/process-spec.ts";
-import { HandleStore } from "./handles.ts";
 import { builtinTools, type HandlerResult, LIMITS, type Verifier } from "./tools.ts";
 
 export interface RegistryServices {

@@ -6,6 +6,7 @@ import { chmodSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { AssayError } from "../errors.ts";
+import { nodeArgs } from "../runtime.ts";
 
 export const SERVER_NAME = "assay";
 
@@ -53,7 +54,7 @@ export function stdioProxyCommand(
   token: string,
   opts: { tokenInEnv?: boolean } = {},
 ): { program: string; args: string[]; env: Record<string, string> } {
-  const base = [process.execPath, "--disable-warning=ExperimentalWarning", STDIO_PROXY_PATH, "--url", url];
+  const base = [process.execPath, ...nodeArgs(), STDIO_PROXY_PATH, "--url", url];
   if (opts.tokenInEnv)
     return {
       program: base[0]!,

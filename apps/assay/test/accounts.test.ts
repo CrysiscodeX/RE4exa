@@ -2,11 +2,11 @@ import assert from "node:assert/strict";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, it } from "node:test";
+import type { Kernel } from "@re4exa/core/kernel/kernel";
 import { createAccounts, scrubDetail } from "../src/accounts/registry.ts";
 import { recordUsageEvent, UsageRecorder } from "../src/accounts/usage.ts";
 import type { AccountRef, AccountStatus, ProviderAdapter, ProviderId, ProviderInfo } from "../src/contracts.ts";
 import { isAssayError } from "../src/errors.ts";
-import type { Kernel } from "../src/kernel/kernel.ts";
 import type { AccountView } from "../src/server/api-types.ts";
 import { openTemp } from "./helpers.ts";
 

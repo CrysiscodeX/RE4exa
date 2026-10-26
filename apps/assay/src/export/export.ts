@@ -4,12 +4,12 @@
 import { createPrivateKey, createPublicKey, generateKeyPairSync, sign, verify } from "node:crypto";
 import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { canonicalize, type Json } from "@re4exa/core/evidence/jcs";
+import { type ClaimRecord, observationId, validate } from "@re4exa/core/evidence/record";
+import { caseClaims, caseEvidence, listUnknowns } from "@re4exa/core/evidence/store";
+import { sha256 } from "@re4exa/core/kernel/ids";
+import type { Kernel } from "@re4exa/core/kernel/kernel";
 import { AssayError } from "../errors.ts";
-import { canonicalize, type Json } from "../evidence/jcs.ts";
-import { type ClaimRecord, observationId, validate } from "../evidence/record.ts";
-import { caseClaims, caseEvidence, listUnknowns } from "../evidence/store.ts";
-import { sha256 } from "../kernel/ids.ts";
-import type { Kernel } from "../kernel/kernel.ts";
 
 export const BUNDLE_SPEC = "assay.bundle/1";
 
@@ -125,7 +125,7 @@ export function markdown(k: Kernel, caseId: string): string {
           ? "? unverifiable"
           : "· not checked";
   const lines = [
-    `# ${c?.title ?? caseId}`,
+    `# ${c?.title || caseId}`, // an empty title is no title
     "",
     `Case \`${caseId}\`. ${evidence.length} evidence records, ${claims.length} claims, ${unknowns.filter((u) => u.status === "open").length} open questions. Log chain ${k.verifyChain(caseId) === null ? "intact" : "BROKEN"}.`,
     "",

@@ -1,13 +1,29 @@
 name: assay
 
-# Assay (apps/assay): typecheck, lint, tests with coverage gates, generated-doc freshness,
-# dependency audit and SBOM, UI build and browser end-to-end tests, model-free benchmark gates.
-# Tests also run on macOS and Windows. Only first-party actions, pinned by commit.
+# Assay (apps/assay) and the shared engine it runs on (packages/core): typecheck, lint, tests with
+# coverage gates, generated-doc freshness, dependency audit and SBOM, UI build and browser
+# end-to-end tests, model-free benchmark gates. Tests also run on macOS and Windows.
+# npm workspaces: dependencies install once at the repository root. Only first-party actions,
+# pinned by commit.
 on:
   push:
-    paths: ["apps/assay/**", ".github/workflows/assay.yml"]
+    paths:
+      - "apps/assay/**"
+      - "packages/core/**"
+      - "scripts/with-source.mjs"
+      - "package.json"
+      - "package-lock.json"
+      - "tsconfig.base.json"
+      - ".github/workflows/assay.yml"
   pull_request:
-    paths: ["apps/assay/**", ".github/workflows/assay.yml"]
+    paths:
+      - "apps/assay/**"
+      - "packages/core/**"
+      - "scripts/with-source.mjs"
+      - "package.json"
+      - "package-lock.json"
+      - "tsconfig.base.json"
+      - ".github/workflows/assay.yml"
 
 permissions:
   contents: read
@@ -32,8 +48,17 @@ jobs:
           git checkout -q FETCH_HEAD
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: "22.22.0"
-      - run: npm ci --ignore-scripts
+          node-version: "24.22.1"
+      - name: Install (workspace root)
+        working-directory: .
+        run: npm ci --ignore-scripts
+      - name: Core typecheck, lint, tests with coverage gates, generated docs
+        working-directory: packages/core
+        run: |
+          npm run typecheck
+          npm run lint
+          npm run coverage
+          node --disable-warning=ExperimentalWarning scripts/gen-docs.ts --check
       - name: Dependency budget and audit
         run: |
           node --disable-warning=ExperimentalWarning scripts/dep-budget.ts
@@ -43,25 +68,26 @@ jobs:
       - name: Tests with coverage gates
         run: npm run coverage
       - name: Generated docs are current (capabilities, reach, failure modes)
-        run: node --disable-warning=ExperimentalWarning scripts/gen-docs.ts --check
+        run: node --conditions=source --disable-warning=ExperimentalWarning scripts/gen-docs.ts --check
       - name: SBOM
         run: npm sbom --sbom-format cyclonedx --omit dev > sbom.cdx.json && node -e "JSON.parse(require('fs').readFileSync('sbom.cdx.json','utf8'))"
-      - name: Build and install rehearsal (pack, install the tarball, run the installed CLI)
-        run: node --disable-warning=ExperimentalWarning scripts/install-rehearsal.ts
+      - name: Build and install rehearsal (pack core and Assay, install both tarballs, run the installed CLI)
+        run: node --conditions=source --disable-warning=ExperimentalWarning scripts/install-rehearsal.ts
       - name: Browser end-to-end
         run: |
           npx playwright install --with-deps chromium  # the version pinned in package.json
           npm run e2e
       - name: Benchmark gates (model-free)
-        run: node --disable-warning=ExperimentalWarning bench/run.ts --gate
+        run: node --conditions=source --disable-warning=ExperimentalWarning bench/run.ts --gate
       - name: Self-application
-        run: node --disable-warning=ExperimentalWarning src/cli.ts sweep . --json > self-sweep.json
+        run: node --conditions=source --disable-warning=ExperimentalWarning src/cli.ts sweep . --json > self-sweep.json
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
           name: assay-results
           path: |
             apps/assay/test-results/
+            packages/core/coverage/coverage-summary.json
             apps/assay/bench/results/
             apps/assay/sbom.cdx.json
             apps/assay/self-sweep.json
@@ -70,7 +96,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-14, windows-2022]
+        os: [macos-15, windows-2025]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     steps:
@@ -86,6 +112,12 @@ jobs:
           git checkout -q FETCH_HEAD
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: "22.22.0"
-      - run: npm ci --ignore-scripts
-      - run: npm test
+          node-version: "24.22.1"
+      - name: Install (workspace root)
+        working-directory: .
+        run: npm ci --ignore-scripts
+      - name: Core tests
+        working-directory: packages/core
+        run: npm test
+      - name: Assay tests
+        run: npm test

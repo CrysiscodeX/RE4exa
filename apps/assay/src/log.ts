@@ -3,7 +3,7 @@
 // a request), so a turn can be followed across server, orchestrator and provider.
 // Logs never contain secrets: values pass through the same redactor as stored evidence.
 
-import { redactString } from "./policy/redact.ts";
+import { redactString } from "@re4exa/core/policy/redact";
 
 const LEVELS = { error: 0, warn: 1, info: 2, debug: 3 } as const;
 export type Level = keyof typeof LEVELS;

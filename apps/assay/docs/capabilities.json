@@ -852,7 +852,7 @@
     "fetchPageBytes": 6144
   },
   "redaction": {
-    "detectorVersion": "assay.redact/1"
+    "detectorVersion": "re4exa.redact/1"
   },
   "effects": {
     "none": "allow",

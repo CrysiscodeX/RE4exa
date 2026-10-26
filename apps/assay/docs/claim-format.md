@@ -1,12 +1,12 @@
-# Claim format: `assay.claim/1` (S-2 v1)
+# Claim format: `re4exa.claim/2` (S-2; reads `assay.claim/1`)
 
-A claim record states one thing about one subject, together with how it was obtained and how sure Assay is of it. The schema and the identity rules are in [`src/evidence/record.ts`](../src/evidence/record.ts). This page explains them.
+A claim record states one thing about one subject, together with how it was obtained and how sure Assay is of it. The schema and the identity rules are in [`packages/core/src/evidence/record.ts`](../../../packages/core/src/evidence/record.ts), the shared engine. This page explains them.
 
 ## Fields
 
 | Field | Hashed into the ObservationId | Meaning |
 |---|---|---|
-| `spec` | yes | Always `assay.claim/1` |
+| `spec` | yes | `re4exa.claim/2` for new records; `assay.claim/1` records are still read. Each record's own spec is hashed, so old records keep verifying (docs/decisions/0004) |
 | `probe_key` | yes | `pk_` + sha256 of the canonical inputs: probe id and version, parameters, subject digest and profile. It is known **before** the probe runs, so a durable step can be keyed by it |
 | `probe` | — | `{id, version}`; already covered by `probe_key` |
 | `predicate` | yes | What is claimed, for example `file.identify`, `pkg.manifest` or `js.imports` |

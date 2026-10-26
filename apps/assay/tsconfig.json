@@ -1,27 +1,12 @@
 {
+  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "target": "ES2023",
     "lib": [
       "ES2023",
       "DOM",
       "DOM.Iterable"
     ],
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "allowImportingTsExtensions": true,
-    "noEmit": true,
-    "erasableSyntaxOnly": true,
-    "verbatimModuleSyntax": true,
-    "strict": true,
-    "noUncheckedIndexedAccess": true,
-    "noImplicitOverride": true,
-    "exactOptionalPropertyTypes": false,
-    "skipLibCheck": true,
-    "resolveJsonModule": true,
-    "jsx": "react-jsx",
-    "types": [
-      "node"
-    ]
+    "jsx": "react-jsx"
   },
   "include": [
     "src",
@@ -31,7 +16,5 @@
     "ui/mock",
     "scripts"
   ],
-  "exclude": [
-    "src/vendor"
-  ]
+  "exclude": []
 }

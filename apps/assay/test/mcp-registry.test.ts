@@ -3,13 +3,13 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, 
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
+import type { Json } from "@re4exa/core/evidence/jcs";
+import { caseClaims, listUnknowns } from "@re4exa/core/evidence/store";
+import { ApprovalQueue } from "@re4exa/core/policy/approvals";
 import type { ToolContext, ToolDef } from "../src/contracts.ts";
 import { AssayError } from "../src/errors.ts";
-import type { Json } from "../src/evidence/jcs.ts";
-import { caseClaims, listUnknowns } from "../src/evidence/store.ts";
 import { checkArgs, createToolRegistry } from "../src/mcp/registry.ts";
 import { TOOL_SPECS } from "../src/mcp/tools.ts";
-import { ApprovalQueue } from "../src/policy/approvals.ts";
 import { stubEngine } from "./fixtures/tripwire/_support/stub-engine.ts";
 import { openTemp } from "./helpers.ts";
 
@@ -37,7 +37,7 @@ function setup(opts: { extraTools?: ToolDef[]; verifier?: boolean } = {}) {
     verifier: opts.verifier ? { verify: async (i) => ({ verified: 1, caseId: i.caseId }) } : undefined,
     runProcess: async (spec) => {
       spawns++;
-      const { runProcess } = await import("../src/vendor/orca-process-host/run-process.ts");
+      const { runProcess } = await import("@re4exa/core/vendor/orca-process-host/run-process");
       return runProcess(spec);
     },
   });
@@ -371,7 +371,7 @@ test("a missing path suggests similar paths in the error the agent reads", async
   const { mkdtempSync, mkdirSync, writeFileSync, rmSync } = await import("node:fs");
   const { tmpdir } = await import("node:os");
   const { join } = await import("node:path");
-  const { suggestPaths, pathNotFound } = await import("../src/mcp/suggest.ts");
+  const { suggestPaths, pathNotFound } = await import("@re4exa/core/mcp/suggest");
   const root = mkdtempSync(join(tmpdir(), "assay-suggest-"));
   mkdirSync(join(root, "postinstall", "evil-helper"), { recursive: true });
   writeFileSync(join(root, "postinstall", "evil-helper", "package.json"), "{}");

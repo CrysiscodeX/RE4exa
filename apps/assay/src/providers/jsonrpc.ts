@@ -3,8 +3,8 @@
 
 import type { ChildProcessWithoutNullStreams } from "node:child_process";
 import { createInterface } from "node:readline";
+import { spawnProcess } from "@re4exa/core/vendor/orca-process-host/run-process";
 import { AssayError } from "../errors.ts";
-import { spawnProcess } from "../vendor/orca-process-host/run-process.ts";
 
 export interface RpcMessage {
   jsonrpc?: string;

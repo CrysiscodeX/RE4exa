@@ -3,11 +3,11 @@ import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
+import { runProcess } from "@re4exa/core/vendor/orca-process-host/run-process";
 import type { ProviderAdapter } from "../src/contracts.ts";
 import { isAssayError } from "../src/errors.ts";
 import { createProviders } from "../src/providers/index.ts";
 import { which } from "../src/providers/util.ts";
-import { runProcess } from "../src/vendor/orca-process-host/run-process.ts";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 

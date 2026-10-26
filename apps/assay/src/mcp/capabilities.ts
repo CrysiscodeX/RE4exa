@@ -5,10 +5,10 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import type { Json } from "@re4exa/core/evidence/jcs";
+import { DETECTOR_VERSION } from "@re4exa/core/policy/redact";
+import { createProbeEngine } from "@re4exa/core/probes/engine";
 import type { ProbeEngine } from "../contracts.ts";
-import type { Json } from "../evidence/jcs.ts";
-import { DETECTOR_VERSION } from "../policy/redact.ts";
-import { createProbeEngine } from "../probes/engine.ts";
 import { PROTOCOL_VERSION, SUPPORTED_PROTOCOL_VERSIONS } from "./server.ts";
 import { LIMITS, TOOL_SPECS, type ToolSpec, VERIFY_SPEC } from "./tools.ts";
 

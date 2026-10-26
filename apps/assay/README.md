@@ -18,8 +18,9 @@ Assay is the product that came out of the merger debate in [`docs/merger/`](../.
 ## Quick start
 
 ```bash
+npm ci                       # Node 24.15+; once, at the repository root (npm workspaces)
 cd apps/assay
-npm ci && npm run build      # Node 22.12+
+npm run build                # builds the shared engine (packages/core), Assay and its UI
 node bin/assay.mjs serve     # prints a one-time pairing link; open it in your browser
 node bin/assay.mjs serve --demo   # adds a deterministic fake agent, so you can try it with no account
 ```
@@ -88,7 +89,7 @@ The model-free benchmark is `node bench/run.ts --gate`, and it runs in CI. The l
 | M9 | False "complete" coverage | rea: yes | 0 of 300 |
 | M10 | Time to first evidence | rea CLI starts in 2.1 s | 0.3 ms identify; under 7 ms sweep per fixture |
 | M11 | 4 workers in parallel | serial | 3.7× faster (synthetic 300 ms turns) |
-| M13 | Server start to first verified claim in the browser | — | 1–2 s (1.1 s and 1.7 s in the last two runs) |
+| M13 | Server start to first verified claim in the browser | — | about 1.1 s warm; about 10 s on the first run straight after a build (both measured 2026-10-26) |
 
 **Live comparison (M12).** The same questions went to the same model, on the same signed-in Claude account, through two set-ups:
 - **Tier 0:** the official client with Bash and leanrea's skill;
@@ -138,7 +139,7 @@ Two agent reviewers scored commit `9373f4d` against RQS-2030 (agent-harness prof
 | macOS 14 (arm64) | unit and integration tests | signed-in terminal login uses node-pty |
 | Windows Server 2022 | unit and integration tests | external-tool probes that need POSIX tools report "not available" |
 
-Node 22.12 or later. The browser interface is tested in Chromium only.
+Node 24.15 or later. The browser interface is tested in Chromium only.
 
 ## Honest limits
 

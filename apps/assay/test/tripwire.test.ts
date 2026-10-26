@@ -19,11 +19,11 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
+import type { Json } from "@re4exa/core/evidence/jcs";
+import { ApprovalQueue } from "@re4exa/core/policy/approvals";
 import type { ToolContext } from "../src/contracts.ts";
 import { AssayError } from "../src/errors.ts";
-import type { Json } from "../src/evidence/jcs.ts";
 import { createToolRegistry, type ToolRegistry } from "../src/mcp/registry.ts";
-import { ApprovalQueue } from "../src/policy/approvals.ts";
 import { stubEngine } from "./fixtures/tripwire/_support/stub-engine.ts";
 import { openTemp } from "./helpers.ts";
 

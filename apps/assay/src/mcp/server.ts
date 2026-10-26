@@ -6,9 +6,9 @@
 
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import type { IncomingMessage, ServerResponse } from "node:http";
+import type { Json } from "@re4exa/core/evidence/jcs";
 import type { Effect, ToolContext, ToolDef } from "../contracts.ts";
 import { AssayError } from "../errors.ts";
-import type { Json } from "../evidence/jcs.ts";
 import type { ToolRegistry } from "./registry.ts";
 
 export const PROTOCOL_VERSION = "2025-06-18";

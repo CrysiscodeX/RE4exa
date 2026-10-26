@@ -13,7 +13,8 @@ import { fileURLToPath } from "node:url";
 const require = createRequire(import.meta.url);
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const SHOTS = join(ROOT, "test-results", "ui");
-const AXE = readFileSync(join(ROOT, "node_modules", "axe-core", "axe.min.js"), "utf8");
+// Resolved like any dependency: in the workspace it is hoisted to the repository root.
+const AXE = readFileSync(createRequire(import.meta.url).resolve("axe-core/axe.min.js"), "utf8");
 
 // Playwright is preinstalled globally; typed loosely so the test does not need its type package.
 interface Locator {

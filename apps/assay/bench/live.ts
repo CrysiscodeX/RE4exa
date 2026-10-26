@@ -7,8 +7,8 @@
 import { cpSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { query } from "@anthropic-ai/claude-agent-sdk";
+import { caseClaims } from "@re4exa/core/evidence/store";
 import { App } from "../src/app/app.ts";
-import { caseClaims } from "../src/evidence/store.ts";
 import { tmp } from "../test/helpers.ts";
 
 if (process.env.ASSAY_LIVE !== "1") {

@@ -11,13 +11,13 @@
 // - Liveness: live | exited | unverifiable. Workers found running after a restart are
 //   unverifiable, never exited, and are not restarted automatically.
 
+import type { Json } from "@re4exa/core/evidence/jcs";
+import type { AgentClaim } from "@re4exa/core/evidence/store";
+import { caseClaims, listUnknowns, recordClaim } from "@re4exa/core/evidence/store";
+import { newId } from "@re4exa/core/kernel/ids";
+import type { Attempt, Kernel, TaskRow } from "@re4exa/core/kernel/kernel";
 import type { AccountRef, AgentEvent, AgentSession, ProviderAdapter, ProviderId, ToolDef } from "../contracts.ts";
 import { AssayError, isAssayError } from "../errors.ts";
-import type { Json } from "../evidence/jcs.ts";
-import type { AgentClaim } from "../evidence/store.ts";
-import { caseClaims, listUnknowns, recordClaim } from "../evidence/store.ts";
-import { newId } from "../kernel/ids.ts";
-import type { Attempt, Kernel, TaskRow } from "../kernel/kernel.ts";
 import { log } from "../log.ts";
 import type {
   CostEstimate,

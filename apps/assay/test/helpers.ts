@@ -1,7 +1,7 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Kernel } from "../src/kernel/kernel.ts";
+import { Kernel } from "@re4exa/core/kernel/kernel";
 
 export function tmp(prefix = "assay-"): { dir: string; cleanup: () => void } {
   const dir = mkdtempSync(join(tmpdir(), prefix));

@@ -1,8 +1,8 @@
 // A tiny MCP client over Streamable HTTP (initialize, tools/list, tools/call) with a bearer token.
 // The fake provider uses it to behave like a real agent calling Assay's tools.
 
+import type { Json } from "@re4exa/core/evidence/jcs";
 import { AssayError } from "../errors.ts";
-import type { Json } from "../evidence/jcs.ts";
 
 export const MCP_PROTOCOL_VERSION = "2025-06-18";
 

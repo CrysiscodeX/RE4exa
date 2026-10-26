@@ -17,6 +17,7 @@
 // default account passes the environment through. Status: account/read (no token refresh requested).
 // Sign-in: the official `codex login` in that home.
 
+import type { Json } from "@re4exa/core/evidence/jcs";
 import type {
   AccountRef,
   AccountStatus,
@@ -27,7 +28,6 @@ import type {
   SessionOptions,
 } from "../contracts.ts";
 import { AssayError } from "../errors.ts";
-import type { Json } from "../evidence/jcs.ts";
 import { stdioMcpConfig } from "../mcp/config.ts";
 import { RpcError, RpcPeer, type RpcPeerOptions } from "./jsonrpc.ts";
 import {

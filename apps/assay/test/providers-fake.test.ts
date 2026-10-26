@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import type { AddressInfo } from "node:net";
 import { after, before, beforeEach, describe, it } from "node:test";
+import type { Json } from "@re4exa/core/evidence/jcs";
 import { isAssayError } from "../src/errors.ts";
-import type { Json } from "../src/evidence/jcs.ts";
 import {
   createFakeAdapter,
   FAKE_ABSENT_NEEDLE,

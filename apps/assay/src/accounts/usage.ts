@@ -4,8 +4,8 @@
 // total_cost_usd is differenced by the adapter). A turn that is re-sent after a crash is marked
 // `resent`, so reports can tell double-billed work from new work.
 
+import type { Kernel } from "@re4exa/core/kernel/kernel";
 import type { AgentEvent, ProviderId } from "../contracts.ts";
-import type { Kernel } from "../kernel/kernel.ts";
 
 export interface UsageContext {
   caseId?: string | null;

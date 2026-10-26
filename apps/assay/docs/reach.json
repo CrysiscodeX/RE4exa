@@ -1,6 +1,6 @@
 {
-  "generatedBy": "node src/probes/reach.ts --write",
-  "source": "sweeps of test/fixtures/probes/gen.ts fixtures + src/probes/router-pack.json",
+  "generatedBy": "scripts/reach.ts --write",
+  "source": "sweeps of @re4exa/core testing/gen.ts fixtures + probes/router-pack.json",
   "rows": [
     {
       "format": "apk",

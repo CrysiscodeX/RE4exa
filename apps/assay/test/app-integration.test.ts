@@ -192,7 +192,7 @@ test("a second server on the same store is refused", async () => {
 });
 
 test("verifier re-runs of cmd.exit: approval first, allow-listed environment, secrets in output redacted", async () => {
-  const { recordClaim, getEvidence } = await import("../src/evidence/store.ts");
+  const { recordClaim, getEvidence } = await import("@re4exa/core/evidence/store");
   const home = tmp("assay-home-");
   const ws = workspace();
   process.env.ASSAY_TEST_SECRET = "should-not-reach-the-child";

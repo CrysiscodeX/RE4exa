@@ -7,7 +7,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { PassThrough } from "node:stream";
 import { test } from "node:test";
-import type { Json } from "../src/evidence/jcs.ts";
+import type { Json } from "@re4exa/core/evidence/jcs";
+import { ApprovalQueue } from "@re4exa/core/policy/approvals";
 import { STDIO_PROXY_PATH, stdioProxyCommand } from "../src/mcp/config.ts";
 import { createToolRegistry } from "../src/mcp/registry.ts";
 import {
@@ -19,7 +20,6 @@ import {
   TokenRegistry,
 } from "../src/mcp/server.ts";
 import { parseArgs, runProxy } from "../src/mcp/stdio-proxy.ts";
-import { ApprovalQueue } from "../src/policy/approvals.ts";
 import type { ApprovalView } from "../src/server/api-types.ts";
 import { stubEngine } from "./fixtures/tripwire/_support/stub-engine.ts";
 import { openTemp } from "./helpers.ts";

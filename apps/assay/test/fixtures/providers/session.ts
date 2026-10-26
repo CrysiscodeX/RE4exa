@@ -1,8 +1,8 @@
 // Shared helpers for provider tests.
 
 import { fileURLToPath } from "node:url";
+import type { Json } from "@re4exa/core/evidence/jcs";
 import type { AccountRef, AgentEvent, SessionOptions } from "../../../src/contracts.ts";
-import type { Json } from "../../../src/evidence/jcs.ts";
 
 export const FIXTURES = fileURLToPath(new URL(".", import.meta.url));
 export const FAKE_CODEX = fileURLToPath(new URL("./fake-codex-app-server.ts", import.meta.url));
