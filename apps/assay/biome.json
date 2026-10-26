@@ -13,6 +13,7 @@
       "!test/fixtures/tripwire/**",
       "!bench/tasks/fixtures/**",
       "!bench/results/**",
+      "!bench/baseline/**",
       "!dist/**"
     ]
   },

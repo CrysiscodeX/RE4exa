@@ -209,6 +209,10 @@ The adversarial review is kept as written, for commit `0bdc987`. These changes w
 | rqs matching its own rule tables; prose counted as practice | rqs 1.1: `.rqs-ignore`, prose reported separately, results and answer keys found, SQL-from-strings signal. Re-probing the 14 external targets left suggestion accuracy unchanged (48.8% to 47.6% exact). The fixes remove false evidence, not reviewer disagreement |
 | No LICENSE (RL-1), single maintainer | Open: these are the owner's decisions |
 
+## Corrections after publication
+
+- **leanrea router size.** `reports/leanrea.md` (opportunity O9) says "19-row router". SKILL.md has 18 data rows (lines 38-55). The report is generated from the review, so the correction lives here. See [docs/profiles/leanrea.md](../../docs/profiles/leanrea.md) (2026-10-26).
+
 ## Files and reproduction
 
 | File | Contents |

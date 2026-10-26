@@ -25,12 +25,12 @@ Both are MIT-licensed, so code can be reused if the copyright and licence notice
 **A task becomes a worker.**
 - A coordinator agent calls `orca orchestration worker-start` once per task.
 - Each call creates a Task and its first attempt (a dispatch) in one step.
-- It then creates a git worktree for that worker and starts the agent CLI in a terminal.
+- It then starts the agent CLI in a fresh terminal. By default that terminal is in the coordinator's current workspace; Orca creates a git worktree for a worker only when the user asks for one or sharing the checkout is unsafe (`skill-guides/orchestration/references/placement-and-remote.md:8-11`). *(corrected 2026-10-26, see [docs/profiles/orca.md](../../docs/profiles/orca.md))*
 - It sends the worker a preamble: the exact commands for reporting back.
 - Key files: `main/runtime/rpc/methods/orchestration/worker/workers.ts:36-92` and `local-worker-start.ts`.
 
 **One worktree per worker.**
-- Each worker gets its own worktree, so parallel agents never edit the same checkout.
+- One worktree per task is the human workflow. Orchestrated workers share the current workspace by default, so overlap is controlled by an "Ownership" line in each task spec, not by isolation. *(corrected 2026-10-26, see [docs/profiles/orca.md](../../docs/profiles/orca.md))*
 - Worktree names are cleaned and kept inside the workspace (`ipc/worktree-logic.ts:28-115`).
 - The repo's `orca.yaml` setup script runs with a 120 s deadline and is killed as a whole process group (`main/hooks.ts`).
 - Removal is a separate step, with at most two deletions at a time.
@@ -50,7 +50,7 @@ A valid `worker_done`, sent exactly once, settles the task.
 - **Retries are safe.** Every change carries a retry id with a stored receipt. A repeat returns the first result, and a reused id with a different payload is refused (`rpc/orchestration-mutation-executor.ts:100-215`).
 - **Ambiguous starts are not guessed.** They become `start_unknown` / `outcome_unknown`, with the next commands to run. Nothing is retried automatically.
 - **Liveness is `live`, `exited` or `unverifiable`.** Lost contact is `unverifiable`, never `exited`, and it does not authorize stopping or retrying a worker (`shared/pty-liveness-verdict.ts`).
-- **Failures stop after three.** A circuit breaker opens after 3 failures. Nesting depth is 1 by default.
+- **Failures stop after three.** The circuit breaker counts per task: three consecutive failed *starts* of one task fail that task; a worker reporting failure does not count. *(corrected 2026-10-26, see [docs/profiles/orca.md](../../docs/profiles/orca.md))* Nesting depth is 1 by default.
 - **The task text must fit.** A prompt budget checks it before anything is created (`shared/orchestration-worker-start-prompt-budget.ts`).
 
 **Status of each agent.**
