@@ -26,6 +26,7 @@
   "llvm-objdump --macho --dylibs-used lib-aarch64-macos-s.dylib",
   "llvm-objdump --macho --exports-trie hello-aarch64-macos-g",
   "llvm-objdump --macho --exports-trie hello-aarch64-macos-s",
+  "llvm-objdump --macho --exports-trie hello-universal-macos-s",
   "llvm-objdump --macho --exports-trie hello-x86_64-macos-g",
   "llvm-objdump --macho --exports-trie hello-x86_64-macos-s",
   "llvm-objdump --macho --exports-trie lib-aarch64-macos-s.dylib",
@@ -375,7 +376,10 @@
    "bits": 64,
    "links": [],
    "interpreter": null,
-   "exports": [],
+   "exports": [
+    "reax_add",
+    "reax_build_tag"
+   ],
    "symtab": false,
    "dwarf": false,
    "comp_dir": null,

@@ -1183,8 +1183,25 @@ export interface MachOSlice {
     platform: string | null;
     minOs: string | null;
     markers: string[];
+    /** From the exports trie (LC_DYLD_EXPORTS_TRIE or LC_DYLD_INFO); names without the leading "_"
+     * kept as in the binary. complete is false when the trie was cut short by a cap or bad data. */
+    exports: {
+        count: number;
+        names: string[];
+        complete: boolean;
+    };
+    /** Undefined external symbols in LC_SYMTAB: what the binary takes from its dylibs. */
+    imports: {
+        count: number;
+        names: string[];
+        complete: boolean;
+    };
     error?: string;
 }
+/** Most export or import names kept per slice. */
+export declare const MACHO_NAME_CAP = 100000;
+/** Walk the exports trie: each node has terminal info, then edges (label, child offset). */
+export declare function readExportsTrie(b: Uint8Array, start: number, size: number, cap?: number): MachOSlice["exports"];
 export interface MachOInfo {
     fat: boolean;
     slices: MachOSlice[];

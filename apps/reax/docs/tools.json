@@ -1,0 +1,28 @@
+[
+ {
+  "name": "identify",
+  "description": "identify.file: What a file is: format, format families and MIME type, from its first 256 KiB and its name. Pass operation and its arguments; see session describe for one operation's schema.",
+  "operations": [
+   "identify.file"
+  ],
+  "annotations": {
+   "readOnlyHint": true,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  }
+ },
+ {
+  "name": "inventory",
+  "description": "inventory.native: One-call inventory of a native binary: per architecture slice, its kind, interpreter, linked libraries, exported and imported symbols, and language markers. Pass operation and its arguments; see session describe for one operation's schema.",
+  "operations": [
+   "inventory.native"
+  ],
+  "annotations": {
+   "readOnlyHint": true,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  }
+ }
+]

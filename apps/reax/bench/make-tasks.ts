@@ -73,6 +73,15 @@ function facts(file: string): Facts {
     f.arch = [...sh(T.objdump, ["--macho", "--universal-headers", file]).matchAll(/^architecture (\S+)/gm)].map((m) =>
       m[1] === "arm64" ? "aarch64" : m[1]!,
     );
+    // Exports of every slice (llvm-objdump prints the trie of each architecture).
+    f.exports = [
+      ...new Set(
+        lines(sh(T.objdump, ["--macho", "--exports-trie", file]))
+          .map((l) => l.split(/\s+/)[1] ?? "")
+          .filter((n) => n.startsWith("_reax_"))
+          .map((n) => n.slice(1)),
+      ),
+    ].sort();
     return f;
   }
   const arch = head.match(/^Arch: (.*)$/m)?.[1] ?? "";

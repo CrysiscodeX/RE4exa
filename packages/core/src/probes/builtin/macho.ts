@@ -1,9 +1,10 @@
 // macho.info: thin Mach-O (32/64-bit, either endianness) and fat/universal binaries; CPU types,
-// file type, linked dylibs, LC_ID_DYLIB, LC_RPATH, code signature, encryption, build version.
+// file type, linked dylibs, LC_ID_DYLIB, LC_RPATH, code signature, encryption, build version,
+// exported symbols (the dyld exports trie) and imported symbols (undefined externals in LC_SYMTAB).
 
 import { isCoreError } from "../../errors.ts";
 import type { Json } from "../../evidence/jcs.ts";
-import { type AssayProbe, cstr, fail, toHex, u32, u64 } from "../util.ts";
+import { type AssayProbe, cstr, fail, toHex, u8, u32, u64 } from "../util.ts";
 import { libFindings, NATIVE_CAP } from "./elf.ts";
 
 const CPU: Record<number, string> = {
@@ -61,7 +62,112 @@ export interface MachOSlice {
   platform: string | null;
   minOs: string | null;
   markers: string[];
+  /** From the exports trie (LC_DYLD_EXPORTS_TRIE or LC_DYLD_INFO); names without the leading "_"
+   * kept as in the binary. complete is false when the trie was cut short by a cap or bad data. */
+  exports: { count: number; names: string[]; complete: boolean };
+  /** Undefined external symbols in LC_SYMTAB: what the binary takes from its dylibs. */
+  imports: { count: number; names: string[]; complete: boolean };
   error?: string;
+}
+
+/** Most export or import names kept per slice. */
+export const MACHO_NAME_CAP = 100_000;
+
+function uleb(b: Uint8Array, o: number, end: number): { v: number; next: number } {
+  let v = 0;
+  let shift = 0;
+  let p = o;
+  while (p < end) {
+    const byte = u8(b, p++);
+    v += (byte & 0x7f) * 2 ** shift;
+    if (!(byte & 0x80)) return { v, next: p };
+    shift += 7;
+    if (shift > 63) break;
+  }
+  return fail("Mach-O: bad ULEB128 in the exports trie");
+}
+
+/** Walk the exports trie: each node has terminal info, then edges (label, child offset). */
+export function readExportsTrie(
+  b: Uint8Array,
+  start: number,
+  size: number,
+  cap = MACHO_NAME_CAP,
+): MachOSlice["exports"] {
+  const end = start + size;
+  if (size === 0) return { count: 0, names: [], complete: true };
+  if (end > b.length) return { count: 0, names: [], complete: false };
+  const names: string[] = [];
+  const seen = new Set<number>();
+  const stack: { off: number; prefix: string }[] = [{ off: 0, prefix: "" }];
+  let complete = true;
+  while (stack.length) {
+    const { off, prefix } = stack.pop()!;
+    if (seen.has(off) || off >= size || prefix.length > 4096) {
+      complete = false;
+      continue;
+    }
+    seen.add(off);
+    let p = start + off;
+    const term = uleb(b, p, end);
+    p = term.next;
+    if (term.v > 0) {
+      if (names.length < cap) names.push(prefix);
+      else complete = false;
+      p += term.v;
+    }
+    if (p >= end) continue;
+    const children = u8(b, p++);
+    for (let i = 0; i < children; i++) {
+      let q = p;
+      while (q < end && b[q] !== 0) q++;
+      if (q >= end) {
+        complete = false;
+        break;
+      }
+      const label = new TextDecoder().decode(b.subarray(p, q));
+      const child = uleb(b, q + 1, end);
+      p = child.next;
+      stack.push({ off: child.v, prefix: prefix + label });
+    }
+  }
+  names.sort();
+  return { count: names.length, names, complete };
+}
+
+/** Undefined external symbols from LC_SYMTAB (nlist entries with N_UNDF and N_EXT, not stabs). */
+function readUndefinedSymbols(
+  b: Uint8Array,
+  cmd: number,
+  le: boolean,
+  is64: boolean,
+  cap = MACHO_NAME_CAP,
+): MachOSlice["imports"] {
+  const symoff = u32(b, cmd + 8, le);
+  const nsyms = u32(b, cmd + 12, le);
+  const stroff = u32(b, cmd + 16, le);
+  const strsize = u32(b, cmd + 20, le);
+  const step = is64 ? 16 : 12;
+  if (symoff + nsyms * step > b.length || stroff + strsize > b.length) return { count: 0, names: [], complete: false };
+  const names: string[] = [];
+  let complete = true;
+  for (let i = 0; i < nsyms; i++) {
+    const e = symoff + i * step;
+    const type = u8(b, e + 4);
+    if (type & 0xe0 || (type & 0x0e) !== 0 || !(type & 0x01)) continue;
+    const strx = u32(b, e, le);
+    if (strx >= strsize) {
+      complete = false;
+      continue;
+    }
+    if (names.length >= cap) {
+      complete = false;
+      break;
+    }
+    names.push(cstr(b, stroff + strx, 4096, stroff + strsize));
+  }
+  names.sort();
+  return { count: names.length, names, complete };
 }
 
 export interface MachOInfo {
@@ -103,6 +209,8 @@ export function parseThin(b: Uint8Array): MachOSlice {
     platform: null,
     minOs: null,
     markers: [],
+    exports: { count: 0, names: [], complete: true },
+    imports: { count: 0, names: [], complete: true },
   };
   const markers = new Set<string>();
   let o = hdr;
@@ -120,6 +228,10 @@ export function parseThin(b: Uint8Array): MachOSlice {
     else if (cmd === 0x1d) out.codeSignature = true;
     else if (cmd === 0x21 || cmd === 0x2c) out.encrypted = u32(b, o + 16, le) !== 0;
     else if (cmd === 0x1b) out.uuid = toHex(b.subarray(o + 8, o + 24));
+    else if (cmd === 0x80000033) out.exports = readExportsTrie(b, u32(b, o + 8, le), u32(b, o + 12, le));
+    else if ((cmd === 0x22 || cmd === 0x80000022) && u32(b, o + 44, le) > 0)
+      out.exports = readExportsTrie(b, u32(b, o + 40, le), u32(b, o + 44, le));
+    else if (cmd === 0x2) out.imports = readUndefinedSymbols(b, o, le, is64);
     else if (cmd === 0x32) {
       out.platform = PLATFORMS[u32(b, o + 8, le)] ?? `${u32(b, o + 8, le)}`;
       out.minOs = ver(u32(b, o + 12, le));
@@ -186,12 +298,14 @@ function emptySlice(cpu: number): MachOSlice {
     platform: null,
     minOs: null,
     markers: [],
+    exports: { count: 0, names: [], complete: false },
+    imports: { count: 0, names: [], complete: false },
   };
 }
 
 export const machoInfo: AssayProbe = {
   id: "macho.info",
-  version: "1",
+  version: "2",
   predicate: "macho.info",
   summary: "Mach-O CPU types (thin and fat), file type, LC_LOAD_DYLIB/LC_ID_DYLIB, LC_RPATH, code signature",
   appliesTo: (i) => i.format === "macho" || i.format === "macho-fat",

@@ -580,7 +580,7 @@
     },
     {
       "id": "macho.info",
-      "version": "1",
+      "version": "2",
       "predicate": "macho.info",
       "cost": "cheap",
       "platforms": [

@@ -17,7 +17,8 @@
     "test:lane": "node scripts/test-lane.mjs",
     "seed:check": "node --conditions=source --disable-warning=ExperimentalWarning scripts/seed-register.ts --check",
     "bench": "node --conditions=source --disable-warning=ExperimentalWarning bench/run.ts",
-    "size-lint": "node --disable-warning=ExperimentalWarning scripts/size-lint.ts"
+    "size-lint": "node --disable-warning=ExperimentalWarning scripts/size-lint.ts",
+    "gen": "node --conditions=source --disable-warning=ExperimentalWarning scripts/gen.ts"
   },
   "dependencies": {
     "@re4exa/core": "0.1.0"
