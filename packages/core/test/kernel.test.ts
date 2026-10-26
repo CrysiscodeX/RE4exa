@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
+import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { test } from "node:test";
@@ -292,4 +293,114 @@ test("ids minted in the same millisecond sort in minting order", async () => {
   const ids = Array.from({ length: 5000 }, () => newId("x", 1_800_000_000_000));
   assert.deepEqual([...ids].sort(), ids);
   assert.equal(new Set(ids).size, ids.length);
+});
+
+test("readers open alongside the owner, see committed rows only, and cannot write", () => {
+  const t = tmp();
+  const path = join(t.dir, "store.db");
+  const owner = Kernel.open({ path });
+  const reader = Kernel.open({ path, mode: "reader" });
+  try {
+    owner.send({ to: "r", from: "o", kind: "k", body: 1 });
+    assert.equal(reader.inbox("r").length, 1, "a committed row is visible to a reader");
+    owner.tx(() => {
+      owner.send({ to: "r", from: "o", kind: "k", body: 2 });
+      assert.equal(reader.inbox("r").length, 1, "an uncommitted row is not");
+    });
+    assert.equal(reader.inbox("r").length, 2);
+    assert.throws(
+      () => reader.send({ to: "r", from: "x", kind: "k", body: 3 }),
+      (e) => isCoreError(e, "store_read_only"),
+    );
+    assert.throws(
+      () => reader.tx(() => 1),
+      (e) => isCoreError(e, "store_read_only"),
+    );
+    assert.throws(
+      () => Kernel.open({ path: ":memory:", mode: "reader" }),
+      (e) => isCoreError(e, "store_read_only"),
+    );
+  } finally {
+    reader.close();
+    owner.close();
+  }
+  const raw = new DatabaseSync(path);
+  raw.exec("UPDATE meta SET v='0' WHERE k='schema_version'");
+  raw.close();
+  assert.throws(
+    () => Kernel.open({ path, mode: "reader" }),
+    (e) => isCoreError(e, "store_schema_mismatch"),
+    "a reader never migrates; the owner must open the store first",
+  );
+  t.cleanup();
+});
+
+test("checkpoints are capped in size and in number per task", async () => {
+  const clock = new FakeClock();
+  const t = tmp();
+  const k = Kernel.open({
+    path: join(t.dir, "s.db"),
+    clock: clock.now,
+    maxCheckpointBytes: 64,
+    maxCheckpointsPerTask: 2,
+  });
+  try {
+    k.spawnTask({ queue: "q", kind: "x" });
+    const a = k.claimTask("q", "w", 10_000)!;
+    await assert.rejects(
+      k.checkpoint(a, "big", () => "x".repeat(100)),
+      (e) => isCoreError(e, "checkpoint_too_large"),
+    );
+    assert.equal(k.get<{ n: number }>("SELECT COUNT(*) AS n FROM checkpoints")!.n, 0, "nothing is stored");
+    await k.checkpoint(a, "c1", () => 1);
+    k.commitStep(a, "c2", () => 2);
+    assert.throws(
+      () => k.commitStep(a, "c3", () => 3),
+      (e) => isCoreError(e, "checkpoint_too_large"),
+    );
+    assert.equal(
+      k.commitStep(a, "c2", () => 99),
+      2,
+      "an existing checkpoint is still read back",
+    );
+  } finally {
+    k.close();
+    t.cleanup();
+  }
+});
+
+test("namespaced migrations commit with their version or not at all, after a backup; exports copy pages", async () => {
+  const t = tmp();
+  const path = join(t.dir, "s.db");
+  const k = Kernel.open({ path });
+  try {
+    assert.deepEqual(k.migrateNamespace("app", ["CREATE TABLE a1 (x)"]), { from: 0, to: 1, backup: null });
+    k.run("INSERT INTO a1 VALUES (1)");
+    assert.throws(() => k.migrateNamespace("app", ["CREATE TABLE a1 (x)", "CREATE TABLE a2 (y)", "NOT SQL"]));
+    assert.equal(k.meta("schema_version:app"), "1", "a failing migration leaves the version");
+    assert.equal(k.get("SELECT name FROM sqlite_master WHERE name='a2'"), undefined, "and no partial table");
+    const r = k.migrateNamespace("app", ["CREATE TABLE a1 (x)", "CREATE TABLE a2 (y)"]);
+    assert.equal(r.to, 2);
+    assert.ok(r.backup && existsSync(r.backup), "the store was copied aside first");
+    const old = new DatabaseSync(r.backup!, { readOnly: true });
+    assert.equal((old.prepare("SELECT v FROM meta WHERE k='schema_version:app'").get() as { v: string }).v, "1");
+    old.close();
+    assert.throws(
+      () => k.migrateNamespace("app", ["CREATE TABLE a1 (x)"]),
+      (e) => isCoreError(e, "store_schema_newer"),
+    );
+    assert.throws(
+      () => k.migrateNamespace("Bad Name", []),
+      (e) => isCoreError(e, "store_schema_mismatch"),
+    );
+    const dest = join(t.dir, "export.db");
+    assert.ok((await k.exportTo(dest)).pages >= 0);
+    const copy = Kernel.open({ path: dest, mode: "reader" });
+    assert.equal(copy.get<{ n: number }>("SELECT COUNT(*) AS n FROM a1")!.n, 1);
+    copy.close();
+    await assert.rejects(k.exportTo(dest), (e) => isCoreError(e, "path_exists"));
+  } finally {
+    k.close();
+    t.cleanup();
+  }
 });

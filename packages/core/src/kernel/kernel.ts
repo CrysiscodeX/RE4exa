@@ -1,16 +1,20 @@
 // The durable kernel. One SQLite file, owned by one process at a time.
 //
-// - Ownership: `locking_mode=EXCLUSIVE` plus an immediate write at open, so a second process is
-//   refused with `store_locked` instead of silently losing rows (the PGlite failure, N-1).
+// - Ownership (ADR 0005 in apps/reax/docs/decisions): one owner process writes; any number of
+//   readers (other processes or worker threads) read through WAL. The owner holds an exclusive
+//   lock on a sidecar database, `<store>.lock`, so a second owner is refused with `store_locked`
+//   instead of silently losing rows (the PGlite failure, N-1). The operating system releases that
+//   lock when the owner exits or is killed, so a crash never leaves the store stuck. The store
+//   itself is not opened in exclusive mode, which would shut readers out.
 // - Tasks, attempts, leases and checkpoints follow absurd's state machine; every write made on
 //   behalf of an attempt goes through `fence()`, which refuses expired or superseded leases
 //   (absurd accepted writes from an expired, unswept lease).
 // - Effects record their intent before running and settle by replay policy (pi-durable).
 // - IDs are minted fresh per call, never from a counter cached at open (pi-durable defect).
 
-import { mkdirSync } from "node:fs";
+import { existsSync, mkdirSync, rmSync } from "node:fs";
 import { dirname } from "node:path";
-import { DatabaseSync } from "node:sqlite";
+import { backup, DatabaseSync } from "node:sqlite";
 import { CoreError } from "../errors.ts";
 import { canonicalize } from "../evidence/jcs.ts";
 import { newId, sha256 } from "./ids.ts";
@@ -72,6 +76,37 @@ export interface KernelOptions {
   path: string;
   clock?: Clock;
   maxCrashes?: number;
+  /** owner (default): the one writer, runs migrations. reader: read-only, any number at once. */
+  mode?: "owner" | "reader";
+  /** How long a reader waits on a busy store, in ms. Default 5000. */
+  busyTimeoutMs?: number;
+  /** Largest checkpoint value (serialised JSON bytes). Default 1 MiB. */
+  maxCheckpointBytes?: number;
+  /** Most checkpoints one task may hold. Default 10,000. */
+  maxCheckpointsPerTask?: number;
+}
+
+/** Hold the owner lock: an exclusive lock on `<store>.lock`, released by the OS at process exit. */
+function takeOwnerLock(path: string): DatabaseSync {
+  const lock = new DatabaseSync(`${path}.lock`, { timeout: 0 });
+  try {
+    lock.exec("PRAGMA locking_mode=EXCLUSIVE");
+    lock.exec("BEGIN IMMEDIATE");
+    lock.exec("CREATE TABLE IF NOT EXISTS owner (k TEXT PRIMARY KEY, v TEXT NOT NULL)");
+    lock
+      .prepare("INSERT INTO owner(k,v) VALUES('pid',?) ON CONFLICT(k) DO UPDATE SET v=excluded.v")
+      .run(String(process.pid));
+    lock.exec("COMMIT");
+    return lock;
+  } catch (e) {
+    try {
+      lock.close();
+    } catch {
+      // already closed
+    }
+    if (/locked|busy/i.test(String((e as Error).message))) throw new CoreError("store_locked", { path });
+    throw e;
+  }
 }
 
 type Row = Record<string, unknown>;
@@ -87,38 +122,67 @@ export class Kernel {
   readonly path: string;
   readonly now: Clock;
   readonly maxCrashes: number;
+  readonly mode: "owner" | "reader";
+  readonly limits = { checkpointBytes: 1 << 20, checkpointsPerTask: 10_000 };
+  #lock: DatabaseSync | null;
   #depth = 0;
   #closed = false;
 
-  private constructor(db: DatabaseSync, path: string, clock: Clock, maxCrashes: number) {
+  private constructor(
+    db: DatabaseSync,
+    path: string,
+    clock: Clock,
+    maxCrashes: number,
+    mode: "owner" | "reader",
+    lock: DatabaseSync | null,
+  ) {
     this.db = db;
     this.path = path;
     this.now = clock;
     this.maxCrashes = maxCrashes;
+    this.mode = mode;
+    this.#lock = lock;
   }
 
   static open(opts: KernelOptions): Kernel {
-    if (opts.path !== ":memory:") mkdirSync(dirname(opts.path), { recursive: true });
-    const db = new DatabaseSync(opts.path, { timeout: 0 });
+    const mode = opts.mode ?? "owner";
+    const clock = opts.clock ?? Date.now;
+    if (mode === "reader") {
+      if (opts.path === ":memory:")
+        throw new CoreError("store_read_only", { path: opts.path, reason: "an in-memory store has no readers" });
+      const db = new DatabaseSync(opts.path, { readOnly: true, timeout: opts.busyTimeoutMs ?? 5000 });
+      const k = new Kernel(db, opts.path, clock, opts.maxCrashes ?? 5, "reader", null);
+      const cur = Number(k.get<{ v: string }>("SELECT v FROM meta WHERE k='schema_version'")?.v ?? 0);
+      if (cur !== SCHEMA_VERSION) {
+        k.close();
+        throw new CoreError(cur > SCHEMA_VERSION ? "store_schema_newer" : "store_schema_mismatch", {
+          store: cur,
+          code: SCHEMA_VERSION,
+        });
+      }
+      return k;
+    }
+    let lock: DatabaseSync | null = null;
+    if (opts.path !== ":memory:") {
+      mkdirSync(dirname(opts.path), { recursive: true });
+      lock = takeOwnerLock(opts.path);
+    }
+    let db: DatabaseSync;
     try {
-      db.exec("PRAGMA locking_mode=EXCLUSIVE");
+      db = new DatabaseSync(opts.path, { timeout: opts.busyTimeoutMs ?? 5000 });
       db.exec("PRAGMA journal_mode=WAL");
       db.exec("PRAGMA synchronous=FULL");
       db.exec("PRAGMA foreign_keys=ON");
-      // Take the exclusive lock now; it is held until close or process death.
-      db.exec("BEGIN IMMEDIATE");
       db.exec("CREATE TABLE IF NOT EXISTS meta (k TEXT PRIMARY KEY, v TEXT NOT NULL)");
-      db.exec("COMMIT");
     } catch (e) {
-      try {
-        db.close();
-      } catch {
-        // already closed
-      }
+      lock?.close();
+      // A store still held in exclusive mode by an older version of this code.
       if (/locked|busy/i.test(String((e as Error).message))) throw new CoreError("store_locked", { path: opts.path });
       throw e;
     }
-    const k = new Kernel(db, opts.path, opts.clock ?? Date.now, opts.maxCrashes ?? 5);
+    const k = new Kernel(db, opts.path, clock, opts.maxCrashes ?? 5, "owner", lock);
+    if (opts.maxCheckpointBytes) k.limits.checkpointBytes = opts.maxCheckpointBytes;
+    if (opts.maxCheckpointsPerTask) k.limits.checkpointsPerTask = opts.maxCheckpointsPerTask;
     k.#migrate();
     return k;
   }
@@ -127,6 +191,12 @@ export class Kernel {
     if (this.#closed) return;
     this.#closed = true;
     this.db.close();
+    this.#lock?.close();
+    this.#lock = null;
+  }
+
+  #writable(): void {
+    if (this.mode === "reader") throw new CoreError("store_read_only", { path: this.path });
   }
 
   get closed(): boolean {
@@ -139,6 +209,7 @@ export class Kernel {
       this.close();
       throw new CoreError("store_schema_newer", { store: cur, code: SCHEMA_VERSION });
     }
+    if (cur > 0 && cur < SCHEMA_VERSION) this.#backupBeforeMigration("core", cur);
     this.tx(() => {
       for (let v = cur + 1; v <= SCHEMA_VERSION; v++) this.db.exec(MIGRATIONS[v - 1]!);
       this.run(
@@ -148,9 +219,54 @@ export class Kernel {
     });
   }
 
+  /** Copy the store aside before a migration changes it: `<store>.pre-<ns>-v<from>.bak`. */
+  #backupBeforeMigration(ns: string, from: number): string | null {
+    if (this.path === ":memory:") return null;
+    const dest = `${this.path}.pre-${ns}-v${from}.bak`;
+    rmSync(dest, { force: true });
+    this.db.prepare("VACUUM INTO ?").run(dest);
+    return dest;
+  }
+
+  /**
+   * An app's or a component's own schema, versioned separately from core's (`schema_version:<ns>`).
+   * Pending migrations and the version bump commit in one transaction, so a failure part-way leaves
+   * the store as it was; the store is copied aside first.
+   */
+  migrateNamespace(ns: string, migrations: string[]): { from: number; to: number; backup: string | null } {
+    this.#writable();
+    if (!/^[a-z][a-z0-9_-]{0,31}$/.test(ns))
+      throw new CoreError("store_schema_mismatch", { namespace: ns, reason: "bad name" });
+    const key = `schema_version:${ns}`;
+    const cur = Number(this.meta(key) ?? 0);
+    if (cur > migrations.length)
+      throw new CoreError("store_schema_newer", { namespace: ns, store: cur, code: migrations.length });
+    if (cur === migrations.length) return { from: cur, to: cur, backup: null };
+    const backup = cur > 0 ? this.#backupBeforeMigration(ns, cur) : null;
+    this.tx(() => {
+      for (let v = cur + 1; v <= migrations.length; v++) this.db.exec(migrations[v - 1]!);
+      this.setMeta(key, String(migrations.length));
+    });
+    return { from: cur, to: migrations.length, backup };
+  }
+
+  /**
+   * Copy the whole store to `dest` page by page (SQLite's online backup), so an export never holds
+   * the store in memory as one string (rea's bundles failed above V8's string limit). Refuses to
+   * overwrite an existing file.
+   */
+  async exportTo(dest: string): Promise<{ pages: number }> {
+    if (this.path === ":memory:")
+      throw new CoreError("store_read_only", { path: this.path, reason: "nothing to export" });
+    if (existsSync(dest)) throw new CoreError("path_exists", { path: dest });
+    const pages = await backup(this.db, dest);
+    return { pages };
+  }
+
   // ---------- low-level helpers ----------
 
   run(sql: string, ...params: unknown[]): { changes: number | bigint; lastInsertRowid: number | bigint } {
+    this.#writable();
     return this.db.prepare(sql).run(...(params as never[]));
   }
 
@@ -164,6 +280,7 @@ export class Kernel {
 
   /** Synchronous transaction; nested calls use savepoints. */
   tx<T>(fn: () => T): T {
+    this.#writable();
     const sp = `sp${this.#depth}`;
     this.db.exec(this.#depth === 0 ? "BEGIN IMMEDIATE" : `SAVEPOINT ${sp}`);
     this.#depth++;
@@ -473,7 +590,7 @@ export class Kernel {
   }
 
   extendLease(att: Attempt, leaseMs: number): Attempt {
-    if (!(leaseMs > 0)) throw new CoreError("invalid_lease", { leaseMs });
+    if (!(leaseMs > 0) || !Number.isFinite(leaseMs)) throw new CoreError("invalid_lease", { leaseMs });
     return this.tx(() => {
       this.fence(att);
       const leaseUntil = this.now() + leaseMs;
@@ -490,14 +607,18 @@ export class Kernel {
       name,
     );
     if (prior) return JSON.parse(prior.value) as T;
+    // Check the lease before running the computation too, so an attempt that has lost its lease
+    // does not run work whose result would be refused anyway.
+    this.fence(att);
     const value = await compute();
     return this.tx(() => {
       this.fence(att);
+      const json = this.#checkpointJson(att, name, value);
       this.run(
         "INSERT INTO checkpoints(task_id,name,value,attempt_id,created_at) VALUES(?,?,?,?,?) ON CONFLICT(task_id,name) DO NOTHING",
         att.taskId,
         name,
-        JSON.stringify(value ?? null),
+        json,
         att.id,
         this.now(),
       );
@@ -508,6 +629,29 @@ export class Kernel {
       )!;
       return JSON.parse(stored.value) as T;
     });
+  }
+
+  /** Serialise a checkpoint value, refusing one that would let a task's checkpoints grow without
+   * bound (absurd stored every checkpoint of every attempt with no cap). */
+  #checkpointJson(att: Attempt, name: string, value: unknown): string {
+    const json = JSON.stringify(value ?? null);
+    const bytes = Buffer.byteLength(json);
+    if (bytes > this.limits.checkpointBytes)
+      throw new CoreError("checkpoint_too_large", {
+        task: att.taskId,
+        name,
+        bytes,
+        limit: this.limits.checkpointBytes,
+      });
+    const n = Number(this.get<{ n: number }>("SELECT COUNT(*) AS n FROM checkpoints WHERE task_id=?", att.taskId)!.n);
+    if (n >= this.limits.checkpointsPerTask)
+      throw new CoreError("checkpoint_too_large", {
+        task: att.taskId,
+        name,
+        count: n,
+        limit: this.limits.checkpointsPerTask,
+      });
+    return json;
   }
 
   /** Run `body` inside the fence so its writes and the checkpoint land in one transaction. */
@@ -521,11 +665,12 @@ export class Kernel {
       );
       if (prior) return JSON.parse(prior.value) as T;
       const value = body();
+      const json = this.#checkpointJson(att, name, value);
       this.run(
         "INSERT INTO checkpoints(task_id,name,value,attempt_id,created_at) VALUES(?,?,?,?,?)",
         att.taskId,
         name,
-        JSON.stringify(value ?? null),
+        json,
         att.id,
         this.now(),
       );

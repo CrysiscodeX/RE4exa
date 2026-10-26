@@ -23,6 +23,16 @@ export const CORE_FAILURE_MODES = {
     message: "The store was written by a newer version",
     fix: "Upgrade; opening a store with an older version is refused (downgrade only through export and import)",
   },
+  store_schema_mismatch: {
+    retryable: false,
+    message: "The store has not been migrated to this version yet",
+    fix: "Open it once as the owner (start the server or run any command), then open readers",
+  },
+  store_read_only: {
+    retryable: false,
+    message: "This store connection is a reader and cannot write",
+    fix: "Send the write to the store's owner process",
+  },
   lease_expired: {
     retryable: false,
     message: "The attempt's lease expired before this write",
@@ -37,6 +47,16 @@ export const CORE_FAILURE_MODES = {
     retryable: false,
     message: "Lease length must be a positive number of milliseconds",
     fix: "Pass leaseMs > 0",
+  },
+  write_op_unknown: {
+    retryable: false,
+    message: "The writer has no handler for this write operation",
+    fix: "Register a handler for the operation with the owner's WriteBatcher",
+  },
+  checkpoint_too_large: {
+    retryable: false,
+    message: "A checkpoint is larger than the store allows, or the task has too many",
+    fix: "Store large results as evidence or blobs and checkpoint a reference to them",
   },
   effect_interrupted: {
     retryable: false,
@@ -92,6 +112,11 @@ export const CORE_FAILURE_MODES = {
     retryable: false,
     message: "The path resolves outside the workspace",
     fix: "Use a path inside the workspace",
+  },
+  path_exists: {
+    retryable: false,
+    message: "The destination already exists",
+    fix: "Choose a new destination path, or remove the existing file first",
   },
   path_not_found: {
     retryable: false,
