@@ -462,3 +462,14 @@ T3-5 (reax delegates no work to sub-agents).
   reviewed wonts: IDA Lumina and vendor FLIRT, scripted Windows and remote debugging, Hopper's
   shared GUI cursor, JEB's combined Dalvik analysis and debugger, and JEB's WASM, EVM, PLC and
   SASS decompilers.
+
+## 15. Live benchmark backends (2026-10-27)
+
+Four backends, run on the user's Mac under the user's own sign-ins (`bench/mac-setup.sh`,
+`bench/doctor.ts`, `bench/smoke.sh`): `local` (llama.cpp, Qwen3-4B Q4_K_M, a 4096 MiB cap
+enforced from llama.cpp's buffer report and sampled RSS), `codex` (Codex CLI, gpt-6.1-sol,
+medium), `claude` (Claude Code CLI, Opus 5.5, `--effort medium` when offered) and `hybrid`
+(Opus plans and decides, the local model works, Codex reviews, one revision). Rules:
+`bench/PREREG-v2-smoke.md`. Tested here against a stub llama-server and fake CLIs
+([±RX-1/bench-live], [±RX-1/bench-hybrid], [±LEAN-C49-LIMIT]); no live cell has run. reax never
+reads, copies or refreshes a CLI's credentials and identifies only as itself.

@@ -19,6 +19,23 @@ when something counts as done.
 | `docs/decisions/` | Decisions that deviate from or refine the plan. |
 | `docs/review-notes.md` | Security items recorded for review. |
 
+## Live runs on a Mac
+
+The live backends (a local model through llama.cpp, Codex CLI, Claude Code CLI, and a hybrid of
+the three) run on your machine under your own sign-ins; reax never reads or copies a credential.
+From `apps/reax`:
+
+```bash
+bash bench/mac-setup.sh            # builds llama.cpp (Metal, pinned), downloads and pins the model
+codex login                        # your ChatGPT account
+claude                             # then /login with your Claude account, then /exit
+npm run bench:doctor -- --live     # checks everything, sends one short request per CLI
+npm run bench:smoke                # 5 tasks on local, codex, claude and hybrid
+```
+
+The rules are in [`bench/PREREG-v2-smoke.md`](bench/PREREG-v2-smoke.md). One backend alone:
+`npm run bench:live -- --backend claude --smoke`.
+
 ## Status rules (ADR 0001)
 
 A row is covered only when tests tagged `[+KEY]` and `[-KEY]` both passed on every platform the row
@@ -31,9 +48,9 @@ Not done yet:
   candidates stay gated until a person decides. The plan changes the triage found are in
   [`docs/plan.md`](docs/plan.md) §14;
 - `docs/operations.md` and the operation registry arrive in phase 1;
-- live benchmark arms: `bench/` has the grader, 30 LLVM-oracle tasks, the fake arm and
-  `PREREG.md`; the reax, rea and leanrea arms are not implemented, so leanrea's benchmark rows
-  (except grading, LEAN-C56) stay open.
+- live benchmark arms: the local, codex, claude and hybrid backends exist and are tested against
+  stand-ins; no live cell has run yet (they need a Mac with the sign-ins). The rea and leanrea
+  arms are not implemented, so leanrea's comparison rows stay open.
 
 ## Commands (Node 24.15+, from a checkout after `npm ci` at the repository root)
 

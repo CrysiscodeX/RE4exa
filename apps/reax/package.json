@@ -18,7 +18,10 @@
     "seed:check": "node --conditions=source --disable-warning=ExperimentalWarning scripts/seed-register.ts --check",
     "bench": "node --conditions=source --disable-warning=ExperimentalWarning bench/run.ts",
     "size-lint": "node --disable-warning=ExperimentalWarning scripts/size-lint.ts",
-    "gen": "node --conditions=source --disable-warning=ExperimentalWarning scripts/gen.ts"
+    "gen": "node --conditions=source --disable-warning=ExperimentalWarning scripts/gen.ts",
+    "bench:doctor": "node --conditions=source --disable-warning=ExperimentalWarning bench/doctor.ts",
+    "bench:live": "node --conditions=source --disable-warning=ExperimentalWarning bench/live.ts",
+    "bench:smoke": "bash bench/smoke.sh"
   },
   "dependencies": {
     "@re4exa/core": "0.1.0"
