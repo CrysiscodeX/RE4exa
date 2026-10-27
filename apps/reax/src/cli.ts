@@ -2,7 +2,9 @@
 // this is how agents and people call operations.
 //   reax op --list
 //   reax describe <operation>
-//   reax op <operation> [--json '{"path":"..."}'] [--workspace dir] [--format text|json]
+//   reax op <operation> [key=value ...] [--json '{"path":"..."}'] [--workspace dir] [--format text|json]
+// key=value needs no quoting in any shell (sh, PowerShell, cmd), so it is the form agents are told
+// to use; a value that parses as JSON (a number, true, a list) is taken as JSON, else as a string.
 import { isCoreError } from "@re4exa/core/errors";
 import { envelope } from "@re4exa/core/policy/taint";
 import { OPERATIONS, operation, runOperation } from "./ops/registry.ts";
@@ -10,6 +12,30 @@ import { OPERATIONS, operation, runOperation } from "./ops/registry.ts";
 function flag(args: string[], name: string): string | undefined {
   const i = args.indexOf(name);
   return i >= 0 ? args[i + 1] : undefined;
+}
+
+/** The operation's arguments: --json first, then each key=value on top. */
+export function opArgs(rest: string[]): Record<string, unknown> {
+  const args = JSON.parse(flag(rest, "--json") ?? "{}") as Record<string, unknown>;
+  for (let i = 1; i < rest.length; i++) {
+    const a = rest[i]!;
+    if (a.startsWith("--")) {
+      i++;
+      continue;
+    }
+    const eq = a.indexOf("=");
+    if (eq <= 0) throw new Error(`expected key=value, got ${a}`);
+    const v = a.slice(eq + 1);
+    let value: unknown = v;
+    try {
+      const j = JSON.parse(v) as unknown;
+      if (typeof j !== "string") value = j;
+    } catch {
+      // a plain string
+    }
+    args[a.slice(0, eq)] = value;
+  }
+  return args;
 }
 
 export async function main(argv: string[]): Promise<number> {
@@ -39,7 +65,7 @@ export async function main(argv: string[]): Promise<number> {
       return 0;
     }
     if (cmd === "op" && rest[0]) {
-      const args = JSON.parse(flag(rest, "--json") ?? "{}") as unknown;
+      const args = opArgs(rest);
       const workspace = flag(rest, "--workspace") ?? process.cwd();
       const r = await runOperation(rest[0], args, { workspace });
       const op = operation(rest[0]);
@@ -52,7 +78,7 @@ export async function main(argv: string[]): Promise<number> {
       return 0;
     }
     process.stderr.write(
-      "usage: reax op --list | reax describe <operation> | reax op <operation> --json '{...}' [--workspace dir] [--format json]\n",
+      "usage: reax op --list | reax describe <operation> | reax op <operation> [key=value ...] [--json '{...}'] [--workspace dir] [--format json]\n",
     );
     return 2;
   } catch (e) {

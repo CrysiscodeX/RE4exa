@@ -1,7 +1,18 @@
 // A stand-in for llama-server: /health and an OpenAI-style /v1/chat/completions that calls
 // reax_op once, then answers from the tool output. Prints the buffer sizes llama.cpp prints at
-// load; STUB_KV_MIB sets the KV size so the memory cap can be tested.
+// load; STUB_KV_MIB sets the KV size so the memory cap can be tested. --list-devices prints
+// STUB_DEVICES (default: none).
 import http from "node:http";
+
+if (process.argv.includes("--list-devices")) {
+  // STUB_DEVICES: the device lines to print ("none" for a CPU-only machine).
+  process.stdout.write(`Available devices:\n${process.env.STUB_DEVICES ?? "  (none)"}\n`);
+  process.exit(0);
+}
+if (process.argv.includes("--version")) {
+  process.stdout.write("version: 11923 (de5122d8) stub\n");
+  process.exit(0);
+}
 
 const port = Number(process.argv[process.argv.indexOf("--port") + 1]);
 process.stderr.write("load_tensors: Metal_Mapped model buffer size =  2400.00 MiB\n");

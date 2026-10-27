@@ -103,3 +103,39 @@ with the network off. Candidate design: a separate approval-gated sandbox profil
 only the target origin through a recording proxy, with the CDP port on loopback and closed when
 the job ends. Review what the instrumented page can reach and what the recording keeps. Status:
 open; must be decided before phase 3.
+
+### SR-13. The benchmark setup downloads and runs third-party binaries
+`bench/setup.ts` downloads llama.cpp's own release build (tag b11923, commit de5122d) and a GGUF
+model, then runs that llama-server. Each download is checked against its publisher's sha256: GitHub's
+per-asset digest, and the LFS sha256 from Hugging Face. That proves the bytes are what the
+publisher published, not that the publisher is trustworthy.
+
+Where no digest is published, the computed digest is pinned on first use, and setup says so.
+
+The model repositories are tried in a fixed order:
+1. Qwen
+2. unsloth
+3. bartowski
+4. lmstudio-community
+
+The first one that has the file wins, so which publisher was used is recorded in
+`provenance.model`.
+
+llama-server binds 127.0.0.1 only. It runs as the user with no sandbox (plan §3.6's sandbox is not
+built yet).
+
+For review:
+- whether to pin the asset digests in the repository once a first run has recorded them;
+- whether to verify GitHub's artifact attestations (the release workflow attests its assets) when
+  the `gh` CLI is present.
+
+### SR-14. How the CLIs are started on Windows
+npm installs `codex` and `claude` as `.cmd` shims. reax runs them without a shell: core's vendored
+`resolveSpawn` reads a recognised npm shim and runs `node <script>` directly. A shim it does not
+recognise falls back to a cmd.exe command line, which it builds and caret-escapes itself.
+
+Prompts go over stdin, never through argv, so no prompt text reaches cmd's parser. Agents call reax
+as `reax op <operation> path=<file>`, which needs no quoting in sh, PowerShell or cmd.
+
+For review: the cmd.exe fallback path is not exercised by a test, because every shim in CI is
+recognised.

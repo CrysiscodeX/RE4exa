@@ -1,7 +1,8 @@
 // A stand-in for `claude -p --output-format stream-json`: plans, reviews (asking for one
 // revision the first time it reviews in a cell) or answers, in Claude Code's stream-json shape.
-// FAKE_SIGNED_OUT=1 fails like a signed-out CLI; FAKE_SLEEP_MS delays the answer.
-import { appendFileSync } from "node:fs";
+// The prompt arrives on stdin. FAKE_SIGNED_OUT=1 fails like a signed-out CLI; FAKE_SLEEP_MS delays
+// the answer.
+import { appendFileSync, readFileSync } from "node:fs";
 
 const args = process.argv.slice(2);
 if (process.env.FAKE_ARGS_FILE) appendFileSync(process.env.FAKE_ARGS_FILE, `${JSON.stringify(args)}\n`);
@@ -19,7 +20,8 @@ if (process.env.FAKE_SIGNED_OUT === "1") {
   );
   process.exit(1);
 }
-const prompt = args.at(-1);
+// `claude -p` with no prompt argument reads it from stdin, which is how the harness sends it.
+const prompt = readFileSync(0, "utf8");
 const model = args[args.indexOf("--model") + 1];
 const ev = (o) => process.stdout.write(`${JSON.stringify(o)}\n`);
 const finish = (text, cost) => {

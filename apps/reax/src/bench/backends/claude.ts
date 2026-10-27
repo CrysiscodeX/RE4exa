@@ -1,9 +1,8 @@
 // Claude Code CLI as a backend: `claude -p --output-format stream-json` under the user's own
 // Claude sign-in. Tools are limited to the reax command and read-only file tools; the user's MCP
 // servers are not loaded. reax never touches Claude Code's credentials.
-import { spawnSync } from "node:child_process";
 import { type BenchConfig, DEFAULTS } from "./config.ts";
-import { jsonLines, runCli, signInNeeded } from "./proc.ts";
+import { jsonLines, prependPath, runCli, runCliSync, signInNeeded } from "./proc.ts";
 import type { Backend, BackendContext, BackendResult } from "./types.ts";
 
 export const CLAUDE_TOOLS = ["Bash(reax:*)", "Read", "Glob", "Grep"];
@@ -15,13 +14,14 @@ export function effortArgsFor(cfg: BenchConfig["claude"]): string[] | null {
   if (cfg.effortArgs) return cfg.effortArgs;
   const key = cfg.cmd.join("\0");
   if (!detected.has(key)) {
-    const r = spawnSync(cfg.cmd[0]!, [...cfg.cmd.slice(1), "--help"], { encoding: "utf8", timeout: 30_000 });
-    detected.set(key, /--effort\b/.test(`${r.stdout ?? ""}${r.stderr ?? ""}`) ? ["--effort", cfg.effort] : null);
+    const r = runCliSync([...cfg.cmd, "--help"], { timeoutMs: 30_000 });
+    detected.set(key, /--effort\b/.test(r.out) ? ["--effort", cfg.effort] : null);
   }
   return detected.get(key)!;
 }
 
-export function claudeArgv(cfg: BenchConfig["claude"], prompt: string, tools: string[] = CLAUDE_TOOLS): string[] {
+/** The argv; `claude -p` with no prompt argument reads the prompt from stdin. */
+export function claudeArgv(cfg: BenchConfig["claude"], tools: string[] = CLAUDE_TOOLS): string[] {
   return [
     ...cfg.cmd,
     "-p",
@@ -41,8 +41,6 @@ export function claudeArgv(cfg: BenchConfig["claude"], prompt: string, tools: st
     ...(tools.length ? [] : ["Bash", "Read", "Glob", "Grep"]),
     ...(effortArgsFor(cfg) ?? []),
     ...cfg.extraArgs,
-    "--",
-    prompt,
   ];
 }
 
@@ -92,8 +90,13 @@ export function claudeBackend(cfg: BenchConfig["claude"] = DEFAULTS.claude, tool
   return {
     name: "claude",
     async run(prompt: string, ctx: BackendContext): Promise<BackendResult> {
-      const env = { ...process.env, PATH: `${ctx.toolsDir}:${process.env.PATH ?? ""}` };
-      const r = await runCli(claudeArgv(cfg, prompt, tools), { cwd: ctx.workspace, env, deadline: ctx.deadline });
+      const env = prependPath(process.env, ctx.toolsDir);
+      const r = await runCli(claudeArgv(cfg, tools), {
+        cwd: ctx.workspace,
+        env,
+        deadline: ctx.deadline,
+        input: prompt,
+      });
       const p = parseClaude(r.stdout, cfg.model, effortArgsFor(cfg));
       const failed = p.isError || (r.code !== 0 && !p.answer);
       return {

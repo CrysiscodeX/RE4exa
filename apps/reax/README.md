@@ -19,22 +19,65 @@ when something counts as done.
 | `docs/decisions/` | Decisions that deviate from or refine the plan. |
 | `docs/review-notes.md` | Security items recorded for review. |
 
-## Live runs on a Mac
+## Live runs (Linux, macOS, Windows)
 
-The live backends (a local model through llama.cpp, Codex CLI, Claude Code CLI, and a hybrid of
-the three) run on your machine under your own sign-ins; reax never reads or copies a credential.
-From `apps/reax`:
+The live backends run on your own machine, under your own sign-ins. They are a local model through
+llama.cpp, Codex CLI, Claude Code CLI, and a hybrid of the three. reax never reads or copies a
+credential.
+
+**What you need:**
+- Node 24.15 or newer
+- git
+- on Windows, Git for Windows (Claude Code's Bash tool needs it)
+
+**1. Get the code.** In a terminal (PowerShell on Windows):
 
 ```bash
-bash bench/mac-setup.sh            # builds llama.cpp (Metal, pinned), downloads and pins the model
-codex login                        # your ChatGPT account
-claude                             # then /login with your Claude account, then /exit
-npm run bench:doctor -- --live     # checks everything, sends one short request per CLI
-npm run bench:smoke                # 5 tasks on local, codex, claude and hybrid
+git clone https://github.com/CrysiscodeX/RE4exa
+cd RE4exa
+git checkout claude/admiring-volta-uc87nj
+npm ci
 ```
 
-The rules are in [`bench/PREREG-v2-smoke.md`](bench/PREREG-v2-smoke.md). One backend alone:
-`npm run bench:live -- --backend claude --smoke`.
+**2. Set up and sign in.** These commands work from the repository root:
+
+```bash
+npm run bench:setup                    # detects the GPU; installs llama.cpp's build for it and the model
+npm install -g @openai/codex @anthropic-ai/claude-code   # if not installed
+codex login                            # your ChatGPT account
+claude                                 # then /login with your Claude account, then /exit
+npm run bench:doctor -- --live         # checks everything, sends one short request per CLI
+npm run bench:smoke                    # 5 tasks on local, codex, claude and hybrid
+```
+
+**How `bench:setup` chooses the build.** It installs llama.cpp's own release build at tag
+`b11923`. It picks the build from the hardware it finds:
+
+| Machine | Builds tried, in order |
+|---|---|
+| Apple Silicon or Intel Mac | Metal, then CPU |
+| NVIDIA | CUDA (the newest build the driver supports), then Vulkan, then CPU |
+| AMD Radeon | ROCm (on Windows, or on Linux with ROCm installed), then Vulkan, then CPU |
+| Intel GPU | Vulkan, then CPU |
+| Snapdragon (Windows on Arm) | Adreno OpenCL, then Vulkan, then CPU |
+| anything else | Vulkan if a loader is installed, then CPU |
+
+**Checks during setup:**
+- Each build must find its device (`llama-server --list-devices`).
+- Each build must load the model under the 4 GB cap, or the next build is tried.
+- Every download is checked against its publisher's sha256.
+
+**Options:**
+- `--dry-run` shows the plan without downloading.
+- `--backend <id>` forces a build. SYCL, and backends llama.cpp offers beyond these, are reachable
+  this way but are untested.
+- `--server <path>` uses a llama-server you built yourself.
+
+Behind a proxy, set `NODE_USE_ENV_PROXY=1`.
+
+**Results.** They land in `bench/results/smoke-<date>-<os>/`. Commit and push them. Mac and
+Windows results are reported separately. The rules are in
+[`bench/PREREG-v2-smoke.md`](bench/PREREG-v2-smoke.md).
 
 ## Status rules (ADR 0001)
 

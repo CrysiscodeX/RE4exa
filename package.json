@@ -16,7 +16,11 @@
     "typecheck": "npm run typecheck --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
     "test": "npm test --workspaces --if-present",
-    "build": "npm run build --workspaces --if-present"
+    "build": "npm run build --workspaces --if-present",
+    "bench:setup": "npm run bench:setup -w apps/reax --",
+    "bench:doctor": "npm run bench:doctor -w apps/reax --",
+    "bench:smoke": "npm run bench:smoke -w apps/reax --",
+    "bench:live": "npm run bench:live -w apps/reax --"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.3",

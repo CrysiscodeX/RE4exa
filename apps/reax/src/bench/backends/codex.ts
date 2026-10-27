@@ -1,10 +1,11 @@
 // Codex CLI as a backend: `codex exec --json` under the user's own Codex sign-in, in the cell's
 // workspace, with a read-only sandbox. reax never touches Codex's credentials.
 import { type BenchConfig, DEFAULTS } from "./config.ts";
-import { jsonLines, runCli, signInNeeded } from "./proc.ts";
+import { jsonLines, prependPath, runCli, signInNeeded } from "./proc.ts";
 import type { Backend, BackendContext, BackendResult } from "./types.ts";
 
-export function codexArgv(cfg: BenchConfig["codex"], ctx: BackendContext, prompt: string): string[] {
+/** The argv; the prompt itself goes over stdin (`-`), so no prompt text is ever in a command line. */
+export function codexArgv(cfg: BenchConfig["codex"], ctx: BackendContext): string[] {
   return [
     ...cfg.cmd,
     "exec",
@@ -19,7 +20,7 @@ export function codexArgv(cfg: BenchConfig["codex"], ctx: BackendContext, prompt
     "-C",
     ctx.workspace,
     ...cfg.extraArgs,
-    prompt,
+    "-",
   ];
 }
 
@@ -51,8 +52,8 @@ export function codexBackend(cfg: BenchConfig["codex"] = DEFAULTS.codex): Backen
   return {
     name: "codex",
     async run(prompt: string, ctx: BackendContext): Promise<BackendResult> {
-      const env = { ...process.env, PATH: `${ctx.toolsDir}:${process.env.PATH ?? ""}` };
-      const r = await runCli(codexArgv(cfg, ctx, prompt), { cwd: ctx.workspace, env, deadline: ctx.deadline });
+      const env = prependPath(process.env, ctx.toolsDir);
+      const r = await runCli(codexArgv(cfg, ctx), { cwd: ctx.workspace, env, deadline: ctx.deadline, input: prompt });
       const p = parseCodex(r.stdout, cfg.model, cfg.effort);
       const failed = r.code !== 0 && !p.answer;
       return {

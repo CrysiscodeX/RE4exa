@@ -34,6 +34,8 @@ export interface LiveCell {
   run: BackendResult["run"];
   roles: BackendResult["roles"] | null;
   memory: BackendResult["memory"] | null;
+  /** For local and hybrid: the llama.cpp build and device, and the OS it ran on. */
+  hardware: { os: NodeJS.Platform; arch: string; llama_backend: string | null; device: string | null } | null;
   error: string | null;
   timed_out: boolean;
   transcript: string;
@@ -42,13 +44,25 @@ export interface LiveCell {
   grade_first: Grade | null;
 }
 
-/** A directory with a `reax` command for the agents (POSIX shim; reax runs in the cell's cwd). */
+/** What the CLI agents are told about reax; the local model gets the same facts as its tools. */
+export const REAX_NOTE =
+  "The files are in the current directory. The `reax` command is on PATH: `reax op --list` lists its operations and `reax op <operation> path=<file>` runs one on a file.";
+
+/** The prompt one backend gets for a task. */
+export function cellPrompt(backend: BackendName, t: Parameters<typeof prompt>[0]): string {
+  return backend === "codex" || backend === "claude" ? `${REAX_NOTE}\n\n${prompt(t)}` : prompt(t);
+}
+
+/** A directory with a `reax` command for the agents: a POSIX shim and reax.cmd for Windows. */
 export function toolsDir(root: string): string {
   const dir = join(root, ".tools");
   mkdirSync(dir, { recursive: true });
   const bin = join(import.meta.dirname, "..", "..", "bin", "reax.mjs");
   const shim = join(dir, "reax");
-  writeFileSync(shim, `#!/bin/sh\nexec "${process.execPath}" "${bin}" "$@"\n`);
+  // Forward slashes: Git Bash (Claude Code's shell on Windows) reads them; a backslash before a
+  // quote or a `$` would not survive sh's double quotes.
+  const fwd = (p: string) => p.replaceAll("\\", "/");
+  writeFileSync(shim, `#!/bin/sh\nexec "${fwd(process.execPath)}" "${fwd(bin)}" "$@"\n`);
   chmodSync(shim, 0o755);
   writeFileSync(join(dir, "reax.cmd"), `@"${process.execPath}" "${bin}" %*\r\n`);
   return dir;
@@ -97,8 +111,9 @@ export async function runLive(o: LiveOptions): Promise<LiveCell[]> {
     for (let rep = 1; rep <= o.reps; rep++)
       for (const t of o.tasks) {
         const ws = workspace(t, o.fixturesBin);
+        const text = cellPrompt(o.backend, t);
         try {
-          const r = await backend.run(prompt(t), {
+          const r = await backend.run(text, {
             workspace: ws,
             toolsDir: tools,
             deadline: Date.now() + cfg.cell.timeoutMs,
@@ -106,7 +121,7 @@ export async function runLive(o: LiveOptions): Promise<LiveCell[]> {
           const name = `${o.backend}-${t.id}-${rep}.txt`;
           writeFileSync(
             join(o.out, "transcripts", name),
-            `# prompt\n\n${prompt(t)}\n\n# answer\n\n${r.answer}\n\n# transcript\n\n${r.transcript}`,
+            `# prompt\n\n${text}\n\n# answer\n\n${r.answer}\n\n# transcript\n\n${r.transcript}`,
           );
           const cell: LiveCell = {
             task: t.id,
@@ -117,6 +132,9 @@ export async function runLive(o: LiveOptions): Promise<LiveCell[]> {
             run: r.run,
             roles: r.roles ?? null,
             memory: r.memory ?? null,
+            hardware: needsLocal
+              ? { os: process.platform, arch: process.arch, llama_backend: cfg.local.backend, device: cfg.local.device }
+              : null,
             error: r.error ?? null,
             timed_out: !!r.timed_out,
             transcript: `transcripts/${name}`,
@@ -153,6 +171,17 @@ export function liveSummary(cells: LiveCell[]): string {
       `| ${b} | ${cs.length} | ${(s((c) => c.grade.accuracy) / cs.length).toFixed(3)} | ${s((c) => c.grade.hits)}/${s((c) => c.grade.positives)} | ${s((c) => c.grade.wrong)} | ${s((c) => c.grade.labelErrors)} | ${cs.filter((c) => c.grade.parseError).length} | ${cs.filter((c) => c.error).length} | ${(s((c) => c.run.ms) / cs.length / 1000).toFixed(1)} | ${s((c) => c.run.cost_usd).toFixed(3)} | ${[...new Set(cs.map((c) => c.run.model))].join("; ")} |`,
     );
   }
+  const hw = [
+    ...new Set(
+      cells
+        .filter((c) => c.hardware)
+        .map(
+          (c) =>
+            `${c.hardware!.os} ${c.hardware!.arch}, llama.cpp ${c.hardware!.llama_backend ?? "build not recorded"} on ${c.hardware!.device ?? "device not recorded"}`,
+        ),
+    ),
+  ];
+  if (hw.length) out.push("", `Local model ran on: ${hw.join("; ")}.`);
   const hybrid = cells.filter((c) => c.grade_first);
   if (hybrid.length) {
     const m = (f: (c: LiveCell) => number) => (hybrid.reduce((a, c) => a + f(c), 0) / hybrid.length).toFixed(3);

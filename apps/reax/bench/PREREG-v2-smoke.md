@@ -10,13 +10,24 @@ full run.
 
 | Backend | What runs | Model and effort |
 |---|---|---|
-| `local` | llama-server (llama.cpp at commit `de5122d8`, Metal) on loopback, driven by reax's lean tool loop (`reax_op`, `list_files`, `read_file`) | Qwen3-4B-Instruct-2507, Q4_K_M GGUF, digest pinned in `bench/backends.json`; context 16384, KV cache q8_0 |
+| `local` | llama-server (llama.cpp release `b11923` = commit `de5122d8`, the build `bench/setup.ts` chose for the machine's GPU) on loopback, driven by reax's lean tool loop (`reax_op`, `list_files`, `read_file`) | Qwen3-4B-Instruct-2507, Q4_K_M GGUF, digest pinned in `bench/backends.json`; context 16384, KV cache q8_0 |
 | `codex` | `codex exec --json`, read-only sandbox, under the user's own ChatGPT sign-in | `gpt-6.1-sol`, `model_reasoning_effort="medium"` |
 | `claude` | `claude -p --output-format stream-json`, tools limited to `Bash(reax:*)`, Read, Glob and Grep, no MCP servers, under the user's own Claude sign-in | `claude-opus-5-5`, `--effort medium` when the CLI offers it |
 | `hybrid` | Opus plans (no tools), the local model works, Codex reviews, Opus decides, at most one revision | as above, per role |
 
 Each cell records the model the CLI or server reports, not only the one requested. A difference
 between the two is reported, never corrected.
+
+## Machines
+
+The smoke test runs on more than one machine:
+1. first a MacBook (Apple Silicon, Metal);
+2. then a Windows PC (the build chosen for its GPU).
+
+Each cell records the OS, the architecture, the llama.cpp build and the device. Results from
+different machines are reported separately and are never pooled: a local-model result depends on
+the hardware it ran on. The CLI backends' results can differ between machines too (shell, tool
+behaviour), so they are kept apart as well.
 
 ## Tasks and cells
 

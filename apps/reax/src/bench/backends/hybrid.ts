@@ -23,7 +23,7 @@ ${task}`;
 export const CODEX_REVIEW_PROMPT = (
   task: string,
   claims: string,
-) => `Review another agent's answer to this task. Check each claim yourself with the reax command (\`reax op <operation> --json '{"path":"<file>"}'\`; \`reax op --list\` lists operations). Do not trust the answer's wording.
+) => `Review another agent's answer to this task. Check each claim yourself with the reax command (\`reax op <operation> path=<file>\`; \`reax op --list\` lists operations). Do not trust the answer's wording.
 Reply with a fenced block whose info string is "review", holding JSON: {"wrong": [claims that are false, with the right value if you found it], "missing": [facts the task asks for that are absent], "ok": true|false}.
 
 Task:
@@ -36,7 +36,7 @@ export const OPUS_REVIEW_PROMPT = (
   task: string,
   claims: string,
   codexReview: string,
-) => `You are reviewing a local model's answer to this task. A second reviewer (Codex) has also checked it; its review is below. Verify anything you are unsure of yourself with the reax command (\`reax op <operation> --json '{"path":"<file>"}'\`).
+) => `You are reviewing a local model's answer to this task. A second reviewer (Codex) has also checked it; its review is below. Verify anything you are unsure of yourself with the reax command (\`reax op <operation> path=<file>\`).
 Reply with a fenced block whose info string is "decision", holding JSON: {"decision": "accept" | "revise", "corrections": ["specific instruction to the worker", ...]}. Choose "revise" only for a claim you confirmed is wrong or a requested fact that is missing.
 
 Task:

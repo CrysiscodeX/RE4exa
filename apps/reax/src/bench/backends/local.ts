@@ -7,6 +7,7 @@ import { type ChildProcess, spawn, spawnSync } from "node:child_process";
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { envelope } from "@re4exa/core/policy/taint";
+import { windowsSystem32Binary } from "@re4exa/core/vendor/orca-process-host/windows-system-binary";
 import { OPERATIONS, runOperation } from "../../ops/registry.ts";
 import { type BenchConfig, DEFAULTS } from "./config.ts";
 import type { Backend, BackendContext, BackendResult } from "./types.ts";
@@ -61,8 +62,23 @@ export function allocatedMiB(log: string): number {
   return Math.round(total);
 }
 
+/**
+ * The working set in KiB from one `tasklist /FO CSV /NH` row: the last field, "123,456 K" with
+ * the locale's own digit grouping (`,` `.` or a space), so only the digits are kept.
+ */
+export function tasklistKiB(csv: string): number {
+  const last = csv.trim().split(/","/).at(-1) ?? "";
+  return Number(last.replace(/[^\d]/g, "") || 0);
+}
+
 function rssMiB(pid: number): number {
-  if (process.platform === "win32") return 0;
+  if (process.platform === "win32") {
+    const r = spawnSync(windowsSystem32Binary("tasklist.exe"), ["/FI", `PID eq ${pid}`, "/FO", "CSV", "/NH"], {
+      encoding: "utf8",
+      windowsHide: true,
+    });
+    return Math.round(tasklistKiB(r.stdout ?? "") / 1024);
+  }
   const r = spawnSync("ps", ["-o", "rss=", "-p", String(pid)], { encoding: "utf8" });
   return Math.round(Number(r.stdout.trim() || 0) / 1024);
 }
@@ -109,7 +125,7 @@ export class LlamaServer {
 
   async start(timeoutMs = 180_000): Promise<void> {
     const [cmd, ...args] = this.argv();
-    this.child = spawn(cmd!, args, { stdio: ["ignore", "pipe", "pipe"] });
+    this.child = spawn(cmd!, args, { stdio: ["ignore", "pipe", "pipe"], windowsHide: true });
     const keep = (d: Buffer) => {
       if (this.log.length < 4 << 20) this.log += d.toString("utf8");
     };

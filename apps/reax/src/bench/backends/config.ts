@@ -1,5 +1,5 @@
-// Backend settings. Defaults are in code; bench/backends.json (or $REAX_BENCH_CONFIG) overrides
-// them. Model names and effort options are what you asked for; the doctor checks them against the
+// Backend settings. Defaults are in code; bench/backends.json (or $REAX_BENCH_CONFIG), which
+// bench/setup.ts writes and git ignores (it holds this machine's paths), overrides them. Model names and effort options are what you asked for; the doctor checks them against the
 // installed CLIs before a run, and each cell records what was actually used.
 import { existsSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
@@ -21,6 +21,10 @@ export interface BenchConfig {
     gpuLayers: number;
     maxTurns: number;
     maxTokensPerTurn: number;
+    /** The llama.cpp build bench/setup.ts chose (metal, cuda, rocm, vulkan, ...), and the device
+     * it ran on; recorded in every local cell. */
+    backend: string | null;
+    device: string | null;
   };
   codex: { cmd: string[]; model: string; effort: string; extraArgs: string[] };
   claude: {
@@ -47,6 +51,8 @@ export const DEFAULTS: BenchConfig = {
     gpuLayers: 99,
     maxTurns: 12,
     maxTokensPerTurn: 2048,
+    backend: null,
+    device: null,
   },
   codex: { cmd: ["codex"], model: "gpt-6.1-sol", effort: "medium", extraArgs: [] },
   claude: { cmd: ["claude"], model: "claude-opus-5-5", effort: "medium", effortArgs: null, extraArgs: [] },

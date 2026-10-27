@@ -465,11 +465,31 @@ T3-5 (reax delegates no work to sub-agents).
 
 ## 15. Live benchmark backends (2026-10-27)
 
-Four backends, run on the user's Mac under the user's own sign-ins (`bench/mac-setup.sh`,
-`bench/doctor.ts`, `bench/smoke.sh`): `local` (llama.cpp, Qwen3-4B Q4_K_M, a 4096 MiB cap
+Four backends, run on the user's machines (Mac first, then Windows) under the user's own sign-ins
+(`bench/setup.ts`, `bench/doctor.ts`, `bench/smoke.ts`, all cross-platform): `local` (llama.cpp, Qwen3-4B Q4_K_M, a 4096 MiB cap
 enforced from llama.cpp's buffer report and sampled RSS), `codex` (Codex CLI, gpt-6.1-sol,
 medium), `claude` (Claude Code CLI, Opus 5.5, `--effort medium` when offered) and `hybrid`
 (Opus plans and decides, the local model works, Codex reviews, one revision). Rules:
 `bench/PREREG-v2-smoke.md`. Tested here against a stub llama-server and fake CLIs
 ([±RX-1/bench-live], [±RX-1/bench-hybrid], [±LEAN-C49-LIMIT]); no live cell has run. reax never
 reads, copies or refreshes a CLI's credentials and identifies only as itself.
+
+**Cross-platform setup (2026-10-27).**
+- `bench/setup.ts` picks llama.cpp's own release build at tag `b11923` from the hardware it
+  detects, tests it, and falls back to the next build. It supports:
+  - Metal;
+  - CUDA, choosing by driver version;
+  - ROCm;
+  - Vulkan;
+  - Adreno OpenCL;
+  - SYCL, only when chosen;
+  - CPU.
+- The CLIs start on Windows without a shell, with prompts on stdin
+  ([±RX-1/bench-setup], [±RX-1/bench-process], on all three CI lanes).
+- **Not covered by CI:**
+  - real GPUs;
+  - real downloads, since the container's network policy blocks Hugging Face, and the GitHub
+    API covers only this session's repositories;
+  - Codex's read-only sandbox on Windows.
+
+  These count only once a run on the user's machine records them.

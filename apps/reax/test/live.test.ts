@@ -10,14 +10,14 @@ import { test } from "node:test";
 import { claudeArgv } from "../src/bench/backends/claude.ts";
 import { type BenchConfig, DEFAULTS } from "../src/bench/backends/config.ts";
 import { allocatedMiB, LlamaServer } from "../src/bench/backends/local.ts";
-import { runLive } from "../src/bench/live.ts";
+import { cellPrompt, REAX_NOTE, runLive } from "../src/bench/live.ts";
 import { loadTasks } from "../src/bench/run.ts";
+import { opArgs } from "../src/cli.ts";
 
 const REAX = join(import.meta.dirname, "..");
 const FIX = join(import.meta.dirname, "fixtures");
 const tasks = loadTasks(join(REAX, "bench", "tasks"));
 const one = (id: string) => tasks.filter((t) => t.id === id);
-const posix = process.platform !== "win32";
 
 function config(over: Partial<{ port: number; kv: string }> = {}): BenchConfig {
   const c = structuredClone(DEFAULTS);
@@ -43,9 +43,7 @@ async function withServer<T>(cfg: BenchConfig, fn: (s: LlamaServer) => Promise<T
 
 const out = () => mkdtempSync(join(tmpdir(), "reax-live-"));
 
-test("[+RX-1/bench-live] each backend runs standalone and its cell records the model, effort, tokens and grade", {
-  skip: !posix && "the agents' reax shim is a POSIX script",
-}, async () => {
+test("[+RX-1/bench-live] each backend runs standalone and its cell records the model, effort, tokens and grade", async () => {
   const cfg = config();
   const dir = out();
   try {
@@ -104,9 +102,7 @@ test("[+RX-1/bench-live] each backend runs standalone and its cell records the m
   }
 });
 
-test("[-RX-1/bench-live] a signed-out CLI and an over-cap model are reported as errors, not as wrong answers", {
-  skip: !posix && "the agents' reax shim is a POSIX script",
-}, async () => {
+test("[-RX-1/bench-live] a signed-out CLI and an over-cap model are reported as errors, not as wrong answers", async () => {
   const dir = out();
   const t = one("identify-hello-x86_64-linux-gnu.2.28-s");
   try {
@@ -154,9 +150,7 @@ test("[-RX-1/bench-live] a signed-out CLI and an over-cap model are reported as 
   }
 });
 
-test("[+RX-1/bench-hybrid] the hybrid plans with Opus, works locally, reviews with Codex and Opus, revises once, and grades both answers", {
-  skip: !posix && "the agents' reax shim is a POSIX script",
-}, async () => {
+test("[+RX-1/bench-hybrid] the hybrid plans with Opus, works locally, reviews with Codex and Opus, revises once, and grades both answers", async () => {
   const cfg = config();
   const dir = out();
   try {
@@ -183,9 +177,7 @@ test("[+RX-1/bench-hybrid] the hybrid plans with Opus, works locally, reviews wi
   }
 });
 
-test("[-RX-1/bench-hybrid] Opus planning with no tools gets every tool disallowed; a failed Codex review does not stop the cell", {
-  skip: !posix && "the agents' reax shim is a POSIX script",
-}, async () => {
+test("[-RX-1/bench-hybrid] Opus planning with no tools gets every tool disallowed; a failed Codex review does not stop the cell", async () => {
   const cfg = config();
   const dir = out();
   const argsFile = join(dir, "args.jsonl");
@@ -222,17 +214,31 @@ test("[-RX-1/bench-hybrid] Opus planning with no tools gets every tool disallowe
 test("the claude backend finds --effort in the CLI's help when none is configured, and leaves it out when the CLI has none", () => {
   const cfg = config();
   cfg.claude.effortArgs = null;
-  const argv = claudeArgv(cfg.claude, "x");
+  const argv = claudeArgv(cfg.claude);
   assert.deepEqual(argv.slice(argv.indexOf("--effort"), argv.indexOf("--effort") + 2), ["--effort", "medium"]);
   process.env.FAKE_NO_EFFORT = "1";
   try {
     const other = config();
     other.claude.effortArgs = null;
     other.claude.cmd = [process.execPath, join(FIX, "fake-claude.mjs"), "--no-effort-variant"];
-    assert.ok(!claudeArgv(other.claude, "x").includes("--effort"));
+    assert.ok(!claudeArgv(other.claude).includes("--effort"));
   } finally {
     delete process.env.FAKE_NO_EFFORT;
   }
+});
+
+test("agents call reax with key=value arguments that need no quoting in any shell, and the CLI agents are told about reax", () => {
+  assert.deepEqual(opArgs(["identify.file", "path=a b.exe", "limit=5", "--format", "json", "flag=true"]), {
+    path: "a b.exe",
+    limit: 5,
+    flag: true,
+  });
+  assert.deepEqual(opArgs(["x", "--json", '{"path":"p"}', "path=q"]), { path: "q" }, "key=value wins over --json");
+  assert.deepEqual(opArgs(["x", 'path="quoted"']), { path: '"quoted"' }, "a JSON string stays the raw text");
+  assert.throws(() => opArgs(["x", "nonsense"]), /expected key=value/);
+  const t = one("identify-hello-x86_64-linux-gnu.2.28-s")[0]!;
+  assert.ok(cellPrompt("codex", t).startsWith(REAX_NOTE) && cellPrompt("claude", t).startsWith(REAX_NOTE));
+  assert.ok(!cellPrompt("local", t).includes(REAX_NOTE), "the local model gets reax as its tools instead");
 });
 
 test("[+LEAN-C49-LIMIT] a cell that runs out of time is still written, with its transcript and timed_out set", async () => {
