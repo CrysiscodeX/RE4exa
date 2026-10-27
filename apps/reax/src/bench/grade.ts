@@ -222,3 +222,23 @@ export function grade(task: Task, answer: string): Grade {
     detail,
   };
 }
+
+/**
+ * Diagnostic only, never the score: when an answer has no claims block, what its last fenced
+ * block holding a JSON array of claims (```json, or no info string) would have scored. It tells
+ * "could not follow the output format" apart from "got the facts wrong".
+ */
+export function contentCheck(task: Task, answer: string): number | null {
+  if (parseClaims(answer).error !== "no claims block") return null;
+  const blocks = [...answer.matchAll(/```[^\n`]*\n([\s\S]*?)```/g)].reverse();
+  for (const b of blocks) {
+    try {
+      const raw = JSON.parse(b[1]!) as unknown;
+      if (Array.isArray(raw) && raw.some((c) => c && typeof c === "object" && "predicate" in c))
+        return grade(task, `\`\`\`claims\n${b[1]}\`\`\``).accuracy;
+    } catch {
+      // not JSON; try the block before it
+    }
+  }
+  return null;
+}

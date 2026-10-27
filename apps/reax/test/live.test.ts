@@ -9,10 +9,11 @@ import { join } from "node:path";
 import { test } from "node:test";
 import { claudeArgv } from "../src/bench/backends/claude.ts";
 import { type BenchConfig, DEFAULTS } from "../src/bench/backends/config.ts";
-import { allocatedMiB, LlamaServer } from "../src/bench/backends/local.ts";
+import { allocatedMiB, LlamaServer, searchFile } from "../src/bench/backends/local.ts";
 import { cellPrompt, REAX_NOTE, runLive } from "../src/bench/live.ts";
 import { loadTasks } from "../src/bench/run.ts";
 import { opArgs } from "../src/cli.ts";
+import { OPERATIONS } from "../src/ops/registry.ts";
 
 const REAX = join(import.meta.dirname, "..");
 const FIX = join(import.meta.dirname, "fixtures");
@@ -304,4 +305,67 @@ test("the backends never open a provider's credential store or token", () => {
       f,
     );
   }
+});
+
+const localCell = async (env: Record<string, string>, task = "identify-hello-x86_64-linux-gnu.2.28-s") => {
+  const cfg = config();
+  const dir = out();
+  Object.assign(process.env, env);
+  try {
+    const cells = await withServer(cfg, (s) =>
+      runLive({
+        backend: "local",
+        tasks: one(task),
+        reps: 1,
+        fixturesBin: join(REAX, "fixtures", "bin"),
+        out: dir,
+        config: cfg,
+        server: s,
+      }),
+    );
+    return { cell: cells[0]!, summary: readFileSync(join(dir, "summary.md"), "utf8") };
+  } finally {
+    for (const k of Object.keys(env)) delete process.env[k];
+    rmSync(dir, { recursive: true, force: true });
+  }
+};
+
+test("[+RX-1/bench-local-answer] the local model is told the output contract and every operation, can search a file, and is asked once to answer when reasoning runs out of tokens", async () => {
+  const sys = join(out(), "system.txt");
+  const { cell } = await localCell({ STUB_REASON_LIMIT: "once", STUB_SYSTEM_FILE: sys });
+  assert.equal(cell.error, null);
+  assert.ok(cell.grade.hits >= 2 && !cell.grade.parseError, JSON.stringify(cell.grade));
+  assert.deepEqual([cell.run.length_stops, cell.run.nudged], [1, true]);
+  const prompt = readFileSync(sys, "utf8");
+  assert.match(prompt, /info string is exactly claims/);
+  assert.match(prompt, /Do not use json as the info string/);
+  for (const op of OPERATIONS) assert.ok(prompt.includes(`${op.name}: ${op.summary}`), op.name);
+  assert.match(prompt, /search_file finds text inside a file/);
+  const b = readFileSync(join(REAX, "fixtures", "bin", "hello-x86_64-linux-gnu.2.28-s"));
+  const found = searchFile(b, "ld-linux");
+  assert.match(found, /^1 matching strings\n0x[0-9a-f]+: \/lib64\/ld-linux-x86-64\.so\.2$/);
+  assert.match(searchFile(b, "clang version \\d+", true), /clang version 20/);
+  const utf16 = Buffer.from("\x00\x01W\x00i\x00d\x00e\x00 \x00t\x00e\x00x\x00t\x00\x00\x00", "latin1");
+  assert.match(searchFile(utf16, "wide"), /0x2: Wide text/);
+});
+
+test("[-RX-1/bench-local-answer] an answer that never comes is an error, not a graded answer; claims under the wrong fence still score 0, with the diagnostic beside it", async () => {
+  const never = await localCell({ STUB_REASON_LIMIT: "always" });
+  assert.match(never.cell.error ?? "", /^no answer: the turn ran out of tokens while reasoning, twice/);
+  assert.equal(never.cell.run.length_stops, 2);
+  const json = await localCell({ STUB_FENCE: "json" });
+  assert.equal(json.cell.grade.accuracy, 0, "the score stays strict");
+  assert.equal(json.cell.grade.parseError, "no claims block");
+  assert.ok(json.cell.content_check !== null && json.cell.content_check > 0, String(json.cell.content_check));
+  assert.match(
+    json.summary,
+    /Format, local: 1 cells had no claims block; 1 of them held a JSON claims array under another fence, which would have scored [\d.]+ on average\. Diagnostic only/,
+  );
+  const b = Buffer.from("nothing to see");
+  assert.equal(searchFile(b, "absent"), "0 matching strings");
+  assert.match(searchFile(b, "([", true), /^error: invalid regular expression/);
+  assert.match(
+    searchFile(Buffer.from(Array.from({ length: 300 }, (_, i) => `item${i}\0`).join("")), "item", false, 5),
+    /^300 matching strings \(first 5 shown\)/,
+  );
 });

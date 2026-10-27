@@ -2,6 +2,7 @@
 // reax_op once, then answers from the tool output. Prints the buffer sizes llama.cpp prints at
 // load; STUB_KV_MIB sets the KV size so the memory cap can be tested. --list-devices prints
 // STUB_DEVICES (default: none).
+import { appendFileSync } from "node:fs";
 import http from "node:http";
 
 if (process.argv.includes("--list-devices")) {
@@ -64,6 +65,8 @@ http
           choices: [{ message: { role: "assistant", content: "OK" } }],
         });
       }
+      if (process.env.STUB_SYSTEM_FILE)
+        appendFileSync(process.env.STUB_SYSTEM_FILE, `${body.messages[0].content}\n---\n`);
       const tool = body.messages.filter((m) => m.role === "tool").at(-1);
       const usage = { prompt_tokens: 900, completion_tokens: 60, prompt_tokens_details: { cached_tokens: 400 } };
       if (!tool) {
@@ -98,11 +101,34 @@ http
         { predicate: "file.format", subject: file[1], value: file[2], label: "observed" },
         { predicate: "native.arch", subject: file[1], value: arch[1], label: "observed" },
       ];
+      // STUB_REASON_LIMIT=once: reason past max_tokens until asked with thinking off (as the 9B
+      // did); =always: never answer. STUB_FENCE=json: fence the claims as ```json (as both runs did).
+      const limit = process.env.STUB_REASON_LIMIT;
+      const thinkingOff = body.chat_template_kwargs?.enable_thinking === false;
+      if (limit === "always" || (limit === "once" && !thinkingOff))
+        return reply(res, {
+          model: "stub-qwen3-4b",
+          usage,
+          choices: [
+            {
+              finish_reason: "length",
+              message: {
+                role: "assistant",
+                content: "",
+                reasoning_content: "Let me think about this more. ".repeat(50),
+              },
+            },
+          ],
+        });
+      const fence = process.env.STUB_FENCE ?? "claims";
       reply(res, {
         model: "stub-qwen3-4b",
         usage,
         choices: [
-          { message: { role: "assistant", content: `Checked.\n\`\`\`claims\n${JSON.stringify(claims)}\n\`\`\`` } },
+          {
+            finish_reason: "stop",
+            message: { role: "assistant", content: `Checked.\n\`\`\`${fence}\n${JSON.stringify(claims)}\n\`\`\`` },
+          },
         ],
       });
     });

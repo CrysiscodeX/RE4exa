@@ -486,15 +486,24 @@ test("[+RX-1/bench-close] a closed server has exited and its port is free; one t
   } finally {
     delete process.env.STUB_IGNORE_TERM;
   }
+  const ps = [
+    "  101 /Users/x/.cache/reax/llama.cpp/b11923/metal/llama-b11923/llama-server -m m.gguf --port 8089",
+    "  102 /bin/zsh",
+    "  103 vim llama-server.md",
+    "  104 /opt/homebrew/bin/llama-server -m /Users/x/Models/Qwen3.5-9B-Q4_K_M.gguf --port 8080",
+    "  105 /usr/local/bin/llama-server -m x.gguf --port 8096",
+  ].join("\n");
   assert.deepEqual(
-    parseStrays(
-      "  101 /Users/x/.cache/reax/llama.cpp/b11923/metal/llama-b11923/llama-server -m m.gguf\n  102 /bin/zsh\n  103 vim llama-server.md\n",
-      "darwin",
-    ).map((x) => x.pid),
-    [101],
+    parseStrays(ps, "darwin", [8089, 8096]).map((x) => [x.pid, x.bench]),
+    [
+      [101, true],
+      [104, false],
+      [105, true],
+    ],
+    "the bench's cache or port marks a bench server; your own server on 8080 is yours",
   );
   assert.deepEqual(parseStrays('"llama-server.exe","4242","Console","1","3,456 K"\r\n', "win32"), [
-    { pid: 4242, command: "llama-server.exe" },
+    { pid: 4242, command: "llama-server.exe", bench: null },
   ]);
 });
 

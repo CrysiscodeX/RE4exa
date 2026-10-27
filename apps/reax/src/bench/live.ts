@@ -10,7 +10,7 @@ import { type BenchConfig, loadConfig } from "./backends/config.ts";
 import { hybridBackend } from "./backends/hybrid.ts";
 import { LlamaServer, localBackend } from "./backends/local.ts";
 import type { Backend, BackendResult } from "./backends/types.ts";
-import { type Grade, grade } from "./grade.ts";
+import { contentCheck, type Grade, grade } from "./grade.ts";
 import { prompt, workspace } from "./run.ts";
 import type { Task } from "./types.ts";
 
@@ -53,6 +53,8 @@ export interface LiveCell {
   grade: Grade;
   /** The hybrid worker's first answer, graded the same way. */
   grade_first: Grade | null;
+  /** Diagnostic only, never the score: with no claims block, what a ```json claims array in the answer would have scored. */
+  content_check: number | null;
 }
 
 /** What the CLI agents are told about reax; the local model gets the same facts as its tools. */
@@ -173,6 +175,7 @@ export async function runLive(o: LiveOptions): Promise<LiveCell[]> {
             transcript: "",
             grade: grade(t, ""),
             grade_first: null,
+            content_check: null,
           };
           cells.push(cell);
           o.onCell?.(cell);
@@ -210,6 +213,7 @@ export async function runLive(o: LiveOptions): Promise<LiveCell[]> {
             transcript: `transcripts/${name}`,
             grade: grade(t, r.answer),
             grade_first: r.first_answer !== undefined ? grade(t, r.first_answer) : null,
+            content_check: contentCheck(t, r.answer),
           };
           cells.push(cell);
           o.onCell?.(cell);
@@ -247,6 +251,15 @@ export function liveSummary(cells: LiveCell[]): string {
     out.push(
       `| ${b} | ${cs.length} | ${all.length - cs.length} | ${mean((c) => c.grade.accuracy, 3)} | ${s((c) => c.grade.hits)}/${s((c) => c.grade.positives)} | ${s((c) => c.grade.wrong)} | ${s((c) => c.grade.labelErrors)} | ${cs.filter((c) => c.grade.parseError).length} | ${cs.filter((c) => c.error).length} | ${mean((c) => c.run.ms / 1000, 1)} | ${s((c) => c.run.cost_usd).toFixed(3)} | ${[...new Set(cs.map((c) => c.run.model))].join("; ")} |`,
     );
+  }
+  for (const [b, all] of by) {
+    const noBlock = all.filter((c) => !c.not_run && c.grade.parseError === "no claims block");
+    const held = noBlock.filter((c) => c.content_check !== null);
+    if (noBlock.length)
+      out.push(
+        "",
+        `Format, ${b}: ${noBlock.length} cells had no claims block${held.length ? `; ${held.length} of them held a JSON claims array under another fence, which would have scored ${(held.reduce((a, c) => a + c.content_check!, 0) / held.length).toFixed(3)} on average` : ""}. Diagnostic only: the score above is strict and unchanged.`,
+      );
   }
   const ran = cells.filter((c) => !c.not_run && c.machine);
   if (ran.length) {

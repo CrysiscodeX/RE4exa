@@ -4,3 +4,4 @@ coverage/
 reports/
 *.tgz
 bench/backends.json
+bench/results/**/.tools/

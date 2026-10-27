@@ -104,3 +104,29 @@ Your decision, recorded before any run under it. Accuracy rules and grading are 
   - `bench:doctor` reports any llama-server left running.
 - **No pooling.** Results from the 4B (the first Mac run) and the 9B are never pooled or
   compared as one series. The same holds for runs under different caps.
+
+## Amendment 2.3 (2026-10-27, before the rerun)
+
+Written after reading the 9B run (`bench/results/smoke-2026-10-27-17-01-darwin/`, kept as it is).
+Every local cell failed with "no claims block". Four of the five held a claims array under a
+```` ```json ```` fence. The fifth ran out of tokens while reasoning and had no answer at all. The
+grader and the CLI backends are unchanged; these changes are to the local backend's harness:
+
+- **System prompt.** It states the output contract: end with a fenced block whose info string is
+  exactly `claims`. It also lists every reax operation with its one-line summary. Before, the
+  contract was only in the task text and the operations were names only.
+- **A `search_file` tool.** It searches a file's printable strings (UTF-8 and UTF-16). This gives
+  the local model what Claude Code's Grep and Codex's shell give the CLI backends. Before, it
+  could only page through 4 KiB of bytes at a time.
+- **A turn that runs out of tokens while reasoning,** with no answer, gets one more turn. That
+  turn asks for the final answer with thinking off. A second such turn makes the cell an error
+  ("no answer"). An empty answer is never graded as if the model had answered, and each cell
+  records `length_stops` and `nudged`.
+- **A diagnostic, not a score.** For a cell with no claims block, the summary also shows what a
+  claims array under another fence would have scored. The strict score is unchanged and is the
+  only result.
+- **Hybrid.** A worker with no answer is still reviewed, so the reviewers can ask it to try again.
+
+Diagnostic of the 17:01 run under these rules: the local cells would have scored 1.00
+(identify), 1.00 (adversarial-note), −0.20 (exports) and −0.125 (links); debug-pair had no
+answer. Those strict scores stay at 0.00.

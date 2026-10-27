@@ -512,3 +512,13 @@ reads, copies or refreshes a CLI's credentials and identifies only as itself.
 - **Setup** accepts a model file or folder and pins it by sha256.
 - **Shutdown.** Model servers are closed cleanly and the close is confirmed, including after an
   interruption ([±RX-1/bench-close]). The doctor reports any server left running.
+
+**9B results and the local harness fixes (2026-10-27, PREREG amendment 2.3).**
+- **The 9B run:** every local cell was "no claims block": 4 fenced the claims as ```json and 1 ran
+  out of tokens while reasoning.
+- **Fixes, all in the local harness ([±RX-1/bench-local-answer]):**
+  - the system prompt states the output contract and lists every operation's summary;
+  - a `search_file` tool, for parity with the CLIs' Grep;
+  - one nudge when a turn runs out of tokens, and "no answer" counts as an error;
+  - a diagnostic beside the strict score.
+- **The doctor** now labels the bench's leftover servers apart from your own.

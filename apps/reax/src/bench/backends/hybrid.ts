@@ -106,7 +106,9 @@ export function hybridBackend(p: HybridParts): Backend {
       const plan = await step("plan", p.opusNoTools, PLAN_PROMPT(prompt));
       if (plan.error) return fail(plan, "plan");
       const first = await step("worker", p.worker, `${prompt}\n\nA reviewer suggests this plan:\n${plan.answer}`);
-      if (first.error && !first.answer) return fail(first, "worker");
+      // A worker that gave no answer is still reviewed (the reviewers can ask it to try again);
+      // any other worker failure ends the cell.
+      if (first.error && !first.answer && !first.error.startsWith("no answer")) return fail(first, "worker");
       const claims = JSON.stringify(parseClaims(first.answer).claims, null, 1);
       const codex = await step("codex_review", p.codex, CODEX_REVIEW_PROMPT(prompt, claims));
       const opus = await step(

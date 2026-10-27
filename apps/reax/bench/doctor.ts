@@ -56,12 +56,27 @@ if (want("local")) {
         : "no build recorded: run npm run bench:setup",
     );
   }
-  const strays = findStrayServers();
+  // The bench's ports: cells on local.port, setup's checks on local.port + 7.
+  const strays = findStrayServers([cfg.local.port, cfg.local.port + 7]);
+  const stop = process.platform === "win32" ? "`taskkill /PID <pid>`" : "`kill <pid>`";
+  const bench = strays.filter((x) => x.bench === true);
+  const yours = strays.filter((x) => x.bench === false);
+  const unknown = strays.filter((x) => x.bench === null);
   row(
     "no stray llama-server",
     strays.length === 0,
     strays.length
-      ? `${strays.length} running, holding memory: ${strays.map((x) => `pid ${x.pid} (${x.command})`).join("; ")}. Stop them with ${process.platform === "win32" ? "`taskkill /PID <pid>`" : "`kill <pid>`"} if they are left over from a bench run`
+      ? [
+          bench.length
+            ? `left over from the bench, stop with ${stop}: ${bench.map((x) => `pid ${x.pid}`).join(", ")}`
+            : "",
+          yours.length
+            ? `yours (not started by the bench), holding memory during runs: ${yours.map((x) => `pid ${x.pid} (${x.command.slice(0, 80)})`).join("; ")}`
+            : "",
+          unknown.length ? `running, origin unknown on this OS: ${unknown.map((x) => `pid ${x.pid}`).join(", ")}` : "",
+        ]
+          .filter(Boolean)
+          .join(". ")
       : "none running",
     true,
   );

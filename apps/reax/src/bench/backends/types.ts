@@ -19,6 +19,9 @@ export interface RoleRun {
   tokens: Usage;
   cost_usd: number;
   ms: number;
+  /** Local model: turns that ran out of tokens while reasoning, and whether it was asked once to answer. */
+  length_stops?: number;
+  nudged?: boolean;
 }
 
 export interface BackendResult {
