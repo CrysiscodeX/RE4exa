@@ -27,6 +27,7 @@ function config(over: Partial<{ port: number; kv: string }> = {}): BenchConfig {
   c.codex.cmd = [process.execPath, join(FIX, "fake-codex.mjs")];
   c.claude.cmd = [process.execPath, join(FIX, "fake-claude.mjs")];
   c.claude.effortArgs = ["--effort", "medium"];
+  c.local.memCapMiB = 4096;
   c.cell.timeoutMs = 60_000;
   return c;
 }
@@ -37,7 +38,7 @@ async function withServer<T>(cfg: BenchConfig, fn: (s: LlamaServer) => Promise<T
   try {
     return await fn(s);
   } finally {
-    s.stop();
+    await s.close();
   }
 }
 

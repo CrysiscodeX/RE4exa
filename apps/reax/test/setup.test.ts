@@ -13,7 +13,7 @@ import { tmpdir } from "node:os";
 import { delimiter, join } from "node:path";
 import { test } from "node:test";
 import { DEFAULTS } from "../src/bench/backends/config.ts";
-import { tasklistKiB } from "../src/bench/backends/local.ts";
+import { LlamaServer, parseStrays, tasklistKiB } from "../src/bench/backends/local.ts";
 import { findCommand, pathKey, prependPath, runCli, spawnFor } from "../src/bench/backends/proc.ts";
 import { budgetMiB, fitContext, fitsCap, measureContext } from "../src/bench/setup/fit.ts";
 import {
@@ -27,7 +27,14 @@ import {
   parseVideoControllers,
   vendorOf,
 } from "../src/bench/setup/hardware.ts";
-import { downloadVerified, extract, findFile, modelFile, releaseAssets } from "../src/bench/setup/install.ts";
+import {
+  downloadVerified,
+  extract,
+  findFile,
+  modelFile,
+  releaseAssets,
+  resolveModelPath,
+} from "../src/bench/setup/install.ts";
 
 const TAG = "b11923";
 const ASSETS = [
@@ -373,6 +380,8 @@ test("[+RX-1/bench-setup] setup end to end against a fake release: GPU builds th
         "--conditions=source",
         "--disable-warning=ExperimentalWarning",
         join(import.meta.dirname, "..", "bench", "setup.ts"),
+        "--mem-cap-mib",
+        "4096",
       ],
       {
         cwd: dir,
@@ -457,4 +466,92 @@ test("[-RX-1/bench-fit] nothing fits when even the smallest context is over the 
   );
   const dead = await measureContext(stubLocal({ server: [process.execPath, "-e", "process.exit(4)"] }), 6144);
   assert.match(dead.error ?? "", /llama-server exited \d+|did not become healthy/);
+});
+
+test("[+RX-1/bench-close] a closed server has exited and its port is free; one that ignores SIGTERM is ended by SIGKILL", async () => {
+  const s = new LlamaServer(stubLocal({ memCapMiB: 4096 }));
+  await s.start(20_000);
+  const pid = s.child!.pid!;
+  const c = await s.close();
+  assert.deepEqual([c.confirmed, c.graceful], [true, true]);
+  assert.throws(() => process.kill(pid, 0), "the process is gone");
+  assert.equal(s.child, null);
+  process.env.STUB_IGNORE_TERM = "1";
+  try {
+    const stubborn = new LlamaServer(stubLocal({ memCapMiB: 4096 }));
+    await stubborn.start(20_000);
+    const k = await stubborn.close(500);
+    assert.equal(k.confirmed, true);
+    if (process.platform !== "win32") assert.equal(k.graceful, false, "SIGTERM was ignored, so SIGKILL ended it");
+  } finally {
+    delete process.env.STUB_IGNORE_TERM;
+  }
+  assert.deepEqual(
+    parseStrays(
+      "  101 /Users/x/.cache/reax/llama.cpp/b11923/metal/llama-b11923/llama-server -m m.gguf\n  102 /bin/zsh\n  103 vim llama-server.md\n",
+      "darwin",
+    ).map((x) => x.pid),
+    [101],
+  );
+  assert.deepEqual(parseStrays('"llama-server.exe","4242","Console","1","3,456 K"\r\n', "win32"), [
+    { pid: 4242, command: "llama-server.exe" },
+  ]);
+});
+
+test("[-RX-1/bench-close] an interrupted harness (SIGINT) closes its servers before it exits", {
+  skip:
+    process.platform === "win32" &&
+    "Windows has no SIGINT to send; Ctrl-C reaches the whole console group, llama-server included",
+}, async () => {
+  const script = `
+    import { LlamaServer } from ${JSON.stringify(join(import.meta.dirname, "..", "src", "bench", "backends", "local.ts"))};
+    const s = new LlamaServer(${JSON.stringify(stubLocal({ memCapMiB: 4096 }))});
+    await s.start(20000);
+    console.log(s.child.pid);
+    setInterval(() => {}, 1000);
+  `;
+  const { spawn } = await import("node:child_process");
+  const child = spawn(process.execPath, ["--conditions=source", "--input-type=module", "-e", script], {
+    stdio: ["ignore", "pipe", "inherit"],
+  });
+  const pid = await new Promise<number>((ok) => child.stdout.once("data", (d: Buffer) => ok(Number(String(d).trim()))));
+  assert.ok(pid > 0);
+  child.kill("SIGINT");
+  const code = await new Promise<number | null>((ok) => child.once("exit", (c) => ok(c)));
+  assert.equal(code, 130);
+  assert.throws(() => process.kill(pid, 0), "the harness closed its llama-server on SIGINT");
+});
+
+test("[+RX-1/bench-setup] your own model: a file, a path without .gguf, or a folder with its vision projector and split shards", () => {
+  const d = mkdtempSync(join(tmpdir(), "reax-model-"));
+  try {
+    const one = join(d, "Qwen3.5-9B-Q4_K_M");
+    mkdirSync(one);
+    writeFileSync(join(one, "Qwen3.5-9B-Q4_K_M.gguf"), "x");
+    writeFileSync(join(one, "mmproj-Qwen3.5-9B-F16.gguf"), "x");
+    writeFileSync(join(one, "README.md"), "x");
+    assert.equal(resolveModelPath(one), join(one, "Qwen3.5-9B-Q4_K_M.gguf"), "the projector is not the model");
+    assert.equal(resolveModelPath(join(one, "Qwen3.5-9B-Q4_K_M.gguf")), join(one, "Qwen3.5-9B-Q4_K_M.gguf"));
+    writeFileSync(join(d, "solo.gguf"), "x");
+    assert.equal(resolveModelPath(join(d, "solo")), join(d, "solo.gguf"));
+    const split = join(d, "split");
+    mkdirSync(split);
+    for (const n of ["00002", "00001", "00003"]) writeFileSync(join(split, `big-Q4_K_M-${n}-of-00003.gguf`), "x");
+    assert.equal(resolveModelPath(split), join(split, "big-Q4_K_M-00001-of-00003.gguf"));
+  } finally {
+    rmSync(d, { recursive: true, force: true });
+  }
+});
+
+test("[-RX-1/bench-setup] a model folder that is empty, holds two models or does not exist is refused", () => {
+  const d = mkdtempSync(join(tmpdir(), "reax-model-"));
+  try {
+    assert.throws(() => resolveModelPath(join(d, "missing")), /no model at/);
+    assert.throws(() => resolveModelPath(d), /holds no .gguf model file/);
+    writeFileSync(join(d, "a-Q4_K_M.gguf"), "x");
+    writeFileSync(join(d, "b-Q5_K_M.gguf"), "x");
+    assert.throws(() => resolveModelPath(d), /more than one model \(a-Q4_K_M.gguf, b-Q5_K_M.gguf\)/);
+  } finally {
+    rmSync(d, { recursive: true, force: true });
+  }
 });

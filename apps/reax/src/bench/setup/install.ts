@@ -121,3 +121,27 @@ export function findFile(dir: string, name: string): string | null {
   }
   return null;
 }
+
+/**
+ * The GGUF file to load for a path you give: the file itself; `<path>.gguf` when the path has
+ * no extension; or, for a folder, its one model file. Vision projectors (`mmproj-*.gguf`) are
+ * not models; for a split model the first shard is returned, since llama.cpp loads the rest
+ * from it. A folder holding more than one model is refused, naming them.
+ */
+export function resolveModelPath(path: string): string {
+  if (existsSync(path) && statSync(path).isFile()) return path;
+  if (!existsSync(path) && existsSync(`${path}.gguf`)) return `${path}.gguf`;
+  if (!existsSync(path)) throw new Error(`no model at ${path}`);
+  const ggufs = readdirSync(path)
+    .filter((f) => /\.gguf$/i.test(f) && !/^mmproj/i.test(f))
+    .sort();
+  const models = new Map<string, string[]>();
+  for (const f of ggufs) {
+    const key = f.replace(/-\d{5}-of-\d{5}\.gguf$/i, "");
+    models.set(key, [...(models.get(key) ?? []), f]);
+  }
+  if (models.size === 0) throw new Error(`${path} holds no .gguf model file`);
+  if (models.size > 1)
+    throw new Error(`${path} holds more than one model (${[...models.keys()].join(", ")}): pass the file itself`);
+  return join(path, [...models.values()][0]![0]!);
+}

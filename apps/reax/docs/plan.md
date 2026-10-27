@@ -505,3 +505,10 @@ reads, copies or refreshes a CLI's credentials and identifies only as itself.
   - Each cell records the machine's load.
 - The cause of the 0.00 scores on the local cells that did run waits on those cells'
   transcripts.
+
+**Local model switched to Qwen3.5-9B (2026-10-27, PREREG amendment 2.2).**
+- **The change.** At your direction, the local model is your own Qwen3.5-9B Q4_K_M, under a
+  12 GB cap for the temporary test runs.
+- **Setup** accepts a model file or folder and pins it by sha256.
+- **Shutdown.** Model servers are closed cleanly and the close is confirmed, including after an
+  interruption ([±RX-1/bench-close]). The doctor reports any server left running.

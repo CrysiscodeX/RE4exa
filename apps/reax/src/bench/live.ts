@@ -150,6 +150,7 @@ export async function runLive(o: LiveOptions): Promise<LiveCell[]> {
   const save = () => writeFileSync(join(o.out, "cells.jsonl"), `${cells.map((c) => JSON.stringify(c)).join("\n")}\n`);
   /** Why the backend can run no more cells (the memory cap stopped the server), or null. */
   let stopped: string | null = null;
+  let closedNote = "";
   try {
     for (let rep = 1; rep <= o.reps; rep++)
       for (const t of o.tasks) {
@@ -219,9 +220,12 @@ export async function runLive(o: LiveOptions): Promise<LiveCell[]> {
         }
       }
   } finally {
-    if (own) server?.stop();
+    if (own && server) {
+      const closed = await server.close();
+      closedNote = `Local model server: closed after the run${closed.confirmed ? " (exit and freed port confirmed" : " (NOT confirmed: check `npm run bench:doctor` for a stray llama-server"}${closed.graceful ? "" : "; it needed SIGKILL"}, ${closed.ms} ms).`;
+    }
   }
-  writeFileSync(join(o.out, "summary.md"), liveSummary(cells));
+  writeFileSync(join(o.out, "summary.md"), liveSummary(cells) + (closedNote ? `\n${closedNote}\n` : ""));
   return cells;
 }
 

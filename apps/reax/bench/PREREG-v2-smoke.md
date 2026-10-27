@@ -83,3 +83,24 @@ as they are) and before any rerun. Accuracy rules and grading are unchanged.
 - **The model stays the same.** Qwen3-4B-Instruct-2507 at Q4_K_M. A larger quantisation or model
   would make the cap harder to meet. A community distill has weaker provenance for a benchmark
   meant to be reproducible.
+
+## Amendment 2.2 (2026-10-27, before the rerun)
+
+Your decision, recorded before any run under it. Accuracy rules and grading are unchanged.
+
+- **Local model.** Qwen3.5-9B at Q4_K_M, from your own copy
+  (`~/Models/Qwen3.5-9B-Q4_K_M`). It replaces Qwen3-4B-Instruct-2507 for the local backend and as
+  the hybrid's worker. `bench/setup.ts --model` pins it by the sha256 it computes; the provenance
+  is your file, recorded as such, not a download from a publisher.
+- **Memory cap: 12288 MiB** for these temporary test runs on a shared machine (`--mem-cap-mib`).
+  It was 4096 MiB, which a 9B model's weights alone exceed. The context is still fitted under the
+  cap by measurement (amendment 2.1).
+- **Output per turn: up to 4096 tokens**, up from 2048, so a model that reasons before answering
+  is not cut off. Its reasoning is kept in the transcript.
+- **Clean shutdown.** Every local model server is closed after use and the close is confirmed:
+  - SIGTERM first, SIGKILL after 5 s, then the exit and the freed port are checked;
+  - also when the harness is interrupted;
+  - the summary states whether the close was confirmed;
+  - `bench:doctor` reports any llama-server left running.
+- **No pooling.** Results from the 4B (the first Mac run) and the 9B are never pooled or
+  compared as one series. The same holds for runs under different caps.

@@ -24,6 +24,8 @@ process.stderr.write(`llama_context: Metal compute buffer size =   ${process.env
 // the context fitting in setup can be tested against real resident memory.
 const ctx = Number(process.argv[process.argv.indexOf("-c") + 1] || 0);
 const held = [];
+// STUB_IGNORE_TERM=1: a server that does not exit on SIGTERM, so the SIGKILL fallback is tested.
+if (process.env.STUB_IGNORE_TERM === "1") process.on("SIGTERM", () => {});
 const reply = (res, body) => {
   res.writeHead(200, { "content-type": "application/json" });
   res.end(JSON.stringify(body));

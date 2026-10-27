@@ -3,6 +3,12 @@
 // enforced twice: llama.cpp's own report of the buffers it allocated (model, KV cache, compute)
 // must fit the cap before any cell runs, and the server's resident memory is sampled every
 // second while cells run; going over either stops the run.
+//
+// Every server is closed cleanly: SIGTERM, a grace period, then SIGKILL, and the exit and the
+// freed port are confirmed. Servers still running when the process is interrupted (SIGINT,
+// SIGTERM, SIGHUP) are closed before it exits, and an `exit` hook kills any left, so a crashed
+// or interrupted run does not leave several GB of model in memory. On Windows, Ctrl-C reaches the
+// whole console group, llama-server included; the doctor reports any server left behind anyway.
 import { type ChildProcess, spawn, spawnSync } from "node:child_process";
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
@@ -83,6 +89,70 @@ function rssMiB(pid: number): number {
   return Math.round(Number(r.stdout.trim() || 0) / 1024);
 }
 
+const LIVE = new Set<LlamaServer>();
+let hooked = false;
+
+function hookExit(): void {
+  if (hooked) return;
+  hooked = true;
+  process.once("exit", () => {
+    for (const s of LIVE) s.child?.kill("SIGKILL");
+  });
+  for (const sig of ["SIGINT", "SIGTERM", "SIGHUP"] as const)
+    process.once(sig, () => {
+      void closeAll().finally(() => process.exit(sig === "SIGINT" ? 130 : 143));
+    });
+}
+
+/** Close every server this process started. */
+export async function closeAll(): Promise<void> {
+  await Promise.all([...LIVE].map((s) => s.close()));
+}
+
+const sleep = (ms: number) => new Promise<void>((ok) => setTimeout(ok, ms));
+const exited = (c: ChildProcess) => c.exitCode !== null || c.signalCode !== null;
+
+export interface Closed {
+  /** The process exited and nothing answers on its port any more. */
+  confirmed: boolean;
+  /** It exited on SIGTERM, within the grace period, without needing SIGKILL. */
+  graceful: boolean;
+  ms: number;
+}
+
+/** llama-server processes running on this machine (pid and command line), from ps or tasklist. */
+export function parseStrays(
+  text: string,
+  platform: NodeJS.Platform = process.platform,
+): { pid: number; command: string }[] {
+  if (platform === "win32")
+    return [...text.matchAll(/^"llama-server\.exe","(\d+)"/gim)].map((m) => ({
+      pid: Number(m[1]),
+      command: "llama-server.exe",
+    }));
+  return text
+    .split("\n")
+    .map((l) => /^\s*(\d+)\s+(.*)$/.exec(l))
+    .filter((m): m is RegExpExecArray => !!m && /(^|[\\/])llama-server(\s|$)/.test(m[2]!))
+    .map((m) => ({ pid: Number(m[1]), command: m[2]!.slice(0, 200) }));
+}
+
+export function findStrayServers(): { pid: number; command: string }[] {
+  const r =
+    process.platform === "win32"
+      ? spawnSync(
+          windowsSystem32Binary("tasklist.exe"),
+          ["/FI", "IMAGENAME eq llama-server.exe", "/FO", "CSV", "/NH"],
+          {
+            encoding: "utf8",
+            windowsHide: true,
+          },
+        )
+      : spawnSync("ps", ["-Ao", "pid=,command="], { encoding: "utf8" });
+  const own = new Set([...LIVE].map((s) => s.child?.pid));
+  return parseStrays(r.stdout ?? "").filter((x) => !own.has(x.pid));
+}
+
 export class LlamaServer {
   child: ChildProcess | null = null;
   log = "";
@@ -90,6 +160,7 @@ export class LlamaServer {
   peakRss = 0;
   overCap: string | null = null;
   #timer: ReturnType<typeof setInterval> | null = null;
+  closed: Closed | null = null;
   readonly cfg: BenchConfig["local"];
   /** False while setup measures how much memory a context size takes: sample, never stop. */
   readonly enforceCap: boolean;
@@ -136,7 +207,9 @@ export class LlamaServer {
 
   async start(timeoutMs = 180_000): Promise<void> {
     const [cmd, ...args] = this.argv();
+    hookExit();
     this.child = spawn(cmd!, args, { stdio: ["ignore", "pipe", "pipe"], windowsHide: true });
+    LIVE.add(this);
     const keep = (d: Buffer) => {
       if (this.log.length < 4 << 20) this.log += d.toString("utf8");
     };
@@ -161,7 +234,7 @@ export class LlamaServer {
         () => false,
       ))
     ) {
-      this.stop();
+      await this.close();
       throw new Error(`llama-server did not become healthy in ${timeoutMs} ms`);
     }
     this.allocated = allocatedMiB(this.log);
@@ -171,17 +244,36 @@ export class LlamaServer {
       const rss = this.sample();
       if (this.enforceCap && rss > this.cfg.memCapMiB && !this.overCap) {
         this.overCap = `llama-server resident memory reached ${rss} MiB, over the ${this.cfg.memCapMiB} MiB cap`;
-        this.stop();
+        void this.close();
       }
     }, 1000);
     this.#timer.unref();
   }
 
-  stop(): void {
+  /** Stop the server and free its memory: SIGTERM, then SIGKILL after graceMs; confirm it is gone. */
+  async close(graceMs = 5000): Promise<Closed> {
     if (this.#timer) clearInterval(this.#timer);
     this.#timer = null;
-    this.child?.kill("SIGKILL");
+    const c = this.child;
     this.child = null;
+    LIVE.delete(this);
+    const t0 = Date.now();
+    let graceful = true;
+    if (c && !exited(c)) {
+      const gone = new Promise<void>((ok) => c.once("exit", () => ok()));
+      c.kill("SIGTERM");
+      graceful = await Promise.race([gone.then(() => true), sleep(graceMs).then(() => false)]);
+      if (!graceful) {
+        c.kill("SIGKILL");
+        await Promise.race([gone, sleep(5000)]);
+      }
+    }
+    const portFree = !(await fetch(`${this.url}/health`, { signal: AbortSignal.timeout(2000) }).then(
+      () => true,
+      () => false,
+    ));
+    this.closed = { confirmed: (!c || exited(c)) && portFree, graceful, ms: Date.now() - t0 };
+    return this.closed;
   }
 }
 

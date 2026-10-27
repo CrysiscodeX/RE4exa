@@ -89,6 +89,6 @@ export async function measureContext(local: BenchConfig["local"], ctx: number): 
   } catch (e) {
     return { ctx, peak_rss_mib: s.peakRss, allocated_mib: s.allocated, filled_tokens: 0, error: (e as Error).message };
   } finally {
-    s.stop();
+    await s.close();
   }
 }

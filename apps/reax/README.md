@@ -42,7 +42,9 @@ npm ci
 **2. Set up and sign in.** These commands work from the repository root:
 
 ```bash
-npm run bench:setup                    # detects the GPU; installs llama.cpp's build for it and the model
+npm run bench:setup -- --model ~/Models/Qwen3.5-9B-Q4_K_M --mem-cap-mib 12288
+                                       # detects the GPU, installs llama.cpp's build for it, pins your
+                                       # model by sha256, fits the context under the 12 GB cap
 npm install -g @openai/codex @anthropic-ai/claude-code   # if not installed
 codex login                            # your ChatGPT account
 claude                                 # then /login with your Claude account, then /exit
@@ -75,6 +77,15 @@ npm run bench:smoke                    # 5 tasks on local, codex, claude and hyb
 - `--backend <id>` forces a build. SYCL, and backends llama.cpp offers beyond these, are reachable
   this way but are untested.
 - `--server <path>` uses a llama-server you built yourself.
+- `--model <file or folder>` uses a model you already have; nothing is downloaded. In a folder,
+  vision projector files (`mmproj-*`) are skipped and a split model's first shard is used.
+  Without it, setup downloads Qwen3-4B-Instruct-2507 Q4_K_M.
+- `--mem-cap-mib <n>` sets the local model's memory cap. The default is 12288 for the current
+  test runs.
+
+**Shutdown.** Every model server is closed when it is done: SIGTERM, then SIGKILL after 5 s,
+with the exit and the freed port confirmed. This also happens on Ctrl-C. `bench:doctor` lists
+any llama-server still running.
 
 Behind a proxy, set `NODE_USE_ENV_PROXY=1`.
 

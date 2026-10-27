@@ -46,11 +46,14 @@ export const DEFAULTS: BenchConfig = {
     modelSha256: null,
     ctx: 16384,
     kvType: "q8_0",
-    memCapMiB: 4096,
+    // 12 GB: your limit for the temporary test runs with Qwen3.5-9B (2026-10-27); it was 4096
+    // for the 4B. bench/setup.ts --mem-cap-mib sets it per machine.
+    memCapMiB: 12288,
     port: 8089,
     gpuLayers: 99,
     maxTurns: 12,
-    maxTokensPerTurn: 2048,
+    // Room for a model that thinks before it answers; its reasoning is kept in the transcript.
+    maxTokensPerTurn: 4096,
     backend: null,
     device: null,
   },

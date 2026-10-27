@@ -9,6 +9,7 @@ import { dirname, join } from "node:path";
 import { parseArgs } from "node:util";
 import { effortArgsFor } from "../src/bench/backends/claude.ts";
 import { configPath, loadConfig } from "../src/bench/backends/config.ts";
+import { findStrayServers } from "../src/bench/backends/local.ts";
 import { findCommand, runCliSync } from "../src/bench/backends/proc.ts";
 import { parseDevices } from "../src/bench/setup/hardware.ts";
 import { fileSha256 } from "../src/bench/setup/install.ts";
@@ -55,6 +56,15 @@ if (want("local")) {
         : "no build recorded: run npm run bench:setup",
     );
   }
+  const strays = findStrayServers();
+  row(
+    "no stray llama-server",
+    strays.length === 0,
+    strays.length
+      ? `${strays.length} running, holding memory: ${strays.map((x) => `pid ${x.pid} (${x.command})`).join("; ")}. Stop them with ${process.platform === "win32" ? "`taskkill /PID <pid>`" : "`kill <pid>`"} if they are left over from a bench run`
+      : "none running",
+    true,
+  );
   const fit = existsSync(configPath())
     ? (
         JSON.parse(readFileSync(configPath(), "utf8")) as {

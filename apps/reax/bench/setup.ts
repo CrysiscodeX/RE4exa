@@ -6,8 +6,9 @@
 // Every download is checked against its publisher's sha256. Sign-in to Codex and Claude is
 // yours to do; this script never touches credentials.
 //   node bench/setup.ts [--dry-run] [--backend metal|cuda|rocm|vulkan|opencl-adreno|sycl|cpu]
-//                       [--server path/to/llama-server] [--model path.gguf] [--model-repo owner/name]
-import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+//                       [--server path/to/llama-server] [--model file.gguf|folder] [--model-repo owner/name]
+//                       [--mem-cap-mib 12288]
+import { existsSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
@@ -25,7 +26,16 @@ import {
   firstWorking,
   parseDevices,
 } from "../src/bench/setup/hardware.ts";
-import { downloadVerified, extract, findFile, modelFile, PUBLIC, releaseAssets } from "../src/bench/setup/install.ts";
+import {
+  downloadVerified,
+  extract,
+  fileSha256,
+  findFile,
+  modelFile,
+  PUBLIC,
+  releaseAssets,
+  resolveModelPath,
+} from "../src/bench/setup/install.ts";
 import { probeHardware } from "../src/bench/setup/probe.ts";
 
 /** llama.cpp release tag b11923 is commit de5122d879d00d2895c36be7e0cee94105aeeabd. */
@@ -54,8 +64,14 @@ const { values: a } = parseArgs({
     server: { type: "string" },
     model: { type: "string" },
     "model-repo": { type: "string" },
+    "mem-cap-mib": { type: "string" },
   },
 });
+const capArg = a["mem-cap-mib"] === undefined ? null : Number(a["mem-cap-mib"]);
+if (capArg !== null && !(Number.isInteger(capArg) && capArg >= 1024)) {
+  console.error("--mem-cap-mib must be a whole number of MiB, at least 1024");
+  process.exit(2);
+}
 if (a.backend && !BACKENDS.includes(a.backend as BackendId)) {
   console.error(`--backend must be one of ${BACKENDS.join(", ")}`);
   process.exit(2);
@@ -74,6 +90,8 @@ const CACHE =
     ? join(process.env.LOCALAPPDATA ?? join(homedir(), "AppData", "Local"), "reax")
     : join(homedir(), ".cache", "reax"));
 const cfg = loadConfig(CONFIG);
+if (capArg !== null) cfg.local.memCapMiB = capArg;
+console.log(`memory cap for the local model: ${cfg.local.memCapMiB} MiB`);
 const exe = process.platform === "win32" ? "llama-server.exe" : "llama-server";
 const mib = (n: number) => `${(n / 2 ** 20).toFixed(0)} MiB`;
 
@@ -92,10 +110,16 @@ const list: Candidate[] = a.backend
 console.log(`builds to try, in order: ${list.map((c) => `${c.backend} (${c.why})`).join("; ")}`);
 
 // The model first: every build is checked by loading it.
-let model = a.model ?? null;
+let model: string | null = null;
 let modelSha: string | null = null;
-let modelFrom: string | null = a.model ? "given with --model" : null;
-if (!model) {
+let modelFrom: string | null = null;
+if (a.model) {
+  // Your own file: nothing is downloaded; it is pinned by the sha256 computed here.
+  model = resolveModelPath(a.model.replace(/^~(?=[\\/])/, homedir()));
+  modelSha = await fileSha256(model);
+  modelFrom = `your own file ${model} (${mib(statSync(model).size)}), pinned at setup`;
+  console.log(`model: ${model}, ${mib(statSync(model).size)}, sha256 ${modelSha}`);
+} else {
   for (const repo of a["model-repo"] ? [a["model-repo"]] : MODEL_REPOS) {
     const f = await modelFile(repo, MODEL_FILE, EP).catch((e: Error) => {
       console.log(`  ${repo}: ${e.message}`);
@@ -189,8 +213,11 @@ const { chosen, result, failures } = await firstWorking(list, async (c) => {
     port,
     ctx: Math.min(...CONTEXTS),
   });
-  await s.start(300_000);
-  s.stop();
+  try {
+    await s.start(300_000);
+  } finally {
+    await s.close();
+  }
   if (s.overCap) throw new Error(`memory cap: ${s.overCap}`);
   return {
     server,
@@ -227,6 +254,7 @@ const local = {
   server: [result.server],
   model,
   modelSha256: modelSha,
+  memCapMiB: cfg.local.memCapMiB,
   gpuLayers,
   ctx: fit.ctx,
   backend: chosen.backend,
