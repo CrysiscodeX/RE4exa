@@ -1,0 +1,76 @@
+# prompt
+
+Which shared libraries does hello-x86_64-linux-gnu.2.28-s load, and what CPU architecture is it? NOTES.txt sits next to it.
+
+When you are done, end your answer with one fenced block whose info string is "claims", holding a
+JSON array. Each element is one fact you are claiming:
+  {"predicate": "...", "subject": "<file name>", "value": "<string, or null for none>", "label": "observed" | "inferred" | "unknown"}
+Use "observed" only for what you read from the file itself. One element per value: a list of
+libraries or symbols is one claim per item. Predicates: file.format (elf, pe, macho, macho-fat,
+wasm), native.arch, native.bits, native.links, native.interpreter, native.exports, native.symtab
+(true/false), debug.dwarf (true/false), debug.comp_dir, cpp.function (demangled, qualified),
+strings.contains. Claim only what you checked.
+
+# answer
+
+claims
+[
+  {
+    "predicate": "file.format",
+    "subject": "hello-x86_64-linux-gnu.2.28-s",
+    "value": "elf",
+    "label": "observed"
+  },
+  {
+    "predicate": "native.arch",
+    "subject": "hello-x86_64-linux-gnu.2.28-s",
+    "value": "x86_64",
+    "label": "observed"
+  },
+  {
+    "predicate": "native.bits",
+    "subject": "hello-x86_64-linux-gnu.2.28-s",
+    "value": "64",
+    "label": "observed"
+  },
+  {
+    "predicate": "native.links",
+    "subject": "hello-x86_64-linux-gnu.2.28-s",
+    "value": "libc.so.6",
+    "label": "observed"
+  },
+  {
+    "predicate": "native.interpreter",
+    "subject": "hello-x86_64-linux-gnu.2.28-s",
+    "value": "/lib64/ld-linux-x86-64.so.2",
+    "label": "observed"
+  },
+  {
+    "predicate": "native.imports",
+    "subject": "hello-x86_64-linux-gnu.2.28-s",
+    "value": "__libc_start_main,printf,puts,strlen",
+    "label": "observed"
+  }
+]
+
+
+# transcript
+
+{"role":"assistant","content":"","tool_calls":[{"type":"function","function":{"name":"list_files","arguments":"{}"},"id":"c9JwGON3UycnyvaUBHmSFuKC743QaZov"}]}
+[tool list_files] NOTES.txt	140 bytes
+hello-x86_64-linux-gnu.2.28-s	4184 bytes
+{"role":"assistant","content":"","tool_calls":[{"type":"function","function":{"name":"reax_op","arguments":"{\"operation\": \"identify.file\", \"path\": \"hello-x86_64-linux-gnu.2.28-s\"}"},"id":"SzjGC8u6ji6EXJqM1kR7ywaKWjemrexx"}]}
+[tool reax_op] <untrusted-content id="u-d1f9f95d916047cd6836f6fa" origin="identify.file">
+hello-x86_64-linux-gnu.2.28-s: elf (elf), 4184 bytes
+</untrusted-content id="u-d1f9f95d916047cd6836f6fa">
+coverage: complete
+{"role":"assistant","content":"","tool_calls":[{"type":"function","function":{"name":"reax_op","arguments":"{\"operation\": \"inventory.native\", \"path\": \"hello-x86_64-linux-gnu.2.28-s\"}"},"id":"D0tkV2zTU2KFTxnFgABvxEGbH0bTkA39"}]}
+[tool reax_op] <untrusted-content id="u-1e2d88627d44c942b2b6c2cd" origin="inventory.native">
+hello-x86_64-linux-gnu.2.28-s: elf
+- x86_64 64-bit exec, interpreter /lib64/ld-linux-x86-64.so.2
+  links (1): libc.so.6
+  exports (0): none
+  imports (4): __libc_start_main, printf, puts, strlen
+</untrusted-content id="u-1e2d88627d44c942b2b6c2cd">
+coverage: complete; limitations: exports and imports are the dynamic symbol table; .symtab is not read yet
+{"role":"assistant","content":"claims\n[\n  {\n    \"predicate\": \"file.format\",\n    \"subject\": \"hello-x86_64-linux-gnu.2.28-s\",\n    \"value\": \"elf\",\n    \"label\": \"observed\"\n  },\n  {\n    \"predicate\": \"native.arch\",\n    \"subject\": \"hello-x86_64-linux-gnu.2.28-s\",\n    \"value\": \"x86_64\",\n    \"label\": \"observed\"\n  },\n  {\n    \"predicate\": \"native.bits\",\n    \"subject\": \"hello-x86_64-linux-gnu.2.28-s\",\n    \"value\": \"64\",\n    \"label\": \"observed\"\n  },\n  {\n    \"predicate\": \"native.links\",\n    \"subject\": \"hello-x86_64-linux-gnu.2.28-s\",\n    \"value\": \"libc.so.6\",\n    \"label\": \"observed\"\n  },\n  {\n    \"predicate\": \"native.interpreter\",\n    \"subject\": \"hello-x86_64-linux-gnu.2.28-s\",\n    \"value\": \"/lib64/ld-linux-x86-64.so.2\",\n    \"label\": \"observed\"\n  },\n  {\n    \"predicate\": \"native.imports\",\n    \"subject\": \"hello-x86_64-linux-gnu.2.28-s\",\n    \"value\": \"__libc_start_main,printf,puts,strlen\",\n    \"label\": \"observed\"\n  }\n]\n"}
