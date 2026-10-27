@@ -140,8 +140,18 @@ test("[-RX-1/bench-live] a signed-out CLI and an over-cap model are reported as 
         server: s,
       }),
     );
-    assert.equal(capped.length, 1, "the run stops at the first capped cell");
+    assert.equal(capped.length, 3, "every cell is listed, run or not");
     assert.match(capped[0]!.error ?? "", /memory cap: llama.cpp allocated 7700 MiB, over the 4096 MiB cap/);
+    assert.deepEqual(
+      capped.map((c) => c.not_run),
+      [true, true, true],
+      "over the cap at load, no cell can run: each is listed as not run, none is dropped",
+    );
+    assert.match(capped[1]!.error ?? "", /^not run: the backend had stopped \(memory cap/);
+    const summary = readFileSync(join(dir, "local", "summary.md"), "utf8");
+    assert.match(summary, /\| local \| 0 \| 3 \| - \|/, "cells run and not run, per backend; no mean over no cells");
+    assert.match(summary, /## Not run/);
+    assert.ok(capped.every((c) => c.machine.total_mib > 0 && c.hardware?.ctx === big.local.ctx));
     assert.equal(allocatedMiB("x buffer size =  1.5 MiB\ny buffer size = 2 MiB"), 4);
   } finally {
     delete process.env.FAKE_SIGNED_OUT;

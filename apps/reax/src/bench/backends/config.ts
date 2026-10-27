@@ -59,9 +59,11 @@ export const DEFAULTS: BenchConfig = {
   cell: { timeoutMs: 600_000 },
 };
 
-export function loadConfig(
-  path = process.env.REAX_BENCH_CONFIG ?? join(import.meta.dirname, "..", "..", "..", "bench", "backends.json"),
-): BenchConfig {
+/** Where the settings live: $REAX_BENCH_CONFIG, else bench/backends.json. */
+export const configPath = () =>
+  process.env.REAX_BENCH_CONFIG ?? join(import.meta.dirname, "..", "..", "..", "bench", "backends.json");
+
+export function loadConfig(path = configPath()): BenchConfig {
   if (!existsSync(path)) return structuredClone(DEFAULTS);
   const o = JSON.parse(readFileSync(path, "utf8")) as Partial<BenchConfig>;
   return {

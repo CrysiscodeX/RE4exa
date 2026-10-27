@@ -2,6 +2,7 @@
 // same prompt and same grader as every other arm; one cell at a time; every cell's raw
 // transcript, models, effort, tokens, cost, time, memory and errors are kept.
 import { chmodSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { availableParallelism, freemem, loadavg, totalmem } from "node:os";
 import { join } from "node:path";
 import { claudeBackend } from "./backends/claude.ts";
 import { codexBackend } from "./backends/codex.ts";
@@ -34,8 +35,18 @@ export interface LiveCell {
   run: BackendResult["run"];
   roles: BackendResult["roles"] | null;
   memory: BackendResult["memory"] | null;
-  /** For local and hybrid: the llama.cpp build and device, and the OS it ran on. */
-  hardware: { os: NodeJS.Platform; arch: string; llama_backend: string | null; device: string | null } | null;
+  /** For local and hybrid: the llama.cpp build, device and context size, and the OS it ran on. */
+  hardware: {
+    os: NodeJS.Platform;
+    arch: string;
+    llama_backend: string | null;
+    device: string | null;
+    ctx: number;
+  } | null;
+  /** The machine's load when the cell started; the bench does not assume it has the machine to itself. */
+  machine: { loadavg1: number | null; free_mib: number; total_mib: number; cpus: number };
+  /** True for a cell the run never started (the backend had stopped); left out of every mean. */
+  not_run: boolean;
   error: string | null;
   timed_out: boolean;
   transcript: string;
@@ -54,6 +65,26 @@ export function cellPrompt(backend: BackendName, t: Parameters<typeof prompt>[0]
 }
 
 /** A directory with a `reax` command for the agents: a POSIX shim and reax.cmd for Windows. */
+function machineNow(): LiveCell["machine"] {
+  return {
+    loadavg1: process.platform === "win32" ? null : Math.round(loadavg()[0]! * 100) / 100,
+    free_mib: Math.round(freemem() / 2 ** 20),
+    total_mib: Math.round(totalmem() / 2 ** 20),
+    cpus: availableParallelism(),
+  };
+}
+
+const zeroRun = (): LiveCell["run"] => ({
+  model: "",
+  requested_model: "",
+  effort: "",
+  turns: 0,
+  tool_calls: 0,
+  tokens: { input_uncached: 0, input_cached: 0, output: 0 },
+  cost_usd: 0,
+  ms: 0,
+});
+
 export function toolsDir(root: string): string {
   const dir = join(root, ".tools");
   mkdirSync(dir, { recursive: true });
@@ -107,9 +138,47 @@ export async function runLive(o: LiveOptions): Promise<LiveCell[]> {
   }
   const backend = buildBackend(o.backend, cfg, server);
   const cells: LiveCell[] = [];
+  const hardware = needsLocal
+    ? {
+        os: process.platform,
+        arch: process.arch,
+        llama_backend: cfg.local.backend,
+        device: cfg.local.device,
+        ctx: cfg.local.ctx,
+      }
+    : null;
+  const save = () => writeFileSync(join(o.out, "cells.jsonl"), `${cells.map((c) => JSON.stringify(c)).join("\n")}\n`);
+  /** Why the backend can run no more cells (the memory cap stopped the server), or null. */
+  let stopped: string | null = null;
   try {
     for (let rep = 1; rep <= o.reps; rep++)
       for (const t of o.tasks) {
+        if (!stopped && server?.overCap) stopped = `memory cap: ${server.overCap}`;
+        if (stopped) {
+          const cell: LiveCell = {
+            task: t.id,
+            class: t.class,
+            backend: o.backend,
+            rep,
+            targets: t.subjects,
+            run: { ...zeroRun(), model: "not run", requested_model: "" },
+            roles: null,
+            memory: null,
+            hardware,
+            machine: machineNow(),
+            not_run: true,
+            error: `not run: the backend had stopped (${stopped})`,
+            timed_out: false,
+            transcript: "",
+            grade: grade(t, ""),
+            grade_first: null,
+          };
+          cells.push(cell);
+          o.onCell?.(cell);
+          save();
+          continue;
+        }
+        const machine = machineNow();
         const ws = workspace(t, o.fixturesBin);
         const text = cellPrompt(o.backend, t);
         try {
@@ -132,9 +201,9 @@ export async function runLive(o: LiveOptions): Promise<LiveCell[]> {
             run: r.run,
             roles: r.roles ?? null,
             memory: r.memory ?? null,
-            hardware: needsLocal
-              ? { os: process.platform, arch: process.arch, llama_backend: cfg.local.backend, device: cfg.local.device }
-              : null,
+            hardware,
+            machine,
+            not_run: false,
             error: r.error ?? null,
             timed_out: !!r.timed_out,
             transcript: `transcripts/${name}`,
@@ -143,8 +212,8 @@ export async function runLive(o: LiveOptions): Promise<LiveCell[]> {
           };
           cells.push(cell);
           o.onCell?.(cell);
-          writeFileSync(join(o.out, "cells.jsonl"), `${cells.map((c) => JSON.stringify(c)).join("\n")}\n`);
-          if (cell.error?.startsWith("memory cap")) break;
+          save();
+          if (cell.error?.includes("memory cap")) stopped = cell.error;
         } finally {
           rmSync(ws, { recursive: true, force: true });
         }
@@ -160,15 +229,28 @@ export function liveSummary(cells: LiveCell[]): string {
   const out = [
     "# Live benchmark summary",
     "",
-    "| Backend | Cells | Mean accuracy | Hits | Wrong | Label errors | Parse errors | Errors | Mean s | Cost USD | Models |",
-    "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|",
+    "Means are over the cells that ran; cells the run never started are counted as not run.",
+    "",
+    "| Backend | Cells run | Not run | Mean accuracy | Hits | Wrong | Label errors | Parse errors | Errors | Mean s | Cost USD | Models |",
+    "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|",
   ];
   const by = new Map<string, LiveCell[]>();
   for (const c of cells) by.set(c.backend, [...(by.get(c.backend) ?? []), c]);
-  for (const [b, cs] of by) {
+  for (const [b, all] of by) {
+    const cs = all.filter((c) => !c.not_run);
     const s = (f: (c: LiveCell) => number) => cs.reduce((a, c) => a + f(c), 0);
+    const mean = (f: (c: LiveCell) => number, d: number) => (cs.length ? (s(f) / cs.length).toFixed(d) : "-");
     out.push(
-      `| ${b} | ${cs.length} | ${(s((c) => c.grade.accuracy) / cs.length).toFixed(3)} | ${s((c) => c.grade.hits)}/${s((c) => c.grade.positives)} | ${s((c) => c.grade.wrong)} | ${s((c) => c.grade.labelErrors)} | ${cs.filter((c) => c.grade.parseError).length} | ${cs.filter((c) => c.error).length} | ${(s((c) => c.run.ms) / cs.length / 1000).toFixed(1)} | ${s((c) => c.run.cost_usd).toFixed(3)} | ${[...new Set(cs.map((c) => c.run.model))].join("; ")} |`,
+      `| ${b} | ${cs.length} | ${all.length - cs.length} | ${mean((c) => c.grade.accuracy, 3)} | ${s((c) => c.grade.hits)}/${s((c) => c.grade.positives)} | ${s((c) => c.grade.wrong)} | ${s((c) => c.grade.labelErrors)} | ${cs.filter((c) => c.grade.parseError).length} | ${cs.filter((c) => c.error).length} | ${mean((c) => c.run.ms / 1000, 1)} | ${s((c) => c.run.cost_usd).toFixed(3)} | ${[...new Set(cs.map((c) => c.run.model))].join("; ")} |`,
+    );
+  }
+  const ran = cells.filter((c) => !c.not_run && c.machine);
+  if (ran.length) {
+    const free = ran.map((c) => c.machine.free_mib);
+    const load = ran.map((c) => c.machine.loadavg1).filter((x): x is number => x !== null);
+    out.push(
+      "",
+      `Machine during the run: ${Math.min(...free)}-${Math.max(...free)} MiB reported free of ${ran[0]!.machine.total_mib} MiB${load.length ? `, load average ${Math.min(...load).toFixed(1)}-${Math.max(...load).toFixed(1)} on ${ran[0]!.machine.cpus} CPUs` : ""}. The bench does not assume it has the machine to itself: times are descriptive, noisy, and not comparable across runs.`,
     );
   }
   const hw = [
@@ -190,7 +272,9 @@ export function liveSummary(cells: LiveCell[]): string {
       `Hybrid: the local worker's first answers averaged ${m((c) => c.grade_first!.accuracy)}; after review, ${m((c) => c.grade.accuracy)}.`,
     );
   }
-  const errors = cells.filter((c) => c.error);
+  const errors = cells.filter((c) => c.error && !c.not_run);
+  const notRun = cells.filter((c) => c.not_run);
+  if (notRun.length) out.push("", "## Not run", "", ...notRun.map((c) => `- ${c.backend} ${c.task}: ${c.error}`));
   if (errors.length) out.push("", "## Errors", "", ...errors.map((c) => `- ${c.backend} ${c.task}: ${c.error}`));
   return `${out.join("\n")}\n`;
 }

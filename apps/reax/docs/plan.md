@@ -493,3 +493,15 @@ reads, copies or refreshes a CLI's credentials and identifies only as itself.
   - Codex's read-only sandbox on Windows.
 
   These count only once a run on the user's machine records them.
+
+**After the first Mac run (2026-10-27, PREREG amendment 2.1).**
+- codex and claude scored 5/5 each.
+- The local backend went over the cap: resident memory reached 4160–4213 MiB at a 16k
+  context, though llama.cpp's buffer report was under 4096 MiB. Its remaining cells were missing
+  with no record.
+- **Fixes:**
+  - Setup measures the largest context that fits the cap ([±RX-1/bench-fit]).
+  - Cells that were not run are written and counted.
+  - Each cell records the machine's load.
+- The cause of the 0.00 scores on the local cells that did run waits on those cells'
+  transcripts.

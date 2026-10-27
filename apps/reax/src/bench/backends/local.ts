@@ -91,8 +91,19 @@ export class LlamaServer {
   overCap: string | null = null;
   #timer: ReturnType<typeof setInterval> | null = null;
   readonly cfg: BenchConfig["local"];
-  constructor(cfg: BenchConfig["local"]) {
+  /** False while setup measures how much memory a context size takes: sample, never stop. */
+  readonly enforceCap: boolean;
+  constructor(cfg: BenchConfig["local"], opts: { enforceCap?: boolean } = {}) {
     this.cfg = cfg;
+    this.enforceCap = opts.enforceCap ?? true;
+  }
+
+  /** Take one resident-memory sample now (the timer takes one each second). */
+  sample(): number {
+    if (!this.child?.pid) return 0;
+    const rss = rssMiB(this.child.pid);
+    this.peakRss = Math.max(this.peakRss, rss);
+    return rss;
   }
 
   get url(): string {
@@ -154,13 +165,11 @@ export class LlamaServer {
       throw new Error(`llama-server did not become healthy in ${timeoutMs} ms`);
     }
     this.allocated = allocatedMiB(this.log);
-    if (this.allocated > this.cfg.memCapMiB)
+    if (this.enforceCap && this.allocated > this.cfg.memCapMiB)
       this.overCap = `llama.cpp allocated ${this.allocated} MiB, over the ${this.cfg.memCapMiB} MiB cap`;
     this.#timer = setInterval(() => {
-      if (!this.child?.pid) return;
-      const rss = rssMiB(this.child.pid);
-      this.peakRss = Math.max(this.peakRss, rss);
-      if (rss > this.cfg.memCapMiB && !this.overCap) {
+      const rss = this.sample();
+      if (this.enforceCap && rss > this.cfg.memCapMiB && !this.overCap) {
         this.overCap = `llama-server resident memory reached ${rss} MiB, over the ${this.cfg.memCapMiB} MiB cap`;
         this.stop();
       }

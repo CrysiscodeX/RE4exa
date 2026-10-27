@@ -3,12 +3,12 @@
 // device list, plus (with --live) one tiny request per CLI to prove the sign-in and the model
 // name work. It never reads a credential file.
 //   node bench/doctor.ts [--backend local|codex|claude|hybrid|all] [--live]
-import { existsSync, statSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
 import { freemem, totalmem } from "node:os";
 import { dirname, join } from "node:path";
 import { parseArgs } from "node:util";
 import { effortArgsFor } from "../src/bench/backends/claude.ts";
-import { loadConfig } from "../src/bench/backends/config.ts";
+import { configPath, loadConfig } from "../src/bench/backends/config.ts";
 import { findCommand, runCliSync } from "../src/bench/backends/proc.ts";
 import { parseDevices } from "../src/bench/setup/hardware.ts";
 import { fileSha256 } from "../src/bench/setup/install.ts";
@@ -55,6 +55,22 @@ if (want("local")) {
         : "no build recorded: run npm run bench:setup",
     );
   }
+  const fit = existsSync(configPath())
+    ? (
+        JSON.parse(readFileSync(configPath(), "utf8")) as {
+          provenance?: { fit?: { trials: { ctx: number; peak_rss_mib: number; fits: boolean }[] } };
+        }
+      ).provenance?.fit
+    : undefined;
+  const fitted = fit?.trials.find((t) => t.fits && t.ctx === cfg.local.ctx);
+  row(
+    "context fits the cap",
+    !!fitted,
+    fitted
+      ? `${cfg.local.ctx} tokens; measured at setup: peak ${fitted.peak_rss_mib} MiB resident with it ~90% full, cap ${cfg.local.memCapMiB} MiB`
+      : `${cfg.local.ctx} tokens, not measured against the ${cfg.local.memCapMiB} MiB cap: run npm run bench:setup`,
+    true,
+  );
   const model = cfg.local.model;
   if (!existsSync(model)) row("GGUF model", false, `missing: ${model} (run npm run bench:setup)`);
   else {

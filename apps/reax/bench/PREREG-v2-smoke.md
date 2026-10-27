@@ -62,3 +62,24 @@ Read from the smoke results, in this order: a backend with any harness error is 
 then accuracy; then cost per correct answer; then time. With 5 cells per backend the result is a
 direction, not evidence. The full run (version 1's design, with the chosen configuration) needs
 its own go-ahead.
+
+## Amendment 2.1 (2026-10-27, before the rerun)
+
+Written after the first Mac run (results in `bench/results/smoke-2026-10-27-14-41-darwin/`, kept
+as they are) and before any rerun. Accuracy rules and grading are unchanged.
+
+- **Context size.** The fixed 16384-token context is replaced by the largest of 16384, 12288,
+  8192 and 6144 whose measured peak fits the cap minus 5%. The measurement is the server's resident
+  memory with the context about 90% full. `bench/setup.ts` measures this on the machine itself and
+  writes it to `bench/backends.json`, and each local cell records it.
+  - Why: in the first run llama.cpp's buffer report was under 4096 MiB, but resident memory reached
+    4160–4213 MiB as the KV cache filled. The cap stays at 4096 MiB.
+- **Cells not run.** When a backend stops (the memory cap, or a server that died), every remaining
+  cell is still written, marked `not_run` with the reason. Such cells are left out of every mean
+  and counted separately. In the first run they were missing without a record.
+- **Shared machine.** Each cell records the load average, free memory, total memory and CPU count
+  at its start. Runs happen on machines in normal use, so time per cell is descriptive only, and
+  neither speed nor slowness is read as a property of a model.
+- **The model stays the same.** Qwen3-4B-Instruct-2507 at Q4_K_M. A larger quantisation or model
+  would make the cap harder to meet. A community distill has weaker provenance for a benchmark
+  meant to be reproducible.

@@ -1,7 +1,8 @@
 // One-time setup for the local backend, on Linux, macOS or Windows, on whatever GPU the machine
 // has: detect the hardware, download llama.cpp's own release build for it at the pinned tag,
 // check it really runs on that hardware, fall back (CUDA/ROCm -> Vulkan -> CPU) if it does not,
-// download the model, load it once under the memory cap, and write bench/backends.json.
+// download the model, fit the context size to the memory cap by measuring the server's peak
+// resident memory with the context filled, and write bench/backends.json.
 // Every download is checked against its publisher's sha256. Sign-in to Codex and Claude is
 // yours to do; this script never touches credentials.
 //   node bench/setup.ts [--dry-run] [--backend metal|cuda|rocm|vulkan|opencl-adreno|sycl|cpu]
@@ -13,6 +14,7 @@ import { parseArgs } from "node:util";
 import { loadConfig } from "../src/bench/backends/config.ts";
 import { LlamaServer } from "../src/bench/backends/local.ts";
 import { runCliSync } from "../src/bench/backends/proc.ts";
+import { budgetMiB, CONTEXTS, fitContext, measureContext } from "../src/bench/setup/fit.ts";
 import {
   assetFor,
   BACKENDS,
@@ -177,12 +179,15 @@ const { chosen, result, failures } = await firstWorking(list, async (c) => {
     throw new Error(
       `it started but found no ${c.backend} device (${listed.out.split("\n").slice(-3).join(" | ") || "no output"})`,
     );
+  // The smallest context: this checks the build loads the model at all; the context that fits
+  // the cap is measured next.
   const s = new LlamaServer({
     ...cfg.local,
     server: [server],
     model: model!,
     gpuLayers: c.backend === "cpu" ? 0 : cfg.local.gpuLayers,
     port,
+    ctx: Math.min(...CONTEXTS),
   });
   await s.start(300_000);
   s.stop();
@@ -198,13 +203,32 @@ console.log(
   `using ${chosen.backend} on ${result.device}; llama.cpp allocated ${result.allocated} MiB of the ${cfg.local.memCapMiB} MiB cap`,
 );
 
+const gpuLayers = chosen.backend === "cpu" ? 0 : cfg.local.gpuLayers;
+console.log(
+  `fitting the context to the ${cfg.local.memCapMiB} MiB cap (peak resident memory with the context ~90% full):`,
+);
+const fit = await fitContext(
+  (ctx) => measureContext({ ...cfg.local, server: [result.server], model: model!, gpuLayers, port }, ctx),
+  cfg.local.memCapMiB,
+);
+for (const t of fit.trials)
+  console.log(
+    `  ${String(t.ctx).padStart(5)} tokens: peak ${t.peak_rss_mib} MiB resident, ${t.allocated_mib} MiB reported by llama.cpp, ${t.filled_tokens} tokens filled -> ${t.fits ? "fits" : t.error ? `error: ${t.error}` : `over the ${budgetMiB(cfg.local.memCapMiB)} MiB budget`}`,
+  );
+if (fit.ctx === null)
+  throw new Error(
+    `no context size fits the ${cfg.local.memCapMiB} MiB cap with this model and build; the smallest tried peaked at ${fit.trials.at(-1)?.peak_rss_mib} MiB`,
+  );
+console.log(`context: ${fit.ctx} tokens`);
+
 const existing = existsSync(CONFIG) ? (JSON.parse(readFileSync(CONFIG, "utf8")) as Record<string, unknown>) : {};
 const local = {
   ...((existing.local as object | undefined) ?? {}),
   server: [result.server],
   model,
   modelSha256: modelSha,
-  gpuLayers: chosen.backend === "cpu" ? 0 : cfg.local.gpuLayers,
+  gpuLayers,
+  ctx: fit.ctx,
   backend: chosen.backend,
   device: result.device,
 };
@@ -213,6 +237,7 @@ const provenance = {
   llamaCommit: "de5122d879d00d2895c36be7e0cee94105aeeabd",
   model: modelFrom,
   hardware: hw,
+  fit: { capMiB: cfg.local.memCapMiB, budgetMiB: budgetMiB(cfg.local.memCapMiB), trials: fit.trials },
   setupAt: new Date().toISOString(),
 };
 writeFileSync(CONFIG, `${JSON.stringify({ ...existing, local, provenance }, null, 2)}\n`);

@@ -64,7 +64,10 @@ npm run bench:smoke                    # 5 tasks on local, codex, claude and hyb
 
 **Checks during setup:**
 - Each build must find its device (`llama-server --list-devices`).
-- Each build must load the model under the 4 GB cap, or the next build is tried.
+- Each build must load the model, or the next build is tried.
+- The context size is then fitted to the 4 GB cap by measurement. Setup fills each candidate
+  context (16384 down to 6144 tokens) to about 90% and keeps the largest whose peak resident
+  memory stays under the cap minus 5%.
 - Every download is checked against its publisher's sha256.
 
 **Options:**

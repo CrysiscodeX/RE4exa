@@ -12,8 +12,10 @@ import type { AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
 import { delimiter, join } from "node:path";
 import { test } from "node:test";
+import { DEFAULTS } from "../src/bench/backends/config.ts";
 import { tasklistKiB } from "../src/bench/backends/local.ts";
 import { findCommand, pathKey, prependPath, runCli, spawnFor } from "../src/bench/backends/proc.ts";
+import { budgetMiB, fitContext, fitsCap, measureContext } from "../src/bench/setup/fit.ts";
 import {
   assetFor,
   backendWorks,
@@ -392,6 +394,8 @@ test("[+RX-1/bench-setup] setup end to end against a fake release: GPU builds th
     assert.ok(existsSync(written.local.server[0]), "the unpacked llama-server");
     assert.equal(written.codex.model, "kept", "other settings are kept");
     assert.equal(written.provenance.llamaTag, "b11923");
+    assert.equal(written.local.ctx, 16384, "the stub's memory fits the cap at the largest context");
+    assert.equal(written.provenance.fit.trials[0].fits, true);
     if (process.platform === "darwin")
       assert.match(r.stdout, /metal did not work: it started but found no metal device/);
     assert.match(r.stdout, /using cpu on CPU; llama.cpp allocated 3300 MiB of the 4096 MiB cap/);
@@ -399,4 +403,58 @@ test("[+RX-1/bench-setup] setup end to end against a fake release: GPU builds th
     server.close();
     rmSync(dir, { recursive: true, force: true });
   }
+});
+
+const stubLocal = (over: Partial<typeof DEFAULTS.local> = {}) => ({
+  ...DEFAULTS.local,
+  server: [process.execPath, join(import.meta.dirname, "fixtures", "stub-llama.mjs")],
+  model: "stub.gguf",
+  port: 23000 + Math.floor(Math.random() * 2000),
+  ...over,
+});
+
+test("[+RX-1/bench-fit] the context is the largest whose measured peak resident memory, with the context filled, fits the cap", async () => {
+  const peaks: Record<number, number> = { 16384: 4213, 12288: 3900, 8192: 3600, 6144: 3400 };
+  const tried: number[] = [];
+  const r = await fitContext(async (ctx) => {
+    tried.push(ctx);
+    return { ctx, peak_rss_mib: peaks[ctx]!, allocated_mib: 3300, filled_tokens: ctx * 0.9, error: null };
+  }, 4096);
+  assert.equal(budgetMiB(4096), 3891);
+  assert.deepEqual(
+    [r.ctx, tried],
+    [8192, [16384, 12288, 8192]],
+    "4213 (the Mac run's peak) and 3900 are over 3891; it stops at the first fit",
+  );
+  // real resident memory: the stub holds 30 MiB per 1000 tokens of context once it is filled
+  process.env.STUB_MODEL_MIB = "100";
+  process.env.STUB_KV_MIB = "50";
+  process.env.STUB_COMPUTE_MIB = "10";
+  process.env.STUB_MIB_PER_KTOK = "30";
+  try {
+    const local = stubLocal({ memCapMiB: 400 });
+    const fit = await fitContext((ctx) => measureContext({ ...local, port: local.port + ctx / 1024 }, ctx), 400);
+    assert.equal(fit.ctx, 8192, JSON.stringify(fit.trials));
+    assert.ok(fit.trials[0]!.peak_rss_mib > 380, "16384 really took more than the budget");
+    assert.ok(fit.trials.at(-1)!.filled_tokens > 8192 * 0.8, "the context was really filled");
+    assert.equal(fit.trials.at(-1)!.allocated_mib, 160);
+  } finally {
+    for (const k of ["STUB_MODEL_MIB", "STUB_KV_MIB", "STUB_COMPUTE_MIB", "STUB_MIB_PER_KTOK"]) delete process.env[k];
+  }
+});
+
+test("[-RX-1/bench-fit] nothing fits when even the smallest context is over the cap, and a failed or over-reported trial never fits", async () => {
+  const r = await fitContext(
+    async (ctx) => ({ ctx, peak_rss_mib: 5000, allocated_mib: 4000, filled_tokens: 0, error: null }),
+    4096,
+  );
+  assert.equal(r.ctx, null);
+  assert.equal(r.trials.length, 4, "every size was tried and kept for the report");
+  assert.ok(!fitsCap({ ctx: 1, peak_rss_mib: 10, allocated_mib: 10, filled_tokens: 0, error: "HTTP 500" }, 4096));
+  assert.ok(
+    !fitsCap({ ctx: 1, peak_rss_mib: 10, allocated_mib: 3900, filled_tokens: 0, error: null }, 4096),
+    "llama.cpp's own report counts too (GPU memory is not resident)",
+  );
+  const dead = await measureContext(stubLocal({ server: [process.execPath, "-e", "process.exit(4)"] }), 6144);
+  assert.match(dead.error ?? "", /llama-server exited \d+|did not become healthy/);
 });
