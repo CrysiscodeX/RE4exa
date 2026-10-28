@@ -40,10 +40,12 @@ Fixed before release. These were found by two independent RQS-2030 reviews and r
   - a hash-chained case log that can be forked.
 - **S-2 claim records** with ProbeKey, ObservationId and FindingKey; honest coverage; revisioned unknowns; calibration.
 - **Model-free probes** for files, archives, packages, JavaScript loading forms, endpoints, ELF, PE, Mach-O and wasm, plus leanrea's router as data.
-- **A verifier** that re-runs `seen` claims, using 10 predicates.
+- **A verifier** that re-runs `seen` claims, using 12 predicates. These include `native.arch` and `native.exports`, checked with core's own readers.
+- **reax inside Assay**: reax's read-only operations are probes (`reax.identify.file`, `reax.inventory.native`), and the **Examine a binary** recipe uses them. The demo runbook is `docs/demo-0.1.0.md`.
 - **Policy**: untrusted-content envelopes, session taint, approvals, secret redaction.
 - **MCP server** over HTTP with bearer tokens, plus a stdio proxy.
 - **Providers**: Claude Agent SDK, codex app-server and ACP, all through delegated sign-in; and a fake provider for tests and demos.
 - **Coordinator and workers**: worktrees, mailbox, circuit breaker, depth 1, receipts, recovery after a crash.
 - **Web UI in Orca's layout**: chat, worker tree, approvals, evidence inspector, palette and wizard.
-- **Exports**: S-2 JSONL, SARIF, CycloneDX, Markdown, signed bundles with `assay verify --bundle`.
+- **Exports**: S-2 JSONL, SARIF, CycloneDX, Markdown (each claim with its verdict and the reason), signed bundles with `assay verify --bundle`.
+- **`assay cases`** lists cases with their claims counted by verdict.

@@ -1,0 +1,5 @@
+reax
+Copyright 2026 the RE4exa contributors. Licensed under the Apache License, Version 2.0 (see LICENSE).
+
+reax is a clean-room implementation: it contains no code from rea or leanrea, whose behaviour it
+replaces. It depends on @re4exa/core, which lists the work it includes or adapts in its own NOTICE.

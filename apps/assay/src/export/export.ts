@@ -124,6 +124,8 @@ export function markdown(k: Kernel, caseId: string): string {
         : v === "unverifiable"
           ? "? unverifiable"
           : "· not checked";
+  // a table cell: pipes escaped, line breaks flattened
+  const cell = (t: string) => t.replaceAll("|", "\\|").replace(/\r?\n/g, " ");
   const lines = [
     `# ${c?.title || caseId}`, // an empty title is no title
     "",
@@ -131,10 +133,11 @@ export function markdown(k: Kernel, caseId: string): string {
     "",
     "## Claims",
     "",
-    "| Verdict | Claim | Author | Label |",
-    "|---|---|---|---|",
+    "| Verdict | Claim | Reason | Author | Label |",
+    "|---|---|---|---|---|",
     ...claims.map(
-      (cl) => `| ${badge(cl.verdict)} | ${cl.claim.text.replaceAll("|", "\\|")} | ${cl.author} | ${cl.claim.label} |`,
+      (cl) =>
+        `| ${badge(cl.verdict)} | ${cell(cl.claim.text)} | ${cell(cl.verdict_record?.reason ?? "")} | ${cl.author} | ${cl.claim.label} |`,
     ),
     "",
     "## Open questions",

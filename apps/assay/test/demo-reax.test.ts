@@ -3,6 +3,7 @@
 // reax.* probes) and records claims, and Assay's verifier checks each one with core's own
 // readers: true claims verified, false ones refuted. No account or network is needed.
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { copyFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { test } from "node:test";
@@ -49,6 +50,7 @@ test("demo 0.1.0: the agent examines five binaries with reax inside Assay, and e
   for (const f of DEMO_FILES) copyFileSync(join(FIXTURES, f), join(ws.dir, "bin", f));
   const app = new App({ home: home.dir, workspace: ws.dir, demo: true });
   const server = await app.listen();
+  let closed = false;
   try {
     const api = await pair(server.url, server.pairingUrl());
     const state = await api<AppState>("GET", "/api/state");
@@ -115,8 +117,46 @@ test("demo 0.1.0: the agent examines five binaries with reax inside Assay, and e
       assert.ok(match!.observationId, "the verdict cites the evidence it was checked against");
     }
     assert.ok(done.chainIntact, "the case log is intact");
-  } finally {
+
+    // 3. the terminal summary: with the server stopped, the CLI exports the case's claims, each
+    // with its verdict and the reason for it
     await app.close();
+    closed = true;
+    const cli = join(import.meta.dirname, "..", "src", "cli.ts");
+    const assay = (...a: string[]) =>
+      spawnSync(
+        process.execPath,
+        [
+          "--conditions=source",
+          "--disable-warning=ExperimentalWarning",
+          cli,
+          ...a,
+          "--home",
+          home.dir,
+          "--workspace",
+          ws.dir,
+        ],
+        { encoding: "utf8", timeout: 60_000 },
+      );
+    const list = assay("cases");
+    assert.equal(list.status, 0, list.stderr);
+    const line = list.stdout.split("\n").find((l) => l.includes("five binaries"));
+    assert.ok(line, list.stdout);
+    assert.match(line!, /4 ✔ verified, 3 ✖ refuted, 0 \? unverifiable, 0 · not checked/);
+    const id = line!.split(/\s+/)[0]!;
+    assert.equal(id, c.id);
+    const out = assay("export", id, "--format", "md");
+    assert.equal(out.status, 0, out.stderr);
+    for (const [i, [, , want]] of claims.entries()) {
+      const row = out.stdout.split("\n").find((l) => l.includes(`| demo claim ${i + 1} |`));
+      assert.ok(row, `claim ${i + 1} is in the summary`);
+      const reason = got.find((x) => x.text === `demo claim ${i + 1}`)!.reason!;
+      assert.ok(row!.includes(want === "verified" ? "✔ verified" : "✖ refuted"), row);
+      assert.ok(reason && row!.includes(reason.replaceAll("|", "\\|").replace(/\r?\n/g, " ")), row);
+    }
+    assert.match(out.stdout, /Log chain intact/);
+  } finally {
+    if (!closed) await app.close();
     ws.cleanup();
     home.cleanup();
   }

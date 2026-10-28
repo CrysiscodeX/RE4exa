@@ -15,6 +15,8 @@ on:
       - "apps/reax/fixtures/bin/**"
       - "apps/reax/package.json"
       - "apps/reax/scripts/build.ts"
+      - "apps/reax/tsconfig.build.json"
+      - "apps/reax/NOTICE"
       - "scripts/with-source.mjs"
       - "package.json"
       - "package-lock.json"
@@ -29,6 +31,8 @@ on:
       - "apps/reax/fixtures/bin/**"
       - "apps/reax/package.json"
       - "apps/reax/scripts/build.ts"
+      - "apps/reax/tsconfig.build.json"
+      - "apps/reax/NOTICE"
       - "scripts/with-source.mjs"
       - "package.json"
       - "package-lock.json"
@@ -80,12 +84,12 @@ jobs:
         run: npm run coverage
       - name: Generated docs are current (capabilities, reach, failure modes)
         run: node --conditions=source --disable-warning=ExperimentalWarning scripts/gen-docs.ts --check
-      - name: SBOM (Assay and what it ships with, not the other workspaces)
+      - name: SBOM (Assay and what it ships with, core and reax)
         working-directory: .
         run: |
           npm sbom --workspace assay --sbom-format cyclonedx --omit dev > apps/assay/sbom.cdx.json
-          node -e "const n=JSON.parse(require('fs').readFileSync('apps/assay/sbom.cdx.json','utf8')).components.map(c=>c.name); if(!n.includes('assay')||!n.includes('core')||n.includes('reax')) process.exit(1)"
-      - name: Build and install rehearsal (pack core and Assay, install both tarballs, run the installed CLI)
+          node -e "const n=JSON.parse(require('fs').readFileSync('apps/assay/sbom.cdx.json','utf8')).components.map(c=>c.name); for(const want of ['assay','core','reax']) if(!n.includes(want)){console.error('SBOM is missing '+want); process.exit(1)}"
+      - name: Build and install rehearsal (pack core, reax and Assay, install the three tarballs, run the installed CLI)
         run: node --conditions=source --disable-warning=ExperimentalWarning scripts/install-rehearsal.ts
       - name: Browser end-to-end
         run: |

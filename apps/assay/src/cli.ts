@@ -2,6 +2,7 @@
 
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { caseClaims } from "@re4exa/core/evidence/store";
 import { App, defaultHome, VERSION } from "./app/app.ts";
 import { isAssayError } from "./errors.ts";
 import { type Bundle, signingKey, verifyBundle } from "./export/export.ts";
@@ -16,6 +17,7 @@ usage:
   assay probe --list                                               list probes
   assay verify --bundle <file> [--key <public.pem>]                check a signed bundle (exit 3: intact, signer unchecked)
   assay key                                                        print the public key that signs your bundles
+  assay cases                                                      list cases: id, title, claims by verdict
   assay export <case-id> --format s2|sarif|cyclonedx|md|bundle [--out FILE]
   assay capabilities                                               machine-readable capability statement
   assay forget <case-id> | --all                                   delete cases from the store
@@ -35,6 +37,7 @@ const FLAGS: Record<string, { value: string[]; bool: string[] }> = {
   probe: { value: ["--probe", "--params", "--workspace", "--home"], bool: ["--list"] },
   verify: { value: ["--bundle", "--key"], bool: [] },
   key: { value: ["--home"], bool: [] },
+  cases: { value: ["--workspace", "--home"], bool: [] },
   export: { value: ["--format", "--out", "--workspace", "--home"], bool: [] },
   capabilities: { value: ["--workspace", "--home"], bool: [] },
   forget: { value: ["--workspace", "--home"], bool: ["--all"] },
@@ -174,6 +177,18 @@ async function main(argv: string[]): Promise<number> {
           "  Ask the sender for their key (`assay key` prints it) and pass --key <public.pem>.",
       );
       return 3;
+    }
+    case "cases": {
+      const app = new App({ home, workspace });
+      for (const c of app.kernel.listCases()) {
+        const n = { verified: 0, refuted: 0, unverifiable: 0, unchecked: 0 };
+        for (const cl of caseClaims(app.kernel, c.id)) n[cl.verdict ?? "unchecked"]++;
+        console.log(
+          `${c.id}  ${c.title || "(untitled)"}  ${n.verified} ✔ verified, ${n.refuted} ✖ refuted, ${n.unverifiable} ? unverifiable, ${n.unchecked} · not checked`,
+        );
+      }
+      await app.close();
+      return 0;
     }
     case "export": {
       const caseId = args[0];

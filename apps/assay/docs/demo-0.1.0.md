@@ -58,7 +58,17 @@ node apps/assay/bin/assay.mjs serve --workspace ~/assay-demo --demo
 
 **Stop if** the probe is unknown, a claim stays without a verdict, or the page shows an error.
 
-Stop the server with Ctrl-C. The terminal returns to the prompt.
+Stop the server with Ctrl-C. The terminal returns to the prompt. Then check the terminal summary
+(the store can be read only while no server holds it):
+
+```bash
+node apps/assay/bin/assay.mjs cases
+node apps/assay/bin/assay.mjs export <case-id> --format md
+```
+
+**Expected:** `cases` lists your case with `1 ✔ verified, 1 ✖ refuted`. Its first word is the case
+id. `export` prints a table with one row per claim: its verdict, the text, and the reason for the
+verdict.
 
 ## 3. The real demo: your signed-in Claude
 
@@ -78,6 +88,14 @@ node apps/assay/bin/assay.mjs serve --workspace ~/assay-demo
 - It reports the format, CPU, links and exports for each file.
 - It records claims, and each one gets ✔, ✖ or ?. The right answers are in §5.
 
+**The demo passes only if all three hold:**
+1. It runs end to end: every step above happened, with no error page.
+2. The checking is right: every verdict agrees with §5. A true claim is ✔, a false one ✖, and a
+   claim the files cannot settle is ?.
+3. Claude is right: every claim it records is ✔. If the checker is right about a ✖, Claude was
+   wrong. A ? means Claude claimed something the checker cannot settle. Either fails this
+   condition; report which claims.
+
 **Stop if:**
 - Claude uses any tool that is not an Assay tool (names starting `mcp__assay__`). In enforced mode
   that should be impossible.
@@ -87,13 +105,19 @@ node apps/assay/bin/assay.mjs serve --workspace ~/assay-demo
 
 ## 4. Report
 
-Send back:
-1. Whether each step's expected result happened.
-2. The case's claims list: the text, the verdict and the reason. Copy it from the case page. Do
-   not commit it.
-3. Anything surprising.
+Close the server with Ctrl-C, then print the summary in the terminal:
 
-Close the server with Ctrl-C when you are done.
+```bash
+node apps/assay/bin/assay.mjs cases
+node apps/assay/bin/assay.mjs export <case-id> --format md > ~/assay-demo/report.md
+```
+
+Send back:
+1. Whether each step's expected result happened, and which of the three pass conditions in §3
+   held.
+2. `~/assay-demo/report.md`: each claim with its verdict and reason, and the evidence list. Keep
+   it out of the repository.
+3. Anything surprising.
 
 ## 5. The right answers (from LLVM's reading of each file; the universal binary's links, which LLVM's record does not cover, are from reax and core)
 
