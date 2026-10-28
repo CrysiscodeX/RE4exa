@@ -97,6 +97,11 @@ try {
   await box.fill('claim pkg.has-dependency {"path":"pkg/package.json","name":"lodash"} demo-pkg depends on lodash');
   await box.press("Enter");
   await page.getByRole("button", { name: /Claim refuted: demo-pkg depends on lodash/ }).waitFor({ timeout: 20_000 });
+  // the sidebar's counts follow the last verdict too, without a reload (it is checked after the turn ends)
+  await page
+    .locator(`[role="treeitem"][data-key="c:${c.id}"] .count`)
+    .getByText("1 verified, 1 refuted")
+    .waitFor({ state: "attached", timeout: 5_000 });
   await shot("02-claims");
 
   await box.fill("run node --version");

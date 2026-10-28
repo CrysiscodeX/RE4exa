@@ -380,6 +380,8 @@ export class Orchestrator {
           claimIds: changed.map((c) => c.id),
         },
       );
+      // verification runs after the turn ends, so no later status change would refresh the case's counts
+      this.deps.caseChanged?.(caseId);
     }
   }
 

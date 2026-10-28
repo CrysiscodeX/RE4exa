@@ -31,6 +31,7 @@ Fixed before release. These were found by two independent RQS-2030 reviews and r
 - Approval cards cut arguments at 2,000 characters. They now show up to 256 KiB, and say when they show less.
 - Workers had no spend cap; they now get what is left of the case budget.
 - The live benchmark graded the two arms differently and read its baseline from outside the repository.
+- The sidebar's verdict counts missed the last claim checked in a turn until the page was reloaded (found in a visual run of the demo).
 
 - **Durable kernel** on SQLite:
   - one process per store;
