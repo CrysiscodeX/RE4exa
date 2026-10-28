@@ -956,6 +956,10 @@ export declare function explain(input: DecideInput): {
 };
 export declare function decide(input: DecideInput): Decision;
 
+//// probes/arch.d.ts
+/** The canonical name of an architecture (lower-cased; names not in the table pass through). */
+export declare function normalizeArch(name: string): string;
+
 //// probes/builtin/archive.d.ts
 import { type AssayProbe } from "../util.ts";
 export interface ArchiveEntry {

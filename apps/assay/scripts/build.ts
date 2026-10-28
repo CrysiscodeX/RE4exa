@@ -1,4 +1,5 @@
-// Build the installable package: build the bundled shared engine (@re4exa/core), compile src/ to
+// Build the installable package: build the bundled shared engine (@re4exa/core) and reax's
+// operations (the reax.* probes), compile src/ to
 // dist/ (relative .ts imports rewritten to .js), and build the UI. `npm pack` runs this through
 // prepack. Core is a bundled dependency, so the tarball carries its dist/.
 import { spawnSync } from "node:child_process";
@@ -14,6 +15,8 @@ run(process.execPath, [
   "--disable-warning=ExperimentalWarning",
   join(root, "..", "..", "packages", "core", "scripts", "build.ts"),
 ]);
+// reax's operations are Assay's reax.* probes; build them the same way.
+run(process.execPath, ["--disable-warning=ExperimentalWarning", join(root, "..", "reax", "scripts", "build.ts")]);
 rmSync(join(root, "dist"), { recursive: true, force: true });
 run("npx", ["tsc", "-p", "tsconfig.build.json"]);
 run("npx", ["vite", "build", "ui"]);

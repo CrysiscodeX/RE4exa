@@ -5,6 +5,13 @@
   "license": "Apache-2.0",
   "type": "module",
   "private": true,
+  "exports": {
+    "./*": {
+      "types": "./src/*.ts",
+      "source": "./src/*.ts",
+      "default": "./dist/*.js"
+    }
+  },
   "engines": {
     "node": ">=24.15"
   },
@@ -22,7 +29,8 @@
     "bench:doctor": "node --conditions=source --disable-warning=ExperimentalWarning bench/doctor.ts",
     "bench:live": "node --conditions=source --disable-warning=ExperimentalWarning bench/live.ts",
     "bench:smoke": "node --conditions=source --disable-warning=ExperimentalWarning bench/smoke.ts",
-    "bench:setup": "node --conditions=source --disable-warning=ExperimentalWarning bench/setup.ts"
+    "bench:setup": "node --conditions=source --disable-warning=ExperimentalWarning bench/setup.ts",
+    "build": "node --disable-warning=ExperimentalWarning scripts/build.ts"
   },
   "dependencies": {
     "@re4exa/core": "0.1.0"

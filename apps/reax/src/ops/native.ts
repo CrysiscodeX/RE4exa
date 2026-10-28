@@ -5,6 +5,7 @@
 import { closeSync, openSync, readSync, statSync } from "node:fs";
 import { CoreError } from "@re4exa/core/errors";
 import { resolveInWorkspace } from "@re4exa/core/mcp/paths";
+import { normalizeArch } from "@re4exa/core/probes/arch";
 import { NATIVE_CAP, parseElf } from "@re4exa/core/probes/builtin/elf";
 import { IDENTIFY_HEAD, identifyBytes } from "@re4exa/core/probes/builtin/identify";
 import { parseMachO } from "@re4exa/core/probes/builtin/macho";
@@ -39,16 +40,8 @@ function target(ctx: OpContext, path: unknown): { abs: string; rel: string } {
   return r;
 }
 
-const ARCH: Record<string, string> = {
-  "x86-64": "x86_64",
-  amd64: "x86_64",
-  x86_64: "x86_64",
-  arm64: "aarch64",
-  aarch64: "aarch64",
-  i386: "x86",
-  x86: "x86",
-};
-const arch = (a: string) => ARCH[a] ?? a;
+// One spelling per architecture, shared with the core verifier so reax's facts and its checks agree.
+const arch = normalizeArch;
 
 export interface NameList {
   count: number;

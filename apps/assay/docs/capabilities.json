@@ -106,11 +106,11 @@
           },
           "predicate": {
             "type": "string",
-            "description": "one the verifier can re-run: file.contains, file.identify, file.hash, pkg.has-dependency, pkg.has-install-script, js.imports, native.links, archive.contains, endpoint.present, cmd.exit"
+            "description": "one the verifier can re-run: file.contains, file.identify, file.hash, pkg.has-dependency, pkg.has-install-script, js.imports, native.links, native.arch, native.exports, archive.contains, endpoint.present, cmd.exit"
           },
           "params": {
             "type": "object",
-            "description": "params by predicate (workspace-relative paths; literal text, not regex): file.contains{path,offset?,text|hex} file.identify{path,format} file.hash{path,sha256} pkg.has-dependency{path,name,scope?} pkg.has-install-script{path,hook?} js.imports{path,specifier} native.links{path,library} archive.contains{path,entry} endpoint.present{path,host} cmd.exit{program,args?,expect} | any predicate: negate:true when the text states an absence (\"does not use eval\")"
+            "description": "params by predicate (workspace-relative paths; literal text, not regex): file.contains{path,offset?,text|hex} file.identify{path,format} file.hash{path,sha256} pkg.has-dependency{path,name,scope?} pkg.has-install-script{path,hook?} js.imports{path,specifier} native.links{path,library} native.arch{path,arch} native.exports{path,symbol} archive.contains{path,entry} endpoint.present{path,host} cmd.exit{program,args?,expect} | any predicate: negate:true when the text states an absence (\"does not use eval\")"
           },
           "path": {
             "type": "string"
@@ -834,6 +834,30 @@
       "platforms": [
         "linux",
         "darwin"
+      ],
+      "consent": "none"
+    },
+    {
+      "id": "reax.identify.file",
+      "version": "0.0.1",
+      "predicate": "reax.identify.file",
+      "cost": "cheap",
+      "platforms": [
+        "linux",
+        "darwin",
+        "win32"
+      ],
+      "consent": "none"
+    },
+    {
+      "id": "reax.inventory.native",
+      "version": "0.0.1",
+      "predicate": "reax.inventory.native",
+      "cost": "cheap",
+      "platforms": [
+        "linux",
+        "darwin",
+        "win32"
       ],
       "consent": "none"
     }

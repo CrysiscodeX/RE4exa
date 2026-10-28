@@ -2,6 +2,7 @@
 // own MCP endpoint: it behaves like an agent that calls Assay's tools over MCP HTTP with the session's
 // bearer token. Commands (first word of the user's text):
 //   sweep <path>                          assay_sweep, then a summary of the findings
+//   probe <probe-id> <path>               assay_probe (for example reax.inventory.native), then its result
 //   spawn <n> workers: <t1>; <t2> ...     assay_spawn_worker once per task
 //   claim <predicate> <json-params> <text>  assay_record_claim (params.path, if any, is the subject)
 //   run <program> <args...>               assay_exec (Assay's policy asks the person)
@@ -211,6 +212,14 @@ class FakeSession implements AgentSession {
     switch (verb) {
       case "sweep":
         return this.#sweep(rest || ".");
+      case "probe": {
+        const [probe, path] = rest.split(/\s+/);
+        if (!probe || !path) return this.#say("probe needs <probe-id> <path>.");
+        const r = await this.#call("assay_probe", { probe, path });
+        return this.#say(
+          r.ok ? `${probe} ${path}: ${summarize(r.text, 400)}` : `Could not run ${probe}: ${summarize(r.text, 200)}`,
+        );
+      }
       case "spawn": {
         const tasks = parseSpawnCommand(rest);
         const ids: string[] = [];

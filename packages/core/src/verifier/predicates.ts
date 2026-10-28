@@ -115,6 +115,30 @@ export const PREDICATES: Record<string, PredicateSpec> = {
     refuted: "it is not (run-time dlopen/LoadLibrary is not covered by this predicate)",
     unverifiable: "the file is not a supported native binary",
   },
+  "native.arch": {
+    predicate: "native.arch",
+    summary: "The ELF/PE/Mach-O/WebAssembly binary is built for CPU `arch` (any slice of a universal binary)",
+    probes: ["file.identify", "elf.info", "pe.info", "macho.info", "wasm.info"],
+    params: {
+      path,
+      arch: { type: "string", required: true, doc: "architecture, e.g. x86_64, aarch64, x86 (amd64, arm64 accepted)" },
+    },
+    verified: "a slice is built for that architecture",
+    refuted: "no slice is",
+    unverifiable: "the file is not a supported native binary",
+  },
+  "native.exports": {
+    predicate: "native.exports",
+    summary: "The binary exports symbol `symbol` (dynamic symbols, PE export table, Mach-O exports trie, Wasm exports)",
+    probes: ["file.identify", "elf.info", "pe.info", "macho.info", "wasm.info"],
+    params: {
+      path,
+      symbol: { type: "string", required: true, doc: "symbol name; one leading underscore is ignored (Mach-O)" },
+    },
+    verified: "the symbol is in the export list",
+    refuted: "the export list is complete and does not have it",
+    unverifiable: "the export list was capped or could not be read whole, or the file is not a supported native binary",
+  },
   "archive.contains": {
     predicate: "archive.contains",
     summary: "The archive (zip family, tar, tar.gz, ASAR) has an entry named `entry`",
@@ -178,6 +202,8 @@ export function checkParams(spec: PredicateSpec, params: Record<string, Json>): 
 const ALIASES: Record<string, Record<string, string[]>> = {
   "*": { path: ["file", "filePath", "file_path", "subject"] },
   "native.links": { library: ["lib", "dll", "dylib", "so", "name", "needed"] },
+  "native.arch": { arch: ["cpu", "architecture", "machine", "value"] },
+  "native.exports": { symbol: ["export", "name", "function", "value"] },
   "pkg.has-dependency": { name: ["dependency", "package", "pkg", "dep"] },
   "pkg.has-install-script": { hook: ["script", "lifecycle"] },
   "js.imports": { specifier: ["module", "import", "from", "source"] },

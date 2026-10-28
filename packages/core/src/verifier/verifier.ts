@@ -8,6 +8,7 @@ import type { Json } from "../evidence/jcs.ts";
 import type { ClaimRecord } from "../evidence/record.ts";
 import { type AgentClaim, caseClaims, type StoredClaim, setVerdict, type Verdict } from "../evidence/store.ts";
 import type { Kernel } from "../kernel/kernel.ts";
+import { normalizeArch } from "../probes/arch.ts";
 import { familiesOf } from "../probes/builtin/identify.ts";
 import { checkParams, normalizeParams, PREDICATES } from "./predicates.ts";
 
@@ -242,6 +243,83 @@ export function createVerifier(opts: {
         const hit = libs.find((l) => linksMatch(l, lib, probeId !== "elf.info"));
         if (hit) return out("verified", `links ${hit}`, r);
         return out("refuted", `static link list: ${libs.join(", ") || "(none)"}`, r);
+      }
+      case "native.arch":
+      case "native.exports": {
+        const id = await probe("file.identify", {});
+        if (isOutcome(id)) return id;
+        const fmt = String(obj(id.result).format);
+        const probeId =
+          fmt === "elf"
+            ? "elf.info"
+            : fmt === "pe"
+              ? "pe.info"
+              : familiesOf(fmt).includes("macho")
+                ? "macho.info"
+                : fmt === "wasm"
+                  ? "wasm.info"
+                  : null;
+        if (!probeId) return unv(`not a supported native binary (format ${fmt})`, id);
+        const r = await probe(probeId, {});
+        if (isOutcome(r)) return r;
+        const res = obj(r.result);
+        const n = (v: Json | undefined) => (typeof v === "number" ? v : 0);
+        const notes = strs(res.notes);
+        // Per slice: its architecture, its export names, and whether that list is the whole table.
+        const slices: { arch: string; exports: string[]; complete: boolean }[] =
+          probeId === "elf.info"
+            ? [
+                {
+                  arch: String(res.machine),
+                  exports: strs(obj(res.exports).first),
+                  complete:
+                    strs(obj(res.exports).first).length === n(obj(res.exports).count) &&
+                    !notes.some((x) => /symbol/.test(x)),
+                },
+              ]
+            : probeId === "pe.info"
+              ? [
+                  {
+                    arch: String(res.machine),
+                    exports: strs(obj(res.exports).names),
+                    complete:
+                      strs(obj(res.exports).names).length === n(obj(res.exports).count) &&
+                      !notes.some((x) => /^export/.test(x)),
+                  },
+                ]
+              : probeId === "wasm.info"
+                ? [
+                    {
+                      arch: "wasm32",
+                      exports: ((res.exports as Json[] | undefined) ?? []).map((e) => String(obj(e).name)),
+                      complete: res.truncated !== true,
+                    },
+                  ]
+                : ((res.slices as Json[] | undefined) ?? []).map((s) => {
+                    const so = obj(s);
+                    return {
+                      arch: String(so.cpu),
+                      exports: strs(obj(so.exports).names),
+                      complete: obj(so.exports).complete === true && !so.error,
+                    };
+                  });
+        if (c.predicate === "native.arch") {
+          const want = normalizeArch(String(p.arch));
+          const archs = slices.map((s) => normalizeArch(s.arch));
+          if (archs.includes(want)) return out("verified", `built for ${want}`, r);
+          return out("refuted", `built for ${archs.join(", ") || "(no slices)"}`, r);
+        }
+        const bare = (x: string) => x.replace(/^_/, "");
+        const want = bare(String(p.symbol));
+        if (slices.some((s) => s.exports.some((e) => e === String(p.symbol) || bare(e) === want)))
+          return out("verified", `exports ${String(p.symbol)}`, r);
+        if (slices.length && slices.every((s) => s.complete))
+          return out(
+            "refuted",
+            `the export list is complete (${slices.map((s) => s.exports.length).join(" + ")} names) and does not have it`,
+            r,
+          );
+        return unv("the export list was capped or could not be read whole", r);
       }
       case "archive.contains": {
         const r = await probe("archive.list", {});

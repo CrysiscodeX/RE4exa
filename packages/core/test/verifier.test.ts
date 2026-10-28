@@ -58,6 +58,8 @@ test("every predicate verifies a true claim and refutes a false one, citing the 
         { path: "macho/Updater", library: "libsparkle.dylib" },
         { path: "macho/Updater", library: "libz.dylib" },
       ],
+      ["native.arch", { path: "elf/tool", arch: "amd64" }, { path: "elf/tool", arch: "aarch64" }],
+      ["native.exports", { path: "elf/tool", symbol: "tool_main" }, { path: "elf/tool", symbol: "no_such_symbol" }],
       [
         "archive.contains",
         { path: "zip-slip/update.zip", entry: "./app/readme.txt" },
@@ -95,6 +97,16 @@ test("unverifiable, with the reason: partial census, unsupported predicates, bad
       assert.equal(v.verdict, "unverifiable", `${pred}: ${v.reason}`);
       assert.match(v.reason, re);
     };
+    await expect(
+      "native.arch",
+      { path: "version-pair/v1/package.json", arch: "x86_64" },
+      /not a supported native binary/,
+    );
+    await expect(
+      "native.exports",
+      { path: "version-pair/v1/package.json", symbol: "x" },
+      /not a supported native binary/,
+    );
     await expect("js.imports", { path: "js-app/src/main.js", specifier: "lodash" }, /census is partial/);
     await expect(
       "endpoint.present",

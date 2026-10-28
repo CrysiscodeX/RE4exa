@@ -25,6 +25,7 @@ import { diffFindings } from "@re4exa/core/probes/diff";
 import { createProbeEngine } from "@re4exa/core/probes/engine";
 import { runProcess } from "@re4exa/core/vendor/orca-process-host/run-process";
 import { createVerifier, parseClaimBlocks } from "@re4exa/core/verifier/verifier";
+import { reaxProbes } from "reax/ops/probes";
 import { type Accounts, createAccounts } from "../accounts/registry.ts";
 import type { ProviderId } from "../contracts.ts";
 import { AssayError } from "../errors.ts";
@@ -134,6 +135,8 @@ export class App {
       workspace: this.workspace,
       redact: (v) => redact(v),
       producerId: "assay-runner",
+      // reax's operations, as reax.* probes: the agent's source of native-binary facts.
+      probes: reaxProbes(),
     });
     this.verifier = createVerifier({
       producerId: "assay-verifier",

@@ -2,6 +2,15 @@ import type { Recipe } from "../server/api-types.ts";
 
 export const RECIPES: Recipe[] = [
   {
+    id: "examine-binary",
+    title: "Examine a binary",
+    description:
+      "What a native program or library is: format, CPU, linked libraries and exports, read by reax and checked by Assay.",
+    prompt:
+      "Examine the binaries at {path}. For each file, run assay_probe with reax.inventory.native (use reax.identify.file first if you do not know the format). Report its format, CPU architectures, linked libraries and notable exports. Record each as a seen claim with predicate file.identify, native.arch, native.links or native.exports, citing the evidence id, so Assay can check it.",
+    needsPath: true,
+  },
+  {
     id: "investigate-package",
     title: "Investigate a package",
     description:

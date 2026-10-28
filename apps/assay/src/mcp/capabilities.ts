@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 import type { Json } from "@re4exa/core/evidence/jcs";
 import { DETECTOR_VERSION } from "@re4exa/core/policy/redact";
 import { createProbeEngine } from "@re4exa/core/probes/engine";
+import { reaxProbes } from "reax/ops/probes";
 import type { ProbeEngine } from "../contracts.ts";
 import { PROTOCOL_VERSION, SUPPORTED_PROTOCOL_VERSIONS } from "./server.ts";
 import { LIMITS, TOOL_SPECS, type ToolSpec, VERIFY_SPEC } from "./tools.ts";
@@ -85,7 +86,7 @@ export function capabilityStatement(opts: { engine?: ProbeEngine; verifier?: boo
 /** The published statement: every tool a served case has, including assay_verify, and every probe. */
 export function publishedStatement(): Json {
   // list() only reads the probe table, so no store is needed
-  const engine = createProbeEngine({ kernel: null as never, workspace: ROOT, platform: "linux" });
+  const engine = createProbeEngine({ kernel: null as never, workspace: ROOT, platform: "linux", probes: reaxProbes() });
   return capabilityStatement({ engine, verifier: true });
 }
 

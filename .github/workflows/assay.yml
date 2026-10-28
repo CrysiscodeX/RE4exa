@@ -10,6 +10,11 @@ on:
     paths:
       - "apps/assay/**"
       - "packages/core/**"
+      # reax's operations are Assay's reax.* probes; its fixtures are the demo's binaries
+      - "apps/reax/src/**"
+      - "apps/reax/fixtures/bin/**"
+      - "apps/reax/package.json"
+      - "apps/reax/scripts/build.ts"
       - "scripts/with-source.mjs"
       - "package.json"
       - "package-lock.json"
@@ -19,6 +24,11 @@ on:
     paths:
       - "apps/assay/**"
       - "packages/core/**"
+      # reax's operations are Assay's reax.* probes; its fixtures are the demo's binaries
+      - "apps/reax/src/**"
+      - "apps/reax/fixtures/bin/**"
+      - "apps/reax/package.json"
+      - "apps/reax/scripts/build.ts"
       - "scripts/with-source.mjs"
       - "package.json"
       - "package-lock.json"
