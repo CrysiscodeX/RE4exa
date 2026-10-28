@@ -8,7 +8,7 @@ runtime dependencies beyond Node's built-ins (`node:sqlite` included).
 | `kernel/` | Durable SQLite kernel: tasks, attempts, leases with a write fence, checkpoints, intents before effects (`safe` / `keyed` / `unsafe` replay), receipts, topics, mailbox, budgets, a hash-chained case log |
 | `evidence/` | Claim records (`re4exa.claim/2`, reads `assay.claim/1`) with ProbeKey / ObservationId / FindingKey, unknowns with revisions, claims, calibration |
 | `probes/` | Model-free probe engine, built-in readers, the router pack (leanrea's router as data), reach table, finding diffs |
-| `verifier/` | Re-runs `seen` claims against evidence (10 predicates) |
+| `verifier/` | Re-runs `seen` claims against evidence (12 predicates) |
 | `policy/` | Untrusted-content envelope and session taint, approval queue, secret redaction, child-process environment allow-list |
 | `mcp/` | Result handles, workspace path guard, path suggestions |
 | `errors.ts` | Stable failure codes; apps extend them with `defineFailureModes` |

@@ -1,6 +1,6 @@
 # Assay
 
-**A local workbench for agents.** You chat with the agent clients you already have, signed in with your own accounts: Claude, Codex, or any Agent Client Protocol (ACP) agent. The agent can split work across sub-agents that run in parallel. Each claim it records with one of 10 machine-checkable predicates is re-run without a model and shown as ✔ verified or ✖ refuted. Every other claim is shown as ? unverifiable. Investigations survive crashes, and can be rewound, forked at any step, and re-run against a new version.
+**A local workbench for agents.** You chat with the agent clients you already have, signed in with your own accounts: Claude, Codex, or any Agent Client Protocol (ACP) agent. The agent can split work across sub-agents that run in parallel. Each claim it records with one of 12 machine-checkable predicates is re-run without a model and shown as ✔ verified or ✖ refuted. Every other claim is shown as ? unverifiable. Investigations survive crashes, and can be rewound, forked at any step, and re-run against a new version.
 
 ![Claims verified and refuted in the chat](docs/screenshots/claims.png)
 
@@ -24,6 +24,9 @@ npm run build                # builds the shared engine (packages/core), Assay a
 node bin/assay.mjs serve     # prints a one-time pairing link; open it in your browser
 node bin/assay.mjs serve --demo   # adds a deterministic fake agent, so you can try it with no account
 ```
+
+To see the 0.1.0 demo (Claude examining five binaries with reax, each claim checked), follow
+[`docs/demo-0.1.0.md`](docs/demo-0.1.0.md).
 
 The first-run wizard does five things:
 1. finds your installed clients (`claude`, `codex`, ACP agents);
@@ -51,7 +54,7 @@ node bin/assay.mjs doctor
   - Worker status is live, exited or unverifiable.
   - "Second opinion" asks a worker on another provider to check a worker's claims.
 - **Claims checked where a predicate fits.**
-  - A `seen` claim that names a predicate is re-run by a verifier with no model (10 predicates). `cmd.exit` claims, such as "tests pass", run only after you approve.
+  - A `seen` claim that names a predicate is re-run by a verifier with no model (12 predicates). `cmd.exit` claims, such as "tests pass", run only after you approve.
   - The verdict covers the predicate. A claim whose text negates its predicate ("does not use eval") is marked unverifiable unless the predicate says `negate: true`.
   - Verdicts feed **calibration per provider and account**, with Wilson intervals.
 - **Safety by default.**
