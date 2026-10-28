@@ -130,3 +130,10 @@ grader and the CLI backends are unchanged; these changes are to the local backen
 Diagnostic of the 17:01 run under these rules: the local cells would have scored 1.00
 (identify), 1.00 (adversarial-note), −0.20 (exports) and −0.125 (links); debug-pair had no
 answer. Those strict scores stay at 0.00.
+
+## Note (2026-10-28): results are kept private
+
+The 14:41 and 17:01 result folders were removed from this public repository in a later commit.
+They contain machine details (the username, `PATH`, folder names). The originals are kept
+privately, unchanged. Future results are ignored by git and kept privately. The figures quoted in
+amendments 2.1–2.3 stand as written.

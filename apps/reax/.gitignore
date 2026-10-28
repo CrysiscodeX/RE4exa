@@ -5,3 +5,7 @@ reports/
 *.tgz
 bench/backends.json
 bench/results/**/.tools/
+# Live benchmark results hold machine details (paths, PATH, folder names); they are kept privately,
+# never in this public repository.
+bench/results/smoke-*/
+bench/results/live-*/

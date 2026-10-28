@@ -89,8 +89,9 @@ any llama-server still running.
 
 Behind a proxy, set `NODE_USE_ENV_PROXY=1`.
 
-**Results.** They land in `bench/results/smoke-<date>-<os>/`. Commit and push them. Mac and
-Windows results are reported separately. The rules are in
+**Results.** They land in `bench/results/smoke-<date>-<os>/`. Git ignores them, because they
+contain details of your machine (paths, `PATH`, folder names). This repository is public, so keep
+results private. Mac and Windows results are reported separately. The rules are in
 [`bench/PREREG-v2-smoke.md`](bench/PREREG-v2-smoke.md).
 
 ## Status rules (ADR 0001)
