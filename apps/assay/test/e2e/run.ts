@@ -6,8 +6,9 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { join } from "node:path";
 import { App } from "../../src/app/app.ts";
-import type { AppState, CaseSummary } from "../../src/server/api-types.ts";
+import type { CaseSummary } from "../../src/server/api-types.ts";
 import { tmp } from "../helpers.ts";
+import { waitSignedIn } from "../waits.ts";
 
 const require = createRequire(import.meta.url);
 // biome-ignore lint/suspicious/noExplicitAny: Playwright's types are not a dependency of this package
@@ -58,14 +59,7 @@ try {
       },
       [method, path, body] as [string, string, unknown],
     ) as Promise<T>;
-  const state = await api<AppState>("GET", "/api/state");
-  const fake = state.accounts.find((a) => a.provider === "fake")!;
-  for (
-    let i = 0;
-    i < 50 && (await api<AppState>("GET", "/api/state")).accounts.find((x) => x.id === fake.id)?.status !== "signed-in";
-    i++
-  )
-    await page.waitForTimeout(100);
+  const fake = await waitSignedIn(api, "fake");
   const c = await api<CaseSummary>("POST", "/api/cases", {
     title: "demo-pkg install behaviour",
     recipeId: "investigate-package",

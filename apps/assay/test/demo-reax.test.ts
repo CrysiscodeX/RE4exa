@@ -10,6 +10,7 @@ import { test } from "node:test";
 import { App } from "../src/app/app.ts";
 import type { AppState, CaseDetail, CaseSummary } from "../src/server/api-types.ts";
 import { tmp } from "./helpers.ts";
+import { waitCase, waitSignedIn } from "./waits.ts";
 
 const FIXTURES = join(import.meta.dirname, "..", "..", "reax", "fixtures", "bin");
 export const DEMO_FILES = [
@@ -54,7 +55,7 @@ test("demo 0.1.0: the agent examines five binaries with reax inside Assay, and e
   try {
     const api = await pair(server.url, server.pairingUrl());
     const state = await api<AppState>("GET", "/api/state");
-    const fake = state.accounts.find((a) => a.provider === "fake")!;
+    const fake = await waitSignedIn(api, "fake");
     assert.ok(
       state.recipes.some((r) => r.id === "examine-binary"),
       "the examine-binary recipe is offered",
@@ -66,15 +67,7 @@ test("demo 0.1.0: the agent examines five binaries with reax inside Assay, and e
     });
     const say = (text: string) =>
       api("POST", `/api/cases/${c.id}/messages`, { text, provider: "fake", accountId: fake.id });
-    const settled = async (pred: (d: CaseDetail) => boolean) => {
-      let d: CaseDetail | null = null;
-      for (let i = 0; i < 400; i++) {
-        d = await api<CaseDetail>("GET", `/api/cases/${c.id}`);
-        if (pred(d) && d.summary.activity !== "working") return d;
-        await new Promise((r) => setTimeout(r, 50));
-      }
-      return d!;
-    };
+    const settled = (done: (d: CaseDetail) => boolean) => waitCase(api, c.id, done);
 
     // 1. the agent reads the facts through reax
     await say("probe reax.inventory.native bin/hello-universal-macos-s");

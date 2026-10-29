@@ -32,6 +32,7 @@ Fixed before release. These were found by two independent RQS-2030 reviews and r
 - Workers had no spend cap; they now get what is left of the case budget.
 - The live benchmark graded the two arms differently and read its baseline from outside the repository.
 - The sidebar's verdict counts missed the last claim checked in a turn until the page was reloaded (found in a visual run of the demo).
+- While an account was still being checked at start-up, the composer said it was signed out. It now says the sign-in is being checked, and Send turns on when the check ends.
 
 - **Durable kernel** on SQLite:
   - one process per store;

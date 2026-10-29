@@ -5,6 +5,7 @@ import { type KeyboardEvent, type ReactNode, useEffect, useId, useRef, useState 
 import type { ProviderId } from "../../src/contracts.ts";
 import type { CaseDetail, CostEstimate, Mode, SendMessageRequest } from "../../src/server/api-types.ts";
 import { api, type ExportFormat, requestFor, setCaseSettings, useData } from "./api.ts";
+import { composerHint } from "./hint.ts";
 import { Icon } from "./icons.tsx";
 import { cx, download, providerName, rovingIndex, usdRange, useDebounced } from "./util.ts";
 import { setDialog, toastError, useView, verifyAll } from "./view.ts";
@@ -121,6 +122,12 @@ export function Composer(props: { detail: CaseDetail }): ReactNode {
   const mode: Mode = st.mode ?? defaultMode;
   const budget = st.budgetUsd ?? defaultBudget;
   const signedOut = account?.status !== "signed-in";
+  const hint = composerHint({
+    providerName: providerName(provider),
+    accounts: mine,
+    account,
+    selected: !!st.accountId,
+  });
   const activity = detail.summary.activity;
   const running = activity === "working" || activity === "starting" || activity === "blocked";
 
@@ -286,11 +293,9 @@ export function Composer(props: { detail: CaseDetail }): ReactNode {
           ) : null}
         </output>
       </div>
-      {signedOut ? (
+      {hint ? (
         <p className="hint" id={ids.hint}>
-          {mine.length === 0
-            ? `No ${providerName(provider)} account yet. Add one under Accounts in the left rail.`
-            : "The selected account is signed out. Sign in from Accounts in the left rail."}
+          {hint}
         </p>
       ) : null}
       <div className="composer-actions">

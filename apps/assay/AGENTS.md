@@ -37,6 +37,15 @@ The engine-agnostic modules live in `packages/core` (`@re4exa/core`), with their
 8. **Measurements must be real.**
    - Do not edit `bench/results/` by hand.
    - A missed target is reported as missed.
+9. **Tests and scripts that drive a running Assay wait on state, using `test/waits.ts`.** This
+   covers the browser test, the demo path test and any walk-through.
+   - Use `waitSignedIn` before using an account. Assay checks each account when it starts, so it
+     cannot be used straight away.
+   - Use `waitCase` after sending a message. Claims are checked after the turn ends.
+   - Wait on the app's data or on element roles, never on visible text that styling can change
+     (for example, labels shown in capitals).
+   - Run a new browser test or script 3 times in a row, and once with the machine busy, before
+     trusting it.
 
 ## Where to look
 
