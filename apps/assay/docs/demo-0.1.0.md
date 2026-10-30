@@ -23,6 +23,10 @@ cd apps/assay && npm run build && cd ../..
 
 **Expected:** the build ends with `built dist/ and ui/dist/`. **Stop if** any step fails.
 
+`npm ci` may warn that it did not run `node-pty`'s install scripts (npm 11 blocks them by default).
+No action is needed: `node-pty` ships ready-built binaries for macOS and Windows, and Assay falls
+back to plain pipes for the sign-in terminal if it cannot load them.
+
 ## 1. Prepare the five binaries
 
 ```bash
@@ -130,3 +134,52 @@ Send back:
 | `hello-universal-macos-s` | Mach-O universal | x86_64 and aarch64 | `/usr/lib/libSystem.B.dylib` | `reax_add`, `reax_build_tag` |
 
 `reax_hidden` is in none of the export lists. The libraries define it, but keep it hidden.
+
+## 6. A real app: LearnHarness, with the demo agent (no account, no cost)
+
+LearnHarness 0.4.0 is a real Electron + Next.js desktop app (671 files). Its tree holds
+`AGENTS.md`, instructions written for coding agents. An agent that investigates the app must
+treat that text as data. This section shows Assay doing so, and checking claims about the app.
+
+```bash
+mkdir -p ~/assay-lh
+cp -R "$(node apps/assay/scripts/learnharness.ts fetch)" ~/assay-lh/
+node apps/assay/bin/assay.mjs serve --workspace ~/assay-lh --demo
+```
+
+The fetch takes the pinned commit (`dc4c398`), checks it, and leaves out `.git`. Then:
+
+1. Open the pairing link. Make a new case: the recipe is **Audit a desktop app**, the path is
+   `learnharness`, and the agent is the **demo agent**.
+2. Send these one at a time:
+   ```
+   sweep learnharness
+   read learnharness/AGENTS.md
+   run git status
+   claim js.imports {"path":"learnharness/app/layout.tsx","specifier":"next/font/google"} The root layout loads Google fonts through next/font
+   claim js.imports {"path":"learnharness/app/layout.tsx","specifier":"axios"} The root layout loads axios
+   claim endpoint.present {"path":"learnharness/src/server/search.ts","host":"api.tavily.com"} Web search calls Tavily
+   claim endpoint.present {"path":"learnharness/src/server/search.ts","host":"api.bing.microsoft.com"} Web search calls Bing's Web Search API
+   claim file.contains {"path":"learnharness/electron/main.cjs","text":"nodeIntegration: true"} The main window turns on Node integration
+   ```
+
+**Expected:**
+- **The sweep** covers the whole app in a few seconds, with over 2,000 evidence records in the
+  right panel. Nothing is listed as misread. The only entries not examined are images, a PDF
+  and macOS-only formats.
+- **The read** shows the file's text inside `<untrusted-content ... origin="file:learnharness/AGENTS.md">`.
+- **`run git status`** waits for your approval. The card says the session read untrusted
+  content and names `AGENTS.md`. Choose **Deny**: an audit runs nothing.
+- **The claims:**
+  - next/font: **✔ verified**;
+  - axios: **✖ refuted**, because the census is complete;
+  - Tavily: **✔ verified**;
+  - Bing: **✖ refuted**;
+  - Node integration: **✖ refuted**; the file sets `nodeIntegration: false`.
+
+**Stop if** anything is listed as misread, a command runs without your approval, or a verdict
+differs from the list above.
+
+With your Claude in place of the demo agent (as in §3), send the recipe's prompt instead. Each
+claim it makes gets ✔, ✖ or ?, and anything it asks to run waits for you.
+
