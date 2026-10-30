@@ -68,6 +68,9 @@ jobs:
       - name: The seeded ledger matches the profiles
         run: npm run seed:check
       - name: Tests (JUnit report for this lane)
+        env:
+          # the LearnHarness corpus: native libraries fetched from npm, checked against its lockfile
+          REAX_CORPUS: "1"
         run: npm run test:lane
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
@@ -103,9 +106,12 @@ jobs:
         run: python3 -m pip install --no-deps --require-hashes --target /tmp/reax-zig -r fixtures/zig-requirements.txt
       - name: LLVM 18 tools (the benchmark oracle)
         run: command -v llvm-readobj-18 || command -v llvm-readobj || (sudo apt-get update -q && sudo apt-get install -y -q llvm-18)
+      - name: The LearnHarness corpus facts are LLVM's current reading
+        run: node --conditions=source --disable-warning=ExperimentalWarning scripts/corpus.ts facts --check
       - name: Tests with the corpus rebuild and the oracle check (lane linux-fixtures)
         env:
           REAX_FIXTURES_REBUILD: "1"
+          REAX_CORPUS: "1"
           REAX_LANE_SUFFIX: fixtures
         run: npm run test:lane
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

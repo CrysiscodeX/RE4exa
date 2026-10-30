@@ -55,6 +55,10 @@ export interface NativeSlice {
   bits: number;
   kind: string;
   interpreter: string | null;
+  /** The library's name for itself: ELF DT_SONAME, the DLL name in a PE export directory, or a
+   * Mach-O install name (LC_ID_DYLIB). Not a link; a Mach-O install name can carry the path of the
+   * machine it was built on. Null when the file declares none. */
+  ownName: string | null;
   /** Shared libraries or DLLs loaded at start-up. */
   links: string[];
   /** False when the parser could not read the whole import or dynamic table (a cut or damaged file). */
@@ -91,6 +95,7 @@ export function inventoryBytes(
           bits: e.bits,
           kind: e.type === "dyn" && !e.interpreter ? "shared-object" : e.type === "dyn" ? "executable (PIE)" : e.type,
           interpreter: e.interpreter,
+          ownName: e.soname,
           links: [...e.needed].sort(),
           linksComplete: linksOk,
           exports: list(e.exports.first, e.exports.count, symbolsOk, limit),
@@ -113,6 +118,7 @@ export function inventoryBytes(
           bits: p.bits,
           kind: p.kind === "dll" ? "dll" : "executable",
           interpreter: null,
+          ownName: p.exports.dll,
           links: [...new Set(p.imports.map((i) => i.dll))].sort((a, c) => a.localeCompare(c)),
           linksComplete: importsOk,
           exports: list(p.exports.names, p.exports.count, exportsOk, limit),
@@ -132,6 +138,7 @@ export function inventoryBytes(
         bits: s.bits,
         kind: s.filetype === "execute" ? "executable" : s.filetype,
         interpreter: null,
+        ownName: s.id,
         links: s.dylibs.map((d) => d.name).sort(),
         linksComplete: !s.error,
         exports: list(s.exports.names, s.exports.count, s.exports.complete, limit),
@@ -153,6 +160,7 @@ export function inventoryBytes(
           bits: 32,
           kind: "module",
           interpreter: null,
+          ownName: null,
           links: [...new Set(w.imports.map((i) => i.module))].sort(),
           linksComplete: !w.truncated,
           exports: list(exports, exports.length, !w.truncated, limit),
@@ -173,6 +181,7 @@ function render(file: string, format: string, slices: NativeSlice[]): string {
   const lines = [`${file}: ${format}`];
   for (const s of slices) {
     lines.push(`- ${s.arch} ${s.bits}-bit ${s.kind}${s.interpreter ? `, interpreter ${s.interpreter}` : ""}`);
+    if (s.ownName) lines.push(`  own name: ${s.ownName}`);
     lines.push(`  links (${s.links.length}): ${s.links.join(", ") || "none"}`);
     const show = (label: string, l: NameList) =>
       `  ${label} (${l.count}${l.complete ? "" : ", not all listed"}): ${l.names.slice(0, 50).join(", ") || "none"}${l.names.length > 50 ? ", ..." : ""}`;
@@ -227,7 +236,7 @@ export const inventoryNative: Operation = {
   tool: "inventory",
   name: "inventory.native",
   summary:
-    "One-call inventory of a native binary: per architecture slice, its kind, interpreter, linked libraries, exported and imported symbols, and language markers.",
+    "One-call inventory of a native binary: per architecture slice, its kind, interpreter, own name (soname, DLL name or install name), linked libraries, exported and imported symbols, and language markers.",
   input: {
     type: "object",
     properties: {

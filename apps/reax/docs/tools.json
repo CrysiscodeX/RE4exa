@@ -14,7 +14,7 @@
  },
  {
   "name": "inventory",
-  "description": "inventory.native: One-call inventory of a native binary: per architecture slice, its kind, interpreter, linked libraries, exported and imported symbols, and language markers. Pass operation and its arguments; see session describe for one operation's schema.",
+  "description": "inventory.native: One-call inventory of a native binary: per architecture slice, its kind, interpreter, own name (soname, DLL name or install name), linked libraries, exported and imported symbols, and language markers. Pass operation and its arguments; see session describe for one operation's schema.",
   "operations": [
    "inventory.native"
   ],

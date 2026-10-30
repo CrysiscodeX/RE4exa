@@ -45,7 +45,7 @@ Ledger rows: `leanrea/LEAN-C04`.
 
 ### `inventory.native`
 
-One-call inventory of a native binary: per architecture slice, its kind, interpreter, linked libraries, exported and imported symbols, and language markers.
+One-call inventory of a native binary: per architecture slice, its kind, interpreter, own name (soname, DLL name or install name), linked libraries, exported and imported symbols, and language markers.
 
 Effect: read. Cost: cheap. Output from the target is untrusted (sent inside the untrusted-content envelope). Platforms: linux, darwin, win32.
 

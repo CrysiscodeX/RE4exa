@@ -839,7 +839,7 @@
     },
     {
       "id": "reax.identify.file",
-      "version": "0.0.1",
+      "version": "0.0.2",
       "predicate": "reax.identify.file",
       "cost": "cheap",
       "platforms": [
@@ -851,7 +851,7 @@
     },
     {
       "id": "reax.inventory.native",
-      "version": "0.0.1",
+      "version": "0.0.2",
       "predicate": "reax.inventory.native",
       "cost": "cheap",
       "platforms": [

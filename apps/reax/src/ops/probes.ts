@@ -10,7 +10,7 @@ import { OPERATIONS, runOperation } from "./registry.ts";
 import type { Operation } from "./types.ts";
 
 /** reax's version, recorded in every probe version so stored evidence is re-made when reax changes. */
-export const REAX_VERSION = "0.0.1";
+export const REAX_VERSION = "0.0.2";
 
 /** Formats each operation applies to; an operation not listed applies to every file. */
 const APPLIES: Record<string, string[]> = {

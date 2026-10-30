@@ -139,3 +139,22 @@ as `reax op <operation> path=<file>`, which needs no quoting in sh, PowerShell o
 
 For review: the cmd.exe fallback path is not exercised by a test, because every shim in CI is
 recognised.
+
+### SR-15. Third-party binaries fetched at test time (the LearnHarness corpus)
+`scripts/corpus.ts` fetches 11 npm packages (13 native files) that LearnHarness's lockfile pins,
+with `npm pack`. It does not install them and runs no scripts.
+- **Integrity:** each tarball must match the lockfile's sha512 before anything in it is read. A
+  mismatch stops the run.
+- **Unpacking:** core's own tar reader extracts only the named files, by exact entry name, so no
+  path from the archive is used to write.
+- **Use:** the files are only read, by reax, by core and by LLVM; they are never loaded or run.
+  They are cached outside the repository and never committed.
+- **Exposure:** a parser bug in reax, core or LLVM triggered by a crafted file. That risk is the
+  same as for any file a user examines, and these files come from a pinned, hash-checked source.
+
+Found by this corpus: a Mach-O install name can carry the build machine's path (resvg's is
+`/Users/runner/work/...`). reax reports it as `ownName`, not as a link. Agents should treat it as
+target text, which the untrusted-content envelope already does.
+
+For review: the registry is trusted to serve the tarball the lockfile pins. The hash check makes
+any substitution fail loudly, rather than pass silently.

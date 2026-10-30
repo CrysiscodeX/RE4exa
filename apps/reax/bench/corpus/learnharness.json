@@ -1,0 +1,101 @@
+{
+ "_note": "Native binaries LearnHarness ships, pinned by its lockfile. Fetched at test time with npm pack, checked against the sha512 below, never run, never committed. Regenerate with node scripts/corpus.ts manifest <learnharness checkout>.",
+ "source": {
+  "repo": "https://github.com/amosblomqvist/learnharness",
+  "commit": "dc4c398d5167865b84b0ccb3ec809eb88bf8f65f",
+  "release": "0.4.0",
+  "lockfile": "package-lock.json"
+ },
+ "packages": [
+  {
+   "name": "@resvg/resvg-js-linux-x64-gnu",
+   "version": "2.6.2",
+   "integrity": "sha512-IVUe+ckIerA7xMZ50duAZzwf1U7khQe2E0QpUxu5MBJNao5RqC0zwV/Zm965vw6D3gGFUl7j4m+oJjubBVoftw==",
+   "files": [
+    "package/resvgjs.linux-x64-gnu.node"
+   ]
+  },
+  {
+   "name": "@resvg/resvg-js-linux-x64-musl",
+   "version": "2.6.2",
+   "integrity": "sha512-UOf83vqTzoYQO9SZ0fPl2ZIFtNIz/Rr/y+7X8XRX1ZnBYsQ/tTb+cj9TE+KHOdmlTFBxhYzVkP2lRByCzqi4jQ==",
+   "files": [
+    "package/resvgjs.linux-x64-musl.node"
+   ]
+  },
+  {
+   "name": "@resvg/resvg-js-darwin-arm64",
+   "version": "2.6.2",
+   "integrity": "sha512-nmok2LnAd6nLUKI16aEB9ydMC6Lidiiq2m1nEBDR1LaaP7FGs4AJ90qDraxX+CWlVuRlvNjyYJTNv8qFjtL9+A==",
+   "files": [
+    "package/resvgjs.darwin-arm64.node"
+   ]
+  },
+  {
+   "name": "@resvg/resvg-js-win32-x64-msvc",
+   "version": "2.6.2",
+   "integrity": "sha512-ZXtYhtUr5SSaBrUDq7DiyjOFJqBVL/dOBN7N/qmi/pO0IgiWW/f/ue3nbvu9joWE5aAKDoIzy/CxsY0suwGosQ==",
+   "files": [
+    "package/resvgjs.win32-x64-msvc.node"
+   ]
+  },
+  {
+   "name": "@img/sharp-linux-x64",
+   "version": "0.35.5",
+   "integrity": "sha512-SxFtLTeJInhAA9Q836kux2vZNeOBQEx658qvbboZScr0wIARym3IcGmW7KpVD5sbVg0Ojy+udFQdayYIZyoNog==",
+   "files": [
+    "package/lib/sharp-linux-x64-0.35.5.node"
+   ]
+  },
+  {
+   "name": "@img/sharp-darwin-arm64",
+   "version": "0.35.5",
+   "integrity": "sha512-QRUlFQ0WxvdWyqqG/WtI3iupfD5rBzmCHXSdPsY91sAtVtTo7Q4cb6zOccZ3gqEqkr0f1As1ehLqmEpDsRf+lg==",
+   "files": [
+    "package/lib/sharp-darwin-arm64-0.35.5.node"
+   ]
+  },
+  {
+   "name": "@img/sharp-win32-x64",
+   "version": "0.35.5",
+   "integrity": "sha512-x76eH0vEiHlcMQu8Y8IenntaACtddpT6W0wmXtWrnKcnKI7ME5DdgqhAD6SEWOEl1v2zDvkZDhFA9KnURwpfqg==",
+   "files": [
+    "package/lib/sharp-win32-x64-0.35.5.node",
+    "package/lib/libvips-42.dll",
+    "package/lib/libvips-cpp-8.18.7.dll"
+   ]
+  },
+  {
+   "name": "@img/sharp-libvips-linux-x64",
+   "version": "1.3.4",
+   "integrity": "sha512-GJ//SSXbnwSDes02umB3nDJLFcQzw8a18V8fyhqr6tV515tOEMdImjjxj1AoafMRz56F3PHgftnj1QEKSU1zkw==",
+   "files": [
+    "package/lib/libvips-cpp.so.8.18.7"
+   ]
+  },
+  {
+   "name": "@img/sharp-libvips-darwin-arm64",
+   "version": "1.3.4",
+   "integrity": "sha512-5R89nBYiRdUlSWJxPhO+GVtaXzXSxKnRu/xqMn3KTA3L9EB9Oy/P+Nn2f2vlhPuUdy/Zusb2DarbyTpGCfEDuw==",
+   "files": [
+    "package/lib/libvips-cpp.8.18.7.dylib"
+   ]
+  },
+  {
+   "name": "@napi-rs/canvas-linux-arm64-gnu",
+   "version": "1.0.9",
+   "integrity": "sha512-012oiYtKaE7i9oxc8q7nraT7kDOpLcaCmFLzVe9Ty34RHDdoDzbWLrVh827CNxYh/EADX1eSikA3ymLjo/nNuw==",
+   "files": [
+    "package/skia.linux-arm64-gnu.node"
+   ]
+  },
+  {
+   "name": "@img/sharp-wasm32",
+   "version": "0.35.5",
+   "integrity": "sha512-Ptsga1su4tQx+LLF1ECS9U6nz5kmrXKo6XVbtR48Ke3ZRxxgaWBu7IDtEe1quo8hiupwm6WFqxVlXaSf7IINGQ==",
+   "files": [
+    "package/lib/sharp-wasm32-0.35.5.node.wasm"
+   ]
+  }
+ ]
+}

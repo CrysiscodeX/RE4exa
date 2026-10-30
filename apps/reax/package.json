@@ -1,6 +1,6 @@
 {
   "name": "reax",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Clean-room reverse-engineering toolkit for agents (replaces rea and leanrea). In development: phase 0.",
   "license": "Apache-2.0",
   "type": "module",
