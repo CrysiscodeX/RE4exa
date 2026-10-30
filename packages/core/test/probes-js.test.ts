@@ -9,7 +9,7 @@ import {
   jsImports,
   specifierKind,
 } from "../src/probes/builtin/js.ts";
-import { tokenize } from "../src/probes/builtin/js-tokens.ts";
+import { jsxFor, tokenize } from "../src/probes/builtin/js-tokens.ts";
 import { APP_JS } from "../src/testing/gen.ts";
 import { runOn } from "../src/testing/harness.ts";
 import { lcg } from "../src/testing/helpers.ts";
@@ -45,6 +45,113 @@ test("tokenizer: comments, strings, escapes, regex vs division, nested templates
   assert.deepEqual(unterminated, []);
   const line = tokens.find((t) => t.t === "template" && t.v === "outer ")!.line;
   assert.equal(line, 6);
+});
+
+test("tokenizer: JSX in .tsx/.jsx is read as JSX (found on LearnHarness: closing tags were read as regexes)", () => {
+  const src = [
+    'import { a } from "./a";',
+    "export default function App({ children }) {",
+    "  return (",
+    '    <Shell title="x" href="https://docs.example.org/start" onClick={() => require("./clicked")}>',
+    "      {/* a comment child */}",
+    "      <>",
+    '        <Item label={<Badge n={1} />} data-x="y" />',
+    "        Text that says import x from 'not-an-import' and has a / slash",
+    "      </>",
+    "      <AppShell>{children}</AppShell>",
+    "    </Shell>",
+    "  );",
+    "}",
+    "const re = /a\\/b/g;",
+  ].join("\n");
+  const r = tokenize(src, undefined, { jsx: true });
+  assert.deepEqual(r.unterminated, [], "no closing tag is read as a regex");
+  assert.deepEqual(
+    r.tokens.filter((t) => t.t === "regex").map((t) => t.v),
+    ["/a\\/b/g"],
+    "a real regex after the JSX is still a regex",
+  );
+  const strings = r.tokens.filter((t) => t.t === "string").map((t) => t.v);
+  assert.ok(strings.includes("https://docs.example.org/start"), "attribute strings are string tokens");
+  assert.ok(!strings.includes("not-an-import"), "JSX text is not code");
+  const found = census(src, r.tokens)
+    .imports.map((f) => f.specifier)
+    .sort();
+  assert.deepEqual(found, ["./a", "./clicked"], "code inside {...} is read; text is not");
+  assert.ok(endpointsFrom(r.tokens).urls.some((u) => u.host === "docs.example.org"));
+  assert.equal(r.tokens.find((t) => t.t === "regex")!.line, 14, "line numbers stay right through JSX");
+});
+
+test("tokenizer: JSX mode is per extension, and TypeScript generics in .tsx are not taken for JSX", () => {
+  assert.deepEqual(
+    ["a.tsx", "a.jsx", "a.js", "a.mjs", "a.cjs", "a.ts", "a.mts", "a.cts", "a.json", "Makefile"].map(jsxFor),
+    [true, true, true, true, true, false, false, false, false, false],
+  );
+  // .ts: <T>x is a type assertion, read as before
+  const ts = tokenize("const v = <Foo>bar; const re = /x/;", undefined, { jsx: jsxFor("a.ts") });
+  assert.deepEqual(ts.unterminated, []);
+  // .tsx: a generic arrow (<T,>) fails fast; a constrained generic (<T extends ...>) runs to the
+  // end and is rolled back; JSX after both is still read as JSX
+  const tsx = [
+    "const id = <T,>(x: T) => x;",
+    "const first = <T extends unknown[]>(xs: T) => xs[0];",
+    'const el = <div title="ok">a / b</div>;',
+    "const re = /y\\/z/;",
+  ].join("\n");
+  const r = tokenize(tsx, undefined, { jsx: true });
+  assert.deepEqual(r.unterminated, []);
+  assert.deepEqual(
+    r.tokens.filter((t) => t.t === "regex").map((t) => t.v),
+    ["/y\\/z/"],
+  );
+  assert.ok(
+    r.tokens.some((t) => t.t === "string" && t.v === "ok"),
+    "the JSX after the generics was read as JSX",
+  );
+  assert.ok(
+    r.tokens.some((t) => t.t === "ident" && t.v === "extends"),
+    "the rolled-back generic was read as code",
+  );
+});
+
+test("tokenizer: comments inside a JSX tag, and TypeScript's non-null assertion before a division (both from LearnHarness)", () => {
+  const tag = [
+    "const d = (",
+    "  <div",
+    '    role="dialog"',
+    "    // a line comment between attributes",
+    "    /* and a block one */",
+    "    {...rest}",
+    "  >",
+    "    <p>{a}</p>",
+    "  </div>",
+    ");",
+  ].join("\n");
+  assert.deepEqual(tokenize(tag, undefined, { jsx: true }).unterminated, []);
+  for (const jsx of [false, true]) {
+    const r = tokenize(
+      "const ux = sumX[ci]! / cnt[ci]! - px;\nconst a = img.data[i + 3]! / 255;\nconst re = !/x/.test(s);",
+      undefined,
+      { jsx },
+    );
+    assert.deepEqual(r.unterminated, [], `jsx ${jsx}`);
+    assert.deepEqual(
+      r.tokens.filter((t) => t.t === "regex").map((t) => t.v),
+      ["/x/"],
+      "a prefix ! still starts a regex",
+    );
+  }
+});
+
+test("tokenizer: hostile JSX-like input stays linear and never throws", () => {
+  for (const unit of ["(<a>", "(<a b={", "<a {...", "=<a></", "(<T extends X>"]) {
+    const src = unit.repeat(20_000);
+    const t0 = performance.now();
+    const r = tokenize(src, undefined, { jsx: true });
+    const ms = performance.now() - t0;
+    assert.ok(r.tokens.length > 0, unit);
+    assert.ok(ms < 3000, `${JSON.stringify(unit)} x 20000 took ${Math.round(ms)} ms`);
+  }
 });
 
 test("tokenizer: unterminated string, template and comment are reported, never thrown", () => {

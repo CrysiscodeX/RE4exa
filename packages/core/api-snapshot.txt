@@ -1093,7 +1093,18 @@ export interface TokenizeResult {
     truncated: boolean;
 }
 export declare function cook(raw: string): string;
-export declare function tokenize(src: string, maxTokens?: number): TokenizeResult;
+/** Whether a file with this name may hold JSX (and should be tokenized with `jsx: true`). */
+export declare function jsxFor(name: string): boolean;
+/**
+ * Tokenizes JavaScript or TypeScript. With `jsx`, an element that starts where an operand is
+ * expected is read as JSX: attribute strings become string tokens and `{...}` expressions are
+ * tokenized as code, while tag names and text are skipped. A `<` that turns out not to be JSX (a
+ * TypeScript generic such as `<T,>() => ...`, which reaches a character JSX cannot hold or runs
+ * to the end of the file) is rolled back and read as a plain `<`.
+ */
+export declare function tokenize(src: string, maxTokens?: number, opts?: {
+    jsx?: boolean;
+}): TokenizeResult;
 
 //// probes/builtin/js.d.ts
 import { type AssayProbe } from "../util.ts";

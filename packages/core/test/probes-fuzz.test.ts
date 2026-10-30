@@ -131,6 +131,18 @@ CASES.forEach(([name, probe, seed, file], idx) => {
   });
 });
 
+const JSX_SAMPLE = [
+  'import { a } from "./a";',
+  "export const App = <T,>({ x }: { x: T }) => (",
+  '  <div role="dialog" // a comment',
+  // biome-ignore lint/suspicious/noTemplateCurlyInString: JavaScript source under test
+  '    title={`t ${x}`} onClick={() => require("./c")} {...rest}>',
+  "    <>{a! / 2}<b>{cond && <i />}</b></>",
+  "    text / with < and > signs",
+  "  </div>",
+  ");",
+].join("\n");
+
 test("fuzz the raw tar parser and tokenizer directly (no gzip/CRC in front of them)", () => {
   const rnd = lcg(77);
   const tar = makeTar([
@@ -148,6 +160,10 @@ test("fuzz the raw tar parser and tokenizer directly (no gzip/CRC in front of th
     const text = new TextDecoder().decode(mutate(enc.encode(APP_JS), rnd));
     const r = tokenize(text);
     assert.ok(Array.isArray(r.tokens));
+    // the JSX path, on mutated JSX
+    const jsx = new TextDecoder().decode(mutate(enc.encode(JSX_SAMPLE), rnd));
+    const rj = tokenize(jsx, undefined, { jsx: true });
+    assert.ok(Array.isArray(rj.tokens));
   }
 });
 

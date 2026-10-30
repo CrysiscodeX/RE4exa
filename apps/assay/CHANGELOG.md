@@ -34,6 +34,9 @@ Fixed before release. These were found by two independent RQS-2030 reviews and r
 - The sidebar's verdict counts missed the last claim checked in a turn until the page was reloaded (found in a visual run of the demo).
 - While an account was still being checked at start-up, the composer said it was signed out. It now says the sign-in is being checked, and Send turns on when the check ends.
 - `native.exports` claims about a Linux library with more than 64 exports were always unverifiable, true or false: the ELF reader kept only the first 64 names (PE kept 4,096). All three native readers now keep up to 100,000. Found on LearnHarness's libvips (3,500 exports).
+- JSX (in `.tsx`, `.jsx` and `.js`) was read as plain JavaScript: a closing tag such as `</div>` started a regex, the rest of the file was marked "may be misread", and claims about its imports could never be refuted. On LearnHarness that was 94 of 152 `.tsx` files (1,287 entries). The tokenizer now reads JSX, including comments inside tags, and TypeScript's `x! / y`. Hostile JSX-like input stays linear.
+- `assay sweep`, `probe`, `export` and `forget` took an option's value for the subject when the option came first (`assay sweep --workspace w pkg` swept `.`; `assay forget --home h id` also tried to delete `h`).
+- CLI errors now name what they are about, for example `No such object [not_found] {"case":"case_x"}`.
 
 - **Durable kernel** on SQLite:
   - one process per store;

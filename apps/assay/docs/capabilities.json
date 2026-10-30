@@ -532,7 +532,7 @@
     },
     {
       "id": "js.imports",
-      "version": "1",
+      "version": "2",
       "predicate": "js.imports",
       "cost": "cheap",
       "platforms": [
@@ -544,7 +544,7 @@
     },
     {
       "id": "js.endpoints",
-      "version": "1",
+      "version": "2",
       "predicate": "js.endpoints",
       "cost": "cheap",
       "platforms": [
@@ -604,7 +604,7 @@
     },
     {
       "id": "code.obfuscation",
-      "version": "1",
+      "version": "2",
       "predicate": "code.obfuscation",
       "cost": "cheap",
       "platforms": [

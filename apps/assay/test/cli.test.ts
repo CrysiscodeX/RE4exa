@@ -53,3 +53,18 @@ test("CLI: version, help, unknown options rejected, sweep, probe list, forget", 
   assert.equal(unknown.status, 2);
   h.cleanup();
 });
+
+test("CLI: options before the subject are not taken for it (found sweeping LearnHarness with --workspace first)", () => {
+  const h = tmp("assay-cli-order-");
+  const ws = join(import.meta.dirname, "..");
+  const sweep = run(["sweep", "--workspace", ws, "--json", "src/providers"], h.dir);
+  assert.equal(sweep.status, 0, sweep.stderr);
+  assert.equal(JSON.parse(sweep.stdout).subject, "src/providers", "the subject, not the --workspace value");
+  const exp = run(["export", "--format", "md", "case_not_here"], h.dir);
+  assert.notEqual(exp.status, 0);
+  assert.match(`${exp.stdout}${exp.stderr}`, /case_not_here/, "the case id, not --format's value");
+  const forget = run(["forget", "--workspace", ws, "case_not_here"], h.dir);
+  assert.equal(forget.status, 0, forget.stderr);
+  assert.match(forget.stdout, /deleted 1 case/, "only the named case, not the --workspace value");
+  h.cleanup();
+});

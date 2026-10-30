@@ -8,7 +8,7 @@ import { type Coverage, type Finding, findingKey } from "../../evidence/record.t
 import { type AssayProbe, extOf, fail, numParam, params } from "../util.ts";
 import { walkDir } from "../walk.ts";
 import { familiesOf } from "./identify.ts";
-import { type Tok, tokenize } from "./js-tokens.ts";
+import { jsxFor, type Tok, tokenize } from "./js-tokens.ts";
 
 const ALL = ["linux", "darwin", "win32"] as ("linux" | "darwin" | "win32")[];
 /** Bytes of one source file the JS probes read. */
@@ -196,7 +196,7 @@ interface FileCensus extends Census {
 }
 
 export function censusText(text: string, label: string, clipped: boolean): FileCensus & { tokens: Tok[] } {
-  const tk = tokenize(text);
+  const tk = tokenize(text, undefined, { jsx: jsxFor(label) });
   const c = census(text, tk.tokens);
   const skipped: { what: string; reason: string }[] = [];
   if (clipped) skipped.push({ what: `${label} after ${JS_CAP} bytes`, reason: "size cap" });
@@ -242,7 +242,7 @@ async function sources(
 
 export const jsImports: AssayProbe = {
   id: "js.imports",
-  version: "1",
+  version: "2", // 2: JSX read as JSX, and TypeScript's x! before a division
   predicate: "js.imports",
   summary:
     "Census of module loading: import/export-from, require, dynamic import, worker URLs, import.meta.resolve, createRequire, process.dlopen",
@@ -367,7 +367,7 @@ function endpointLike(i: { format: string; kind: string }): boolean {
 
 export const jsEndpoints: AssayProbe = {
   id: "js.endpoints",
-  version: "1",
+  version: "2", // 2: JSX read as JSX, and TypeScript's x! before a division
   predicate: "js.endpoints",
   summary: "URLs and host names in string and template literals (capped), one finding per host",
   appliesTo: endpointLike,
@@ -383,7 +383,7 @@ export const jsEndpoints: AssayProbe = {
     let dynamic = 0;
     const skipped = [...src.skipped];
     for (const f of src.files) {
-      const tk = tokenize(f.text);
+      const tk = tokenize(f.text, undefined, { jsx: jsxFor(f.label) });
       const e = endpointsFrom(tk.tokens);
       dynamic += e.dynamic;
       urls.push(...e.urls.map((u) => (f.rel === undefined ? u : { ...u, file: f.rel })));
@@ -487,7 +487,7 @@ export function obfuscationVerdict(m: ReturnType<typeof obfuscationMetrics>): { 
 
 export const codeObfuscation: AssayProbe = {
   id: "code.obfuscation",
-  version: "1",
+  version: "2", // 2: JSX read as JSX, and TypeScript's x! before a division
   predicate: "code.obfuscation",
   summary: "Heuristic obfuscation signals: long lines, byte entropy, escape density, _0x identifiers, eval-like calls",
   appliesTo: (i) => i.kind === "file" && isJsLike(i),
@@ -499,7 +499,7 @@ export const codeObfuscation: AssayProbe = {
     if (ctx.subject.kind !== "file") fail("code.obfuscation needs a file");
     const b = await ctx.read(undefined, JS_CAP + 1);
     const text = new TextDecoder().decode(b.subarray(0, JS_CAP));
-    const m = obfuscationMetrics(text, tokenize(text).tokens);
+    const m = obfuscationMetrics(text, tokenize(text, undefined, { jsx: jsxFor(ctx.subject.path) }).tokens);
     const v = obfuscationVerdict(m);
     const findings: Finding[] =
       v.verdict === "likely-obfuscated"

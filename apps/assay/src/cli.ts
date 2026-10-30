@@ -58,6 +58,22 @@ function checkFlags(cmd: string, args: string[]): string | null {
   return null;
 }
 
+/** The arguments that are neither options nor option values (by the command's FLAGS entry), so
+ * `assay sweep --home h pkg` sweeps pkg, not h. */
+export function positionals(cmd: string, args: string[]): string[] {
+  const spec = FLAGS[cmd];
+  const out: string[] = [];
+  for (let i = 0; i < args.length; i++) {
+    const a = args[i]!;
+    if (a.startsWith("--")) {
+      if (spec?.value.includes(a)) i++;
+      continue;
+    }
+    out.push(a);
+  }
+  return out;
+}
+
 async function main(argv: string[]): Promise<number> {
   const [cmd, ...args] = argv;
   const bad = cmd ? checkFlags(cmd, args) : null;
@@ -107,7 +123,7 @@ async function main(argv: string[]): Promise<number> {
       return checks.every((c) => c.ok || c.id.startsWith("provider:") || c.id.startsWith("account:")) ? 0 : 1;
     }
     case "sweep": {
-      const path = args.find((a) => !a.startsWith("--")) ?? ".";
+      const path = positionals("sweep", args)[0] ?? ".";
       const app = new App({ home, workspace });
       const report = await app.engine.sweep({ caseId: null, path });
       if (args.includes("--json")) console.log(JSON.stringify(report, null, 2));
@@ -129,9 +145,7 @@ async function main(argv: string[]): Promise<number> {
       if (args.includes("--list")) {
         for (const p of app.engine.list()) console.log(`${p.id.padEnd(20)} ${p.cost.padEnd(7)} ${p.summary}`);
       } else {
-        const path = args.find(
-          (a) => !a.startsWith("--") && a !== flag(args, "--probe") && a !== flag(args, "--params"),
-        );
+        const path = positionals("probe", args)[0];
         const probeId = flag(args, "--probe");
         if (!path || !probeId) {
           console.error("usage: assay probe <path> --probe <id> [--params JSON]");
@@ -191,7 +205,7 @@ async function main(argv: string[]): Promise<number> {
       return 0;
     }
     case "export": {
-      const caseId = args[0];
+      const caseId = positionals("export", args)[0];
       const format = flag(args, "--format") ?? "md";
       if (!caseId) {
         console.error("usage: assay export <case-id> --format ...");
@@ -214,9 +228,7 @@ async function main(argv: string[]): Promise<number> {
     }
     case "forget": {
       const app = new App({ home, workspace });
-      const ids = args.includes("--all")
-        ? app.kernel.listCases().map((c) => c.id)
-        : args.filter((a) => !a.startsWith("--"));
+      const ids = args.includes("--all") ? app.kernel.listCases().map((c) => c.id) : positionals("forget", args);
       for (const id of ids) forget(app, id);
       console.log(`deleted ${ids.length} case(s). Evidence records shared with other cases are kept.`);
       await app.close();
@@ -252,7 +264,9 @@ main(process.argv.slice(2)).then(
   (e) => {
     if (isAssayError(e)) {
       const j = e.toJSON();
-      console.error(`assay: ${j.message} [${j.code}]\n  -> ${j.fix}`);
+      // the detail names what the error is about (which case, which path), as the HTTP API does
+      const detail = j.detail && Object.keys(j.detail).length ? ` ${JSON.stringify(j.detail)}` : "";
+      console.error(`assay: ${j.message} [${j.code}]${detail}\n  -> ${j.fix}`);
     } else console.error(`assay: ${(e as Error)?.stack ?? e}`);
     process.exit(1);
   },
