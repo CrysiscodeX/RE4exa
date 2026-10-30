@@ -15,6 +15,7 @@ import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
 import { normalizeArch } from "@re4exa/core/probes/arch";
 import { gunzipBounded, parseTar, tarEntryData } from "@re4exa/core/probes/builtin/archive";
+import { runCliSync } from "../src/bench/backends/proc.ts";
 
 const ROOT = join(import.meta.dirname, "..");
 export const MANIFEST = join(ROOT, "bench", "corpus", "learnharness.json");
@@ -116,13 +117,12 @@ export function fetchCorpus(dir = corpusDir()): CorpusFile[] {
     if (!existsSync(cached)) {
       const tmp = mkdtempSync(join(dir, "pack-"));
       try {
-        const r = spawnSync("npm", ["pack", `${pkg.name}@${pkg.version}`, "--pack-destination", tmp, "--silent"], {
-          encoding: "utf8",
-          shell: process.platform === "win32",
-          timeout: 300_000,
+        // argv only, no shell: on Windows npm is a .cmd shim, which runCliSync resolves (SR-14)
+        const r = runCliSync(["npm", "pack", `${pkg.name}@${pkg.version}`, "--pack-destination", tmp, "--silent"], {
+          timeoutMs: 300_000,
         });
         const name = r.stdout.trim().split("\n").pop()?.trim();
-        if (r.status !== 0 || !name) throw new Error(`npm pack ${pkg.name}@${pkg.version} failed: ${r.stderr.trim()}`);
+        if (!r.ok || !name) throw new Error(`npm pack ${pkg.name}@${pkg.version} failed: ${r.out}`);
         const b = readFileSync(join(tmp, name));
         if (sri(b) !== pkg.integrity)
           throw new Error(
