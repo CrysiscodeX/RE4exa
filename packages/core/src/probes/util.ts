@@ -20,6 +20,10 @@ export interface AssayProbe extends ProbeDef {
 
 export type JsonObject = { [k: string]: Json };
 
+/** How many export names a native reader keeps (ELF, PE, Mach-O). Below it, the export list is
+ * the whole table, so the verifier can refute a symbol that is not in it. */
+export const NATIVE_NAME_CAP = 100_000;
+
 export function fail(reason: string, detail: Record<string, unknown> = {}): never {
   throw new CoreError("probe_failed", { reason, ...detail }, `probe failed: ${reason}`);
 }

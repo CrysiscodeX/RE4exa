@@ -4,7 +4,7 @@
 
 import { isCoreError } from "../../errors.ts";
 import type { Json } from "../../evidence/jcs.ts";
-import { type AssayProbe, cstr, fail, toHex, u8, u32, u64 } from "../util.ts";
+import { type AssayProbe, cstr, fail, NATIVE_NAME_CAP, toHex, u8, u32, u64 } from "../util.ts";
 import { libFindings, NATIVE_CAP } from "./elf.ts";
 
 const CPU: Record<number, string> = {
@@ -71,7 +71,7 @@ export interface MachOSlice {
 }
 
 /** Most export or import names kept per slice. */
-export const MACHO_NAME_CAP = 100_000;
+export const MACHO_NAME_CAP = NATIVE_NAME_CAP;
 
 function uleb(b: Uint8Array, o: number, end: number): { v: number; next: number } {
   let v = 0;

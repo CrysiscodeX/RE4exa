@@ -2,7 +2,7 @@
 // imports, export directory, and the CLR header marker for .NET assemblies.
 
 import type { Json } from "../../evidence/jcs.ts";
-import { type AssayProbe, asciiAt, cstr, fail, u16, u32, u64parts } from "../util.ts";
+import { type AssayProbe, asciiAt, cstr, fail, NATIVE_NAME_CAP, u16, u32, u64parts } from "../util.ts";
 import { libFindings, NATIVE_CAP } from "./elf.ts";
 
 const MACHINES: Record<number, string> = {
@@ -162,7 +162,7 @@ export function parsePe(b: Uint8Array): PeInfo {
       const namesRva = u32(b, o + 32);
       exportsOut.count = nNames;
       const no = rva(namesRva);
-      for (let i = 0; no >= 0 && i < Math.min(nNames, 4096); i++) {
+      for (let i = 0; no >= 0 && i < Math.min(nNames, NATIVE_NAME_CAP); i++) {
         const s = str(u32(b, no + i * 4), 512);
         if (s !== null) exportsOut.names.push(s);
       }
@@ -189,7 +189,7 @@ export function parsePe(b: Uint8Array): PeInfo {
 
 export const peInfo: AssayProbe = {
   id: "pe.info",
-  version: "1",
+  version: "2", // 2: export names kept up to NATIVE_NAME_CAP, so large libraries can be verified
   predicate: "pe.info",
   summary: "PE machine, subsystem, timestamp, sections, imported DLLs and functions, exports, .NET marker",
   appliesTo: (i) => i.format === "pe",

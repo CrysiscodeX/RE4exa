@@ -556,7 +556,7 @@
     },
     {
       "id": "elf.info",
-      "version": "1",
+      "version": "2",
       "predicate": "elf.info",
       "cost": "cheap",
       "platforms": [
@@ -568,7 +568,7 @@
     },
     {
       "id": "pe.info",
-      "version": "1",
+      "version": "2",
       "predicate": "pe.info",
       "cost": "cheap",
       "platforms": [

@@ -3,7 +3,7 @@
 
 import type { Json } from "../../evidence/jcs.ts";
 import { type Finding, findingKey } from "../../evidence/record.ts";
-import { type AssayProbe, bytesAt, cstr, fail, u16, u32, u64, u64parts } from "../util.ts";
+import { type AssayProbe, bytesAt, cstr, fail, NATIVE_NAME_CAP, u16, u32, u64, u64parts } from "../util.ts";
 
 const MACHINES: Record<number, string> = {
   2: "sparc",
@@ -66,7 +66,10 @@ interface RawSec extends Omit<Sec, "name"> {
   nameOff: number;
 }
 
+/** firstN bounds the import preview; exports are kept up to NATIVE_NAME_CAP (or firstN, if larger)
+ * so the verifier can check any export against the whole table. */
 export function parseElf(b: Uint8Array, firstN = 64): ElfInfo {
+  const exportCap = Math.max(firstN, NATIVE_NAME_CAP);
   if (!bytesAt(b, 0, [0x7f, 0x45, 0x4c, 0x46])) fail("not an ELF file");
   const cls = b[4];
   const data = b[5];
@@ -203,7 +206,7 @@ export function parseElf(b: Uint8Array, firstN = 64): ElfInfo {
         if (imports.length < firstN) imports.push(name);
       } else if (bind === 1 || bind === 2 || bind === 10) {
         nExp++;
-        if (exports.length < firstN) exports.push(name);
+        if (exports.length < exportCap) exports.push(name);
       }
     }
   }
@@ -236,7 +239,7 @@ export function libFindings(libs: string[]): Finding[] {
 
 export const elfInfo: AssayProbe = {
   id: "elf.info",
-  version: "1",
+  version: "2", // 2: export names kept up to NATIVE_NAME_CAP, so large libraries can be verified
   predicate: "elf.info",
   summary: "ELF class, machine, type, interpreter, NEEDED libraries, RPATH/RUNPATH, dynamic symbols",
   appliesTo: (i) => i.format === "elf",

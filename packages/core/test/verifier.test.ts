@@ -423,3 +423,26 @@ test("claims with aliased params (lib, pattern, url, file) are normalised before
     "the canonical name wins",
   );
 });
+
+test("native.exports reads the whole export table of a large library (found on LearnHarness's libvips: ELF kept 64 names, PE 4,096)", async () => {
+  const { makeElf64, makePe64 } = await import("../src/testing/gen.ts");
+  const { writeFileSync } = await import("node:fs");
+  const { join } = await import("node:path");
+  const s = setup();
+  try {
+    const names = (n: number) => Array.from({ length: n }, (_, i) => `big_export_${i}`);
+    writeFileSync(join(s.ws, "big.so"), makeElf64({ exports: names(300) }));
+    writeFileSync(join(s.ws, "big.dll"), makePe64({ dll: true, exports: names(5000) }));
+    for (const [path, last] of [
+      ["big.so", 299],
+      ["big.dll", 4999],
+    ] as const) {
+      const late = await s.verifier.verify("case_v", s.claim("native.exports", { path, symbol: `big_export_${last}` }));
+      assert.equal(late.verdict, "verified", `${path}: ${late.reason}`);
+      const absent = await s.verifier.verify("case_v", s.claim("native.exports", { path, symbol: "not_exported" }));
+      assert.equal(absent.verdict, "refuted", `${path}: ${absent.reason}`);
+    }
+  } finally {
+    s.cleanup();
+  }
+});

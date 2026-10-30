@@ -1043,6 +1043,8 @@ export interface ElfInfo {
     markers: string[];
     notes: string[];
 }
+/** firstN bounds the import preview; exports are kept up to NATIVE_NAME_CAP (or firstN, if larger)
+ * so the verifier can check any export against the whole table. */
 export declare function parseElf(b: Uint8Array, firstN?: number): ElfInfo;
 export declare function libFindings(libs: string[]): Finding[];
 export declare const elfInfo: AssayProbe;
@@ -1443,6 +1445,9 @@ export interface AssayProbe extends ProbeDef {
 export type JsonObject = {
     [k: string]: Json;
 };
+/** How many export names a native reader keeps (ELF, PE, Mach-O). Below it, the export list is
+ * the whole table, so the verifier can refute a symbol that is not in it. */
+export declare const NATIVE_NAME_CAP = 100000;
 export declare function fail(reason: string, detail?: Record<string, unknown>): never;
 export declare function u8(b: Uint8Array, o: number): number;
 export declare function u16(b: Uint8Array, o: number, le?: boolean): number;
