@@ -10,7 +10,7 @@ import { test } from "node:test";
 import { App } from "../src/app/app.ts";
 import type { AppState, CaseDetail, CaseSummary } from "../src/server/api-types.ts";
 import { tmp } from "./helpers.ts";
-import { waitCase, waitSignedIn } from "./waits.ts";
+import { pair, waitCase, waitSignedIn } from "./waits.ts";
 
 const FIXTURES = join(import.meta.dirname, "..", "..", "reax", "fixtures", "bin");
 export const DEMO_FILES = [
@@ -20,27 +20,6 @@ export const DEMO_FILES = [
   "lib-aarch64-macos-s.dylib",
   "hello-universal-macos-s",
 ];
-
-async function pair(base: string, pairingUrl: string) {
-  const code = new URL(pairingUrl).hash.replace("#pair=", "");
-  const r = await fetch(`${base}/api/pair`, {
-    method: "POST",
-    body: JSON.stringify({ code }),
-    headers: { "content-type": "application/json" },
-  });
-  assert.equal(r.status, 200);
-  const cookie = r.headers.get("set-cookie")!.split(";")[0]!;
-  return async <T>(method: string, path: string, body?: unknown): Promise<T> => {
-    const res = await fetch(`${base}${path}`, {
-      method,
-      headers: { cookie, "content-type": "application/json" },
-      body: body === undefined ? undefined : JSON.stringify(body),
-    });
-    const j = (await res.json()) as T;
-    if (!res.ok) throw new Error(`HTTP ${res.status} ${JSON.stringify(j)}`);
-    return j;
-  };
-}
 
 test("demo 0.1.0: the agent examines five binaries with reax inside Assay, and every claim is checked", {
   timeout: 120_000,

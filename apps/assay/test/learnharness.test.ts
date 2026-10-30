@@ -8,99 +8,19 @@ import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { test } from "node:test";
-import type { Json } from "@re4exa/core/evidence/jcs";
 import { recordClaim } from "@re4exa/core/evidence/store";
 import { createProbeEngine } from "@re4exa/core/probes/engine";
 import { openTemp } from "@re4exa/core/testing/helpers";
 import { createVerifier } from "@re4exa/core/verifier/verifier";
 import { fetchLearnHarness, LEARNHARNESS, learnharnessDir } from "../scripts/learnharness.ts";
 import { tmp } from "./helpers.ts";
+import { CLAIMS } from "./learnharness-claims.ts";
 
 const skip =
   process.env.ASSAY_LEARNHARNESS === "1" ? false : "needs GitHub: set ASSAY_LEARNHARNESS=1 (the CI check job does)";
 const CLI = join(import.meta.dirname, "..", "src", "cli.ts");
 /** Measured at about 2.2 s for the whole tree; the budget leaves room for a slower CI runner. */
 const SWEEP_BUDGET_MS = 15_000;
-
-/** [claim text, predicate, params, verdict]: each fact as LearnHarness's source states it, and a
- * false twin that a reviewer could plausibly assume. */
-export const CLAIMS: [string, string, Record<string, Json>, "verified" | "refuted"][] = [
-  ["LearnHarness depends on Next.js", "pkg.has-dependency", { path: "learnharness", name: "next" }, "verified"],
-  ["LearnHarness depends on lodash", "pkg.has-dependency", { path: "learnharness", name: "lodash" }, "refuted"],
-  [
-    "Electron is a development dependency",
-    "pkg.has-dependency",
-    { path: "learnharness", name: "electron", scope: "devDependencies" },
-    "verified",
-  ],
-  [
-    "Electron is a runtime dependency",
-    "pkg.has-dependency",
-    { path: "learnharness", name: "electron", scope: "dependencies" },
-    "refuted",
-  ],
-  [
-    "LearnHarness runs a postinstall script",
-    "pkg.has-install-script",
-    { path: "learnharness", hook: "postinstall" },
-    "refuted",
-  ],
-  [
-    "LearnHarness does not run a postinstall script",
-    "pkg.has-install-script",
-    { path: "learnharness", hook: "postinstall", negate: true },
-    "verified",
-  ],
-  [
-    "The main window isolates its renderer context",
-    "file.contains",
-    { path: "learnharness/electron/main.cjs", text: "contextIsolation: true" },
-    "verified",
-  ],
-  [
-    "The main window turns on Node integration",
-    "file.contains",
-    { path: "learnharness/electron/main.cjs", text: "nodeIntegration: true" },
-    "refuted",
-  ],
-  [
-    "The Electron main process loads electron",
-    "js.imports",
-    { path: "learnharness/electron/main.cjs", specifier: "electron" },
-    "verified",
-  ],
-  [
-    "The Electron main process loads axios",
-    "js.imports",
-    { path: "learnharness/electron/main.cjs", specifier: "axios" },
-    "refuted",
-  ],
-  [
-    "The root layout loads Google fonts through next/font",
-    "js.imports",
-    { path: "learnharness/app/layout.tsx", specifier: "next/font/google" },
-    "verified",
-  ],
-  ["The root layout loads axios", "js.imports", { path: "learnharness/app/layout.tsx", specifier: "axios" }, "refuted"],
-  [
-    "Web search calls Tavily",
-    "endpoint.present",
-    { path: "learnharness/src/server/search.ts", host: "api.tavily.com" },
-    "verified",
-  ],
-  [
-    "Web search calls Brave Search",
-    "endpoint.present",
-    { path: "learnharness/src/server/search.ts", host: "api.search.brave.com" },
-    "verified",
-  ],
-  [
-    "Web search calls Bing's Web Search API",
-    "endpoint.present",
-    { path: "learnharness/src/server/search.ts", host: "api.bing.microsoft.com" },
-    "refuted",
-  ],
-];
 
 test("LearnHarness: the pinned tree is fetched without .git, and Assay's sweep reads all of it within budget", {
   skip,

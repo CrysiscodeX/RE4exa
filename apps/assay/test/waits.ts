@@ -1,10 +1,34 @@
 // Shared waits for tests that drive a running Assay (the browser end-to-end test, the demo path
 // test, walk-through scripts). They wait on the app's state through its API, never on how the page
 // looks, and fail with the last state they saw instead of carrying on with a stale one.
+import assert from "node:assert/strict";
 import type { AccountView, AppState, CaseDetail } from "../src/server/api-types.ts";
 
 /** Calls Assay's HTTP API: from Node with the pairing cookie, or inside the page with fetch. */
 export type Api = <T>(method: string, path: string, body?: unknown) => Promise<T>;
+
+/** Pairs with a running Assay through its one-time link and returns an API caller holding the
+ * session cookie, as the browser does. */
+export async function pair(base: string, pairingUrl: string) {
+  const code = new URL(pairingUrl).hash.replace("#pair=", "");
+  const r = await fetch(`${base}/api/pair`, {
+    method: "POST",
+    body: JSON.stringify({ code }),
+    headers: { "content-type": "application/json" },
+  });
+  assert.equal(r.status, 200);
+  const cookie = r.headers.get("set-cookie")!.split(";")[0]!;
+  return async <T>(method: string, path: string, body?: unknown): Promise<T> => {
+    const res = await fetch(`${base}${path}`, {
+      method,
+      headers: { cookie, "content-type": "application/json" },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
+    const j = (await res.json()) as T;
+    if (!res.ok) throw new Error(`HTTP ${res.status} ${JSON.stringify(j)}`);
+    return j;
+  };
+}
 
 const pause = (ms: number) => new Promise((ok) => setTimeout(ok, ms));
 
