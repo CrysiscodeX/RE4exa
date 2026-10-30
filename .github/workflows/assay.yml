@@ -81,6 +81,9 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint
       - name: Tests with coverage gates
+        env:
+          # LearnHarness 0.4.0 fetched at its pinned commit: Assay on a real Electron + Next.js app
+          ASSAY_LEARNHARNESS: "1"
         run: npm run coverage
       - name: Generated docs are current (capabilities, reach, failure modes)
         run: node --conditions=source --disable-warning=ExperimentalWarning scripts/gen-docs.ts --check
