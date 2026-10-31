@@ -7,6 +7,12 @@
    "format": "elf",
    "made": "gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0: gcc -O1 -fcf-protection=full -Wl,--build-id=sha1"
   },
+  "rsrc-x86_64-windows.exe": {
+   "sha256": "48b790307638a1cca94b3d19b7b6fbf81aeca2237954b859e159fbc268df6017",
+   "size": 21504,
+   "format": "pe",
+   "made": "zig 0.15.2: zig cc -target x86_64-windows-gnu -O1 -s main.c res.rc"
+  },
   "go-hello-x86_64-linux": {
    "sha256": "1ae83a9e5ab8de6bb3c1030a2b15ed0e25c69973fd25281e52677eadd5705438",
    "size": 1429688,

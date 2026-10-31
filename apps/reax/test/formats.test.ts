@@ -192,3 +192,65 @@ test("[-leanrea/LEAN-T10] a search for a function the binary lacks finds nothing
   ).data as { page: { total: number } };
   assert.equal(r.page.total, 0);
 });
+
+const RES = JSON.parse(readFileSync(join(REAX, "bench", "oracle", "resources.json"), "utf8")).files as Record<
+  string,
+  Any
+>;
+
+test("[+rea.tool/inspect_pe_resources] the resource tree equals llvm-readobj's, and version, strings and manifest equal pefile's", async () => {
+  let n = 0;
+  for (const [key, k] of Object.entries(RES)) {
+    const extra = key.startsWith("extra/");
+    const path = extra ? key.slice(6) : key;
+    const r = await runOperation("inventory.resources", { path }, { workspace: extra ? EXTRA : BIN });
+    const d = r.data as Any;
+    assert.deepStrictEqual(
+      d.resources.map((x: Any) => ({ type: x.type, name: x.name, language: x.language, rva: x.rva, size: x.size })),
+      k.tree,
+      key,
+    );
+    const p = k.pefile;
+    if (p.version) {
+      assert.deepStrictEqual(
+        {
+          fileVersion: d.version.fileVersion,
+          productVersion: d.version.productVersion,
+          fileOs: d.version.fileOs,
+          fileType: d.version.fileType,
+          strings: d.version.strings,
+          translations: d.version.translations,
+        },
+        p.version,
+        key,
+      );
+    } else assert.equal(d.version, null, key);
+    assert.deepStrictEqual(d.strings, p.strings, key);
+    assert.equal(d.manifest, p.manifest, key);
+    assert.equal(r.coverage, "complete");
+    n += d.resources.length;
+  }
+  assert.ok(n >= 3, `${n} resources compared`);
+});
+
+test("[-rea.tool/inspect_pe_resources] a non-PE file is refused; a resource directory that loops is read once and reported", async () => {
+  await assert.rejects(
+    runOperation("inventory.resources", { path: "hello-aarch64-macos-s" }, { workspace: BIN }),
+    refused,
+  );
+  const dir = mkdtempSync(join(tmpdir(), "reax-rsrc-"));
+  try {
+    const b = Buffer.from(readFileSync(join(EXTRA, "rsrc-x86_64-windows.exe")));
+    // point the first type entry's subdirectory back at the root directory
+    const k = RES["extra/rsrc-x86_64-windows.exe"].tree[0];
+    const rsrc = b.indexOf(Buffer.from([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0]));
+    assert.ok(rsrc > 0 && k, "found the resource root");
+    b.writeUInt32LE(0x80000000, rsrc + 16 + 4);
+    writeFileSync(join(dir, "loop.exe"), b);
+    const r = await runOperation("inventory.resources", { path: "loop.exe" }, { workspace: dir });
+    assert.equal(r.coverage, "partial");
+    assert.match(r.limitations.join(" "), /repeated or cut/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});

@@ -54,7 +54,7 @@
     - `LC_FUNCTION_STARTS` against an oracle (the zig fixtures carry an empty table; the
       LearnHarness dylibs carry real ones).
 
-- **NAT-4, part 1** (CI to confirm on the commit that adds it):
+- **NAT-4, part 1** (`505677d`, CI green on all workflows, Go key re-derived in CI):
   - `inventory.notes`: GNU build ID, ABI tag, x86 and AArch64 property notes, Go build ID, FDO
     packaging; checked against llvm-readobj;
   - `inventory.go`: build information and pclntab functions (stripped binaries); checked against
@@ -64,9 +64,21 @@
   - Found by the Go key: function names are UTF-8, not Latin-1 (fixed here and in the layout
     reader).
 
+- **NAT-4, part 2** (CI to confirm on the commit that adds it):
+  - `inventory.resources`: the PE resource tree, plus version information, string tables and
+    the manifest;
+  - checked against llvm-readobj (the tree) and pefile 2024.8.26, pinned by hash in
+    `scripts/oracle-requirements.txt` (the decoded contents);
+  - a zig-built PE with resources joins the extra fixtures;
+  - row tagged: inspect_pe_resources.
+
 ## Active
-- **NAT-4, part 2:** PE resources, certificates and load config; Mach-O load commands, code
-  signature and entitlements; Rust (`.dep-v0` with cargo-auditable); crash dumps; GGUF.
+- **NAT-4, part 3:**
+  - PE certificates and load config;
+  - Mach-O load commands, code signature and entitlements;
+  - Rust (`.dep-v0` with cargo-auditable);
+  - crash dumps;
+  - GGUF.
 
 ## Next (in order)
 1. ARC, archives and bundles.

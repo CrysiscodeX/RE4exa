@@ -212,6 +212,30 @@ Result includes:
 
 Ledger rows: `rea.tool/inspect_elf_notes`.
 
+### `inventory.resources`
+
+The resources of a PE file (type, name, language, size and file offset of each) and the contents agents ask about: version information (file and product version and every StringFileInfo value such as CompanyName and OriginalFilename), string tables and the application manifest.
+
+Effect: read. Cost: cheap. Output from the target is untrusted (sent inside the untrusted-content envelope). Platforms: linux, darwin, win32.
+
+| Argument | Type | Required | Default | Meaning |
+|---|---|---|---|---|
+| `path` | string (≤ 4096 chars) | yes |  | File path inside the workspace |
+
+Example: Who a Windows program says made it.
+
+```json
+{"operation":"inventory.resources","path":"rsrc-x86_64-windows.exe"}
+```
+
+Result includes:
+
+```json
+{"version":{"fileVersion":"1.2.3.4","strings":{"040904b0":{"CompanyName":"reax fixtures"}}}}
+```
+
+Ledger rows: `rea.tool/inspect_pe_resources`.
+
 ### `inventory.go`
 
 A Go binary's build information (Go version, main module, every dependency with version, sum and replacement, build settings such as GOOS, GOARCH and CGO_ENABLED) and its functions from the pclntab, which survive stripping. Functions filter by name and page with offset and limit.

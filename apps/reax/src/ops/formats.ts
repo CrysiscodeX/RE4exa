@@ -7,6 +7,7 @@ import "../errors.ts";
 import { goBuildInfo, goFunctions } from "../readers/go.ts";
 import { LAYOUT_FORMATS, layout } from "../readers/layout.ts";
 import { elfNotes } from "../readers/notes.ts";
+import { peResources } from "../readers/resources.ts";
 import { pageStream } from "./bytes.ts";
 import { readHead, target } from "./file.ts";
 import { PAGE_INPUT } from "./page.ts";
@@ -70,6 +71,58 @@ export const inventoryNotes: Operation = {
       ].join("\n"),
       coverage: s.notes.length ? "partial" : "complete",
       limitations: s.notes,
+    };
+  },
+};
+
+export const inventoryResources: Operation = {
+  tool: "inventory",
+  name: "inventory.resources",
+  summary:
+    "The resources of a PE file (type, name, language, size and file offset of each) and the contents agents ask about: version information (file and product version and every StringFileInfo value such as CompanyName and OriginalFilename), string tables and the application manifest.",
+  input: { type: "object", properties: { path: PATH }, required: ["path"], additionalProperties: false },
+  effect: "read",
+  cost: "cheap",
+  untrusted: true,
+  platforms: [...ALL],
+  examples: [
+    {
+      title: "Who a Windows program says made it",
+      workspace: "extra",
+      args: { path: "rsrc-x86_64-windows.exe" },
+      expect: {
+        version: { fileVersion: "1.2.3.4", strings: { "040904b0": { CompanyName: "reax fixtures" } } },
+      },
+    },
+  ],
+  covers: ["rea.tool/inspect_pe_resources"],
+  async run(ctx, args): Promise<OpResult> {
+    const f = native(ctx, args.path);
+    if (f.format !== "pe")
+      throw new CoreError("bad_request", { field: "path", why: `a PE file (EXE or DLL); this file is ${f.format}` });
+    const s = layout(f.bytes, "pe")[0]!;
+    const r = peResources(f.bytes, s);
+    const v = r.version;
+    return {
+      data: { file: f.rel, ...r },
+      text: [
+        `${f.rel}: ${r.resources.length} resources`,
+        ...r.resources.map(
+          (x) => `  ${x.type} ${x.name} lang ${x.language}: ${x.size} bytes at ${x.offset ?? "no file offset"}`,
+        ),
+        ...(v
+          ? [
+              `  version: file ${v.fileVersion}, product ${v.productVersion}`,
+              ...Object.entries(v.strings).flatMap(([t, kv]) =>
+                Object.entries(kv).map(([k, x]) => `    ${t} ${k}: ${x}`),
+              ),
+            ]
+          : []),
+        ...r.strings.map((x) => `  string ${x.id}: ${x.text}`),
+        ...(r.manifest ? ["  manifest:", ...r.manifest.split("\n").map((l) => `    ${l}`)] : []),
+      ].join("\n"),
+      coverage: r.notes.length ? "partial" : "complete",
+      limitations: r.notes,
     };
   },
 };

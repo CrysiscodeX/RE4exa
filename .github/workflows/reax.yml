@@ -115,7 +115,11 @@ jobs:
             dir=$(ls -d /opt/hostedtoolcache/go/*/x64 2>/dev/null | sort -V | tail -1)
             test -n "$dir" && echo "$dir/bin" >> "$GITHUB_PATH"
           fi
-      - name: The answer keys are the tools' current answers (LLVM, GNU strings, Python, Go)
+      - name: pefile for the PE resource key (pinned by hash)
+        env:
+          PIP_BREAK_SYSTEM_PACKAGES: "1"
+        run: python3 -m pip install --no-deps --require-hashes --target /tmp/reax-pyoracle -r scripts/oracle-requirements.txt
+      - name: The answer keys are the tools' current answers (LLVM, GNU strings, Python, Go, pefile)
         run: |
           go version
           node --disable-warning=ExperimentalWarning scripts/oracle.ts --check

@@ -51,6 +51,13 @@ const GO_LIB = `package reaxlib
 func Greet(who string) string { return "hello, " + who }
 `;
 
+/** A PE with a version resource, a string table and a manifest (compiled from .rc by zig). */
+const RC_SRC =
+  '#include <winver.h>\n1 VERSIONINFO\nFILEVERSION 1,2,3,4\nPRODUCTVERSION 1,2,0,0\nFILEFLAGSMASK 0x3fL\nFILEFLAGS 0x0L\nFILEOS VOS_NT_WINDOWS32\nFILETYPE VFT_APP\nFILESUBTYPE 0x0L\nBEGIN\n  BLOCK "StringFileInfo"\n  BEGIN\n    BLOCK "040904b0"\n    BEGIN\n      VALUE "CompanyName", "reax fixtures"\n      VALUE "FileDescription", "reax resource fixture"\n      VALUE "FileVersion", "1.2.3.4"\n      VALUE "OriginalFilename", "rsrc-x86_64-windows.exe"\n      VALUE "ProductName", "reax"\n      VALUE "ProductVersion", "1.2"\n    END\n  END\n  BLOCK "VarFileInfo"\n  BEGIN\n    VALUE "Translation", 0x409, 1200\n  END\nEND\nSTRINGTABLE\nBEGIN\n  101 "reax string one"\n  102 "reax string two"\nEND\n1 24 "app.manifest"\n';
+const RC_MANIFEST =
+  '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">\n  <assemblyIdentity name="reax.fixture" version="1.2.3.4" type="win32"/>\n</assembly>\n';
+const ZIG = process.env.REAX_ZIG ?? "/tmp/reax-zig/ziglang/zig";
+
 function build(): Record<string, ExtraFixture> {
   mkdirSync(EXTRA, { recursive: true });
   const tmp = mkdtempSync(join(tmpdir(), "reax-extra-"));
@@ -62,6 +69,20 @@ function build(): Record<string, ExtraFixture> {
     const cName = "c-notes-x86_64-linux-gnu";
     sh("gcc", ["-O1", "-fcf-protection=full", "-Wl,--build-id=sha1", "-o", join(EXTRA, cName), join(tmp, "note.c")]);
     out[cName] = { ...digest(cName), format: "elf", made: `${gcc}: gcc -O1 -fcf-protection=full -Wl,--build-id=sha1` };
+    // PE resources: VERSIONINFO, STRINGTABLE and RT_MANIFEST
+    writeFileSync(join(tmp, "res.rc"), RC_SRC);
+    writeFileSync(join(tmp, "app.manifest"), RC_MANIFEST);
+    writeFileSync(join(tmp, "main.c"), "int main(void) { return 0; }\n");
+    const zigv = sh(ZIG, ["version"]);
+    const rName = "rsrc-x86_64-windows.exe";
+    sh(ZIG, ["cc", "-target", "x86_64-windows-gnu", "-O1", "-s", "-o", join(EXTRA, rName), "main.c", "res.rc"], {
+      cwd: tmp,
+    });
+    out[rName] = {
+      ...digest(rName),
+      format: "pe",
+      made: `zig ${zigv}: zig cc -target x86_64-windows-gnu -O1 -s main.c res.rc`,
+    };
     // Go with a module dependency (replaced by a local path), outside any VCS checkout
     mkdirSync(join(tmp, "go", "app"), { recursive: true });
     mkdirSync(join(tmp, "go", "reaxlib"), { recursive: true });
