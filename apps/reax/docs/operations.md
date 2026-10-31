@@ -80,6 +80,30 @@ Result includes:
 
 Ledger rows: `rea.tool/list_architectures`, `rea.tool/inspect_native_exports`, `rea.tool/inspect_pe_imports`, `leanrea/LEAN-T11`, `leanrea/LEAN-T15`.
 
+### `inventory.segments`
+
+The layout of a native binary, per architecture slice: its segments and sections with virtual address, size, file offset, bytes in the file, permissions, type and flags.
+
+Effect: read. Cost: cheap. Output from the target is untrusted (sent inside the untrusted-content envelope). Platforms: linux, darwin, win32.
+
+| Argument | Type | Required | Default | Meaning |
+|---|---|---|---|---|
+| `path` | string (≤ 4096 chars) | yes |  | File path inside the workspace |
+
+Example: The sections of a PE DLL.
+
+```json
+{"operation":"inventory.segments","path":"lib-x86_64-windows-gnu-s.dll"}
+```
+
+Result includes:
+
+```json
+{"format":"pe","slices":[{"arch":"x86_64","sections":[{"name":".text","addr":"0x180001000"}]}]}
+```
+
+Ledger rows: `rea.tool/list_segments`, `rea.tool/inspect_binary_layout`.
+
 ## read
 
 ### `read.strings`
@@ -167,3 +191,57 @@ Result includes:
 ```
 
 Ledger rows: `rea.tool/search_bytes`.
+
+### `read.address`
+
+Map a virtual address to its file offset, or a file offset to its virtual address, through the segments that load the file, and name the section that holds it.
+
+Effect: read. Cost: cheap. Output from the target is untrusted (sent inside the untrusted-content envelope). Platforms: linux, darwin, win32.
+
+| Argument | Type | Required | Default | Meaning |
+|---|---|---|---|---|
+| `path` | string (≤ 4096 chars) | yes |  | File path inside the workspace |
+| `address` | string (≤ 24 chars) | no |  | A virtual address, hex ("0x1000") or decimal |
+| `offset` | integer (≥ 0) | no |  | A file offset |
+| `arch` | string (≤ 32 chars) | no |  | Which slice of a universal binary (its architecture); the first slice if omitted |
+
+Example: Where .text of a PE DLL starts in the file.
+
+```json
+{"operation":"read.address","path":"lib-x86_64-windows-gnu-s.dll","address":"0x180001000"}
+```
+
+Result includes:
+
+```json
+{"offset":1024,"section":".text"}
+```
+
+Ledger rows: `rea.tool/address_to_file_offset`.
+
+### `read.entropy`
+
+Shannon entropy (bits per byte, 0 to 8) of any file: the whole file, each block of a fixed size, and for native binaries each section's bytes. High entropy suggests compressed or encrypted data. Blocks page with offset and limit.
+
+Effect: read. Cost: medium. Output from the target is not target text. Platforms: linux, darwin, win32.
+
+| Argument | Type | Required | Default | Meaning |
+|---|---|---|---|---|
+| `path` | string (≤ 4096 chars) | yes |  | File path inside the workspace |
+| `block` | integer (≥ 256, ≤ 1048576) | no | `4096` | Block size in bytes |
+| `offset` | integer (≥ 0) | no | `0` | first row to return (page.next continues) |
+| `limit` | integer (≥ 1, ≤ 10000) | no | `200` | rows per page |
+
+Example: A small WebAssembly module in one block.
+
+```json
+{"operation":"read.entropy","path":"lib-wasm32-freestanding-s.wasm"}
+```
+
+Result includes:
+
+```json
+{"size":295,"page":{"total":1}}
+```
+
+Ledger rows: `rea.tool/inspect_byte_entropy`.

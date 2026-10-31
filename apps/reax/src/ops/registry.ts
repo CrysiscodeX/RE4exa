@@ -2,12 +2,22 @@
 import { CoreError } from "@re4exa/core/errors";
 import "../errors.ts";
 import { readBytes, readStrings, searchBytesOp } from "./bytes.ts";
+import { inventorySegments, readAddress, readEntropy } from "./layout.ts";
 import { identifyFile, inventoryNative } from "./native.ts";
 import type { Page } from "./page.ts";
 import { checkInput } from "./schema.ts";
 import type { OpContext, Operation, OpResult } from "./types.ts";
 
-export const OPERATIONS: readonly Operation[] = [identifyFile, inventoryNative, readStrings, readBytes, searchBytesOp];
+export const OPERATIONS: readonly Operation[] = [
+  identifyFile,
+  inventoryNative,
+  inventorySegments,
+  readStrings,
+  readBytes,
+  searchBytesOp,
+  readAddress,
+  readEntropy,
+];
 
 const byName = new Map<string, Operation>();
 for (const op of OPERATIONS) {

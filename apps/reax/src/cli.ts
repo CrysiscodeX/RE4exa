@@ -174,4 +174,12 @@ export async function main(argv: string[]): Promise<number> {
   }
 }
 
-if (import.meta.main) process.exitCode = await main(process.argv.slice(2));
+if (import.meta.main) {
+  // `reax op ... | head` closes the pipe early: that is the reader's choice, not a failure
+  process.stdout.on("error", (e: NodeJS.ErrnoException) => {
+    // Windows reports a closed pipe as EOF or ECONNRESET
+    if (e.code === "EPIPE" || e.code === "EOF" || e.code === "ECONNRESET") process.exit(process.exitCode ?? 0);
+    throw e;
+  });
+  process.exitCode = await main(process.argv.slice(2));
+}

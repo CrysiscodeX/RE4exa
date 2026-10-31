@@ -3,7 +3,7 @@
 // modes, and PyYAML where python3 has it) over seeded random JSON values built from the strings
 // and numbers that break naive encoders.
 import assert from "node:assert/strict";
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -336,6 +336,34 @@ test("[+leanrea/LEAN-C10] every CLI output is capped: --token-limit cuts on a li
   const s = limitTokens("aaaa\nbbbb\ncccc", 2);
   assert.ok(s.startsWith("aaaa\n["), s);
   assert.equal(limitTokens("short", 100), "short");
+});
+
+test("[+leanrea/LEAN-C10] a reader that stops early (reax ... | head) ends reax quietly, with no error", async () => {
+  const child = spawn(
+    process.execPath,
+    [
+      "--conditions=source",
+      "--disable-warning=ExperimentalWarning",
+      join(REAX, "src", "cli.ts"),
+      "op",
+      "read.bytes",
+      "path=hello-x86_64-linux-musl-s",
+      "length=4096",
+      "--workspace",
+      BIN,
+    ],
+    { stdio: ["ignore", "pipe", "pipe"] },
+  );
+  let err = "";
+  child.stderr.on("data", (d) => {
+    err += d;
+  });
+  // close the read end before reax has started writing (it takes ~100 ms to start), as head does
+  // once it has its lines; every write reax makes then meets a closed pipe
+  child.stdout.destroy();
+  const code = await new Promise<number | null>((res) => child.on("close", (c) => res(c)));
+  assert.equal(code, 0, err);
+  assert.doesNotMatch(err, /EPIPE|Unhandled|Error/);
 });
 
 test("[-leanrea/LEAN-C10] an operation's text over the cap is cut and says so; its data keeps everything", () => {
