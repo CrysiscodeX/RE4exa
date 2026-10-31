@@ -65,6 +65,7 @@ jobs:
           npm run lint
           npm run size-lint
           npm run gen -- --check
+          node --conditions=source --disable-warning=ExperimentalWarning scripts/status.ts --check
       - name: The seeded ledger matches the profiles
         run: npm run seed:check
       - name: Tests (JUnit report for this lane)
