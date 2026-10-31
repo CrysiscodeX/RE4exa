@@ -101,10 +101,32 @@
     (`bench/corpus/functionstarts.facts.json`): 51,569 addresses equal. This found that a number in
     the table could be read past the table's end; fixed, with a test.
 
+- **NAT-4, part 4c, Rust `.dep-v0`** (`b2367cf`; CI green: reax run 41238279650, all five jobs, with
+  assay run 41238279683 and tests run 41238279662):
+  - `inventory.rust`: the cargo-auditable dependency data in ELF `.dep-v0`, Mach-O `__DATA,.dep-v0`
+    (every slice), PE `.dep-v0` and wasm: packages with version, source, kind and root, dependency
+    edges, and the rustc commit hash from `/rustc/<hash>/` paths, so a Rust binary built without
+    cargo-auditable is still named Rust. The inflate and the package and edge counts are capped; a
+    damaged or oversized section gives partial coverage with a limitation, never an error;
+  - key: rust-audit-info 0.5.4's JSON (`bench/oracle/rust.json`), re-derived in CI's fixtures job,
+    which installs it with `cargo install --locked` (D-11);
+  - fixture `rust-deps-aarch64-apple-darwin`, sources and `Cargo.lock` in `fixtures/extra-src/rust-deps`;
+  - not an Assay sweep probe, on cost (D-12);
+  - rows tagged: rea.tool/inspect_rust_binary, LEAN-C29, LEAN-T13.
+  - Known gaps (D-11): ELF, PE and wasm `.dep-v0` have no real fixture (the host has only the
+    aarch64-apple-darwin std, and no cross route is cleared); wasm is covered only by a synthetic unit
+    test; cargo-auditable 0.7.7 records no features, so `features` is checked only against a synthetic
+    document. ELF, PE and fat Mach-O were checked by hand only (the real blob spliced into copies of
+    the zig ELF and PE fixtures with llvm-objcopy; a lipo'd fat file); no committed test covers them.
+  - Correction: `2e07cb7` recorded this item as blocked for lack of a Rust toolchain. That was
+    wrong: Homebrew rustc and cargo 1.99.1 are installed, and cargo-auditable 0.7.7 and
+    rust-audit-info 0.5.4 are in `/tmp/reax-cargo`.
+
 ## Active
 - **NAT-4, part 4 (rest):**
-  - crash dumps;
-  - the PE COFF symbol table and ARM64 `.pdata`.
+  - ARM64 `.pdata`;
+  - the PE COFF symbol table;
+  - crash dumps.
 
 ## Next (in order)
 1. ARC, archives and bundles.
@@ -113,8 +135,6 @@
    16 KiB `tools/list` target).
 
 ## Blocked
-- **Rust `.dep-v0` (cargo-auditable):** no Rust toolchain on the development machine; needs
-  cargo-auditable in CI.
 - **PE certificates (`inspect_pe_certificates`):** none of the four PE files in the LearnHarness
   corpus is signed (their certificate directory is empty) and no signing tool is installed, so
   there is no sample to check a reader against. The row stays untested.
@@ -123,6 +143,13 @@
   test cannot run here. LLVM 18 and binutils come from Homebrew, pefile from the pinned hash. The
   keys regenerate identically except tool-version labels (the Python label differs: leave
   `entropy.json`, `search.json` and `strings.json` as CI wrote them).
+  - Rust: Homebrew rustc and cargo 1.99.1 (host std only, aarch64-apple-darwin); cargo-auditable
+    0.7.7 and rust-audit-info 0.5.4 in `/tmp/reax-cargo`.
+  - zig 0.15.2 for macOS arm64 (2026-11-01), for the ARM64 `.pdata` item, in `/tmp/zigmac`. Its wheel,
+    `ziglang-0.15.2-py3-none-macosx_12_0_arm64.whl` (92,993,702 bytes), has sha256
+    `acae2a9ce67ed249ad68d42c21bc73b5f9d51a33ba5ea42f609f78683e8d9bb7`, equal to PyPI's published
+    digest; the unpacked tree is byte-identical to a fresh unzip, and `zig version` prints 0.15.2.
+    Whether it rebuilds the zig corpus byte for byte is not checked.
 - **The automatic session hook:** refused by the session's permission policy (DECISION-LOG D-5).
   The setup script stands in for it.
 
