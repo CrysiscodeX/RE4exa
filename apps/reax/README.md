@@ -120,4 +120,4 @@ npm run test:lane       # tests, writing reports/<platform>.xml
 npm run parity -- --gate-phase 0 --gate-kind reax-infra
 ```
 
-Licence: Apache-2.0.
+Licence: none; all rights reserved by the owner. Third-party credits: [THIRD_PARTY_NOTICES](../../THIRD_PARTY_NOTICES).

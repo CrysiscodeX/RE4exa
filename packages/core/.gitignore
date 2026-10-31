@@ -2,3 +2,5 @@ node_modules/
 dist/
 coverage/
 *.tgz
+# copied from the repository root at build time
+THIRD_PARTY_NOTICES

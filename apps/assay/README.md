@@ -160,4 +160,4 @@ Node 24.15 or later. The browser interface is tested in Chromium only.
 - [docs/failure-modes.md](docs/failure-modes.md), [docs/configuration.md](docs/configuration.md) and [docs/reach.json](docs/reach.json)
 - [docs/decisions/](docs/decisions/) and [CHANGELOG.md](CHANGELOG.md)
 
-Apache-2.0. See [LICENSE](LICENSE) and, for the projects Assay builds on, [NOTICE](NOTICE).
+No licence: all rights reserved by the owner. Credits for the projects Assay builds on are in [THIRD_PARTY_NOTICES](../../THIRD_PARTY_NOTICES).

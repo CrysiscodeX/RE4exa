@@ -2,7 +2,7 @@
 // project with integrity checking from the lockfile-resolved registry, and run the installed CLI.
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -26,6 +26,12 @@ const digest = createHash("sha256").update(readFileSync(tgz)).digest("hex");
 const dir = mkdtempSync(join(tmpdir(), "assay-install-"));
 writeFileSync(join(dir, "package.json"), JSON.stringify({ name: "rehearsal", version: "0.0.0", private: true }));
 sh("npm", ["install", "--ignore-scripts", "--no-audit", "--no-fund", coreTgz, reaxTgz, tgz], dir);
+// core ships copied third-party code; its MIT terms ask that the credits travel with it
+const notices = join(dir, "node_modules", "@re4exa", "core", "THIRD_PARTY_NOTICES");
+if (!existsSync(notices) || !readFileSync(notices, "utf8").includes("stablyai/orca")) {
+  console.error("the installed @re4exa/core does not carry THIRD_PARTY_NOTICES");
+  process.exit(1);
+}
 const version = sh("npx", ["--no-install", "assay", "version"], dir);
 const home = join(dir, ".assay-home");
 const sweep = sh("npx", ["--no-install", "assay", "sweep", "node_modules/assay/docs", "--home", home], dir);

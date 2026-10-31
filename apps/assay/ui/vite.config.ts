@@ -17,6 +17,9 @@ export default defineConfig({
     target: "es2022",
     sourcemap: false,
     reportCompressedSize: true,
+    // keep the bundled libraries' own @license comments (React, xterm, ...): their MIT terms ask
+    // that the notice travel with every copy, and this way it does with nothing to maintain
+    rolldownOptions: { output: { comments: { legal: true, annotation: false, jsdoc: false } } },
   },
   server: {
     host: "127.0.0.1",

@@ -1,5 +1,5 @@
 // reax fixture: C++ with namespaces, a class hierarchy with virtual functions, a template and
-// an extern "C" entry, so mangled names, vtables and RTTI appear. Written for reax; Apache-2.0.
+// an extern "C" entry, so mangled names, vtables and RTTI appear. Written for reax.
 #include <cstdio>
 
 namespace reax {

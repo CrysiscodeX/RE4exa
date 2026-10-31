@@ -19,5 +19,6 @@ RE4exa is independent and is not affiliated with REA or the other projects studi
 | [`apps/reax/`](apps/reax) | **reax** (in development, phase 0): the clean-room replacement for rea and leanrea. So far: the limitation register and parity ledger seeded from `docs/profiles`, and a CI gate that computes each row's status from every platform lane's test report |
 | [`skills/`](skills) | Agent skills for rex, dissect and rqs |
 
-RE4exa has no LICENSE file yet, so others cannot legally reuse the code; its own RQS-2030 review
-lists this as red line RL-1. Choosing a licence is the owner's decision.
+RE4exa has no licence, by the owner's decision: all rights are reserved, and others need the
+owner's permission to reuse the code. The credits that copied third-party code requires are in
+[THIRD_PARTY_NOTICES](THIRD_PARTY_NOTICES).

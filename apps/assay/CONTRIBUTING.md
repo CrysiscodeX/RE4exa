@@ -7,4 +7,4 @@
 5. **Security issues** are reported privately, never in a public issue. See [SECURITY.md](SECURITY.md).
 6. **AI-assisted contributions** are welcome and must say so in the PR description. They are reviewed like any other change. See [docs/ai-development.md](docs/ai-development.md).
 
-By contributing you agree that your contribution is licensed under Apache-2.0 (see [LICENSE](LICENSE)).
+RE4exa has no licence; all rights are reserved by the owner. Contributions are accepted only with the owner's agreement.

@@ -13,4 +13,7 @@ const r = spawnSync("npx", ["tsc", "-p", "tsconfig.build.json"], {
 });
 if (r.status !== 0) process.exit(r.status ?? 1);
 cpSync(join(root, "src", "probes", "router-pack.json"), join(root, "dist", "probes", "router-pack.json"));
+// The package carries copied third-party code (the Orca process host, leanrea's router data), so it
+// carries the repository's one credit file too; the copy is git-ignored.
+cpSync(join(root, "..", "..", "THIRD_PARTY_NOTICES"), join(root, "THIRD_PARTY_NOTICES"));
 console.log("built packages/core/dist");

@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "description": "Prototype: run REA MCP tool calls as Absurd durable steps so Evidence survives a crash.",
   "type": "module",
-  "license": "MIT",
+  "license": "UNLICENSED",
   "engines": { "node": ">=22.19" },
   "scripts": {
     "pg:up": "bash scripts/pg-up.sh",

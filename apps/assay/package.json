@@ -2,7 +2,7 @@
   "name": "assay",
   "version": "0.1.0",
   "description": "Local-first agent workbench: chat with signed-in agent clients, run sub-agents, and get every claim checked against re-runnable evidence",
-  "license": "Apache-2.0",
+  "license": "UNLICENSED",
   "type": "module",
   "private": true,
   "engines": {
@@ -50,8 +50,6 @@
     "dist",
     "ui/dist",
     "docs",
-    "LICENSE",
-    "NOTICE",
     "SECURITY.md",
     "support.json",
     "README.md",

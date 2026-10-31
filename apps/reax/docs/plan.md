@@ -48,7 +48,7 @@ You then asked me to evaluate and improve the draft without further questions, u
 - **MCP protocol:**
   - Serve **2026-07-28 and 2025-11-25**, on the official TypeScript SDK v2 (`@modelcontextprotocol/server`, Apache-2.0, two dependencies). The SDK's client also runs in CI as a conformance oracle.
   - Do not build approvals or models on sampling or elicitation. The daemon's approval queue and job handles stay authoritative.
-- **Licence:** reax and core are Apache-2.0, with NOTICE files. GPL, LGPL and AGPL tools run **only as separate processes**, are never linked, and are listed in `third-party.md`.
+- **Licence:** none, by the owner's decision (2026-10-31); all rights reserved. Copied third-party code is credited in the root `THIRD_PARTY_NOTICES`. GPL, LGPL and AGPL tools run **only as separate processes**, are never linked, and are listed in `third-party.md`.
 - **Client limits as design inputs.** Claude Code warns at 10k tokens, caps at 25k, and saves any text over 50,000 characters to a file. Error text over about 11k characters is cut. HTTP fails above 16 MiB. So:
   - `inventory` stays under 10k tokens and 50k characters;
   - error text stays under 8k characters;
@@ -430,7 +430,7 @@ reax-tagged test before they count. The rest change the plan as follows. Row ids
 - Add the resume and adversarial tasks to the phase 1 gate [LEAN-Q-6]; record model refusals per
   arm and state the scope in the skill and tool descriptions [REA-9B-3]; the tools/list size
   probe uses the SDK client with a read timeout and kills the server in `finally` [LEAN-C58].
-- A release check that LICENSE and NOTICE are in every tarball [AB-P17, PD-12]; Dependabot or
+- A release check that THIRD_PARTY_NOTICES is in every tarball that carries copied code [AB-P17, PD-12]; Dependabot or
   Renovate and a lockfile-drift check [REA-A6.5, REA-ISS-6480]; a per-file size lint [T3-1];
   public npm download counts in release notes [REA-Q-3]; a ledger row's lease is released only
   when its PR merges [OR-6].

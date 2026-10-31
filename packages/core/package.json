@@ -2,7 +2,7 @@
   "name": "@re4exa/core",
   "version": "0.1.0",
   "description": "Shared engine for Assay and reax: durable SQLite kernel, evidence records, model-free probes, verifier, policy",
-  "license": "Apache-2.0",
+  "license": "UNLICENSED",
   "type": "module",
   "private": true,
   "engines": {
@@ -26,10 +26,9 @@
     "api": "node --disable-warning=ExperimentalWarning scripts/api.ts --check"
   },
   "files": [
+    "THIRD_PARTY_NOTICES",
     "dist",
     "src",
-    "LICENSE",
-    "NOTICE",
     "README.md"
   ]
 }

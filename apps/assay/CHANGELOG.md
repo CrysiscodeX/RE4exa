@@ -19,6 +19,8 @@ What each contract promises:
 
 The first version.
 
+**Licence (2026-10-31).** RE4exa has no licence, by the owner's decision: all rights are reserved. The Apache-2.0 LICENSE and NOTICE files are removed, and every package declares `UNLICENSED`. The credits that copied third-party code requires (Orca's process host, leanrea's router data and skill file) are in one root file, `THIRD_PARTY_NOTICES`, which core's package carries. The UI bundle keeps its libraries' own `@license` comments.
+
 Fixed before release. These were found by two independent RQS-2030 reviews and reproduced before fixing:
 - The verifier marked "app.js does NOT use eval" verified, because it checked only the predicate. A claim whose text negates its predicate is now unverifiable; `negate: true` checks an absence.
 - External-tool probes marked `consent: approval` ran without asking, with Assay's full environment. They now ask every time and get the allow-listed environment. `@electron/asar` is pinned.

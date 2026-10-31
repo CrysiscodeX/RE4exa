@@ -1,5 +1,5 @@
 // reax fixture: a shared library with exported functions and data, a function-pointer table,
-// and a hidden function that must not appear in the export table. Written for reax; Apache-2.0.
+// and a hidden function that must not appear in the export table. Written for reax.
 #define EXPORT __attribute__((visibility("default")))
 #ifdef __wasm__
 #undef EXPORT

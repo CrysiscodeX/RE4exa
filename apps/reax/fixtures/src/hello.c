@@ -1,5 +1,5 @@
 // reax fixture: a small program with strings, an exported function, a static helper, a jump
-// table and libc imports. Written for reax; Apache-2.0.
+// table and libc imports. Written for reax.
 #include <stdio.h>
 #include <string.h>
 

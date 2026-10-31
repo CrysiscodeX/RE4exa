@@ -2,7 +2,7 @@
   "name": "reax",
   "version": "0.0.2",
   "description": "Clean-room reverse-engineering toolkit for agents (replaces rea and leanrea). In development: phase 0.",
-  "license": "Apache-2.0",
+  "license": "UNLICENSED",
   "type": "module",
   "private": true,
   "exports": {
@@ -40,8 +40,6 @@
     "dist",
     "src",
     "!src/bench",
-    "LICENSE",
-    "NOTICE",
     "README.md"
   ]
 }
