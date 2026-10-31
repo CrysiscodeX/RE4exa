@@ -338,6 +338,32 @@ Result includes:
 
 Ledger rows: `rea.tool/inspect_go_binary`, `leanrea/LEAN-C21`, `leanrea/LEAN-C28`, `leanrea/LEAN-T10`.
 
+### `inventory.rust`
+
+A Rust binary's dependencies as cargo-auditable embeds them (.dep-v0 in ELF, PE, every Mach-O slice and wasm): format version, every package with version, source, kind, features and root flag, and the dependency edges as indices and names; and the rustc commit and other Rust marks, so a Rust binary without cargo-auditable is still named Rust. Bounded: 8 MiB inflated, 65536 packages, 1048576 edges (4096 listed per package), 8 MiB of read-only data scanned; past a bound or on damage the result is partial. Packages page with offset and limit.
+
+Effect: read. Cost: cheap. Output from the target is untrusted (sent inside the untrusted-content envelope). Platforms: linux, darwin, win32.
+
+| Argument | Type | Required | Default | Meaning |
+|---|---|---|---|---|
+| `path` | string (≤ 4096 chars) | yes |  | File path inside the workspace |
+| `offset` | integer (≥ 0) | no | `0` | first row to return (page.next continues) |
+| `limit` | integer (≥ 1, ≤ 10000) | no | `200` | rows per page |
+
+Example: Which crates a Rust binary was built from, and with which rustc.
+
+```json
+{"operation":"inventory.rust","path":"rust-deps-aarch64-apple-darwin"}
+```
+
+Result includes:
+
+```json
+{"rust":true,"rustc":"58cf8f9c35b355199727627d07ae34a4e2846d67","items":[{"name":"itoa","version":"1.0.11","source":"crates.io"}]}
+```
+
+Ledger rows: `rea.tool/inspect_rust_binary`, `leanrea/LEAN-C29`, `leanrea/LEAN-T13`.
+
 ## read
 
 ### `read.strings`

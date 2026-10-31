@@ -119,7 +119,17 @@ jobs:
         env:
           PIP_BREAK_SYSTEM_PACKAGES: "1"
         run: python3 -m pip install --no-deps --require-hashes --target /tmp/reax-pyoracle -r scripts/oracle-requirements.txt
-      - name: The answer keys are the tools' current answers (LLVM, GNU strings, Python, Go, pefile)
+      - name: rust-audit-info for the Rust key (the version pinned, its dependencies locked)
+        run: |
+          command -v cargo >/dev/null || export PATH="$HOME/.cargo/bin:$PATH"
+          if ! command -v cargo >/dev/null; then
+            echo "::error::cargo is not on PATH or in ~/.cargo/bin; the Rust key needs rust-audit-info"
+            exit 1
+          fi
+          cargo --version
+          cargo install --locked --version 0.5.4 rust-audit-info --root /tmp/reax-cargo
+          echo /tmp/reax-cargo/bin >> "$GITHUB_PATH"
+      - name: The answer keys are the tools' current answers (LLVM, GNU strings, Python, Go, pefile, rust-audit-info)
         run: |
           go version
           node --disable-warning=ExperimentalWarning scripts/oracle.ts --check

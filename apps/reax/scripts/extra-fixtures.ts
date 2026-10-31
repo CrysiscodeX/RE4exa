@@ -5,10 +5,21 @@
 // script records how they were made and is run by hand when one is added.
 //   node scripts/extra-fixtures.ts           build into fixtures/extra and write the manifest
 //   node scripts/extra-fixtures.ts models   (re)write only the model files, keeping the rest as committed
+//   node scripts/extra-fixtures.ts rust     (re)write only the Rust files, keeping the rest as committed
 //   node scripts/extra-fixtures.ts --check   the committed files match the manifest
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  copyFileSync,
+  cpSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  realpathSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -135,6 +146,66 @@ function buildModels(): Record<string, ExtraFixture> {
   return out;
 }
 
+// The Rust fixture: cargo-auditable's dependency data (.dep-v0) for a binary with a local path
+// library (a feature on), a local build-dependency and one pinned crates.io crate. The sources are
+// in fixtures/extra-src/rust-deps (not fixtures/src, which the zig build copies whole, nor
+// fixtures/extra, whose every entry must be a pinned file). Built once on an Apple Silicon Mac with
+// Homebrew's toolchain, which has only the host's standard library, so it is a Mach-O; ELF, PE and
+// wasm .dep-v0 have no real fixture (DECISION-LOG D-11). It was made with these tools, by
+//   PATH=/tmp/reax-cargo/bin:/opt/homebrew/bin:$PATH CARGO_HOME=/tmp/reax-cargo \
+//   RUSTFLAGS="--remap-path-prefix=<build dir>=/reax --remap-path-prefix=/tmp/reax-cargo=/cargo" \
+//   cargo auditable build --release --locked
+// in a copy of the sources under /tmp, which is removed afterwards.
+export const RUST_SRC = join(REAX, "fixtures", "extra-src", "rust-deps");
+export const RUSTC_VV = "rustc 1.99.1 (58cf8f9c3 2026-10-13) (Homebrew)";
+export const RUSTC_COMMIT = "58cf8f9c35b355199727627d07ae34a4e2846d67";
+export const CARGO_V = "cargo 1.99.1 (5f94df478 2026-08-27) (Homebrew)";
+export const CARGO_AUDITABLE = "cargo-auditable 0.7.7";
+export const RUST_AUDIT_INFO = "rust-audit-info 0.5.4";
+const CARGO_HOME = "/tmp/reax-cargo";
+const RUST_CMD = "cargo auditable build --release --locked";
+
+function buildRust(): Record<string, ExtraFixture> {
+  // under /tmp, which macOS resolves under /private/tmp: both spellings are remapped
+  const tmp = mkdtempSync("/tmp/reax-rust-");
+  const real = realpathSync(tmp);
+  const name = "rust-deps-aarch64-apple-darwin";
+  try {
+    cpSync(RUST_SRC, tmp, { recursive: true });
+    const env = {
+      PATH: `${CARGO_HOME}/bin:/opt/homebrew/bin:${process.env.PATH ?? ""}`,
+      CARGO_HOME,
+      RUSTFLAGS: [
+        `--remap-path-prefix=${tmp}=/reax`,
+        `--remap-path-prefix=${real}=/reax`,
+        `--remap-path-prefix=${CARGO_HOME}=/cargo`,
+        `--remap-path-prefix=${realpathSync(CARGO_HOME)}=/cargo`,
+      ].join(" "),
+    };
+    const vv = sh("rustc", ["-vV"], { env });
+    const commit = /^commit-hash: (\w+)$/m.exec(vv)?.[1];
+    const line = vv.split("\n")[0]!;
+    if (line !== RUSTC_VV || commit !== RUSTC_COMMIT) throw new Error(`rustc is ${line} (${commit}), not ${RUSTC_VV}`);
+    const cargo = sh("cargo", ["-V"], { env });
+    if (cargo !== CARGO_V) throw new Error(`cargo is ${cargo}, not ${CARGO_V}`);
+    // what `cargo install --list --root` prints, read from cargo's own record of the install
+    const tools = readFileSync(join(CARGO_HOME, ".crates.toml"), "utf8");
+    for (const t of [CARGO_AUDITABLE, RUST_AUDIT_INFO])
+      if (!tools.includes(`"${t} (registry+`)) throw new Error(`${t} is not installed in ${CARGO_HOME}`);
+    sh("cargo", RUST_CMD.split(" ").slice(1), { cwd: tmp, env });
+    copyFileSync(join(tmp, "target", "release", "reaxrs"), join(EXTRA, name));
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+  return {
+    [name]: {
+      ...digest(name),
+      format: "macho",
+      made: `${RUSTC_VV} commit-hash ${RUSTC_COMMIT}; ${CARGO_V}; ${CARGO_AUDITABLE}; ${RUST_AUDIT_INFO}: RUSTFLAGS="--remap-path-prefix=<build dir>=/reax --remap-path-prefix=/tmp/reax-cargo=/cargo" ${RUST_CMD} (fixtures/extra-src/rust-deps)`,
+    },
+  };
+}
+
 export function extraManifest(dir = EXTRA): Record<string, ExtraFixture> {
   return JSON.parse(readFileSync(join(dir, "manifest.json"), "utf8")).files as Record<string, ExtraFixture>;
 }
@@ -162,6 +233,13 @@ if (import.meta.main) {
     for (const p of problems) console.error(`fixtures/extra: ${p}`);
     if (problems.length) process.exit(1);
     console.log(`fixtures/extra matches its manifest (${Object.keys(extraManifest()).length} files)`);
+  } else if (process.argv.includes("rust")) {
+    const files = { ...extraManifest(), ...buildRust() };
+    writeFileSync(
+      EXTRA_MANIFEST,
+      `${JSON.stringify({ note: "Built by scripts/extra-fixtures.ts; pinned by digest. Do not edit.", files }, null, 1)}\n`,
+    );
+    console.log(`wrote ${Object.keys(files).length} extra fixtures (Rust only)`);
   } else if (process.argv.includes("models")) {
     const files = { ...extraManifest(), ...buildModels() };
     writeFileSync(

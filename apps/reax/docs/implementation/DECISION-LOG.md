@@ -104,3 +104,43 @@ types and sizes. The fixtures themselves are written by the gguf and safetensors
   hand, as the file is not in the repository.
 **Reopen if** the gguf package becomes installable from hashed wheels on every CI platform (then use
 it as the key), or a model format reader needs a type this table lacks.
+
+## D-11 (2026-11-01) Rust `.dep-v0`: rust-audit-info is the key, re-derived in CI
+The answer key for `inventory.rust` is the JSON that RustSec's rust-audit-info 0.5.4 prints for the
+committed fixture. `scripts/oracle-rust.ts` runs it on the fixture bytes and stores the output as
+printed in `bench/oracle/rust.json`. CI's fixtures job installs it with
+`cargo install --locked --version 0.5.4 rust-audit-info --root /tmp/reax-cargo` and re-derives the
+key with `oracle.ts --check`. On the Mac only `oracle.ts rust` writes. Option A, approved by the user.
+- The one real fixture is `rust-deps-aarch64-apple-darwin` (Mach-O `__DATA,.dep-v0`). It was built
+  with Homebrew rustc 1.99.1 (commit 58cf8f9c35b355199727627d07ae34a4e2846d67), cargo 1.99.1 and
+  cargo-auditable 0.7.7, using `--remap-path-prefix` and `cargo auditable build --release --locked`.
+  Its sources and `Cargo.lock` are in `fixtures/extra-src/rust-deps`.
+- Known gaps:
+  - ELF, PE and wasm `.dep-v0` have no real fixture: the host has only the aarch64-apple-darwin std,
+    and no cross route has been cleared with the user.
+  - wasm is covered only by a synthetic unit test.
+  - cargo-auditable 0.7.7 does not record features, so `features` is checked only against a synthetic
+    document.
+- No committed test exercises ELF, PE or fat Mach-O `.dep-v0`. The reviewer checked them by hand: the
+  fixture's real blob was spliced into copies of the zig ELF and PE fixtures with llvm-objcopy, and
+  reax matched rust-audit-info; for a lipo'd fat file, reax read the aarch64 slice at the correct
+  offset (rust-audit-info refuses fat files).
+**Reopen if** a cross route (a /tmp-only rustup, or build-std) is cleared with the user, so ELF and PE
+fixtures can be built, or rust-audit-info's output changes for the same bytes.
+
+## D-12 (2026-11-01) Assay sweep: a cost criterion; `inventory.rust` stays out
+The D-7 criterion does not exclude `inventory.rust`. It has a read effect and takes only a path, so it
+is eligible under the probe rule in `src/ops/probes.ts` (probes still run only if listed in
+`SWEEP_OPERATIONS`). D-12 adds a cost criterion. An operation joins the Assay sweep only if, on files
+it does not apply to, its p95 is at most `inventory.native`'s p95, and it scans a small, bounded part
+of the file. `inventory.rust` is kept out of the sweep on cost:
+- On 30 non-Rust files (`fixtures/bin`, the non-Rust `fixtures/extra` files and the LearnHarness
+  corpus), its p95 is 0.84 ms; `inventory.native`'s is 0.23 ms over the 25 of those files it accepts.
+  `inventory.rust`'s p95 is also 0.84 ms on those 25. The medians are 0.10 ms and 0.07 ms.
+- Its marker scan is capped at 8 MiB of read-only data, but can still cover up to 53% of a file
+  (811,520 B of the Go PE's `.rdata`).
+- Its output is at most 550 B on non-Rust files (median 389 B), and 1688 B on the Rust fixture.
+
+Agents reach it through reax's inventory tool. Nothing in Assay changes.
+**Reopen if** the marker scan is limited to a small fixed window, or skipped on files without Rust
+evidence, so that its p95 on non-Rust files falls to `inventory.native`'s.

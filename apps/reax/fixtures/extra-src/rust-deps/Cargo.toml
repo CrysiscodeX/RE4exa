@@ -1,0 +1,17 @@
+[package]
+name = "reaxrs"
+version = "0.2.0"
+edition = "2021"
+publish = false
+description = "reax fixture: a Rust binary with cargo-auditable dependency data"
+license = "MIT"
+
+[dependencies]
+reaxlib = { path = "reaxlib", version = "0.1.0", features = ["shout"] }
+itoa = "=1.0.11"
+
+[build-dependencies]
+reaxbuild = { path = "reaxbuild", version = "0.1.0" }
+
+[profile.release]
+strip = true

@@ -48,6 +48,12 @@
    "size": 480,
    "format": "safetensors",
    "made": "safetensors 0.7.0 (numpy 2.0.2): scripts/model-fixtures.py"
+  },
+  "rust-deps-aarch64-apple-darwin": {
+   "sha256": "1b38578efd30ce4e8feb07d6bab78cd6d7c37f79cc461a07982d13a88f05a6a4",
+   "size": 360064,
+   "format": "macho",
+   "made": "rustc 1.99.1 (58cf8f9c3 2026-10-13) (Homebrew) commit-hash 58cf8f9c35b355199727627d07ae34a4e2846d67; cargo 1.99.1 (5f94df478 2026-08-27) (Homebrew); cargo-auditable 0.7.7; rust-audit-info 0.5.4: RUSTFLAGS=\"--remap-path-prefix=<build dir>=/reax --remap-path-prefix=/tmp/reax-cargo=/cargo\" cargo auditable build --release --locked (fixtures/extra-src/rust-deps)"
   }
  }
 }
