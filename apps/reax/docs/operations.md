@@ -260,6 +260,30 @@ Result includes:
 
 Ledger rows: `rea.tool/inspect_macho`, `rea.tool/inspect_signature`.
 
+### `inventory.pe`
+
+A PE file's exploit mitigations and load configuration: ASLR, high-entropy ASLR, DEP, Control Flow Guard, SafeSEH and forced-integrity bits from the header, and the load configuration directory (security cookie, SEH handler table, CFG check and function table, guard flags, enclave and volatile metadata pointers).
+
+Effect: read. Cost: cheap. Output from the target is untrusted (sent inside the untrusted-content envelope). Platforms: linux, darwin, win32.
+
+| Argument | Type | Required | Default | Meaning |
+|---|---|---|---|---|
+| `path` | string (≤ 4096 chars) | yes |  | File path inside the workspace |
+
+Example: Whether a Windows executable opts into ASLR and DEP.
+
+```json
+{"operation":"inventory.pe","path":"hello-x86_64-windows-gnu-s.exe"}
+```
+
+Result includes:
+
+```json
+{"mitigations":{"aslr":true,"dep":true}}
+```
+
+Ledger rows: `rea.tool/inspect_pe_load_config`.
+
 ### `inventory.go`
 
 A Go binary's build information (Go version, main module, every dependency with version, sum and replacement, build settings such as GOOS, GOARCH and CGO_ENABLED) and its functions from the pclntab, which survive stripping. Functions filter by name and page with offset and limit.

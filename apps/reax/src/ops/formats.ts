@@ -8,6 +8,7 @@ import { goBuildInfo, goFunctions } from "../readers/go.ts";
 import { LAYOUT_FORMATS, layout } from "../readers/layout.ts";
 import { machoDetail } from "../readers/macho.ts";
 import { elfNotes } from "../readers/notes.ts";
+import { peSecurity } from "../readers/peconfig.ts";
 import { peResources } from "../readers/resources.ts";
 import { pageStream } from "./bytes.ts";
 import { readHead, target } from "./file.ts";
@@ -121,6 +122,53 @@ export const inventoryResources: Operation = {
           : []),
         ...r.strings.map((x) => `  string ${x.id}: ${x.text}`),
         ...(r.manifest ? ["  manifest:", ...r.manifest.split("\n").map((l) => `    ${l}`)] : []),
+      ].join("\n"),
+      coverage: r.notes.length ? "partial" : "complete",
+      limitations: r.notes,
+    };
+  },
+};
+
+export const inventoryPe: Operation = {
+  tool: "inventory",
+  name: "inventory.pe",
+  summary:
+    "A PE file's exploit mitigations and load configuration: ASLR, high-entropy ASLR, DEP, Control Flow Guard, SafeSEH and forced-integrity bits from the header, and the load configuration directory (security cookie, SEH handler table, CFG check and function table, guard flags, enclave and volatile metadata pointers).",
+  input: { type: "object", properties: { path: PATH }, required: ["path"], additionalProperties: false },
+  effect: "read",
+  cost: "cheap",
+  untrusted: true,
+  platforms: [...ALL],
+  examples: [
+    {
+      title: "Whether a Windows executable opts into ASLR and DEP",
+      workspace: "fixtures",
+      args: { path: "hello-x86_64-windows-gnu-s.exe" },
+      expect: { mitigations: { aslr: true, dep: true } },
+    },
+  ],
+  covers: ["rea.tool/inspect_pe_load_config"],
+  async run(ctx, args): Promise<OpResult> {
+    const f = native(ctx, args.path);
+    if (f.format !== "pe")
+      throw new CoreError("bad_request", { field: "path", why: `a PE file (EXE or DLL); this file is ${f.format}` });
+    const s = layout(f.bytes, "pe")[0]!;
+    const r = peSecurity(f.bytes, s);
+    const m = r.mitigations;
+    const lc = r.loadConfig;
+    return {
+      data: { file: f.rel, ...r },
+      text: [
+        `${f.rel}: ${m.dllCharacteristics.join(", ") || "no DLL characteristics"}`,
+        `  ASLR ${m.aslr}, high-entropy ${m.highEntropyVa}, DEP ${m.dep}, CFG ${m.controlFlowGuard}, SafeSEH ${m.safeSeh ?? "n/a (64-bit)"}`,
+        ...(lc
+          ? [
+              `  load config ${lc.version}, ${lc.size} bytes; guard flags: ${lc.guardFlags.join(", ") || "none"}`,
+              ...Object.entries(lc.fields)
+                .filter(([, v]) => v !== "0x0")
+                .map(([k, v]) => `    ${k}: ${v}`),
+            ]
+          : ["  no load configuration directory"]),
       ].join("\n"),
       coverage: r.notes.length ? "partial" : "complete",
       limitations: r.notes,

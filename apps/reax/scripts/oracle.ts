@@ -7,12 +7,14 @@
 //   node scripts/oracle.ts [--check]
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { extraManifest } from "./extra-fixtures.ts";
-import { goKey, machoKey, notesKey, pefileKey, resourceTree } from "./oracle-formats.ts";
+import { goKey, machoKey, notesKey, pefileKey, peSecKey, resourceTree } from "./oracle-formats.ts";
 import { entropyKey, type LayoutKey, layoutKey, sectionRanges } from "./oracle-layout.ts";
 import { symbolsKey } from "./oracle-symbols.ts";
+import { buildSynth, SYNTH } from "./pe-synth.ts";
 
 const REAX = join(import.meta.dirname, "..");
 const BIN = join(REAX, "fixtures", "bin");
@@ -26,6 +28,7 @@ export const NOTES_KEY = join(ORACLE_DIR, "notes.json");
 export const GO_KEY = join(ORACLE_DIR, "go.json");
 export const RESOURCES_KEY = join(ORACLE_DIR, "resources.json");
 export const MACHO_KEY = join(ORACLE_DIR, "macho.json");
+export const PESEC_KEY = join(ORACLE_DIR, "pesec.json");
 const EXTRA = join(REAX, "fixtures", "extra");
 
 /** Where each slice of a universal binary starts, from llvm-objdump (0 for a thin file). */
@@ -129,7 +132,7 @@ function versions(): Record<string, string> {
 }
 
 export function build(): Record<
-  "strings" | "search" | "layout" | "entropy" | "symbols" | "notes" | "go" | "resources" | "macho",
+  "strings" | "search" | "layout" | "entropy" | "symbols" | "notes" | "go" | "resources" | "macho" | "pesec",
   string
 > {
   const files = readdirSync(BIN).sort();
@@ -143,6 +146,7 @@ export function build(): Record<
   const go: Record<string, unknown> = {};
   const resources: Record<string, unknown> = {};
   const macho: Record<string, unknown> = {};
+  const pesec: Record<string, unknown> = {};
   // the format of each native fixture, as LLVM read it for the benchmark's answer key
   const formats = JSON.parse(readFileSync(join(REAX, "bench", "oracle-facts.json"), "utf8")).facts as Record<
     string,
@@ -164,15 +168,30 @@ export function build(): Record<
         key.slices.map((x) => x.arch),
       );
       if (format === "elf") notes[f] = notesKey(p);
-      if (format === "pe") resources[f] = { tree: resourceTree(p), pefile: pefileKey(p) };
+      if (format === "pe") {
+        resources[f] = { tree: resourceTree(p), pefile: pefileKey(p) };
+        pesec[f] = peSecKey(p);
+      }
       if (format === "macho" || format === "macho-fat") macho[f] = machoKey(p, format === "macho-fat");
     } else entropy[f] = entropyKey(p, []);
   }
+  // synthetic PE32 and PE32+ images with every load configuration field set (scripts/pe-synth.ts)
+  const synthDir = mkdtempSync(join(tmpdir(), "reax-synth-"));
+  for (const c of SYNTH) {
+    const p = join(synthDir, `${c.name}.exe`);
+    writeFileSync(p, buildSynth(c));
+    // LLVM 18 and pefile order ProcessHeapFlags and ProcessAffinityMask differently in the PE32 layout
+    pesec[`synthetic/${c.name}`] = { ...peSecKey(p), pefile: pefileKey(p, "oracle-pe-loadconfig.py") };
+  }
+  rmSync(synthDir, { recursive: true, force: true });
   // the extra fixtures (fixtures/extra): notes and Go, the features the zig corpus lacks
   for (const [f, e] of Object.entries(extraManifest())) {
     const p = join(EXTRA, f);
     if (e.format === "elf") notes[`extra/${f}`] = notesKey(p);
-    if (e.format === "pe") resources[`extra/${f}`] = { tree: resourceTree(p), pefile: pefileKey(p) };
+    if (e.format === "pe") {
+      resources[`extra/${f}`] = { tree: resourceTree(p), pefile: pefileKey(p) };
+      pesec[`extra/${f}`] = peSecKey(p);
+    }
     if (f.startsWith("go-")) {
       const k = goKey(p) as { funcs: { name: string; entry: string }[] };
       // every function, as a digest (thousands of runtime functions), plus the program's own in full
@@ -190,6 +209,7 @@ export function build(): Record<
     go: `${JSON.stringify({ note, tool: "Go's debug/buildinfo and debug/gosym (scripts/oracle-go)", files: go })}\n`,
     resources: `${JSON.stringify({ note, tool: "llvm-readobj 18 --coff-resources; pefile 2024.8.26", files: resources }, null, 1)}\n`,
     macho: `${JSON.stringify({ note, tool: "llvm-objdump 18 --macho --private-headers", files: macho })}\n`,
+    pesec: `${JSON.stringify({ note, tool: "llvm-readobj 18 --file-headers --coff-load-config", files: pesec })}\n`,
   };
 }
 
@@ -205,6 +225,7 @@ if (import.meta.main) {
     [GO_KEY, out.go],
     [RESOURCES_KEY, out.resources],
     [MACHO_KEY, out.macho],
+    [PESEC_KEY, out.pesec],
   ];
   if (process.argv.includes("--check")) {
     // tool versions may differ between machines; the answers may not

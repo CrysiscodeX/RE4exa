@@ -72,16 +72,25 @@
   - a zig-built PE with resources joins the extra fixtures;
   - row tagged: inspect_pe_resources.
 
-- **NAT-4, part 3** (CI to confirm on the commit that adds it):
+- **NAT-4, part 3** (`e2d1579`, CI green on all three workflows):
   - `inventory.macho`: header and load commands, checked against llvm-objdump;
   - the code signature (blobs, CodeDirectory identifier, team, flags, hash type, entitlements),
     with every code page and special slot re-hashed over the file;
   - rows tagged: inspect_macho, inspect_signature.
 
+- **NAT-4, part 4a, PE load configuration** (CI to confirm on the commit that adds it):
+  - `inventory.pe`: header mitigations (ASLR, high-entropy, DEP, CFG, SafeSEH, forced integrity)
+    and the load configuration directory, PE32 and PE32+;
+  - checked against llvm-readobj 18: the zig and extra PEs, the four MSVC-built LearnHarness
+    DLLs (`bench/corpus/pesec.facts.json`), and synthetic PE32 and PE32+ images with a different
+    value in every field and every guard flag (`scripts/pe-synth.ts`); the synthetic images found
+    the `CF_FUNCTION_TABLE_SIZE_nBYTES` flag and an LLVM/pefile disagreement (D-9);
+  - row tagged: inspect_pe_load_config.
+  - Only `CF_INSTRUMENTED` occurs in real files here; the other guard flags are checked on
+    synthetic images only.
+
 ## Active
-- **NAT-4, part 4:**
-  - PE certificates (no signing tool here to make a signed fixture: check the LearnHarness
-    DLLs) and load config;
+- **NAT-4, part 4 (rest):**
   - Rust (`.dep-v0`, needs cargo-auditable);
   - crash dumps;
   - GGUF.
@@ -93,6 +102,14 @@
    16 KiB `tools/list` target).
 
 ## Blocked
+- **PE certificates (`inspect_pe_certificates`):** none of the four PE files in the LearnHarness
+  corpus is signed (their certificate directory is empty) and no signing tool is installed, so
+  there is no sample to check a reader against. The row stays untested.
+- **Local machine (macOS arm64, 2026-10-31):** Node is 24.18.0, not the pinned 24.22.1 (no nvm at
+  `/opt/nvm`); Go is 1.27.3, not 1.24.x; the pinned zig wheel is the Linux one, so the zig rebuild
+  test cannot run here. LLVM 18 and binutils come from Homebrew, pefile from the pinned hash. The
+  keys regenerate identically except tool-version labels (the Python label differs: leave
+  `entropy.json`, `search.json` and `strings.json` as CI wrote them).
 - **The automatic session hook:** refused by the session's permission policy (DECISION-LOG D-5).
   The setup script stands in for it.
 

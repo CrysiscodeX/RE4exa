@@ -78,3 +78,12 @@ Go key uses Go's own `debug/buildinfo` and `debug/gosym` (`scripts/oracle-go`), 
 GitHub's Ubuntu image provides.
 **Reopen if** the repository's size matters more than these checks, or a fixture needs a
 rebuild check of its own.
+
+## D-9 (2026-10-31) PE32 load configuration: pefile arbitrates where LLVM 18 differs
+In the 32-bit load configuration LLVM 18 reads `ProcessAffinityMask` at 0x2C and `ProcessHeapFlags`
+at 0x30; pefile (and the Windows SDK header, as the layout is documented there) has them the other
+way round. A synthetic PE32 with a different value in every field (`scripts/pe-synth.ts`) shows
+it. reax follows pefile for those two fields; the key stores pefile's reading beside LLVM's and the
+test compares those two fields against pefile only. Every other field, in both widths, is compared
+with LLVM. Real files almost always hold zero in both, so the choice rarely shows.
+**Reopen if** LLVM changes the order, or a signed Windows binary with non-zero values settles it.

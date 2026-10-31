@@ -84,9 +84,9 @@ export function resourceTree(path: string) {
 }
 
 /** pefile's reading of version information, string tables and the manifest (scripts/oracle-pe.py). */
-export function pefileKey(path: string): unknown {
+export function pefileKey(path: string, scriptName = "oracle-pe.py"): unknown {
   const lib = process.env.REAX_PYORACLE ?? "/tmp/reax-pyoracle";
-  const script = join(import.meta.dirname, "oracle-pe.py");
+  const script = join(import.meta.dirname, scriptName);
   const r = spawnSync(
     "python3",
     [
@@ -169,4 +169,68 @@ export function goKey(path: string): unknown {
   });
   if (r.error || r.status !== 0) throw new Error(`go run scripts/oracle-go ${path}: ${r.error?.message ?? r.stderr}`);
   return JSON.parse(r.stdout);
+}
+
+export interface PeSecKey {
+  dllCharacteristics: string[];
+  /** null when the image has no load configuration. */
+  loadConfig: null | {
+    size: number;
+    fields: Record<string, string>;
+    seHandlerCount: number;
+    guardCFFunctionCount: number;
+    guardFlags: string[];
+    guardFlagsRaw: number;
+  };
+}
+
+/** The header mitigations and the load configuration as llvm-readobj 18 prints them. */
+export function peSecKey(path: string): PeSecKey {
+  const readobj = (flag: string) => {
+    for (const bin of ["llvm-readobj-18", "llvm-readobj"]) {
+      const r = spawnSync(bin, [flag, path], { encoding: "latin1", maxBuffer: 1 << 26 });
+      if (r.error) continue;
+      if (r.status !== 0) throw new Error(`${bin} ${flag} ${path}: ${r.stderr}`);
+      return r.stdout;
+    }
+    throw new Error("llvm-readobj (LLVM 18) is not installed");
+  };
+  const head = readobj("--file-headers");
+  const dllCharacteristics = [...head.matchAll(/IMAGE_DLL_CHARACTERISTICS_(\w+) \(0x/g)].map((m) => m[1]!);
+  const text = readobj("--coff-load-config");
+  if (!/^LoadConfig \[/m.test(text)) return { dllCharacteristics, loadConfig: null };
+  const fields: Record<string, string> = {};
+  let size = 0;
+  let seHandlerCount = 0;
+  let guardCFFunctionCount = 0;
+  const guardFlags: string[] = [];
+  let guardFlagsRaw = 0;
+  let inFlags = false;
+  for (const line of text.split("\n")) {
+    const gf = /^ {2}GuardFlags \[ \((0x[0-9A-Fa-f]+)\)/.exec(line);
+    if (gf) {
+      guardFlagsRaw = Number(gf[1]);
+      inFlags = true;
+      continue;
+    }
+    if (inFlags) {
+      const g = /^ {4}(\w+) \(0x/.exec(line);
+      if (g) guardFlags.push(g[1]!);
+      else inFlags = false;
+      continue;
+    }
+    const kv = /^ {2}(\w+): (.*)$/.exec(line);
+    if (!kv) continue;
+    const [k, v] = [kv[1]!, kv[2]!.trim()];
+    if (k === "Size") size = Number(v);
+    else if (k === "SEHandlerCount") seHandlerCount = Number(v);
+    else if (k === "GuardCFFunctionCount") guardCFFunctionCount = Number(v);
+    // counts are printed in decimal, everything else in hex
+    if (k !== "Size" && (/^0x[0-9A-Fa-f]+$/.test(v) || (/Count$/.test(k) && /^\d+$/.test(v))))
+      fields[k] = `0x${BigInt(v).toString(16).toUpperCase()}`;
+  }
+  return {
+    dllCharacteristics,
+    loadConfig: { size, fields, seHandlerCount, guardCFFunctionCount, guardFlags, guardFlagsRaw },
+  };
 }

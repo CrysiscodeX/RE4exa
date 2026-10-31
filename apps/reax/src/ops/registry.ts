@@ -2,7 +2,7 @@
 import { CoreError } from "@re4exa/core/errors";
 import "../errors.ts";
 import { readBytes, readStrings, searchBytesOp } from "./bytes.ts";
-import { inventoryGo, inventoryMacho, inventoryNotes, inventoryResources } from "./formats.ts";
+import { inventoryGo, inventoryMacho, inventoryNotes, inventoryPe, inventoryResources } from "./formats.ts";
 import { inventorySegments, readAddress, readEntropy } from "./layout.ts";
 import { identifyFile, inventoryNative } from "./native.ts";
 import type { Page } from "./page.ts";
@@ -20,6 +20,7 @@ export const OPERATIONS: readonly Operation[] = [
   inventoryNotes,
   inventoryResources,
   inventoryMacho,
+  inventoryPe,
   inventoryGo,
   readStrings,
   readBytes,
