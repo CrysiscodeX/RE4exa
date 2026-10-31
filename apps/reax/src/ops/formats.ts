@@ -6,6 +6,7 @@ import { IDENTIFY_HEAD, identifyBytes } from "@re4exa/core/probes/builtin/identi
 import "../errors.ts";
 import { goBuildInfo, goFunctions } from "../readers/go.ts";
 import { LAYOUT_FORMATS, layout } from "../readers/layout.ts";
+import { machoDetail } from "../readers/macho.ts";
 import { elfNotes } from "../readers/notes.ts";
 import { peResources } from "../readers/resources.ts";
 import { pageStream } from "./bytes.ts";
@@ -123,6 +124,81 @@ export const inventoryResources: Operation = {
       ].join("\n"),
       coverage: r.notes.length ? "partial" : "complete",
       limitations: r.notes,
+    };
+  },
+};
+
+/** Each slice of a thin or universal Mach-O file: its architecture, start and size. */
+function machoSlices(b: Uint8Array, format: string): { arch: string; base: number; size: number }[] {
+  const lay = layout(b, format);
+  if (format === "macho") return [{ arch: lay[0]!.arch, base: 0, size: b.length }];
+  const d = new DataView(b.buffer, b.byteOffset, b.byteLength);
+  const fat64 = d.getUint32(0, false) === 0xcafebabf;
+  return lay.map((s, i) => ({
+    arch: s.arch,
+    base: s.base,
+    size: fat64 ? Number(d.getBigUint64(8 + i * 32 + 16, false)) : d.getUint32(8 + i * 20 + 12, false),
+  }));
+}
+
+export const inventoryMacho: Operation = {
+  tool: "inventory",
+  name: "inventory.macho",
+  summary:
+    "A Mach-O file's header and every load command with its fields (linked dylibs with versions, rpaths, install name, UUID, platform and minimum OS, SDK, entry point, linkedit tables, encryption), per slice, and its code signature: identifier, team, flags such as adhoc and linker-signed, hash type, entitlements, and every page hash recomputed over the file.",
+  input: { type: "object", properties: { path: PATH }, required: ["path"], additionalProperties: false },
+  effect: "read",
+  cost: "cheap",
+  untrusted: true,
+  platforms: [...ALL],
+  examples: [
+    {
+      title: "The platform and signature of an Apple Silicon executable",
+      workspace: "fixtures",
+      args: { path: "hello-aarch64-macos-s" },
+      expect: { slices: [{ arch: "aarch64", header: { filetype: "EXECUTE" } }] },
+    },
+  ],
+  covers: ["rea.tool/inspect_macho", "rea.tool/inspect_signature"],
+  async run(ctx, args): Promise<OpResult> {
+    const f = native(ctx, args.path);
+    if (f.format !== "macho" && f.format !== "macho-fat")
+      throw new CoreError("bad_request", { field: "path", why: `a Mach-O file; this file is ${f.format}` });
+    const slices = machoSlices(f.bytes, f.format).map((s) =>
+      machoDetail(f.bytes.subarray(s.base, s.base + s.size), s.arch, s.base),
+    );
+    const limitations = slices.flatMap((s) => s.notes.map((n) => `${s.arch}: ${n}`));
+    for (const s of slices)
+      for (const c of s.signature?.codeDirectories ?? [])
+        if (c.pagesVerified !== c.codeSlots)
+          limitations.push(
+            `${s.arch}: ${c.codeSlots - c.pagesVerified} of ${c.codeSlots} code pages do not match their signed hash`,
+          );
+    const sigLine = (s: (typeof slices)[number]) => {
+      const sig = s.signature;
+      if (!sig) return "  unsigned";
+      const cd = sig.codeDirectories[0];
+      return `  signed ${sig.cms ? "with a certificate" : "ad hoc"}${cd ? `: ${cd.identifier}${cd.team ? ` (team ${cd.team})` : ""}, ${cd.flags.join(" ") || "no flags"}, ${cd.hashType}, ${cd.pagesVerified}/${cd.codeSlots} pages match` : ""}${sig.entitlements ? ", with entitlements" : ""}`;
+    };
+    return {
+      data: { file: f.rel, format: f.format, slices },
+      text: [
+        `${f.rel}: ${f.format}, ${slices.length} slice${slices.length === 1 ? "" : "s"}`,
+        ...slices.flatMap((s) => [
+          `${s.arch}: ${s.header.filetype} ${s.header.flags.join(" ")}`,
+          ...s.loadCommands
+            .filter((c) => c.cmd !== "LC_SEGMENT_64" && c.cmd !== "LC_SEGMENT")
+            .map(
+              (c) =>
+                `  ${c.cmd} ${Object.entries(c.fields)
+                  .map(([k, v]) => `${k}=${v}`)
+                  .join(" ")}`,
+            ),
+          sigLine(s),
+        ]),
+      ].join("\n"),
+      coverage: limitations.length ? "partial" : "complete",
+      limitations,
     };
   },
 };

@@ -64,7 +64,7 @@
   - Found by the Go key: function names are UTF-8, not Latin-1 (fixed here and in the layout
     reader).
 
-- **NAT-4, part 2** (CI to confirm on the commit that adds it):
+- **NAT-4, part 2** (`23162f6`):
   - `inventory.resources`: the PE resource tree, plus version information, string tables and
     the manifest;
   - checked against llvm-readobj (the tree) and pefile 2024.8.26, pinned by hash in
@@ -72,11 +72,17 @@
   - a zig-built PE with resources joins the extra fixtures;
   - row tagged: inspect_pe_resources.
 
+- **NAT-4, part 3** (CI to confirm on the commit that adds it):
+  - `inventory.macho`: header and load commands, checked against llvm-objdump;
+  - the code signature (blobs, CodeDirectory identifier, team, flags, hash type, entitlements),
+    with every code page and special slot re-hashed over the file;
+  - rows tagged: inspect_macho, inspect_signature.
+
 ## Active
-- **NAT-4, part 3:**
-  - PE certificates and load config;
-  - Mach-O load commands, code signature and entitlements;
-  - Rust (`.dep-v0` with cargo-auditable);
+- **NAT-4, part 4:**
+  - PE certificates (no signing tool here to make a signed fixture: check the LearnHarness
+    DLLs) and load config;
+  - Rust (`.dep-v0`, needs cargo-auditable);
   - crash dumps;
   - GGUF.
 

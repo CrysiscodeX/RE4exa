@@ -236,6 +236,30 @@ Result includes:
 
 Ledger rows: `rea.tool/inspect_pe_resources`.
 
+### `inventory.macho`
+
+A Mach-O file's header and every load command with its fields (linked dylibs with versions, rpaths, install name, UUID, platform and minimum OS, SDK, entry point, linkedit tables, encryption), per slice, and its code signature: identifier, team, flags such as adhoc and linker-signed, hash type, entitlements, and every page hash recomputed over the file.
+
+Effect: read. Cost: cheap. Output from the target is untrusted (sent inside the untrusted-content envelope). Platforms: linux, darwin, win32.
+
+| Argument | Type | Required | Default | Meaning |
+|---|---|---|---|---|
+| `path` | string (≤ 4096 chars) | yes |  | File path inside the workspace |
+
+Example: The platform and signature of an Apple Silicon executable.
+
+```json
+{"operation":"inventory.macho","path":"hello-aarch64-macos-s"}
+```
+
+Result includes:
+
+```json
+{"slices":[{"arch":"aarch64","header":{"filetype":"EXECUTE"}}]}
+```
+
+Ledger rows: `rea.tool/inspect_macho`, `rea.tool/inspect_signature`.
+
 ### `inventory.go`
 
 A Go binary's build information (Go version, main module, every dependency with version, sum and replacement, build settings such as GOOS, GOARCH and CGO_ENABLED) and its functions from the pclntab, which survive stripping. Functions filter by name and page with offset and limit.

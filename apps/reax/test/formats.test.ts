@@ -254,3 +254,99 @@ test("[-rea.tool/inspect_pe_resources] a non-PE file is refused; a resource dire
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+const MACHO = JSON.parse(readFileSync(join(REAX, "bench", "oracle", "macho.json"), "utf8")).files as Record<
+  string,
+  Any[]
+>;
+/** Versions compare as numbers, so llvm's "13.0" equals reax's "13.0.0". */
+const ver = (v: string) =>
+  v
+    .split(".")
+    .map(Number)
+    .join(".")
+    .replace(/(\.0)+$/, "");
+
+test("[+rea.tool/inspect_macho] every slice's header and load commands equal llvm-objdump's", async () => {
+  let n = 0;
+  for (const [file, slices] of Object.entries(MACHO)) {
+    const d = (await runOperation("inventory.macho", { path: file }, { workspace: BIN })).data as Any;
+    assert.equal(d.slices.length, slices.length, file);
+    for (const [i, k] of slices.entries()) {
+      const s = d.slices[i];
+      assert.equal(s.header.filetype, k.filetype, file);
+      // the flags are a set; llvm-objdump prints them in its own order
+      assert.deepStrictEqual([...s.header.flags].sort(), [...k.flags].sort(), file);
+      assert.equal(s.header.ncmds, k.ncmds, file);
+      assert.equal(s.header.sizeofcmds, k.sizeofcmds, file);
+      assert.deepStrictEqual(
+        s.loadCommands.map((c: Any) => c.cmd),
+        k.cmds.map((c: Any) => c.cmd),
+        file,
+      );
+      for (const [j, kc] of k.cmds.entries())
+        for (const [field, want] of Object.entries(kc.fields as Record<string, string>)) {
+          const got = String(s.loadCommands[j].fields[field]);
+          const same = /Version$|^(sdk|minos|version)$/.test(field) ? ver(got) === ver(want) : got === want;
+          assert.ok(same, `${file} ${s.arch} ${kc.cmd}.${field}: ${got} vs ${want}`);
+          n++;
+        }
+    }
+  }
+  assert.ok(n >= 100, `${n} fields compared`);
+});
+
+test("[-rea.tool/inspect_macho] a file that is not Mach-O is refused; cut load commands are reported", async () => {
+  await assert.rejects(
+    runOperation("inventory.macho", { path: "lib-x86_64-linux-gnu.2.28-s.so" }, { workspace: BIN }),
+    refused,
+  );
+  const dir = mkdtempSync(join(tmpdir(), "reax-macho-"));
+  try {
+    const b = Buffer.from(readFileSync(join(BIN, "hello-x86_64-macos-s")));
+    b.writeUInt32LE(0x7fffffff, 32 + 4); // the first load command claims an impossible size
+    writeFileSync(join(dir, "cut"), b);
+    const r = await runOperation("inventory.macho", { path: "cut" }, { workspace: dir });
+    assert.equal(r.coverage, "partial");
+    assert.match(r.limitations.join(" "), /impossible size/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("[+rea.tool/inspect_signature] every signed slice's code pages hash to the values its CodeDirectory records", async () => {
+  let pages = 0;
+  for (const file of Object.keys(MACHO)) {
+    const d = (await runOperation("inventory.macho", { path: file }, { workspace: BIN })).data as Any;
+    for (const s of d.slices) {
+      const lc = s.loadCommands.find((c: Any) => c.cmd === "LC_CODE_SIGNATURE");
+      assert.equal(!!s.signature, !!lc, `${file} ${s.arch}: signature iff LC_CODE_SIGNATURE`);
+      if (!s.signature) continue;
+      assert.equal(s.signature.offset, lc.fields.dataoff);
+      const cd = s.signature.codeDirectories[0];
+      assert.ok(cd.codeSlots > 0);
+      assert.equal(cd.pagesVerified, cd.codeSlots, `${file} ${s.arch}`);
+      // zig's linker signs ad hoc: no certificate, flags say so
+      assert.deepStrictEqual(cd.flags, ["adhoc", "linker-signed"]);
+      assert.equal(s.signature.cms, false);
+      pages += cd.codeSlots;
+    }
+  }
+  assert.ok(pages >= 12, `${pages} pages verified`);
+});
+
+test("[-rea.tool/inspect_signature] a changed byte inside a signed page fails its hash, and is reported", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "reax-sig-"));
+  try {
+    const b = Buffer.from(readFileSync(join(BIN, "hello-aarch64-macos-s")));
+    b[0x700] = b[0x700]! ^ 0xff; // inside __TEXT, the second page
+    writeFileSync(join(dir, "tampered"), b);
+    const r = await runOperation("inventory.macho", { path: "tampered" }, { workspace: dir });
+    const cd = (r.data as Any).slices[0].signature.codeDirectories[0];
+    assert.equal(cd.pagesVerified, cd.codeSlots - 1);
+    assert.equal(r.coverage, "partial");
+    assert.match(r.limitations.join(" "), /1 of \d+ code pages do not match/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});

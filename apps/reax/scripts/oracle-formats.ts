@@ -106,6 +106,60 @@ export function pefileKey(path: string): unknown {
   return JSON.parse(r.stdout);
 }
 
+/** Each slice's header and load commands as llvm-objdump --macho --private-headers prints them. */
+export function machoKey(path: string, fat: boolean) {
+  let out = "";
+  for (const bin of ["llvm-objdump-18", "llvm-objdump"]) {
+    const r = spawnSync(bin, ["--macho", "--private-headers", ...(fat ? ["--arch=all"] : []), path], {
+      encoding: "latin1",
+      maxBuffer: 1 << 26,
+    });
+    if (r.error) continue;
+    if (r.status !== 0) throw new Error(`${bin} --macho --private-headers ${path}: ${r.stderr}`);
+    out = r.stdout;
+    break;
+  }
+  return out
+    .split(/^Mach header$/m)
+    .slice(1)
+    .map((text) => {
+      const lines = text.split("\n");
+      const tok = lines[2]!.trim().split(/\s+/);
+      const cmds: { cmd: string; fields: Record<string, string> }[] = [];
+      let cur: { cmd: string; fields: Record<string, string> } | null = null;
+      for (const l of lines) {
+        if (/^Load command \d+$/.test(l)) {
+          cur = null;
+          continue;
+        }
+        if (/^Section$/.test(l)) {
+          cur = null;
+          continue;
+        }
+        const c = /^\s*cmd (\S+)$/.exec(l);
+        if (c) {
+          cur = { cmd: c[1]!, fields: {} };
+          cmds.push(cur);
+          continue;
+        }
+        if (!cur) continue;
+        const name = /^\s*name (.*) \(offset \d+\)$/.exec(l);
+        if (name) cur.fields.name = name[1]!;
+        const ver = /^\s*(current|compatibility) version (\S+)$/.exec(l);
+        if (ver) cur.fields[`${ver[1]}Version`] = ver[2]!;
+        const kv =
+          /^\s*(segname|uuid|platform|sdk|minos|entryoff|stacksize|dataoff|datasize|symoff|nsyms|stroff|strsize|path|cryptoff|cryptsize|cryptid) (\S+)/.exec(
+            l,
+          );
+        if (kv) cur.fields[kv[1]!] = kv[2]!;
+        // LC_SOURCE_VERSION prints "version A.B..." (the build tools also print "version")
+        const sv = /^\s*version (\S+)$/.exec(l);
+        if (sv && cur.cmd === "LC_SOURCE_VERSION") cur.fields.version = sv[1]!;
+      }
+      return { filetype: tok[4]!, ncmds: Number(tok[5]), sizeofcmds: Number(tok[6]), flags: tok.slice(7), cmds };
+    });
+}
+
 export function goKey(path: string): unknown {
   const r = spawnSync("go", ["run", ".", path], {
     cwd: join(import.meta.dirname, "oracle-go"),

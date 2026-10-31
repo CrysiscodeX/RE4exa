@@ -10,7 +10,7 @@ import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { extraManifest } from "./extra-fixtures.ts";
-import { goKey, notesKey, pefileKey, resourceTree } from "./oracle-formats.ts";
+import { goKey, machoKey, notesKey, pefileKey, resourceTree } from "./oracle-formats.ts";
 import { entropyKey, type LayoutKey, layoutKey, sectionRanges } from "./oracle-layout.ts";
 import { symbolsKey } from "./oracle-symbols.ts";
 
@@ -25,6 +25,7 @@ export const SYMBOLS_KEY = join(ORACLE_DIR, "symbols.json");
 export const NOTES_KEY = join(ORACLE_DIR, "notes.json");
 export const GO_KEY = join(ORACLE_DIR, "go.json");
 export const RESOURCES_KEY = join(ORACLE_DIR, "resources.json");
+export const MACHO_KEY = join(ORACLE_DIR, "macho.json");
 const EXTRA = join(REAX, "fixtures", "extra");
 
 /** Where each slice of a universal binary starts, from llvm-objdump (0 for a thin file). */
@@ -128,7 +129,7 @@ function versions(): Record<string, string> {
 }
 
 export function build(): Record<
-  "strings" | "search" | "layout" | "entropy" | "symbols" | "notes" | "go" | "resources",
+  "strings" | "search" | "layout" | "entropy" | "symbols" | "notes" | "go" | "resources" | "macho",
   string
 > {
   const files = readdirSync(BIN).sort();
@@ -141,6 +142,7 @@ export function build(): Record<
   const notes: Record<string, ReturnType<typeof notesKey>> = {};
   const go: Record<string, unknown> = {};
   const resources: Record<string, unknown> = {};
+  const macho: Record<string, unknown> = {};
   // the format of each native fixture, as LLVM read it for the benchmark's answer key
   const formats = JSON.parse(readFileSync(join(REAX, "bench", "oracle-facts.json"), "utf8")).facts as Record<
     string,
@@ -163,6 +165,7 @@ export function build(): Record<
       );
       if (format === "elf") notes[f] = notesKey(p);
       if (format === "pe") resources[f] = { tree: resourceTree(p), pefile: pefileKey(p) };
+      if (format === "macho" || format === "macho-fat") macho[f] = machoKey(p, format === "macho-fat");
     } else entropy[f] = entropyKey(p, []);
   }
   // the extra fixtures (fixtures/extra): notes and Go, the features the zig corpus lacks
@@ -186,6 +189,7 @@ export function build(): Record<
     notes: `${JSON.stringify({ note, tool: "llvm-readobj 18 --notes", files: notes }, null, 1)}\n`,
     go: `${JSON.stringify({ note, tool: "Go's debug/buildinfo and debug/gosym (scripts/oracle-go)", files: go })}\n`,
     resources: `${JSON.stringify({ note, tool: "llvm-readobj 18 --coff-resources; pefile 2024.8.26", files: resources }, null, 1)}\n`,
+    macho: `${JSON.stringify({ note, tool: "llvm-objdump 18 --macho --private-headers", files: macho })}\n`,
   };
 }
 
@@ -200,6 +204,7 @@ if (import.meta.main) {
     [NOTES_KEY, out.notes],
     [GO_KEY, out.go],
     [RESOURCES_KEY, out.resources],
+    [MACHO_KEY, out.macho],
   ];
   if (process.argv.includes("--check")) {
     // tool versions may differ between machines; the answers may not
