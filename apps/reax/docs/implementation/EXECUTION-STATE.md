@@ -26,7 +26,8 @@
   - rows tagged: list_strings, search_strings, read_bytes, search_bytes, LEAN-C07;
   - byte-level operations are not Assay sweep probes (D-7).
 
-- **NAT-2, layout and entropy** (CI to confirm on the commit that adds it):
+- **NAT-2, layout and entropy** (`32754e0`, CI green on all three workflows; the macOS fix
+  `96f9db9` with it):
   - `inventory.segments` (reax's own reader, `src/readers/layout.ts`: ELF sections and program
     headers, PE sections, Mach-O segments and sections in every slice, wasm sections);
   - `read.address` (address to file offset and back, memory-only ranges named);
@@ -36,14 +37,32 @@
   - Rows tagged: list_segments, inspect_binary_layout, address_to_file_offset,
     inspect_byte_entropy.
 
+- **NAT-3, symbols and procedures** (CI to confirm on the commit that adds it):
+  - `inventory.symbols` (ELF .symtab and .dynsym with GNU versions; PE exports, imports and
+    delay-load imports; Mach-O nlist with each undefined symbol's dylib; wasm);
+  - `inventory.procedures`, merged from symbols, ELF `.eh_frame` (stripped binaries too), PE
+    `.pdata` (x64), Mach-O nlist and `LC_FUNCTION_STARTS`, and wasm bodies;
+  - `read.symbol` (name to address, size, section and file offset; address to the containing
+    procedure plus offset);
+  - `inventory.overview`, with entry points from ELF, PE and Mach-O `LC_MAIN`;
+  - answer key `bench/oracle/symbols.json` from llvm-nm, llvm-readobj, llvm-objdump and
+    llvm-dwarfdump;
+  - rows tagged: list_names, list_procedures, search_procedures, procedure_address,
+    procedure_info, address_name, resolve_containing_procedure, binary_overview.
+  - Open within NAT-3's scope:
+    - the PE COFF symbol table and ARM64 `.pdata`;
+    - `LC_FUNCTION_STARTS` against an oracle (the zig fixtures carry an empty table; the
+      LearnHarness dylibs carry real ones).
+
 ## Active
-- **NAT-3, symbols and procedures.**
+- **NAT-4, format depth:** ELF notes, PE resources, certificates and load config, Mach-O code
+  signature and entitlements, Go and Rust metadata, crash dumps, GGUF.
 
 ## Next (in order)
-1. NAT-4, format depth.
-2. ARC, archives and bundles.
-3. SBX, the sandbox.
-4. DMN, the daemon and MCP.
+1. ARC, archives and bundles.
+2. SBX, the sandbox.
+3. DMN, the daemon and MCP (`docs/tools.json` is the tool catalog: watch its size against the
+   16 KiB `tools/list` target).
 
 ## Blocked
 - **The automatic session hook:** refused by the session's permission policy (DECISION-LOG D-5).

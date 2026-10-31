@@ -35,6 +35,9 @@ export interface LayoutSlice {
   base: number;
   /** PE only. */
   imageBase: string | null;
+  /** The entry point's virtual address (ELF e_entry, PE AddressOfEntryPoint, Mach-O LC_MAIN), or
+   * null when the file has none (a library, or wasm, whose start is a function index). */
+  entry: string | null;
   sections: Region[];
   segments: Region[];
   notes: string[];
@@ -240,7 +243,16 @@ function elfLayout(b: Uint8Array): LayoutSlice {
         });
       }
   }
-  return { arch: archOf(() => parseElf(b).machine, notes), base: 0, imageBase: null, sections, segments, notes };
+  const entry = word(24);
+  return {
+    arch: archOf(() => parseElf(b).machine, notes),
+    base: 0,
+    imageBase: null,
+    entry: entry ? hex(entry) : null,
+    sections,
+    segments,
+    notes,
+  };
 }
 
 // -------------------------------------------------------------------------------------------- PE
@@ -293,6 +305,7 @@ function peLayout(b: Uint8Array): LayoutSlice {
     arch: archOf(() => parsePe(b).machine, notes),
     base: 0,
     imageBase: hex(imageBase),
+    entry: r.u32(opt + 16) ? hex(imageBase + BigInt(r.u32(opt + 16))) : null,
     sections,
     segments: [],
     notes,
@@ -342,6 +355,7 @@ function machoThin(all: Uint8Array, base: number, size: number, arch: string): L
   let o = is64 ? 32 : 28;
   const sections: Region[] = [];
   const segments: Region[] = [];
+  let entryoff: bigint | null = null;
   const end = Math.min(b.length, o + r.u32(20));
   for (let i = 0; i < ncmds; i++) {
     if (!r.has(o, 8) || o + 8 > end) {
@@ -354,6 +368,7 @@ function machoThin(all: Uint8Array, base: number, size: number, arch: string): L
       notes.push(`load command ${i} has size ${cmdsize}`);
       break;
     }
+    if (cmd === 0x80000028 && r.has(o + 8, 8)) entryoff = r.u64(o + 8); // LC_MAIN
     if (cmd === 0x19 || cmd === 0x1) {
       const s64 = cmd === 0x19;
       const w = (p: number) => (s64 ? r.u64(p) : BigInt(r.u32(p)));
@@ -410,7 +425,15 @@ function machoThin(all: Uint8Array, base: number, size: number, arch: string): L
     }
     o += cmdsize;
   }
-  return { arch, base, imageBase: null, sections, segments, notes };
+  // LC_MAIN's entry is an offset in the slice; the segment that maps it gives its address
+  let entry: string | null = null;
+  if (entryoff !== null)
+    for (const g of segments) {
+      const at = BigInt(base) + entryoff;
+      if (g.offset !== null && g.addr !== null && at >= BigInt(g.offset) && at < BigInt(g.offset + g.fileSize))
+        entry = hex(BigInt(g.addr) + (at - BigInt(g.offset)));
+    }
+  return { arch, base, imageBase: null, entry, sections, segments, notes };
 }
 
 function machoLayout(b: Uint8Array): LayoutSlice[] {
@@ -436,6 +459,7 @@ function machoLayout(b: Uint8Array): LayoutSlice[] {
           arch,
           base: offset,
           imageBase: null,
+          entry: null,
           sections: [],
           segments: [],
           notes: ["the slice runs past the end of the file"],
@@ -523,7 +547,7 @@ function wasmLayout(b: Uint8Array): LayoutSlice {
     });
     o = payload + size.v;
   }
-  return { arch: "wasm32", base: 0, imageBase: null, sections, segments: [], notes };
+  return { arch: "wasm32", base: 0, imageBase: null, entry: null, sections, segments: [], notes };
 }
 
 export const LAYOUT_FORMATS = ["elf", "pe", "macho", "macho-fat", "wasm"] as const;

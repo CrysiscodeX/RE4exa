@@ -80,6 +80,30 @@ Result includes:
 
 Ledger rows: `rea.tool/list_architectures`, `rea.tool/inspect_native_exports`, `rea.tool/inspect_pe_imports`, `leanrea/LEAN-T11`, `leanrea/LEAN-T15`.
 
+### `inventory.overview`
+
+One call for a first look at a native binary: per slice its architecture, kind, entry point, links, how many sections, segments, symbols (defined and undefined) and procedures it has, and which sections look compressed or encrypted.
+
+Effect: read. Cost: cheap. Output from the target is untrusted (sent inside the untrusted-content envelope). Platforms: linux, darwin, win32.
+
+| Argument | Type | Required | Default | Meaning |
+|---|---|---|---|---|
+| `path` | string (≤ 4096 chars) | yes |  | File path inside the workspace |
+
+Example: A first look at a Linux shared library.
+
+```json
+{"operation":"inventory.overview","path":"lib-x86_64-linux-gnu.2.28-s.so"}
+```
+
+Result includes:
+
+```json
+{"format":"elf","slices":[{"arch":"x86_64","kind":"shared-object"}]}
+```
+
+Ledger rows: `rea.tool/binary_overview`.
+
 ### `inventory.segments`
 
 The layout of a native binary, per architecture slice: its segments and sections with virtual address, size, file offset, bytes in the file, permissions, type and flags.
@@ -103,6 +127,66 @@ Result includes:
 ```
 
 Ledger rows: `rea.tool/list_segments`, `rea.tool/inspect_binary_layout`.
+
+### `inventory.symbols`
+
+Every symbol a native binary names (ELF .symtab and .dynsym with versions, PE exports and imports, Mach-O nlist, wasm imports, exports and names): address, size, kind, binding, section and library. Filters by name, kind and defined or undefined; pages with offset and limit.
+
+Effect: read. Cost: cheap. Output from the target is untrusted (sent inside the untrusted-content envelope). Platforms: linux, darwin, win32.
+
+| Argument | Type | Required | Default | Meaning |
+|---|---|---|---|---|
+| `path` | string (≤ 4096 chars) | yes |  | File path inside the workspace |
+| `arch` | string (≤ 32 chars) | no |  | Which slice of a universal binary (its architecture); the first slice if omitted |
+| `search` | string (≤ 1024 chars) | no |  | Keep only names containing this text |
+| `ignore_case` | boolean | no | `false` | Match search without regard to case |
+| `kind` | "any" \| "function" \| "object" \| "tls" \| "other" | no | `"any"` |  |
+| `defined` | "any" \| "defined" \| "undefined" | no | `"any"` |  |
+| `offset` | integer (≥ 0) | no | `0` | first row to return (page.next continues) |
+| `limit` | integer (≥ 1, ≤ 10000) | no | `200` | rows per page |
+
+Example: The functions a C++ binary defines whose names mention reax.
+
+```json
+{"operation":"inventory.symbols","path":"shapes-x86_64-linux-gnu.2.28-g","search":"reax","kind":"function","defined":"defined"}
+```
+
+Result includes:
+
+```json
+{"page":{"total":2}}
+```
+
+Ledger rows: `rea.tool/list_names`.
+
+### `inventory.procedures`
+
+The procedures (functions) of a native binary with start address, size and name where known, merged from every table that records them: symbols, ELF .eh_frame, PE exports and .pdata, Mach-O nlist and function starts, wasm function bodies. Finds functions in stripped binaries. Filters by name; pages with offset and limit.
+
+Effect: read. Cost: cheap. Output from the target is untrusted (sent inside the untrusted-content envelope). Platforms: linux, darwin, win32.
+
+| Argument | Type | Required | Default | Meaning |
+|---|---|---|---|---|
+| `path` | string (≤ 4096 chars) | yes |  | File path inside the workspace |
+| `arch` | string (≤ 32 chars) | no |  | Which slice of a universal binary (its architecture); the first slice if omitted |
+| `search` | string (≤ 1024 chars) | no |  | Keep only names containing this text |
+| `ignore_case` | boolean | no | `false` | Match search without regard to case |
+| `offset` | integer (≥ 0) | no | `0` | first row to return (page.next continues) |
+| `limit` | integer (≥ 1, ≤ 10000) | no | `200` | rows per page |
+
+Example: Functions of a stripped ELF executable, from its unwind table.
+
+```json
+{"operation":"inventory.procedures","path":"shapes-x86_64-linux-gnu.2.28-s"}
+```
+
+Result includes:
+
+```json
+{"page":{"total":4},"items":[{"addr":"0x10014e0","size":43}]}
+```
+
+Ledger rows: `rea.tool/list_procedures`, `rea.tool/search_procedures`.
 
 ## read
 
@@ -218,6 +302,33 @@ Result includes:
 ```
 
 Ledger rows: `rea.tool/address_to_file_offset`.
+
+### `read.symbol`
+
+Look up a symbol or procedure: by name, its address, size, file offset and section; by address, the symbol and procedure that contain it and the offset into them.
+
+Effect: read. Cost: cheap. Output from the target is untrusted (sent inside the untrusted-content envelope). Platforms: linux, darwin, win32.
+
+| Argument | Type | Required | Default | Meaning |
+|---|---|---|---|---|
+| `path` | string (≤ 4096 chars) | yes |  | File path inside the workspace |
+| `name` | string (≤ 4096 chars) | no |  | An exact symbol name |
+| `address` | string (≤ 24 chars) | no |  | A virtual address, hex ("0x1000") or decimal |
+| `arch` | string (≤ 32 chars) | no |  | Which slice of a universal binary (its architecture); the first slice if omitted |
+
+Example: Where main is, and what a mid-function address belongs to.
+
+```json
+{"operation":"read.symbol","path":"shapes-x86_64-linux-gnu.2.28-g","address":"0x10015b8"}
+```
+
+Result includes:
+
+```json
+{"procedure":{"name":"main","addr":"0x10015b0"},"delta":8}
+```
+
+Ledger rows: `rea.tool/address_name`, `rea.tool/procedure_address`, `rea.tool/procedure_info`, `rea.tool/resolve_containing_procedure`.
 
 ### `read.entropy`
 

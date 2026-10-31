@@ -6,16 +6,21 @@ import { inventorySegments, readAddress, readEntropy } from "./layout.ts";
 import { identifyFile, inventoryNative } from "./native.ts";
 import type { Page } from "./page.ts";
 import { checkInput } from "./schema.ts";
+import { inventoryOverview, inventoryProcedures, inventorySymbols, readSymbol } from "./symbols.ts";
 import type { OpContext, Operation, OpResult } from "./types.ts";
 
 export const OPERATIONS: readonly Operation[] = [
   identifyFile,
   inventoryNative,
+  inventoryOverview,
   inventorySegments,
+  inventorySymbols,
+  inventoryProcedures,
   readStrings,
   readBytes,
   searchBytesOp,
   readAddress,
+  readSymbol,
   readEntropy,
 ];
 
