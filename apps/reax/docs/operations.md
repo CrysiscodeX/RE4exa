@@ -284,6 +284,33 @@ Result includes:
 
 Ledger rows: `rea.tool/inspect_pe_load_config`.
 
+### `inventory.model`
+
+The header of a GGUF or safetensors model file, whatever its size: format version, byte order, every metadata key with its value (long arrays such as a vocabulary as a length, the first elements and a sha256), the tensor table (name, shape, element type, offset, size) with a total parameter count and a count by quantisation type, and what is wrong with the file (tensors past its end, misaligned offsets). Filters tensors by name; pages with offset and limit.
+
+Effect: read. Cost: cheap. Output from the target is untrusted (sent inside the untrusted-content envelope). Platforms: linux, darwin, win32.
+
+| Argument | Type | Required | Default | Meaning |
+|---|---|---|---|---|
+| `path` | string (≤ 4096 chars) | yes |  | File path inside the workspace |
+| `search` | string (≤ 1024 chars) | no |  | Keep only tensors whose name contains this text |
+| `offset` | integer (≥ 0) | no | `0` | first row to return (page.next continues) |
+| `limit` | integer (≥ 1, ≤ 10000) | no | `200` | rows per page |
+
+Example: What a model file is, without loading it.
+
+```json
+{"operation":"inventory.model","path":"model-tiny.gguf"}
+```
+
+Result includes:
+
+```json
+{"format":"gguf","version":3,"summary":{"architecture":"llama","blockCount":2}}
+```
+
+Ledger rows: `rea.tool/inspect_model_artifact`.
+
 ### `inventory.go`
 
 A Go binary's build information (Go version, main module, every dependency with version, sum and replacement, build settings such as GOOS, GOARCH and CGO_ENABLED) and its functions from the pclntab, which survive stripping. Functions filter by name and page with offset and limit.

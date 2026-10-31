@@ -234,3 +234,13 @@ export function peSecKey(path: string): PeSecKey {
     loadConfig: { size, fields, seHandlerCount, guardCFFunctionCount, guardFlags, guardFlagsRaw },
   };
 }
+
+/** The header of a GGUF or safetensors file as the stdlib parser in scripts/oracle-model.py reads it. */
+export function modelKey(path: string): unknown {
+  const r = spawnSync("python3", ["-I", join(import.meta.dirname, "oracle-model.py"), path], {
+    encoding: "utf8",
+    maxBuffer: 1 << 28,
+  });
+  if (r.error || r.status !== 0) throw new Error(`oracle-model.py ${path}: ${r.error?.message ?? r.stderr}`);
+  return JSON.parse(r.stdout);
+}

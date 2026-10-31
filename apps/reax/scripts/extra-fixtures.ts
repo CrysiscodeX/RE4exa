@@ -4,6 +4,7 @@
 // committed bytes in CI (scripts/oracle.ts), so a rebuild is never needed to check reax. This
 // script records how they were made and is run by hand when one is added.
 //   node scripts/extra-fixtures.ts           build into fixtures/extra and write the manifest
+//   node scripts/extra-fixtures.ts models   (re)write only the model files, keeping the rest as committed
 //   node scripts/extra-fixtures.ts --check   the committed files match the manifest
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
@@ -119,6 +120,21 @@ function digest(name: string): { sha256: string; size: number } {
   return { sha256: createHash("sha256").update(b).digest("hex"), size: b.length };
 }
 
+/** GGUF and safetensors files written by the formats' own Python writers (scripts/model-fixtures.py). */
+function buildModels(): Record<string, ExtraFixture> {
+  const py = process.env.REAX_FIXVENV_PYTHON ?? "/tmp/reax-fixvenv/bin/python";
+  const v = JSON.parse(sh(py, [join(import.meta.dirname, "model-fixtures.py"), EXTRA])) as Record<string, string>;
+  const made = (w: string) => `${w} ${v[w]} (numpy ${v.numpy}): scripts/model-fixtures.py`;
+  const out: Record<string, ExtraFixture> = {};
+  for (const name of readdirSync(EXTRA).filter((f) => /\.(gguf|safetensors)$/.test(f)))
+    out[name] = {
+      ...digest(name),
+      format: name.endsWith(".gguf") ? "gguf" : "safetensors",
+      made: made(name.endsWith(".gguf") ? "gguf" : "safetensors"),
+    };
+  return out;
+}
+
 export function extraManifest(dir = EXTRA): Record<string, ExtraFixture> {
   return JSON.parse(readFileSync(join(dir, "manifest.json"), "utf8")).files as Record<string, ExtraFixture>;
 }
@@ -146,6 +162,13 @@ if (import.meta.main) {
     for (const p of problems) console.error(`fixtures/extra: ${p}`);
     if (problems.length) process.exit(1);
     console.log(`fixtures/extra matches its manifest (${Object.keys(extraManifest()).length} files)`);
+  } else if (process.argv.includes("models")) {
+    const files = { ...extraManifest(), ...buildModels() };
+    writeFileSync(
+      EXTRA_MANIFEST,
+      `${JSON.stringify({ note: "Built by scripts/extra-fixtures.ts; pinned by digest. Do not edit.", files }, null, 1)}\n`,
+    );
+    console.log(`wrote ${Object.keys(files).length} extra fixtures (models only)`);
   } else {
     const files = build();
     writeFileSync(

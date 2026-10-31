@@ -11,7 +11,7 @@ import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, 
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { extraManifest } from "./extra-fixtures.ts";
-import { goKey, machoKey, notesKey, pefileKey, peSecKey, resourceTree } from "./oracle-formats.ts";
+import { goKey, machoKey, modelKey, notesKey, pefileKey, peSecKey, resourceTree } from "./oracle-formats.ts";
 import { entropyKey, type LayoutKey, layoutKey, sectionRanges } from "./oracle-layout.ts";
 import { symbolsKey } from "./oracle-symbols.ts";
 import { buildSynth, SYNTH } from "./pe-synth.ts";
@@ -28,6 +28,7 @@ export const NOTES_KEY = join(ORACLE_DIR, "notes.json");
 export const GO_KEY = join(ORACLE_DIR, "go.json");
 export const RESOURCES_KEY = join(ORACLE_DIR, "resources.json");
 export const MACHO_KEY = join(ORACLE_DIR, "macho.json");
+export const MODEL_KEY = join(ORACLE_DIR, "model.json");
 export const PESEC_KEY = join(ORACLE_DIR, "pesec.json");
 const EXTRA = join(REAX, "fixtures", "extra");
 
@@ -132,7 +133,7 @@ function versions(): Record<string, string> {
 }
 
 export function build(): Record<
-  "strings" | "search" | "layout" | "entropy" | "symbols" | "notes" | "go" | "resources" | "macho" | "pesec",
+  "strings" | "search" | "layout" | "entropy" | "symbols" | "notes" | "go" | "resources" | "macho" | "pesec" | "model",
   string
 > {
   const files = readdirSync(BIN).sort();
@@ -147,6 +148,7 @@ export function build(): Record<
   const resources: Record<string, unknown> = {};
   const macho: Record<string, unknown> = {};
   const pesec: Record<string, unknown> = {};
+  const model: Record<string, unknown> = {};
   // the format of each native fixture, as LLVM read it for the benchmark's answer key
   const formats = JSON.parse(readFileSync(join(REAX, "bench", "oracle-facts.json"), "utf8")).facts as Record<
     string,
@@ -188,6 +190,7 @@ export function build(): Record<
   for (const [f, e] of Object.entries(extraManifest())) {
     const p = join(EXTRA, f);
     if (e.format === "elf") notes[`extra/${f}`] = notesKey(p);
+    if (e.format === "gguf" || e.format === "safetensors") model[f] = modelKey(p);
     if (e.format === "pe") {
       resources[`extra/${f}`] = { tree: resourceTree(p), pefile: pefileKey(p) };
       pesec[`extra/${f}`] = peSecKey(p);
@@ -209,6 +212,7 @@ export function build(): Record<
     go: `${JSON.stringify({ note, tool: "Go's debug/buildinfo and debug/gosym (scripts/oracle-go)", files: go })}\n`,
     resources: `${JSON.stringify({ note, tool: "llvm-readobj 18 --coff-resources; pefile 2024.8.26", files: resources }, null, 1)}\n`,
     macho: `${JSON.stringify({ note, tool: "llvm-objdump 18 --macho --private-headers", files: macho })}\n`,
+    model: `${JSON.stringify({ note, tool: "scripts/oracle-model.py (Python stdlib), cross-checked against the gguf and safetensors packages", files: model })}\n`,
     pesec: `${JSON.stringify({ note, tool: "llvm-readobj 18 --file-headers --coff-load-config", files: pesec })}\n`,
   };
 }
@@ -226,6 +230,7 @@ if (import.meta.main) {
     [RESOURCES_KEY, out.resources],
     [MACHO_KEY, out.macho],
     [PESEC_KEY, out.pesec],
+    [MODEL_KEY, out.model],
   ];
   if (process.argv.includes("--check")) {
     // tool versions may differ between machines; the answers may not

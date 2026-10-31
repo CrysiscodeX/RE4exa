@@ -87,3 +87,20 @@ it. reax follows pefile for those two fields; the key stores pefile's reading be
 test compares those two fields against pefile only. Every other field, in both widths, is compared
 with LLVM. Real files almost always hold zero in both, so the choice rarely shows.
 **Reopen if** LLVM changes the order, or a signed Windows binary with non-zero values settles it.
+
+## D-10 (2026-10-31) Model files: a stdlib parser is the key, cross-checked once against the packages
+The gguf package needs numpy, pyyaml and tqdm, and numpy's wheels differ per platform, so it cannot
+be a hash-pinned oracle that runs identically on every machine. The answer key for
+`inventory.model` is `scripts/oracle-model.py`, a GGUF and safetensors header parser in Python's
+standard library, written from the formats' specifications. It was cross-checked against the gguf
+package's `GGUFReader` (`scripts/oracle-model-crosscheck.py`, by hand in a virtualenv) on the three
+GGUF fixtures and on a real 5.7 GB Qwen3.5-9B file: 427 tensors, 46 keys, equal in offsets, shapes,
+types and sizes. The fixtures themselves are written by the gguf and safetensors packages
+(`scripts/model-fixtures.py`), so reax, the key and the writer share no code.
+- gguf-py gives `Q8_1` 40 bytes per block; ggml's C struct has 36. The key and reax use 36. The type
+  does not occur in model files.
+- GGUF version 1 (before August 2023) is reported as unread.
+- reax's own reading of the real 9B file equals the key (170 ms, 99 MB resident); that run is by
+  hand, as the file is not in the repository.
+**Reopen if** the gguf package becomes installable from hashed wheels on every CI platform (then use
+it as the key), or a model format reader needs a type this table lacks.

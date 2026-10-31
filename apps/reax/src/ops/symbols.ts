@@ -12,6 +12,8 @@ import { inventoryBytes } from "./native.ts";
 import { PAGE_INPUT } from "./page.ts";
 import type { JsonSchema, OpContext, Operation, OpResult } from "./types.ts";
 
+/** A reader note that says part of a table was not read: the result is partial. */
+const CUT = /cut|could not|not read yet|past its table/;
 const ALL = ["linux", "darwin", "win32"] as const;
 const PATH: JsonSchema = { type: "string", description: "File path inside the workspace", maxLength: 4096 };
 const ARCH: JsonSchema = {
@@ -101,7 +103,7 @@ export const inventorySymbols: Operation = {
             `  ${x.addr ?? "undefined"}  ${x.kind} ${x.bind}  ${x.name}${x.version ? `${x.versionHidden || !x.defined ? "@" : "@@"}${x.version}` : ""}${x.library ? `  [${x.library}]` : ""}${x.section ? `  (${x.section})` : ""}`,
         ),
       ].join("\n"),
-      coverage: s.notes.some((n) => /cut|could not/.test(n)) ? "partial" : "complete",
+      coverage: s.notes.some((n) => CUT.test(n)) ? "partial" : "complete",
       limitations: s.notes,
     };
   },
@@ -157,7 +159,7 @@ export const inventoryProcedures: Operation = {
           (x) => `  ${x.addr}  ${x.size ?? "?"} bytes  ${x.name ?? `sub_${x.addr.slice(2)}`}  [${x.sources.join(",")}]`,
         ),
       ].join("\n"),
-      coverage: s.notes.some((n) => /cut|could not|not read yet/.test(n)) ? "partial" : "complete",
+      coverage: s.notes.some((n) => CUT.test(n)) ? "partial" : "complete",
       limitations,
     };
   },

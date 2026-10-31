@@ -78,7 +78,7 @@
     with every code page and special slot re-hashed over the file;
   - rows tagged: inspect_macho, inspect_signature.
 
-- **NAT-4, part 4a, PE load configuration** (CI to confirm on the commit that adds it):
+- **NAT-4, part 4a, PE load configuration** (`2d46a8d`, CI green on all three workflows):
   - `inventory.pe`: header mitigations (ASLR, high-entropy, DEP, CFG, SafeSEH, forced integrity)
     and the load configuration directory, PE32 and PE32+;
   - checked against llvm-readobj 18: the zig and extra PEs, the four MSVC-built LearnHarness
@@ -89,11 +89,23 @@
   - Only `CF_INSTRUMENTED` occurs in real files here; the other guard flags are checked on
     synthetic images only.
 
+- **NAT-4, part 4b** (CI to confirm on the commit that adds it):
+  - `inventory.model`: GGUF (v2 and v3, both byte orders) and safetensors headers of files of any
+    size: metadata, tensor table, parameter count, quantisation mix, problems (cut files,
+    misaligned offsets); every scan bounded;
+  - key from a stdlib parser cross-checked against the gguf package and a real 9B model (D-10);
+    fixtures written by the gguf and safetensors packages (`node scripts/extra-fixtures.ts models`
+    adds only those, keeping the other fixtures' digests);
+  - row tagged: inspect_model_artifact;
+  - `LC_FUNCTION_STARTS` checked against llvm-objdump on the LearnHarness dylib and two addons
+    (`bench/corpus/functionstarts.facts.json`): 51,569 addresses equal. This found that a number in
+    the table could be read past the table's end; fixed, with a test.
+
 ## Active
 - **NAT-4, part 4 (rest):**
   - Rust (`.dep-v0`, needs cargo-auditable);
   - crash dumps;
-  - GGUF.
+  - the PE COFF symbol table and ARM64 `.pdata`.
 
 ## Next (in order)
 1. ARC, archives and bundles.

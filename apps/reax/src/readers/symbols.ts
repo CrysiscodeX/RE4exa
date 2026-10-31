@@ -82,10 +82,10 @@ class R {
   }
 }
 
-function uleb(b: Uint8Array, o: number): { v: number; n: number } {
+function uleb(b: Uint8Array, o: number, end = b.length): { v: number; n: number } {
   let v = 0;
   let shift = 0;
-  for (let i = 0; i < 10 && o + i < b.length; i++) {
+  for (let i = 0; i < 10 && o + i < Math.min(end, b.length); i++) {
     const x = b[o + i]!;
     v += (x & 0x7f) * 2 ** shift;
     if ((x & 0x80) === 0) return { v, n: i + 1 };
@@ -646,7 +646,7 @@ function machoSymbols(all: Uint8Array, s: LayoutSlice, size: number): SymbolSlic
     const end = starts.off + starts.size;
     try {
       while (p < end) {
-        const d = uleb(r.b, p);
+        const d = uleb(r.b, p, end);
         p += d.n;
         if (d.v === 0) break;
         a += BigInt(d.v);

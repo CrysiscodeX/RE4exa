@@ -24,6 +24,30 @@
    "size": 1531904,
    "format": "pe",
    "made": "go version go1.24.7 linux/amd64: CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -trimpath -ldflags=\"-s -w\""
+  },
+  "model-align64.gguf": {
+   "sha256": "8960c44f899bac964d71c1b57431578ecdc7d8ef65a92b469ba19a7bd03074af",
+   "size": 832,
+   "format": "gguf",
+   "made": "gguf 0.18.0 (numpy 2.0.2): scripts/model-fixtures.py"
+  },
+  "model-tiny-be.gguf": {
+   "sha256": "19aa8ae5a4864f351142b06379b9adc5e1e5e69696fe3c5f7ca40718880b7247",
+   "size": 736,
+   "format": "gguf",
+   "made": "gguf 0.18.0 (numpy 2.0.2): scripts/model-fixtures.py"
+  },
+  "model-tiny.gguf": {
+   "sha256": "83c90d30dc1c9e8027010b916634b7254d299f87b3a1579040f7eaedf6730107",
+   "size": 2976,
+   "format": "gguf",
+   "made": "gguf 0.18.0 (numpy 2.0.2): scripts/model-fixtures.py"
+  },
+  "model-tiny.safetensors": {
+   "sha256": "dfb30de93af2620a4023bffbf2bbecfa1ffb2ab818f844bcbc6ea43f19ec9e71",
+   "size": 480,
+   "format": "safetensors",
+   "made": "safetensors 0.7.0 (numpy 2.0.2): scripts/model-fixtures.py"
   }
  }
 }

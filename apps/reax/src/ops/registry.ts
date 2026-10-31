@@ -4,6 +4,7 @@ import "../errors.ts";
 import { readBytes, readStrings, searchBytesOp } from "./bytes.ts";
 import { inventoryGo, inventoryMacho, inventoryNotes, inventoryPe, inventoryResources } from "./formats.ts";
 import { inventorySegments, readAddress, readEntropy } from "./layout.ts";
+import { inventoryModel } from "./model.ts";
 import { identifyFile, inventoryNative } from "./native.ts";
 import type { Page } from "./page.ts";
 import { checkInput } from "./schema.ts";
@@ -21,6 +22,7 @@ export const OPERATIONS: readonly Operation[] = [
   inventoryResources,
   inventoryMacho,
   inventoryPe,
+  inventoryModel,
   inventoryGo,
   readStrings,
   readBytes,
