@@ -524,7 +524,8 @@ test("[+RX-1/output-formats] --llms lists every operation with its arguments and
     const argv = [...ex.replace("  Example: reax ", "").matchAll(/"((?:[^"\\]|\\.)*)"|(\S+)/g)].map(
       (m) => m[2] ?? m[1]!.replaceAll('\\"', '"'),
     );
-    const run = cli(...argv, "--workspace", BIN, "--format", "json");
+    const ws = op.examples[0]?.workspace === "extra" ? join(REAX, "fixtures", "extra") : BIN;
+    const run = cli(...argv, "--workspace", ws, "--format", "json");
     assert.equal(run.code, 0, `${ex}: ${run.err}`);
   }
   // every format is reachable from the command line, and untrusted text is enveloped outside JSON

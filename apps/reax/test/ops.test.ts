@@ -42,7 +42,8 @@ test("[+RX-1/op-registry] every documented example runs and returns what the doc
   for (const op of OPERATIONS) {
     assert.ok(op.examples.length > 0, `${op.name} has an example`);
     for (const ex of op.examples) {
-      const r = await runOperation(op.name, ex.args, ctx);
+      const ws = { workspace: ex.workspace === "extra" ? join(REAX, "fixtures", "extra") : BIN };
+      const r = await runOperation(op.name, ex.args, ws);
       assert.ok(includes(r.data, ex.expect), `${op.name}: ${ex.title}: ${JSON.stringify(r.data).slice(0, 400)}`);
     }
   }

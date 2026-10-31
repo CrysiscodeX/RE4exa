@@ -109,8 +109,17 @@ jobs:
         run: command -v llvm-readobj-18 || command -v llvm-readobj || (sudo apt-get update -q && sudo apt-get install -y -q llvm-18)
       - name: The LearnHarness corpus facts are LLVM's current reading
         run: node --conditions=source --disable-warning=ExperimentalWarning scripts/corpus.ts facts --check
-      - name: The byte-level answer keys are the tools' current answers (llvm-strings, GNU strings, Python re)
-        run: node --disable-warning=ExperimentalWarning scripts/oracle.ts --check
+      - name: Go on PATH (Go's own debug/buildinfo and debug/gosym are the Go answer key)
+        run: |
+          if ! command -v go >/dev/null; then
+            dir=$(ls -d /opt/hostedtoolcache/go/*/x64 2>/dev/null | sort -V | tail -1)
+            test -n "$dir" && echo "$dir/bin" >> "$GITHUB_PATH"
+          fi
+      - name: The answer keys are the tools' current answers (LLVM, GNU strings, Python, Go)
+        run: |
+          go version
+          node --disable-warning=ExperimentalWarning scripts/oracle.ts --check
+          node --disable-warning=ExperimentalWarning scripts/extra-fixtures.ts --check
       - name: Tests with the corpus rebuild and the oracle check (lane linux-fixtures)
         env:
           REAX_FIXTURES_REBUILD: "1"

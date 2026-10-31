@@ -74,10 +74,11 @@ class Bytes {
     this.need(o, 8, "a field");
     return this.dv.getBigUint64(o, this.le);
   }
+  /** A NUL-terminated name, decoded as UTF-8 (as the formats' tools print them). */
   cstr(o: number, max: number, end = this.b.length): string {
-    let s = "";
-    for (let i = o; i < Math.min(end, o + max) && this.b[i] !== 0; i++) s += String.fromCharCode(this.b[i]!);
-    return s;
+    let e = o;
+    while (e < Math.min(end, o + max, this.b.length) && this.b[e] !== 0) e++;
+    return new TextDecoder("utf-8").decode(this.b.subarray(o, e));
   }
 }
 

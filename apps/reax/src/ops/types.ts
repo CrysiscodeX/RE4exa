@@ -59,7 +59,7 @@ export interface Example {
   title: string;
   args: Record<string, unknown>;
   /** A fixture-relative workspace (apps/reax/fixtures/bin) the example runs against. */
-  workspace: "fixtures";
+  workspace: "fixtures" | "extra";
   /** Values the result's data must contain (a deep subset match); checked as a doctest. */
   expect: Record<string, unknown>;
 }

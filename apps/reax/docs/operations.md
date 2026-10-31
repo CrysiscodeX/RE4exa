@@ -188,6 +188,57 @@ Result includes:
 
 Ledger rows: `rea.tool/list_procedures`, `rea.tool/search_procedures`.
 
+### `inventory.notes`
+
+The notes of an ELF file and what the well-known ones say: GNU build ID, ABI tag (OS and minimum kernel), the property note (x86 IBT/SHSTK and ISA level, AArch64 BTI/PAC), the Go build ID and FDO packaging metadata.
+
+Effect: read. Cost: cheap. Output from the target is untrusted (sent inside the untrusted-content envelope). Platforms: linux, darwin, win32.
+
+| Argument | Type | Required | Default | Meaning |
+|---|---|---|---|---|
+| `path` | string (≤ 4096 chars) | yes |  | File path inside the workspace |
+
+Example: The ABI a glibc executable was built for.
+
+```json
+{"operation":"inventory.notes","path":"hello-x86_64-linux-gnu.2.28-s"}
+```
+
+Result includes:
+
+```json
+{"notes":[{"owner":"GNU","typeName":"NT_GNU_ABI_TAG","abi":{"os":"Linux","version":"2.0.0"}}]}
+```
+
+Ledger rows: `rea.tool/inspect_elf_notes`.
+
+### `inventory.go`
+
+A Go binary's build information (Go version, main module, every dependency with version, sum and replacement, build settings such as GOOS, GOARCH and CGO_ENABLED) and its functions from the pclntab, which survive stripping. Functions filter by name and page with offset and limit.
+
+Effect: read. Cost: cheap. Output from the target is untrusted (sent inside the untrusted-content envelope). Platforms: linux, darwin, win32.
+
+| Argument | Type | Required | Default | Meaning |
+|---|---|---|---|---|
+| `path` | string (≤ 4096 chars) | yes |  | File path inside the workspace |
+| `search` | string (≤ 1024 chars) | no |  | Keep only functions whose name contains this text |
+| `offset` | integer (≥ 0) | no | `0` | first row to return (page.next continues) |
+| `limit` | integer (≥ 1, ≤ 10000) | no | `200` | rows per page |
+
+Example: Which Go and modules built a stripped binary, and where main.main is.
+
+```json
+{"operation":"inventory.go","path":"go-hello-x86_64-linux","search":"main.main"}
+```
+
+Result includes:
+
+```json
+{"go":true,"buildInfo":{"goVersion":"go1.24.7","path":"example.com/reaxgo"},"items":[{"name":"main.main","entry":"0x491ae0"}]}
+```
+
+Ledger rows: `rea.tool/inspect_go_binary`, `leanrea/LEAN-C21`, `leanrea/LEAN-C28`, `leanrea/LEAN-T10`.
+
 ## read
 
 ### `read.strings`

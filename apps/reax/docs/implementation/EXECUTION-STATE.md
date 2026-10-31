@@ -37,7 +37,7 @@
   - Rows tagged: list_segments, inspect_binary_layout, address_to_file_offset,
     inspect_byte_entropy.
 
-- **NAT-3, symbols and procedures** (CI to confirm on the commit that adds it):
+- **NAT-3, symbols and procedures** (`68e61f4`):
   - `inventory.symbols` (ELF .symtab and .dynsym with GNU versions; PE exports, imports and
     delay-load imports; Mach-O nlist with each undefined symbol's dylib; wasm);
   - `inventory.procedures`, merged from symbols, ELF `.eh_frame` (stripped binaries too), PE
@@ -54,9 +54,19 @@
     - `LC_FUNCTION_STARTS` against an oracle (the zig fixtures carry an empty table; the
       LearnHarness dylibs carry real ones).
 
+- **NAT-4, part 1** (CI to confirm on the commit that adds it):
+  - `inventory.notes`: GNU build ID, ABI tag, x86 and AArch64 property notes, Go build ID, FDO
+    packaging; checked against llvm-readobj;
+  - `inventory.go`: build information and pclntab functions (stripped binaries); checked against
+    Go's own `debug/buildinfo` and `debug/gosym`;
+  - the extra fixtures (D-8);
+  - rows tagged: inspect_elf_notes, inspect_go_binary, LEAN-C21, LEAN-C28, LEAN-T10.
+  - Found by the Go key: function names are UTF-8, not Latin-1 (fixed here and in the layout
+    reader).
+
 ## Active
-- **NAT-4, format depth:** ELF notes, PE resources, certificates and load config, Mach-O code
-  signature and entitlements, Go and Rust metadata, crash dumps, GGUF.
+- **NAT-4, part 2:** PE resources, certificates and load config; Mach-O load commands, code
+  signature and entitlements; Rust (`.dep-v0` with cargo-auditable); crash dumps; GGUF.
 
 ## Next (in order)
 1. ARC, archives and bundles.

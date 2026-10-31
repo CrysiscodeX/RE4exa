@@ -65,3 +65,16 @@ file. Only `identify.file` and `inventory.native` are swept (`SWEEP_OPERATIONS` 
 `src/ops/probes.ts`). The byte-level operations reach agents through the reax CLI now, and through
 reax's MCP tools in DMN.
 **Reopen if** Assay gains an agent tool that calls reax operations with arguments.
+
+## D-8 (2026-10-31) Extra fixtures, pinned by digest, not rebuilt in CI
+The zig corpus has no GNU build ID or property notes and no Go code. `fixtures/extra/` holds:
+- a gcc 13.3 binary with both notes;
+- a stripped Go 1.24.7 program with a local module dependency, for Linux and Windows.
+
+They total 2.9 MB and are not in the npm package. `scripts/extra-fixtures.ts` records how each
+was built, and `--check` pins them by sha256. The answer keys are re-derived from the committed
+bytes in CI's fixtures job, so a rebuild (and its toolchain) is never needed to check reax. The
+Go key uses Go's own `debug/buildinfo` and `debug/gosym` (`scripts/oracle-go`), with the Go that
+GitHub's Ubuntu image provides.
+**Reopen if** the repository's size matters more than these checks, or a fixture needs a
+rebuild check of its own.

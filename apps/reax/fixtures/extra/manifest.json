@@ -1,0 +1,23 @@
+{
+ "note": "Built by scripts/extra-fixtures.ts; pinned by digest. Do not edit.",
+ "files": {
+  "c-notes-x86_64-linux-gnu": {
+   "sha256": "263d2d47072a309bd47020cfa991666978c36d40f59cad8ad6c45230ab766179",
+   "size": 16080,
+   "format": "elf",
+   "made": "gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0: gcc -O1 -fcf-protection=full -Wl,--build-id=sha1"
+  },
+  "go-hello-x86_64-linux": {
+   "sha256": "1ae83a9e5ab8de6bb3c1030a2b15ed0e25c69973fd25281e52677eadd5705438",
+   "size": 1429688,
+   "format": "elf",
+   "made": "go version go1.24.7 linux/amd64: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags=\"-s -w\""
+  },
+  "go-hello-x86_64-windows.exe": {
+   "sha256": "9ac6e73fd2eb1dc4372a0d64be1da94f6b559acabbc1b70c0b78160d378360e0",
+   "size": 1531904,
+   "format": "pe",
+   "made": "go version go1.24.7 linux/amd64: CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -trimpath -ldflags=\"-s -w\""
+  }
+ }
+}
