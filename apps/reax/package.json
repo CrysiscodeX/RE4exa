@@ -41,5 +41,9 @@
     "src",
     "!src/bench",
     "README.md"
-  ]
+  ],
+  "devDependencies": {
+    "@toon-format/toon": "4.4.0",
+    "yaml": "2.9.1"
+  }
 }

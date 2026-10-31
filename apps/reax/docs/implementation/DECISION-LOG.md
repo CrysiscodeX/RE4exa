@@ -38,3 +38,22 @@ Registering a SessionStart hook in `.claude/settings.json` was refused by the se
 policy. Node is pinned in `.nvmrc`, and `scripts/dev/setup-node.sh` installs and selects it; the
 owner can set it as the cloud environment's setup script.
 **Reopen if** the owner enables the hook.
+
+## D-6 (2026-10-31) Output formats, the response budget and their limits
+- **Formats.** text (the operation's own), json, jsonl, yaml, markdown and toon, all rendered from
+  one result. TOON and YAML are reax's own encoders, so the runtime gains no dependency; the TOON
+  reference package and `yaml` are dev-only oracles (pinned, both over two weeks old).
+- **YAML** is written to read the same under YAML 1.2 and 1.1: ambiguous strings are quoted;
+  C1 controls, U+2028 and U+2029 are escaped; exponent numbers get a decimal point. PyYAML found
+  the last two in the fuzz.
+- **Envelope.** Target-derived text reaches a model inside `<untrusted-content>` in every format
+  except json and jsonl, where it stays inside JSON strings (as `--format json` already did). The
+  token limit cuts the body before the envelope is added, so the envelope always closes.
+- **Budget.** 1 MiB of JSON data per result (rea: 10 MiB). Common MCP clients cut tool results
+  far below 10 MiB, so a smaller budget with a continuation serves them better; it is a parameter
+  of `runOperation`. A paged result over budget is shortened and continues at `page.next`; any
+  other is refused with `result_too_large`.
+- **Ledger.** REA-C35 (budget and continuation) and LEAN-C10 (cap every output) are tagged.
+  REA-C03 is not: it also names rea's 155 commands, and reax has 2 operations.
+**Reopen if** a client needs a larger budget, or measurement shows TOON costs more tokens than
+JSON on reax's results.

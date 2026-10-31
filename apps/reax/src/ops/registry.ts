@@ -2,6 +2,7 @@
 import { CoreError } from "@re4exa/core/errors";
 import "../errors.ts";
 import { identifyFile, inventoryNative } from "./native.ts";
+import type { Page } from "./page.ts";
 import { checkInput } from "./schema.ts";
 import type { OpContext, Operation, OpResult } from "./types.ts";
 
@@ -23,19 +24,56 @@ export function operation(name: string): Operation {
  * under 8k characters too, below the point where clients cut it. */
 export const TEXT_CAP = 8000;
 
+/** Most bytes one result's data may take as JSON (rea row C35: refuse early, with a continuation,
+ * rather than send something a client cannot take). */
+export const RESPONSE_BUDGET = 1024 * 1024;
+
+const size = (v: unknown) => Buffer.byteLength(JSON.stringify(v) ?? "");
+
+/** A paged result over the budget keeps the longest prefix of its page that fits, and page.next
+ * continues after it; any other result over the budget is refused. */
+function fitPage(name: string, r: OpResult, budget: number): OpResult {
+  if (size(r.data) <= budget) return r;
+  const d = r.data as { items?: unknown[]; page?: Page } | null;
+  if (!d || !Array.isArray(d.items) || !d.page)
+    throw new CoreError("result_too_large", { operation: name, bytes: size(r.data), budget });
+  let lo = 0;
+  let hi = d.items.length;
+  while (lo < hi) {
+    const mid = Math.ceil((lo + hi) / 2);
+    if (size({ ...d, items: d.items.slice(0, mid) }) <= budget) lo = mid;
+    else hi = mid - 1;
+  }
+  if (lo === 0) throw new CoreError("result_too_large", { operation: name, bytes: size(r.data), budget });
+  const page: Page = { ...d.page, limit: lo, next: d.page.offset + lo < d.page.total ? d.page.offset + lo : null };
+  return {
+    ...r,
+    data: { ...d, items: d.items.slice(0, lo), page },
+    limitations: [
+      ...r.limitations,
+      `page shortened to ${lo} rows to fit the ${budget}-byte response budget; continue at offset ${page.next}`,
+    ],
+  };
+}
+
+/** What every result goes through before it leaves reax: the data within the response budget
+ * (paged results shortened, others refused) and the text within TEXT_CAP. */
+export function applyBudget(name: string, r: OpResult, budget = RESPONSE_BUDGET): OpResult {
+  const fitted = fitPage(name, r, budget);
+  if (fitted.text.length <= TEXT_CAP) return fitted;
+  return {
+    ...fitted,
+    text: `${fitted.text.slice(0, TEXT_CAP)}\n[text cut at ${TEXT_CAP} characters; the full result is in data]`,
+  };
+}
+
 export async function runOperation(
   name: string,
   args: unknown,
   ctx: OpContext,
+  opts: { budget?: number } = {},
 ): Promise<OpResult & { operation: string }> {
   const op = operation(name);
   const checked = checkInput(name, op.input, args);
-  const r = await op.run(ctx, checked);
-  if (r.text.length <= TEXT_CAP) return { ...r, operation: name };
-  return {
-    ...r,
-    operation: name,
-    text: `${r.text.slice(0, TEXT_CAP)}\n[text cut at ${TEXT_CAP} characters; the full result is in data]`,
-    coverage: r.coverage,
-  };
+  return { ...applyBudget(name, await op.run(ctx, checked), opts.budget ?? RESPONSE_BUDGET), operation: name };
 }

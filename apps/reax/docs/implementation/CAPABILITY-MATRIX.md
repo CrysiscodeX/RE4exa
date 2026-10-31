@@ -7,15 +7,15 @@ on every platform the row names is the CI parity job's verdict (`scripts/parity-
 
 | | Tested | Total |
 |---|---:|---:|
-| rea and leanrea capability rows | 7 | 357 |
-| reax's own rows | 26 | 26 |
+| rea and leanrea capability rows | 9 | 357 |
+| reax's own rows | 28 | 28 |
 | Recorded weak points | 21 | 244 |
 
 Open weak points by severity: degrades 150, cosmetic 32, blocks 41. Security review notes: 15 (status in `docs/review-notes.md`).
 
 | Component | Rows | Tested | By phase |
 |---|---:|---:|---|
-| Tool surface, CLI and output | 7 | 0 | p1: 7 |
+| Tool surface, CLI and output | 7 | 2 | p1: 7 |
 | Native readers | 69 | 6 | p1: 67, p2: 2 |
 | Archives and app bundles | 14 | 0 | p1: 14 |
 | JavaScript and Electron | 20 | 0 | p1: 15, p2: 5 |
