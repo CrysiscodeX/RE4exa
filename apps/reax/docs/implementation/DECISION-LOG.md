@@ -57,3 +57,11 @@ owner can set it as the cloud environment's setup script.
   REA-C03 is not: it also names rea's 155 commands, and reax has 2 operations.
 **Reopen if** a client needs a larger budget, or measurement shows TOON costs more tokens than
 JSON on reax's results.
+
+## D-7 (2026-10-31) Byte-level operations are not Assay sweep probes
+`read.strings`, `read.bytes` and `search.bytes` need an argument to be useful (a search, a range, a
+pattern). As sweep probes they would run on every file of a case and store a page of strings per
+file. Only `identify.file` and `inventory.native` are swept (`SWEEP_OPERATIONS` in
+`src/ops/probes.ts`). The byte-level operations reach agents through the reax CLI now, and through
+reax's MCP tools in DMN.
+**Reopen if** Assay gains an agent tool that calls reax operations with arguments.

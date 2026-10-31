@@ -57,7 +57,12 @@ function argLine(name: string, s: JsonSchema, required: boolean): string {
 
 function exampleLine(op: Operation): string {
   const ex = op.examples[0];
-  const kv = ex ? Object.entries(ex.args).map(([k, v]) => `${k}=${typeof v === "string" ? v : JSON.stringify(v)}`) : [];
+  // a value with a space or a shell metacharacter is double-quoted, which sh, PowerShell and cmd
+  // all read as one argument
+  const word = (s: string) => (/^[A-Za-z0-9_./:@+=,-]*$/.test(s) ? s : `"${s.replaceAll('"', '\\"')}"`);
+  const kv = ex
+    ? Object.entries(ex.args).map(([k, v]) => word(`${k}=${typeof v === "string" ? v : JSON.stringify(v)}`))
+    : [];
   return `reax op ${op.name}${kv.length ? ` ${kv.join(" ")}` : ""}`;
 }
 

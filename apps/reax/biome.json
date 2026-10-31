@@ -11,6 +11,7 @@
       "!bench/tasks/**",
       "!bench/oracle-facts.json",
       "!bench/corpus/*.json",
+      "!bench/oracle/**",
       "!**/*.md"
     ]
   },

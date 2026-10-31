@@ -492,7 +492,10 @@ test("[+RX-1/output-formats] --llms lists every operation with its arguments and
   for (const op of OPERATIONS) {
     assert.match(r.out, new RegExp(`^## ${op.name.replace(".", "\\.")}$`, "m"));
     const ex = r.out.split("\n").find((l) => l.startsWith("  Example: ") && l.includes(` ${op.name}`))!;
-    const argv = ex.replace("  Example: reax ", "").split(" ");
+    // split as a shell does: double-quoted words stay whole
+    const argv = [...ex.replace("  Example: reax ", "").matchAll(/"((?:[^"\\]|\\.)*)"|(\S+)/g)].map(
+      (m) => m[2] ?? m[1]!.replaceAll('\\"', '"'),
+    );
     const run = cli(...argv, "--workspace", BIN, "--format", "json");
     assert.equal(run.code, 0, `${ex}: ${run.err}`);
   }

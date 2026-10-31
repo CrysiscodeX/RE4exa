@@ -19,10 +19,16 @@ const APPLIES: Record<string, string[]> = {
 
 const COST: Record<Operation["cost"], ProbeDef["cost"]> = { cheap: "cheap", medium: "medium", deep: "heavy" };
 
+/** Operations an Assay sweep runs on every file: each answers about the whole file with no other
+ * argument. The byte-level operations (strings, slices, searches) need an argument to be useful and
+ * would add a page of noise per file, so they reach agents through reax's own tools instead
+ * (DECISION-LOG D-7). */
+export const SWEEP_OPERATIONS = new Set(["identify.file", "inventory.native"]);
+
 /** Operations that fit the probe contract: read-only, a single file path in, nothing else required. */
 export function probeable(op: Operation): boolean {
   const required = op.input.required ?? [];
-  return op.effect === "read" && required.length === 1 && required[0] === "path";
+  return SWEEP_OPERATIONS.has(op.name) && op.effect === "read" && required.length === 1 && required[0] === "path";
 }
 
 /** A probe with the confidence its evidence carries: reax reads the file's own bytes, so what it

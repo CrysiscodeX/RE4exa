@@ -79,3 +79,91 @@ Result includes:
 ```
 
 Ledger rows: `rea.tool/list_architectures`, `rea.tool/inspect_native_exports`, `rea.tool/inspect_pe_imports`, `leanrea/LEAN-T11`, `leanrea/LEAN-T15`.
+
+## read
+
+### `read.strings`
+
+Printable strings in any file (ASCII and UTF-16LE, at any offset), with their file offsets; optionally only those containing a search text. Pages with offset and limit.
+
+Effect: read. Cost: medium. Output from the target is untrusted (sent inside the untrusted-content envelope). Platforms: linux, darwin, win32.
+
+| Argument | Type | Required | Default | Meaning |
+|---|---|---|---|---|
+| `path` | string (≤ 4096 chars) | yes |  | File path inside the workspace |
+| `encoding` | "all" \| "ascii" \| "utf16le" | no | `"all"` | Which encodings |
+| `min` | integer (≥ 1, ≤ 1024) | no | `4` | Shortest string, in characters |
+| `search` | string (≤ 1024 chars) | no |  | Keep only strings containing this text |
+| `ignore_case` | boolean | no | `false` | Match search without regard to ASCII case |
+| `max_text` | integer (≥ 16, ≤ 65536) | no | `1024` | Longest text returned per string; length still counts the whole string |
+| `offset` | integer (≥ 0) | no | `0` | first row to return (page.next continues) |
+| `limit` | integer (≥ 1, ≤ 10000) | no | `200` | rows per page |
+
+Example: Strings that name the library's functions.
+
+```json
+{"operation":"read.strings","path":"lib-x86_64-linux-gnu.2.28-s.so","search":"reax_a","encoding":"ascii"}
+```
+
+Result includes:
+
+```json
+{"page":{"total":2},"items":[{"text":"reax_add"},{"text":"reax_apply"}]}
+```
+
+Ledger rows: `rea.tool/list_strings`, `rea.tool/search_strings`.
+
+### `read.bytes`
+
+A slice of any file: `length` bytes from file offset `at`, as hex and a hexdump.
+
+Effect: read. Cost: cheap. Output from the target is untrusted (sent inside the untrusted-content envelope). Platforms: linux, darwin, win32.
+
+| Argument | Type | Required | Default | Meaning |
+|---|---|---|---|---|
+| `path` | string (≤ 4096 chars) | yes |  | File path inside the workspace |
+| `at` | integer (≥ 0) | no | `0` | File offset of the first byte |
+| `length` | integer (≥ 1, ≤ 65536) | no | `256` | Bytes to read |
+
+Example: An ELF file's magic number.
+
+```json
+{"operation":"read.bytes","path":"hello-x86_64-linux-gnu.2.28-s","at":0,"length":4}
+```
+
+Result includes:
+
+```json
+{"at":0,"length":4,"hex":"7f454c46"}
+```
+
+Ledger rows: `rea.tool/read_bytes`, `leanrea/LEAN-C07`.
+
+### `search.bytes`
+
+Every file offset where a byte pattern occurs (hex with ?? wildcards, or text with optional ASCII case folding), overlapping matches included. Pages with offset and limit.
+
+Effect: read. Cost: medium. Output from the target is not target text. Platforms: linux, darwin, win32.
+
+| Argument | Type | Required | Default | Meaning |
+|---|---|---|---|---|
+| `path` | string (≤ 4096 chars) | yes |  | File path inside the workspace |
+| `hex` | string (≤ 1024 chars) | no |  | Bytes as hex pairs, ?? for any byte, e.g. "48 8b ?? 24" |
+| `text` | string (≤ 256 chars) | no |  | Bytes as UTF-8 text |
+| `ignore_case` | boolean | no | `false` | With text: match ASCII letters in either case |
+| `offset` | integer (≥ 0) | no | `0` | first row to return (page.next continues) |
+| `limit` | integer (≥ 1, ≤ 10000) | no | `200` | rows per page |
+
+Example: Where a Windows executable's PE header starts.
+
+```json
+{"operation":"search.bytes","path":"hello-x86_64-windows-gnu-s.exe","hex":"50 45 00 00 64 86"}
+```
+
+Result includes:
+
+```json
+{"items":[120],"page":{"total":1}}
+```
+
+Ledger rows: `rea.tool/search_bytes`.

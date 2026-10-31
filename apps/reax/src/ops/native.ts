@@ -2,9 +2,7 @@
 // imports, for ELF, PE, Mach-O (thin and universal) and WebAssembly in one shape. Built on core's
 // bounds-checked parsers; every list says whether it is complete.
 
-import { closeSync, openSync, readSync, statSync } from "node:fs";
 import { CoreError } from "@re4exa/core/errors";
-import { resolveInWorkspace } from "@re4exa/core/mcp/paths";
 import { normalizeArch } from "@re4exa/core/probes/arch";
 import { NATIVE_CAP, parseElf } from "@re4exa/core/probes/builtin/elf";
 import { IDENTIFY_HEAD, identifyBytes } from "@re4exa/core/probes/builtin/identify";
@@ -12,33 +10,10 @@ import { parseMachO } from "@re4exa/core/probes/builtin/macho";
 import { parsePe } from "@re4exa/core/probes/builtin/pe";
 import { parseWasm } from "@re4exa/core/probes/builtin/wasm";
 import "../errors.ts";
-import type { OpContext, Operation, OpResult } from "./types.ts";
+import { readHead, target } from "./file.ts";
+import type { Operation, OpResult } from "./types.ts";
 
 const ALL = ["linux", "darwin", "win32"] as const;
-
-function readHead(abs: string, max: number): { bytes: Uint8Array; size: number } {
-  const size = statSync(abs).size;
-  if (size > max && max === NATIVE_CAP) throw new CoreError("target_too_large", { size, limit: max });
-  const fd = openSync(abs, "r");
-  try {
-    const bytes = new Uint8Array(Math.min(size, max));
-    let off = 0;
-    while (off < bytes.length) {
-      const n = readSync(fd, bytes, off, bytes.length - off, off);
-      if (n === 0) break;
-      off += n;
-    }
-    return { bytes: bytes.subarray(0, off), size };
-  } finally {
-    closeSync(fd);
-  }
-}
-
-function target(ctx: OpContext, path: unknown): { abs: string; rel: string } {
-  const r = resolveInWorkspace(ctx.workspace, String(path), { mustExist: true });
-  if (!statSync(r.abs).isFile()) throw new CoreError("bad_request", { field: "path", why: "a file, not a directory" });
-  return r;
-}
 
 // One spelling per architecture, shared with the core verifier so reax's facts and its checks agree.
 const arch = normalizeArch;

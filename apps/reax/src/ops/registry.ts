@@ -1,12 +1,13 @@
 // Every operation reax has, in one list. Generators (scripts/gen.ts) and the runner read only this.
 import { CoreError } from "@re4exa/core/errors";
 import "../errors.ts";
+import { readBytes, readStrings, searchBytesOp } from "./bytes.ts";
 import { identifyFile, inventoryNative } from "./native.ts";
 import type { Page } from "./page.ts";
 import { checkInput } from "./schema.ts";
 import type { OpContext, Operation, OpResult } from "./types.ts";
 
-export const OPERATIONS: readonly Operation[] = [identifyFile, inventoryNative];
+export const OPERATIONS: readonly Operation[] = [identifyFile, inventoryNative, readStrings, readBytes, searchBytesOp];
 
 const byName = new Map<string, Operation>();
 for (const op of OPERATIONS) {
