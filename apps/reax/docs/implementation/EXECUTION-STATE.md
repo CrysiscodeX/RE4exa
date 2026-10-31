@@ -103,7 +103,6 @@
 
 ## Active
 - **NAT-4, part 4 (rest):**
-  - Rust (`.dep-v0`, needs cargo-auditable);
   - crash dumps;
   - the PE COFF symbol table and ARM64 `.pdata`.
 
@@ -114,6 +113,8 @@
    16 KiB `tools/list` target).
 
 ## Blocked
+- **Rust `.dep-v0` (cargo-auditable):** no Rust toolchain on the development machine; needs
+  cargo-auditable in CI.
 - **PE certificates (`inspect_pe_certificates`):** none of the four PE files in the LearnHarness
   corpus is signed (their certificate directory is empty) and no signing tool is installed, so
   there is no sample to check a reader against. The row stays untested.
