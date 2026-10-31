@@ -112,9 +112,11 @@ test(
       utf16.map((s) => [s.offset, s.text]),
       [[2001, "odd-utf16"]],
     );
-    // where GNU strings is installed, it agrees on this file too
+    // where GNU strings is installed, it agrees on this file too. Only GNU's: macOS's own strings
+    // (cctools) does not count a tab as printable, so it is a different definition, not an oracle
+    const isGnu = /GNU strings/.test(spawnSync("strings", ["--version"], { encoding: "utf8" }).stdout ?? "");
     const gnu = spawnSync("strings", ["-a", "-t", "d", "-n", "4", join(dir, "f.bin")], { encoding: "latin1" });
-    if (gnu.status === 0)
+    if (isGnu && gnu.status === 0)
       assert.deepStrictEqual(
         gnu.stdout
           .trim()
