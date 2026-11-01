@@ -144,3 +144,71 @@ of the file. `inventory.rust` is kept out of the sweep on cost:
 Agents reach it through reax's inventory tool. Nothing in Assay changes.
 **Reopen if** the marker scan is limited to a small fixed window, or skipped on files without Rust
 evidence, so that its p95 on non-Rust files falls to `inventory.native`'s.
+
+## D-13 (2026-11-01) Breadth first: every component gets a tested first implementation
+The user's direction: every component that is not built gets a genuine, tested initial
+implementation, at least partial, before deep work resumes on any single component.
+- **Partial** means real working functionality with positive and negative tests, green in CI.
+  Interfaces and stubs count only as SCAFFOLDED; code in `packages/core` that no reax operation uses
+  is a foundation, not status.
+- **Status vocabulary.** NOT_BUILT, SCAFFOLDED, PARTIAL_UNVERIFIED, PARTIAL_VERIFIED,
+  COMPLETE_UNVERIFIED, COMPLETE_VERIFIED, BLOCKED_EXTERNAL. Each is derived from the ledger's computed
+  statuses (`planned`, `partial`, `covered`, `fixed`, `regressed`, `wont`) of the rows that evidence
+  the item; the mapping is in `BREADTH-COVERAGE.md`. The ledger schema is unchanged; BLOCKED_EXTERNAL
+  lives in `EXECUTION-STATE.md`, not in the ledger.
+- **A row is tagged only when its tests cover what the row says.** A first slice that covers less
+  gets a narrower reax row (`reax.jsonl`, existing format).
+- **Deferred:** the rest of NAT-4 (the PE COFF symbol table, crash dumps). ARM64 `.pdata` is parked
+  as a stash with its review findings (`EXECUTION-STATE.md`, **Parked**). Defects in committed
+  code are not deferred: the x64 `.pdata` section-bound gap is fixed as a defect.
+**Reopen if** the user ends the breadth phase early, or a component cannot reach partial without
+deep work on another.
+
+## D-14 (2026-11-01) The breadth waves, and the sandbox before risky parsing and engines
+Wave 1: SBX, then ENG with LLVM, and PM. Wave 2: DMN, SCH, COD, RUN, MOB, SET. Wave 3: ARC, JSE, EVD,
+OTH, CLI, BEN. Wave 4: the supporting infrastructure, then the breadth gate.
+- **SBX moves first.** D-2 put built-in readers before the sandbox. That suited readers that only
+  parse in process. The coming packages extract archives, run engines on untrusted input, and start
+  processes (ENG, COD, RUN, ARC's extraction), so the sandbox and process
+  supervision come before all of them. ARC, which was first in EXECUTION-STATE's previous **Next**
+  list, moves to Wave 3.
+- **Order inside waves follows dependencies,** which changes two of the user's listed orders:
+  DMN runs first in Wave 2 (SET points clients at DMN's server; SCH's first slice can run before it,
+  in process); ARC runs first in Wave 3 (JSE reads ASAR through ARC's listing).
+- **Early slices that run before a planned dependency:**
+  - ENG before SCH: one adapter run at a time, under PROC, with no pools.
+  - PM before DMN: `pm.db` is opened by the process that uses it; the daemon becomes its owner in
+    Wave 2.
+  - MOB before ARC: APK entries are listed in memory with core's zip reader; nothing is extracted.
+**Reopen if** a wave's first item cannot reach partial, or the user reorders.
+
+## D-15 (2026-11-01) LLVM is the first engine provider
+LLVM 18 is installed on the development machine (Homebrew) and preinstalled on CI's ubuntu-24.04
+runners (`/usr/bin/llvm-readobj-18`); the fixtures job installs `llvm-18` only if it is missing, and
+the macOS and Windows lanes do not use it. It is the answer key for most of NAT, so its adapter can
+be checked against NAT's verified readers
+(differential: the adapter's `llvm-nm` list against `inventory.symbols`). It runs as a separate
+process under SBX. GPL tools (binutils, gdb) are also only ever run as separate processes, never
+linked or imported.
+**Reopen if** LLVM's licence terms change for this use, or a second engine is needed for COD's
+differential before Wave 2.
+
+## D-16 (2026-11-01) The user's hard limits on the breadth waves
+- RUN inspects only processes the tests start. ADB and Frida are BLOCKED_EXTERNAL without a fixture
+  device.
+- SET is tested only against a temporary HOME.
+- BEN runs no live model.
+- DMN's MCP server listens on loopback only, and requires a token.
+- No system-wide installs: SDKs and tools live under /tmp or a temporary directory; Rust cross
+  targets use a rustup confined to /tmp.
+**Reopen if** the user lifts a limit.
+
+## D-17 (2026-11-01) MISSING-CAPABILITIES.md is derived from the ledger, by a documented check
+It lists every one of the 318 untested rea and leanrea rows by key. A row is listed when it lacks
+its `[+KEY]` or `[-KEY]` tag (`scripts/status.ts`'s rule), under the section of the component that
+`COMPONENTS` gives its family. A check command in the file exits 1 when the set of listed keys
+differs from the untested set, a key is listed twice, a row's phase differs from the ledger's, or a
+row sits under the wrong component's section. It does not check the hand-written columns
+(description, owner, priority, code today) or the per-component text. Running it is manual for now; a generator with `--check` in CI is planned (GATE, Wave 4).
+No generator under `scripts/` changed in Wave 0.
+**Reopen when** GATE lands; the file then becomes generated.

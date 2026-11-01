@@ -9,6 +9,8 @@ checkpoint without re-analysing the repository. Start with `EXECUTION-STATE.md`.
 | [MASTER-PLAN.md](MASTER-PLAN.md) | Every work package: requirements, dependencies, acceptance criteria | `../plan.md` (architecture) |
 | [BASELINE.md](BASELINE.md) | The verified starting state and how it was measured | ledgers, test suite, CI |
 | [DECISION-LOG.md](DECISION-LOG.md) | Engineering decisions and their reasons | itself |
+| [BREADTH-COVERAGE.md](BREADTH-COVERAGE.md) | Every component and supporting subsystem: status, evidence, gaps, next package; the waves | ledgers, tests, CI parity report |
+| [MISSING-CAPABILITIES.md](MISSING-CAPABILITIES.md) | Every capability row not yet tested, by component, with a check against the ledger | `../ledger/parity/` |
 | [CAPABILITY-MATRIX.md](CAPABILITY-MATRIX.md) | Rows, tests and weak points per component (**generated** by `scripts/status.ts`) | `../ledger/` |
 
 Other registers live where they already are, rather than in copies here:

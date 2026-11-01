@@ -4,6 +4,20 @@ Work packages in build order (DECISION-LOG D-2). Each lists its rows (ledger key
 what it depends on, and its acceptance criteria. Architecture details are in `../plan.md`; this
 file says what is built when, and how it counts as done.
 
+**Breadth first, until the breadth gate (D-13, D-14).** The packages below are each component's
+full scope. Until every component has a genuine, tested initial implementation, work follows the
+waves in `BREADTH-COVERAGE.md`: one first package per component, in this order:
+1. **Wave 1:** SBX (with process supervision), then ENG with LLVM as the first provider; PM beside
+   them.
+2. **Wave 2:** DMN, then the scheduler (SCH); COD, RUN, MOB and SET.
+3. **Wave 3:** ARC, then JS (JSE); EVD, FMT (OTH), the rest of FW's rows (CLI) and BEN.
+4. **Wave 4:** the supporting infrastructure (FAIL, REL and the others), then the breadth gate.
+
+The rest of NAT-4 (the PE COFF symbol table, crash dumps, ARM64 `.pdata`) resumes after the gate.
+Where a wave runs a package before a dependency named in the table below, `BREADTH-COVERAGE.md`
+says how its first slice does without it (D-14). Component IDs there map onto the packages here:
+COD = CODE, RUN = RT, MOB = MAN, OTH = FMT, JSE = JS, CLI = FW's rows, PM, SCH and FAIL as here.
+
 **Every package is done only when:**
 - its operations are registered, so the CLI, docs, `tools.json` and ledger mappings are generated;
 - each covered row has `[+KEY]` and `[-KEY]` tests, checked against an independent answer key where
