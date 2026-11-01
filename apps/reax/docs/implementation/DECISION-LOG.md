@@ -212,3 +212,18 @@ row sits under the wrong component's section. It does not check the hand-written
 (description, owner, priority, code today) or the per-component text. Running it is manual for now; a generator with `--check` in CI is planned (GATE, Wave 4).
 No generator under `scripts/` changed in Wave 0.
 **Reopen when** GATE lands; the file then becomes generated.
+
+## D-18 (2026-11-01) SBX: Landlock through system Python on Linux, sandbox-exec on macOS, fail closed elsewhere
+The Orchestrator's decision under the user's no-questions directive.
+- **Linux:** Landlock, applied by a small helper that the system `python3 -I` runs. The helper uses
+  `ctypes` to set no-new-privileges and restrict itself, then execs the child. No install, no sysctl
+  change, no new npm package. bubblewrap is not used: it is not installed, and Ubuntu 24.04's
+  AppArmor restriction on unprivileged user namespaces could only be lifted by changing a system
+  setting.
+- **macOS:** `sandbox-exec` with a deny-default profile; no system setting changed.
+- **Windows:** no enforcement yet. Work that requires the sandbox fails closed with the new failure
+  code `sandbox_unavailable`, before any process starts.
+- The system `python3` is a host tool, not a package dependency. Where it is missing, or Landlock is
+  absent, the Linux backend counts as unavailable and the same fail-closed rule applies.
+**Reopen if** Landlock's ABI on the ubuntu-24.04 runner is too old for network control (TCP connect
+rules need ABI 4).

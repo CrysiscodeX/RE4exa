@@ -5,12 +5,11 @@
 2. Read this file.
 3. Continue with the first package under **Next**.
 
-**Last verified checkpoint: `bc38202`.** CI green: reax run 41238955508 (all five jobs: three lanes,
-fixtures, parity) and tests run 41238955465; assay did not run (its path filter excludes docs). The
-parity report of that run: 39 of 357 rea and leanrea rows covered, 29 of 29 reax rows covered, 21 of
-244 weak points fixed. 187 tests declared on every lane; passed: Linux 186, macOS 184, Windows
-181 (1, 3 and 6 skipped by platform), and the fixtures job all 187. The baseline as reconciled at this commit is in
-`BREADTH-COVERAGE.md`.
+**Last verified checkpoint: `175f614`.** CI green: reax run 41295523548 (all five jobs: three
+lanes, fixtures, parity), assay 41295523509, tests 41295523549. The parity report of that run: 39 of
+357 rea and leanrea rows covered, 29 of 29 reax rows covered, 21 of 244 weak points fixed. 190 tests
+declared on every lane; passed: Linux 189, macOS 187, Windows 184 (1, 3 and 6 skipped by platform),
+and the fixtures job all 190. The baseline reconciled at `bc38202` is in `BREADTH-COVERAGE.md`.
 
 ## Done (verified in CI)
 - **Baseline re-measured:** see `BASELINE.md`.
@@ -132,11 +131,32 @@ parity report of that run: 39 of 357 rea and leanrea rows covered, 29 of 29 reax
     wrong: Homebrew rustc and cargo 1.99.1 are installed, and cargo-auditable 0.7.7 and
     rust-audit-info 0.5.4 are in `/tmp/reax-cargo`.
 
+- **Wave 0 of the breadth plan** (`9f76fb7`, documentation only, D-13 to D-17; CI green: reax run
+  41292788262, all five jobs; tests 41292788332): `BREADTH-COVERAGE.md` and `MISSING-CAPABILITIES.md`.
+
+- **Wave 1, item 0: the three Wave 0 defects** (`175f614`; CI green: reax run 41295523548, all five
+  jobs (three lanes, fixtures, parity), assay 41295523509 (check, and platforms on macos-15 and
+  windows-2025), tests 41295523549; Reviewer-Debugger PASS in one round):
+  - the x64 (`0x8664`) `.pdata` walk in `src/readers/symbols.ts` stops at the raw bytes of the
+    section holding the table. A directory that overruns the section, or a section cut by the end of
+    the file, gives partial coverage with a note in the parked ARM64 form. Tests in
+    `test/pdata-x64.test.ts` on an in-memory PE, tagged `[+rea.tool/list_procedures]` and
+    `[-rea.tool/list_procedures]`; the expected values come from the builder, and llvm-readobj agrees
+    on the valid entries;
+  - `test/format.test.ts` probes for PyYAML with `python3 -I`, as it runs the check;
+  - `biome.json` excludes the gitignored, machine-local `bench/backends.json` from lint.
+  - Reviewer's evidence: procedures, symbols and overview for every committed fixture are unchanged
+    by a before/after dump, and no key or fixture changed. The four LearnHarness x64 DLLs also dumped
+    unchanged (38,444 procedures). That direct dump is the corpus evidence, because
+    `test/corpus-lh.test.ts` does not exercise procedures. Mutations of the bound and of both notes
+    fail the tests.
+  - Follow-up: mutant M6 survives. Every case puts the `.pdata` directory at the start of its
+    section, so the `- (pd.rva - sec.rva)` term in the room computation is untested. It needs a case
+    with the directory partway into the section.
+  - Parked ARM64 finding (d) is fixed for x64 by this commit.
+
 ## Active
-- **Wave 0 of the breadth plan** (documentation only; DECISION-LOG D-13 to D-17):
-  `BREADTH-COVERAGE.md` (every component and supporting subsystem, its status and evidence, and
-  the waves) and `MISSING-CAPABILITIES.md` (every ledger row not yet tested, by component). Done
-  when reviewed and committed; nothing in it is implemented.
+- **Wave 1, item 1: SBX, the sandbox foundation** (D-18). Not started in the repository.
 
 ## Parked
 - **NAT-4, ARM64 `.pdata`** (parked 2026-11-01 under the breadth rule, D-13; not committed, not
@@ -160,8 +180,8 @@ parity report of that run: 39 of 357 rea and leanrea rows covered, 29 of 29 reax
     - (b) the mutant `Math.floor` → `Math.ceil` in the room computation survives; it needs a test
       with `SizeOfRawData` 15.
     - (c) advisory: the length-mask mutants P7b and P8b survive.
-    - (d) follow-up: the x64 (`0x8664`) `.pdata` loop has the same section-bound gap (it is
-      bounded by the file, not by the section's raw bytes).
+    - (d) follow-up: the x64 (`0x8664`) `.pdata` loop had the same section-bound gap. Fixed for x64
+      in `175f614`.
   - Its new `bench/oracle/symbols.json` entries were generated with LLVM 18.1.8 on the Mac, under
     the user's rule that CI's LLVM 18.1.3 confirms them in the fixtures job. They were never pushed,
     so that confirmation has not happened.
@@ -207,20 +227,8 @@ target (DMN measures the real `tools/list`).
   The setup script stands in for it.
 
 ## Known defects
-- **x64 `.pdata` walk not bounded by its section** (committed code, `src/readers/symbols.ts`, the
-  `machine === 0x8664` loop): it stops only at the directory's size and the end of the file, so a
-  directory larger than its section's raw bytes reads whatever follows the section as entries.
-  Found by the Reviewer-Debugger while reviewing ARM64 `.pdata` (finding (d) under **Parked**); not
-  yet reproduced by a committed test. A defect in committed code, so not deferred by D-13: fix it
-  with a test (a directory larger than its section's raw bytes) before or with Wave 1.
-- **PyYAML probe without `-I`** (`test/format.test.ts:202`): the test checks for PyYAML with
-  `python3 -c "import yaml"`, without `-I`, but runs the check itself with `-I` (`:212`). With yaml
-  only in the user site, the probe finds it, the isolated run cannot import it, and the test fails
-  instead of skipping. Recorded only (Wave 0 implements nothing).
-- **`npm run lint` checks the gitignored `bench/backends.json` locally:** biome's VCS integration is
-  off (no `vcs` section in the root or reax `biome.json`), so the ignore file is not used. CI's clean
-  checkout has no such file and is not affected. Recorded only.
-- Otherwise none open beyond the ledgers' weak points.
+- None open beyond the ledgers' weak points (the three Wave 0 defects were fixed by `175f614`;
+  see **Done**).
 
 ## Lessons kept as rules
 - A cross-check against a system tool first checks which tool it is (`--version`): macOS ships
