@@ -555,9 +555,21 @@ function peSymbols(b: Uint8Array, s: LayoutSlice): SymbolSlice {
   const po = pd.rva ? off(pd.rva) : null;
   if (po !== null && pd.size) {
     if (machine === 0x8664) {
-      for (let i = 0; i < Math.floor(pd.size / 12); i++) {
+      // off(pd.rva) is non-null only when a section holds file bytes at pd.rva, so sec exists
+      const sec = secs.find((x) => pd.rva >= x.rva && pd.rva - x.rva < x.rawSize)!;
+      const room = Math.max(0, Math.floor((sec.rawSize - (pd.rva - sec.rva)) / 12));
+      const listed = Math.floor(pd.size / 12);
+      const n = Math.min(listed, room);
+      if (listed > n)
+        notes.push(
+          `the x64 .pdata directory (${listed} entries) runs past its section's bytes in the file; ${n} entries read, the rest could not be`,
+        );
+      for (let i = 0; i < n; i++) {
         const p = po + i * 12;
-        if (!r.ok(p, 12)) break;
+        if (!r.ok(p, 12)) {
+          notes.push(`the x64 .pdata table is cut by the end of the file after ${i} of ${n} entries`);
+          break;
+        }
         const begin = r.u32(p);
         const end = r.u32(p + 4);
         if (begin === 0 && end === 0) continue;

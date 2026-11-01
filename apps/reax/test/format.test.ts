@@ -199,7 +199,7 @@ test("[+RX-1/output-formats] TOON and YAML round-trip through independent decode
   }
   assert.equal(n, CASES.length);
   // PyYAML (a YAML 1.1 resolver written by others) reads every document the same way, where present
-  const py = spawnSync("python3", ["-c", "import yaml"], { encoding: "utf8" });
+  const py = spawnSync("python3", ["-I", "-c", "import yaml"], { encoding: "utf8" });
   if (py.status === 0) {
     const dir = mkdtempSync(join(tmpdir(), "reax-yaml-"));
     try {
