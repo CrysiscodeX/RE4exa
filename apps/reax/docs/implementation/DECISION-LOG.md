@@ -342,3 +342,18 @@ recommendation (W1-3 work order).
   `store_schema_newer` is still reused, and `pm_not_indexed` stands.
 **Reopen if** DMN takes ownership of `pm.db`, SET needs another default location, or COD needs
 engine-derived data in the program model.
+
+## D-24 (2026-11-03) Assay LearnHarness tests: gated per test by platform
+The Orchestrator's decision (Wave 2 item 0, work order W2-0), taken when three of the four tests were
+found to pass on darwin.
+- Each LearnHarness test is gated by platform as well as by `ASSAY_LEARNHARNESS=1`, through one
+  helper, `learnharnessSkip()` in `apps/assay/test/helpers.ts`.
+- **The sweep test runs on Linux only.** On darwin `plutil` is available, so
+  `entitlements.mac.plist` is "available; not run by the sweep", not "unsupported format" or "tool
+  missing" (verified by the reviewer's mutation M-b).
+- **demo, claims and wrong-commit run on Linux and darwin** (3 of 4 passed on darwin when tried).
+- **All four skip on win32** with a stated reason: "cause unknown", because they were never run
+  there.
+- **Why:** gating all four on darwin would hide three passing tests.
+**Reopen if** the sweep's expectations become platform-aware, or the tests are run on Windows (the
+skip reason must then state the observed cause, or the gate is lifted).

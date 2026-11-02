@@ -5,11 +5,10 @@
 2. Read this file.
 3. Continue with the first package under **Next**.
 
-**Last verified checkpoint: `d804135`.** CI green: reax run 41480699513 (all five jobs, on attempt 2
-after a macOS runner-capacity cancellation), tests 41480699456; assay last ran on `fb1e03e` (run
-41459082047, green). The parity report of attempt 2: 39 of 357 rea and leanrea rows covered, 35 of 35
-reax rows covered, 21 of 244 weak points fixed. 247 tests declared on every lane; passed: Linux 246,
-macOS 244, Windows 228 (1, 3 and 19 skipped by platform), and the fixtures job all 247. The baseline
+**Last verified checkpoint: `ac70493`** (Wave 2 item 0). CI green on all three workflows: reax run
+41521374732 (fixtures, three lanes, parity), tests 41521374941, assay 41521374728. Rows unchanged: 39
+of 357 rea and leanrea rows covered, 35 of 35 reax rows covered, 21 of 244 weak points fixed. The
+previous checkpoint was `d804135` (reax run 41480699513: 247 tests declared on every lane). The baseline
 reconciled at `bc38202` is in `BREADTH-COVERAGE.md`.
 
 ## Done (verified in CI)
@@ -192,7 +191,7 @@ reconciled at `bc38202` is in `BREADTH-COVERAGE.md`.
     - Under D-21: a text-only fix (B1 and five more overclaims), then a narrow check, PASS. It found
       one token difference, in a test-title string.
   - Pre-push checks on macOS: core, Assay (`assay.yml`'s check steps) and reax all exit 0. Two
-    environment notes:
+    environment notes (both closed by Wave 2 item 0, `ac70493`):
     - core's readelf differential test is meant for Linux and skips without readelf; on macOS it
       fails only if Homebrew binutils is on PATH;
     - Assay's LearnHarness tests are Linux-only; CI's check job runs them.
@@ -300,18 +299,18 @@ reconciled at `bc38202` is in `BREADTH-COVERAGE.md`.
     - the live-arm reax shim sets a per-run `REAX_HOME`;
     - `~/.reax` was never created during this work.
   - Follow-ups:
-    - P2c: `reax.cmd` without `setlocal` (Windows only).
+    - P2c: `reax.cmd` without `setlocal` (Windows only). Closed by Wave 2 item 0 (`ac70493`), see
+      there for what is and is not proven.
     - P3: test the ROLLBACK in `search.symbols`' `finally` (drop `pm_symbol_fts`, then search
       twice).
     - P3b: the count-and-rows transaction has no deterministic test.
     - P4: test the busy mapping of the version reads in rollback mode (`BEGIN EXCLUSIVE` on a non-WAL
       store, a 200 ms timeout, expecting `pm_busy`).
-    - Bench shim quoting: single-quote the values, because `"`, `$` and backticks in a live run's
-      output directory are expanded.
+    - Bench shim quoting (closed by Wave 2 item 0, `ac70493`).
     - The exported mutable test seams (`MIGRATE_HOOKS`, `PM_LIMITS`, `PM_HOOKS`): mark them
       `@internal`, or freeze them.
-    - NOHOME is not testable with the fake. A Windows end-to-end test is still needed to show that
-      `reax.cmd` honours `REAX_HOME`.
+    - NOHOME is not testable with the fake. The Windows end-to-end test that `reax.cmd` honours
+      `REAX_HOME` is closed by Wave 2 item 0 (`ac70493`).
     - The digest race is now guarded by re-hashing (closed).
 
 - **Wave 1 summary** (complete at `d804135`):
@@ -333,9 +332,48 @@ reconciled at `bc38202` is in `BREADTH-COVERAGE.md`.
     - the PE certificates and device blocks (**Blocked**);
     - Waves 2 to 4.
 
+- **Wave 2, item 0: platform-correct test gates and bench shim quoting** (`ac70493`; D-24). Work
+  order W2-0. No rows move: rea and leanrea 39 of 357, reax 35 of 35; `RX-1/bench-live` gains tests.
+  Computer use: none.
+  - What changed:
+    - core `test/probes-differential.test.ts`: the readelf differential compares only subjects whose
+      first four bytes are the ELF magic; a non-ELF subject is reported "skipped, not an ELF file
+      (magic cafebabe)". `test/probes-engine.test.ts`: the skip reason names the platform.
+    - Assay `test/helpers.ts`: `learnharnessSkip()`, gating per test by platform as well as
+      `ASSAY_LEARNHARNESS=1` (D-24).
+    - reax `src/bench/live.ts` (`toolsDir`): the sh shim single-quotes the run directory, node path
+      and script path; `reax.cmd` starts `@setlocal DisableDelayedExpansion` and doubles `%`; `"`,
+      CR, LF and NUL are refused on every platform before anything is written (a stated limit: also
+      refused on macOS and Linux); the backslash rewrite is win32-only (it turned `a\b` into `a/b` on
+      macOS). `test/fixtures/reax-cmd.d.mts` gained one type line.
+    - New `[+RX-1/bench-live]` and `[-RX-1/bench-live]` tests in `test/live.test.ts`, with a
+      directory named with `$HOME`, backticks, `$()`, `%CD%`, `!PATH!` and `^&`, run through sh on
+      POSIX and through real `cmd.exe /d /v:on` on windows-2025; both passed in CI.
+  - CI on `ac70493`, all green: reax run 41521374732 (fixtures, three lanes, parity); tests
+    41521374941; assay 41521374728 (check with `ASSAY_LEARNHARNESS=1`: all four LearnHarness tests
+    passed on Linux; macos-15 and windows-2025 lanes green).
+  - Review: PASS in round 1. The reviewer reproduced A1, A2 (under D-24) and A5 (the full pre-push,
+    with binutils on the main PATH and `ASSAY_LEARNHARNESS=1`: exit 0, all 23 steps). Mutations M-a,
+    M-b, M-c1, M-c3, M-c4, M-c5 and M-c7 were all killed.
+  - Closed follow-ups:
+    - PM's bench shim quoting;
+    - PM's Windows end-to-end test that `reax.cmd` honours `REAX_HOME`: the windows-2025 test runs
+      `reax.cmd` under `cmd.exe` with the caller's `REAX_HOME` set elsewhere, and asserts `pm.db`
+      is at exactly `join(run directory, .reax-home)` and the caller's directory stays empty
+      (`test/live.test.ts`, checked by the Task Master);
+    - SBX's two pre-push environment notes: the local pre-push needs no special PATH or environment
+      beyond the oracle steps;
+    - PM's P2c (drop `setlocal`): the mutant is killed on every lane by the content assertion that
+      the first line of `reax.cmd` is exactly `@setlocal DisableDelayedExpansion` (`test/live.test.ts`,
+      in both shim tests). A behavioural kill on Windows (without it, `!PATH!` in the directory name
+      would expand under `/v:on`, so `pm.db` would land elsewhere) follows from the test but the
+      mutant was never run on Windows; not proven.
+  - Advisory: the NUL refusal has no test of its own (the `[-RX-1/bench-live]` test covers `"` and
+    LF).
+
 ## Active
-- **Wave 1 is complete** (summary under **Done**), and waits for the user. Wave 2 (DMN, then SCH;
-  COD, RUN, MOB, SET) does not start without the user.
+- **Wave 2, item 1: DMN** is in progress (work order being written). Wave 2 item 0 is done
+  (`ac70493`, under **Done**).
 
 ## Parked
 - **NAT-4, ARM64 `.pdata`** (parked 2026-11-01 under the breadth rule, D-13; not committed, not
@@ -372,7 +410,7 @@ reconciled at `bc38202` is in `BREADTH-COVERAGE.md`.
   dumps (recorded crashes and Apple IPS), and ARM64 `.pdata` (parked above).
 
 ## Next (in order)
-Wave 1 resumed under D-21 (**Active**).
+Wave 1 is complete; Wave 2 item 0 is done and item 1 (DMN) is **Active**.
 The breadth plan in `BREADTH-COVERAGE.md` (waves and dependencies there; D-13, D-14):
 1. **Wave 1:** SBX, the sandbox foundation; then ENG, the adapter registry with LLVM as the first
    provider; the program model (PM) beside them.
