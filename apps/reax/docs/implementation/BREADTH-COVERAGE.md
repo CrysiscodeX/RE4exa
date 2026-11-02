@@ -76,7 +76,7 @@ recorded; both were green on all three workflows, now recorded.
 | JSE | JavaScript and Electron | NOT_BUILT | 3 |
 | EVD | Evidence, unknowns, verification | NOT_BUILT | 3 |
 | OTH | Other formats | NOT_BUILT | 3 |
-| PM | Program model | NOT_BUILT | 1 |
+| PM | Program model | PARTIAL_VERIFIED (since `fb1e03e`/`d804135`) | 1 |
 | SCH | Scheduler | NOT_BUILT | 2 |
 | SNAP | Snapshot cache | NOT_BUILT | 4 |
 | POOL | Resource pools | NOT_BUILT | 4 |
@@ -97,8 +97,8 @@ recorded; both were green on all three workflows, now recorded.
 | LED | Ledger, parity and status machinery | PARTIAL_VERIFIED | 4 |
 | GATE | Breadth gate and completeness checker | NOT_BUILT | 4 (last) |
 
-**Counts (34 items, updated at `95c82c1`):** PARTIAL_VERIFIED 9 (NAT, CLI, BEN, PROC, FIX, KEY,
-LED, SBX, ENG); NOT_BUILT 25; SCAFFOLDED 0; PARTIAL_UNVERIFIED 0; COMPLETE_UNVERIFIED 0; COMPLETE_VERIFIED 0;
+**Counts (34 items, updated at `d804135`):** PARTIAL_VERIFIED 10 (NAT, CLI, BEN, PROC, FIX, KEY,
+LED, SBX, ENG, PM); NOT_BUILT 24; SCAFFOLDED 0; PARTIAL_UNVERIFIED 0; COMPLETE_UNVERIFIED 0; COMPLETE_VERIFIED 0;
 BLOCKED_EXTERNAL 0 as whole items, with three blocked parts inside RUN, MOB and NAT (41 ledger rows:
 Frida 10, ADB 25, JEB 5, PE certificates 1).
 
@@ -198,14 +198,28 @@ the fixtures job and the parity job, unless another run is named.
   - the nightly real-engine workflow (RCI).
 - **Next:** COD (Wave 2) exposes it through operations, after the forgery mitigation.
 
-### PM, program model: NOT_BUILT
-- **Evidence:** none in reax. Core's kernel (`kernel/kernel.ts`, SQLite) is the storage precedent.
-- **Next (Wave 1, beside ENG):** `pm.db` (node:sqlite) with `pm_target` keyed by digest, and symbols,
-  functions, strings and segments filled from NAT's operations; FTS5 over strings and symbols; cache
-  keys that include the reader or engine version. Positive: the stored rows equal the operations'
-  results (themselves checked against LLVM keys); an FTS query equals a linear filter; the store
-  survives a process restart. Negative: a changed engine or reader version is not served from the
-  cache; a digest mismatch is refused. The daemon becomes its owner in Wave 2 (D-14).
+### PM, program model: PARTIAL_VERIFIED (since `fb1e03e`/`d804135`)
+- **Evidence:** `src/pm/{db,schema}.ts`, `src/ops/pm.ts`; entry `reax op session.index` and
+  `reax op search.symbols` (registered operations); tests `test/pm.test.ts`. CI: reax run 41480699513
+  (attempt 2), where `RX-PM/store` and `RX-PM/index-search` are covered on all three lanes.
+- **Works:**
+  - `pm.db` over `node:sqlite`, with migrations in one transaction and a newer store refused
+    (`store_schema_newer`);
+  - `session.index` stores every slice's symbols from `inventory.symbols` under the file's sha256,
+    and reuses an unchanged target;
+  - `search.symbols` gives a paged read-back and an FTS5 trigram search, the query bound as one
+    phrase;
+  - typed `pm_not_indexed`, `pm_busy` and `pm_target_changed`;
+  - survives a restart in another process;
+  - tests never touch the real home.
+- **Gaps:**
+  - only symbols: functions, xrefs, strings, modules, annotations and coverage records (plan §3.5)
+    are not stored;
+  - no cache keys by engine version beyond the reader version;
+  - DMN ownership;
+  - the follow-ups in EXECUTION-STATE (P2c, P3, P3b, P4, shim quoting, test seams, a Windows
+    `REAX_HOME` end-to-end test).
+- **Next:** COD (Wave 2) adds functions and xrefs; DMN takes ownership.
 
 ### COD, code-level analysis: NOT_BUILT
 - **Evidence:** none. Builds on `inventory.procedures` and `read.symbol` (NAT). 63 rows, 56 of them

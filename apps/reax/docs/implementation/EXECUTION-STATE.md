@@ -5,11 +5,12 @@
 2. Read this file.
 3. Continue with the first package under **Next**.
 
-**Last verified checkpoint: `95c82c1`.** CI green: reax run 41450134753 (all five jobs: three
-lanes, fixtures, parity), assay 41450135019, tests 41450134853. The parity report of that run: 39 of
-357 rea and leanrea rows covered, 33 of 33 reax rows covered, 21 of 244 weak points fixed. 225 tests
-declared on every lane; passed: Linux 224, macOS 222, Windows 206 (1, 3 and 19 skipped by platform),
-and the fixtures job all 225. The baseline reconciled at `bc38202` is in `BREADTH-COVERAGE.md`.
+**Last verified checkpoint: `d804135`.** CI green: reax run 41480699513 (all five jobs, on attempt 2
+after a macOS runner-capacity cancellation), tests 41480699456; assay last ran on `fb1e03e` (run
+41459082047, green). The parity report of attempt 2: 39 of 357 rea and leanrea rows covered, 35 of 35
+reax rows covered, 21 of 244 weak points fixed. 247 tests declared on every lane; passed: Linux 246,
+macOS 244, Windows 228 (1, 3 and 19 skipped by platform), and the fixtures job all 247. The baseline
+reconciled at `bc38202` is in `BREADTH-COVERAGE.md`.
 
 ## Done (verified in CI)
 - **Baseline re-measured:** see `BASELINE.md`.
@@ -264,8 +265,77 @@ and the fixtures job all 225. The baseline reconciled at `bc38202` is in `BREADT
     - The A5 install grep matches only remediation strings and two "Homebrew LLVM version" fixture
       strings; accepted by the Orchestrator.
 
+- **Wave 1, item 3: PM, the program model** (`fb1e03e`, with the test-only fix `d804135`; D-23).
+  **PARTIAL_VERIFIED.**
+  - What it is:
+    - `src/pm/{db,schema}.ts`: `pm.db` over `node:sqlite`, with reax's own migration runner (every
+      step and the version bump in one transaction; a newer store refused with core's
+      `store_schema_newer`), a target table keyed by sha256, the symbols, and an FTS5 trigram index;
+    - `src/ops/pm.ts`: `session.index` (write; every slice of the file under its digest) and
+      `search.symbols` (read; paged read-back, or an FTS5 search bound as one quoted phrase);
+    - storage under `REAX_HOME` (default `<home>/.reax`);
+    - failure codes `pm_not_indexed`, `pm_busy` and `pm_target_changed` (both retryable).
+    - No sandbox and no engine: it populates from the in-process `inventory.symbols` (D-23).
+  - CI:
+    - `fb1e03e`: assay run 41459082047 (all three jobs) and tests run 41459082114 passed. reax run
+      41459082118 failed only on windows-2025, in `[+RX-1/bench-live]`: the fake Codex's regex for
+      `reax.cmd`. Every RX-PM test passed there.
+    - `d804135` (test-only fix): the win32 fake Codex parses the new `reax.cmd`. Its patterns are
+      shared in `test/fixtures/reax-cmd.mjs`, and every platform checks the `reax.cmd` format.
+      - reax run 41480699513 passed all five jobs on attempt 2. On attempt 1, GitHub gave the
+        macOS lane no runner (capacity, zero steps), which is infrastructure.
+      - tests run 41480699456 passed. assay was not triggered (test-only change).
+    - Parity (attempt 2's report): darwin, linux-fixtures, linux and win32, 247 tests each; gate
+      passed; `RX-PM/store`, `RX-PM/index-search` and `RX-1/bench-live` all covered; reax rows 35 of
+      35.
+  - Review history:
+    1. FAIL: a NUL query raised a raw SQLite error; the delete-trigger/reader-version and page-limit
+       tests were missing.
+    2. FAIL: the migration re-check and the bench `callTool` refusal were untested.
+    3. PASS: 41 of 45 mutants killed.
+    - The CI-fix review (`d804135`): PASS.
+  - Safety:
+    - reads never create a store;
+    - the local bench offers only read operations, and uses a per-run home;
+    - the live-arm reax shim sets a per-run `REAX_HOME`;
+    - `~/.reax` was never created during this work.
+  - Follow-ups:
+    - P2c: `reax.cmd` without `setlocal` (Windows only).
+    - P3: test the ROLLBACK in `search.symbols`' `finally` (drop `pm_symbol_fts`, then search
+      twice).
+    - P3b: the count-and-rows transaction has no deterministic test.
+    - P4: test the busy mapping of the version reads in rollback mode (`BEGIN EXCLUSIVE` on a non-WAL
+      store, a 200 ms timeout, expecting `pm_busy`).
+    - Bench shim quoting: single-quote the values, because `"`, `$` and backticks in a live run's
+      output directory are expanded.
+    - The exported mutable test seams (`MIGRATE_HOOKS`, `PM_LIMITS`, `PM_HOOKS`): mark them
+      `@internal`, or freeze them.
+    - NOHOME is not testable with the fake. A Windows end-to-end test is still needed to show that
+      `reax.cmd` honours `REAX_HOME`.
+    - The digest race is now guarded by re-hashing (closed).
+
+- **Wave 1 summary** (complete at `d804135`):
+  | Item | Commits | CI (reax run) | Review | Rows newly tested |
+  |---|---|---|---|---|
+  | 0: three Wave 0 defects | `175f614` | 41295523548 | PASS in round 1 | none (`rea.tool/list_procedures` already covered) |
+  | 1: SBX | `1001fd7` | 41440711064 (attempt 2: runner capacity) | FAIL ×4, then D-21's narrow check PASS | `RX-SBX/enforced`, `RX-SBX/fail-closed` |
+  | 2: ENG | `95c82c1` | 41450134753 | FAIL, then PASS | `RX-ENG/contract`, `RX-ENG/llvm` |
+  | 3: PM | `fb1e03e`, `d804135` | 41459082118 (failed on win32 bench-live), then 41480699513 (attempt 2: runner capacity) | FAIL ×2, PASS; CI-fix review PASS | `RX-PM/store`, `RX-PM/index-search` |
+  - Rows newly tested since `9f76fb7`: 6, all reax rows. Tested rows went from 68 to 74 (rea and
+    leanrea 39 of 357, unchanged; reax 29 → 35 of 35). Weak points are unchanged: 21 of 244 fixed.
+  - Breadth: SBX, ENG and PM are PARTIAL_VERIFIED, making 10 of 34 items.
+  - Still open:
+    - every follow-up and advisory recorded under SBX, ENG and PM above, notably ENG's
+      newline-forgery limit, which must be mitigated before COD exposes symbols;
+    - Windows sandbox enforcement;
+    - the parked ARM64 `.pdata` stash (**Parked**), with the rest of NAT-4 deferred to after the
+      breadth gate;
+    - the PE certificates and device blocks (**Blocked**);
+    - Waves 2 to 4.
+
 ## Active
-- **Wave 1, item 3: PM, the program model** (D-23). In progress in the working tree.
+- **Wave 1 is complete** (summary under **Done**), and waits for the user. Wave 2 (DMN, then SCH;
+  COD, RUN, MOB, SET) does not start without the user.
 
 ## Parked
 - **NAT-4, ARM64 `.pdata`** (parked 2026-11-01 under the breadth rule, D-13; not committed, not
@@ -343,6 +413,9 @@ target (DMN measures the real `tools/list`).
   see **Done**).
 
 ## Lessons kept as rules
+- A re-run attempt uploads a second artifact with the same name: `gh run download -n reax-parity`
+  can fetch the first attempt's report. Take the parity report of the attempt that passed, by its
+  artifact id (`gh api repos/{owner}/{repo}/actions/runs/<run>/artifacts`).
 - A cross-check against a system tool first checks which tool it is (`--version`): macOS ships
   different `strings` semantics under the same name.
 - A test of a failure path is mutation-checked: remove the fix, and the test must fail

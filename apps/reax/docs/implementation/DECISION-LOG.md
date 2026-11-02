@@ -331,5 +331,14 @@ recommendation (W1-3 work order).
 - **Migrations:** reax's own runner over `node:sqlite`, with core's rules: every pending step and the
   version bump in one transaction; a newer store refused unmodified. Not core's `Kernel`: its tables
   and owner lock belong to the store's owner, and that ownership arrives with DMN.
+- **Amendment (the same day), the Orchestrator's decision on the Coding Agent's deviation from the
+  work order:** `session.index` takes only `{ path }`, with no `arch?`. It indexes every slice of the
+  file under its content digest, and each row carries its arch; `search.symbols` returns all slices,
+  in order. This keeps `reused` meaningful, because one digest covers the whole file.
+- **Amendment (2026-11-02), approved by the Orchestrator:** two more failure codes, both retryable:
+  - `pm_busy`: the store stayed locked past its timeout;
+  - `pm_target_changed`: the file changed while it was being indexed (the digest re-check).
+
+  `store_schema_newer` is still reused, and `pm_not_indexed` stands.
 **Reopen if** DMN takes ownership of `pm.db`, SET needs another default location, or COD needs
 engine-derived data in the program model.
