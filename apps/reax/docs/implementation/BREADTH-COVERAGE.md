@@ -65,7 +65,7 @@ recorded; both were green on all three workflows, now recorded.
 | NAT | Native readers | PARTIAL_VERIFIED | (deferred: deep work) |
 | CLI | Tool surface, CLI and output | PARTIAL_VERIFIED | 3 |
 | BEN | Benchmark | PARTIAL_VERIFIED | 3 |
-| SBX | Sandbox and safety | NOT_BUILT | 1 |
+| SBX | Sandbox and safety | PARTIAL_VERIFIED (since `1001fd7`) | 1 |
 | ENG | Engine adapters and provider registry | NOT_BUILT | 1 |
 | COD | Code-level analysis | NOT_BUILT | 2 |
 | RUN | Runtime and devices | NOT_BUILT (Frida and ADB parts BLOCKED_EXTERNAL) | 2 |
@@ -97,8 +97,8 @@ recorded; both were green on all three workflows, now recorded.
 | LED | Ledger, parity and status machinery | PARTIAL_VERIFIED | 4 |
 | GATE | Breadth gate and completeness checker | NOT_BUILT | 4 (last) |
 
-**Counts (34 items):** PARTIAL_VERIFIED 7 (NAT, CLI, BEN, PROC, FIX, KEY, LED);
-NOT_BUILT 27; SCAFFOLDED 0; PARTIAL_UNVERIFIED 0; COMPLETE_UNVERIFIED 0; COMPLETE_VERIFIED 0;
+**Counts (34 items, updated at `1001fd7`):** PARTIAL_VERIFIED 8 (NAT, CLI, BEN, PROC, FIX, KEY,
+LED, SBX); NOT_BUILT 26; SCAFFOLDED 0; PARTIAL_UNVERIFIED 0; COMPLETE_UNVERIFIED 0; COMPLETE_VERIFIED 0;
 BLOCKED_EXTERNAL 0 as whole items, with three blocked parts inside RUN, MOB and NAT (41 ledger rows:
 Frida 10, ADB 25, JEB 5, PE certificates 1).
 
@@ -152,25 +152,37 @@ the fixtures job and the parity job, unless another run is named.
   MCP sizer over DMN's `tools/list` (LEAN-C58), the context-overhead probe (LEAN-C57). Oracle: byte
   counts by an independent serializer. No live model runs.
 
-### SBX, sandbox and safety: NOT_BUILT
-- **Evidence:** no sandbox code. Related, under other rows: the untrusted-content envelope (D-6,
-  RX-1/output-formats), workspace refusal in probes (RX-1/assay-probes), core's
-  `policy/{taint,redact,approvals}.ts` (core tests). The ledger row is REA-C34; the weak points
-  include 30 open security rows, 19 blocking.
-- **Gaps:** everything in MASTER-PLAN SBX; ADR 0006 is not written.
-- **Next (Wave 1, first):** ADR 0006 and the sandbox interface, with macOS `sandbox-exec` first (the
-  development machine), Linux (Landlock helper or bubblewrap where user namespaces are allowed) and
-  a Windows Job Object; network off; results labelled `unenforced` where no sandbox applies. A new
-  reax row (for example RX-2/sandbox-tripwire). Positive: a well-behaved child runs and returns its
-  output. Negative: a tripwire child that writes outside scratch, connects to a listener the test
-  owns, or exceeds its memory limit is stopped, on each OS lane. Oracle: the OS (the file is absent,
-  the listener records no connection). Weak points it targets: REA-C15-LIMIT (with ENG).
+### SBX, sandbox and safety: PARTIAL_VERIFIED (since `1001fd7`)
+- **Evidence:** `src/sandbox/{index,policy,macos,linux,tree}.ts` and `src/sandbox/landlock.py`;
+  entry `runSandboxed(argv, policy, opts)` (internal; no operation yet); ADR 0006
+  (`docs/decisions/0006-sandbox.md`); tests `test/sandbox.test.ts`. CI: reax run 41440711064, where
+  `RX-SBX/enforced` (linux, darwin) and `RX-SBX/fail-closed` (linux, darwin, win32) are covered; Linux
+  ran Landlock ABI 8.
+- **Works:**
+  - a real child under an enforced policy on macOS (`sandbox-exec`) and Linux (Landlock through the
+    system `python3 -I`): reads allowed, writes only beneath scratch (a symlink out is refused too),
+    TCP connect refused, each checked from outside the child;
+  - fail closed with `sandbox_unavailable` where nothing is enforced (Windows), or a run labelled
+    `none` when the caller does not require the sandbox;
+  - an allowlisted environment, a deadline, abort, and an output cap; the tree is killed while the
+    root is unreaped.
+- **Gaps:**
+  - Windows enforcement;
+  - UDP and other non-TCP sockets on Linux;
+  - a descendant that escapes its group after its parent exits (ADR 0006's limit), and proof that an
+    escaped grandchild is still confined;
+  - read restriction; memory, CPU and process-count limits;
+  - the macOS `mach-lookup` DNS side channel;
+  - REA-C34 (effect audit, MCP hints), which needs DMN;
+  - the open advisories in EXECUTION-STATE (A1, A2, the `sandbox_unavailable` fix text).
+- **Next:** none in Wave 1 beyond ENG's use of it. Windows enforcement and the gaps above are deep
+  work after the breadth gate (D-13).
 
 ### ENG, engine adapters and provider registry: NOT_BUILT
 - **Evidence:** no adapter code; LLVM runs today only as an oracle (`scripts/oracle*.ts`). Related:
   core's `ProbeContext.exec` (argv, no shell, bounded time and output) in `probes/engine.ts` and
   `probes/router.ts`. Rows: REA-C38, LEAN-C14, LEAN-C46.
-- **Next (Wave 1, after SBX):** the adapter contract (plan §3.6: id, version, binary digest,
+- **Next (Wave 1, item 2):** the adapter contract (plan §3.6: id, version, binary digest,
   availability and remediation, operations served, resource class, a streamed, cancellable run) and
   the provider registry, with LLVM 18 as the first provider, run under SBX and PROC. A missing engine
   gives a typed error with an install line and never installs (LEAN-C14, LEAN-C46). Positive: the

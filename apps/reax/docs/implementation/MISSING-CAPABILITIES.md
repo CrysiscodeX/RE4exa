@@ -429,7 +429,7 @@ correctness 30 and 10, coverage 32 and 3, tests 20 and 0, state 18 and 2, instal
 
 ## SBX: Safety (1 open)
 
-- **Component status:** NOT_BUILT (the untrusted-content envelope and workspace refusal exist under other rows).
+- **Component status:** PARTIAL_VERIFIED since `1001fd7`, on reax's own rows `RX-SBX/enforced` and `RX-SBX/fail-closed` (`BREADTH-COVERAGE.md`). Its one capability row, REA-C34, stays open: it needs DMN.
 - **Required implementation:** the sandbox interface (ADR 0006): macOS `sandbox-exec`, Linux Landlock or bubblewrap, Windows Job Object; network off; `unenforced` where none is available; the effect audit and MCP hints of REA-C34 arrive with DMN.
 - **Dependencies:** PROC.
 - **Acceptance criteria:** a tripwire child that writes outside its scratch space, opens a socket or exceeds its memory is stopped on each OS lane; a well-behaved child completes; plus the common bar in `MASTER-PLAN.md`.

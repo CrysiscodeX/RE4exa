@@ -266,3 +266,49 @@ fix, needs a new decision from the user.
 - **Core change:** an `onSpawn` hook in the vendored orca process host (`process-spec.ts`,
   `run-process.ts`, its README), with the MIT notice kept and `api-snapshot.txt` updated.
 **Reopen when** the user decides on SBX: a fifth round, a redesign, or a different order for Wave 1.
+
+## D-21 (2026-11-02) A review whose only findings are false text gets a narrow confirmation, not a round
+The user's decision, in their words: "Option 1. My decision, recorded as D-21: SBX's 4th review passed
+every functional and safety criterion, and its only finding was false text. So this is a narrow
+confirmation, not a 5th full review. From now on, the same applies to every item: when a review's
+only findings are false comments or docs and all functional criteria pass, coding-agent fixes the
+text and reviewer-debugger confirms it with a narrow check. That does not count as a round. A finding
+in code or tests always counts as a round."
+- **The rule, for every item:** if a review passes every functional and safety criterion and its only
+  findings are false comments or documentation, the Coding Agent fixes the text and the
+  Reviewer-Debugger confirms it with a narrow check. The narrow check is not a review round and does
+  not count toward the 3-FAIL rule. Any finding in code or tests counts as a round.
+- **SBX now:** B1 (the false `SandboxResult.timedOut` comment) is such a finding, so SBX resumes from
+  its stash for a narrow confirmation. This supersedes D-20's outcome; D-20's design record stands.
+  The procedure:
+  - apply, not pop, the stash selected by its message; drop it only after the commit is pushed and CI
+    is green;
+  - fix B1, and sweep every SBX text for the same overclaim;
+  - narrow check by the Reviewer-Debugger. A FAIL there means: stash again and stop;
+  - before the push: core's suite and API snapshot check, Assay's CI check steps as `assay.yml` runs
+    them, and reax's checks;
+  - the Linux Landlock test fails rather than skips, failures are diagnosed from the logs, and the
+    2-same-cause rule applies;
+  - the 2-same-cause rule is the user's directive, section 21.5: "If CI fails twice for the same
+    cause, stop pushing that work item. Record the failure, and move to another item.";
+  - the parity report must show the SBX rows covered on Linux and macOS.
+**Reopen if** the user changes the rule, or a narrow check turns out to hide a code or test defect.
+
+## D-22 (2026-11-02) ENG: no ambient sandbox opt-out; `REAX_LLVM_BIN` kept
+The Orchestrator's decision under the user's no-questions directive, on the Task Master's
+recommendation.
+- **`REAX_SANDBOX=allow-unenforced` is dropped.** An ambient environment variable could switch the
+  sandbox off for every engine run, which contradicts fail-closed and the requirement that engines run
+  inside the sandbox.
+  - Engine runs on targets always use `required: true`, so on Windows they fail closed with
+    `sandbox_unavailable`.
+  - Discovery (`--version`) and the contract tests use an explicit, labelled `required: false`.
+  - Any future opt-in must be per call and logged, and would come with DMN's configuration or with
+    Windows enforcement.
+- **`REAX_LLVM_BIN` is kept** as a public environment variable. It only directs discovery to a
+  directory. The binaries found there still run under the sandbox, so it cannot weaken enforcement.
+  - Discovery records the resolved absolute path and its digest.
+  - Without the variable, discovery uses PATH (`llvm-nm-18`, then `llvm-nm`) and then the fixed
+    directory list.
+**Reopen if** Windows gains enforcement, DMN brings per-call configuration, or `REAX_LLVM_BIN` is
+found to change what runs in a way the sandbox does not cover.

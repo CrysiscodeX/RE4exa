@@ -5,11 +5,12 @@
 2. Read this file.
 3. Continue with the first package under **Next**.
 
-**Last verified checkpoint: `175f614`.** CI green: reax run 41295523548 (all five jobs: three
-lanes, fixtures, parity), assay 41295523509, tests 41295523549. The parity report of that run: 39 of
-357 rea and leanrea rows covered, 29 of 29 reax rows covered, 21 of 244 weak points fixed. 190 tests
-declared on every lane; passed: Linux 189, macOS 187, Windows 184 (1, 3 and 6 skipped by platform),
-and the fixtures job all 190. The baseline reconciled at `bc38202` is in `BREADTH-COVERAGE.md`.
+**Last verified checkpoint: `1001fd7`.** CI green: reax run 41440711064 (all five jobs: three
+lanes, fixtures, parity; the macOS lane and parity on a re-run after a runner-capacity cancellation),
+assay 41440711018, tests 41440710879. The parity report of that run: 39 of 357 rea and leanrea rows
+covered, 31 of 31 reax rows covered, 21 of 244 weak points fixed. 203 tests declared on every lane;
+passed: Linux 202, macOS 200, Windows 189 (1, 3 and 14 skipped by platform), and the fixtures job all
+203. The baseline reconciled at `bc38202` is in `BREADTH-COVERAGE.md`.
 
 ## Done (verified in CI)
 - **Baseline re-measured:** see `BASELINE.md`.
@@ -155,67 +156,70 @@ and the fixtures job all 190. The baseline reconciled at `bc38202` is in `BREADT
     with the directory partway into the section.
   - Parked ARM64 finding (d) is fixed for x64 by this commit.
 
-## Active
-- **Wave 1 is stopped, pending the user** (D-19, D-20). Item 0 is done (`175f614`). Item 1, SBX,
-  failed its fourth and final review and is parked (below). ENG (item 2) and PM (item 3) are not
-  started and are blocked on SBX: both depend on it (D-14).
-
-## Parked
-- **Wave 1, item 1: SBX, the sandbox foundation** (parked 2026-11-02 under D-19 and D-20; not
-  committed, not pushed). The work is the git stash
-  `sbx WIP (4 reviewer FAILs; 4th: false timedOut doc comment, policy.ts:20)` on `1687685`. Refer to
-  it by message, not by index. It holds 17 files:
-  - reax: `src/sandbox/{policy,index,macos,linux,tree}.ts` and `src/sandbox/landlock.py`;
-    `src/errors.ts`; `test/sandbox.test.ts` and `test/fixtures/{sbx-child.mjs,sbx-watch.ts}`;
-    `docs/decisions/0006-sandbox.md`; `docs/ledger/parity/reax.jsonl` (rows `RX-SBX/enforced` and
-    `RX-SBX/fail-closed`); `docs/implementation/CAPABILITY-MATRIX.md`;
-  - core: `packages/core/src/vendor/orca-process-host/{process-spec.ts,run-process.ts,README.md}`
-    (the `onSpawn` hook) and `packages/core/api-snapshot.txt`.
-  - Review history (Reviewer-Debugger). Enforcement passed in all four reviews; every finding was in
-    process cleanup or its documentation:
-    1. FAIL: escaped grandchildren survived the deadline and normal exits; the call could hang; two
-       comments were false.
-    2. FAIL: a stale pid was signalled after the reap; the hold timer was untested.
-    3. FAIL: core's stop path signalled the reaped root's group 3 to 5 s after the reap; the
-       `finally` group kill was unreachable.
-    4. FAIL (the D-19 exception round), one blocking finding:
-       - **B1:** the doc comment on `SandboxResult.timedOut` (`src/sandbox/policy.ts:20`) says
-         "Killed at the deadline (with its whole process tree)". Measured: a timed-out run can return
-         code 5 with the escaped grandchild still alive, and `test/sandbox.test.ts:289` asserts that
-         escape. The reviewer's replacement text: "The deadline passed before the run ended. If the
-         root was still running, it, its process group and the descendants found in a ps snapshot
-         were SIGKILLed. A descendant that escaped (ADR 0006's known limit) may still be running, and
-         a root that had already exited keeps its own exit code."
-  - What the fourth review verified (macOS):
-    - enforcement holds: an allowed read; a write outside scratch refused, directly and through a
-      symlink; a loopback connect refused, against an unsandboxed control; fail-closed. 16 mutants
-      killed;
-    - nothing signals a reaped root except the documented exit-turn residual. Core sends no
-      pid-addressed signal on POSIX (the barrier is off; reax owns the tree kill). This was checked in
-      10 probe cases, with `process.kill` and `ChildProcess.kill` wrapped and watched for 7 s;
-    - the Linux helper matches the kernel UAPI headers, but **has never run on Linux**;
-    - the core change is minimal: the MIT notice is kept, and core's tests pass.
-  - Open advisories (not blocking in round 4):
-    - A1: libuv reaps a batch of children before emitting their exit events. A synchronous abort of
-      run B inside run A's callback can see `rootLive()` true for an already-reaped B (hit in 2 of 220
-      iterations; B was still a zombie). Fix: defer with `setImmediate` and re-check, or reword the
-      comments to "has not emitted exit".
-    - A2: G3 and G4 (the `finally` stdio destroy and the ref'd hold timer) are unreachable on POSIX,
+- **Wave 1, item 1: SBX, the sandbox foundation** (`1001fd7`; D-18, D-19, D-20, D-21). **PARTIAL_VERIFIED**:
+  enforced on Linux and macOS, fail-closed on all three platforms.
+  - CI green:
+    - reax run 41440711064, all five jobs; tests 41440710879; assay 41440711018 (check, and
+      platforms on macos-15 and windows-2025).
+    - Infrastructure re-run: the first attempt of the reax and assay runs was cancelled because
+      GitHub had no macOS arm64 runner capacity ("The job was not acquired by Runner of type
+      hosted"), with zero steps run. The failed jobs were re-run (attempt 2) and passed. Not an SBX
+      failure.
+    - Parity report (run 41440711064): 203 tests on each of darwin, linux-fixtures, linux and win32;
+      gate passed; `RX-SBX/enforced` (platforms linux, darwin) and `RX-SBX/fail-closed` (linux,
+      darwin, win32) both "covered: all required lanes passed + and - tests"; reax rows 31 of 31
+      covered.
+    - Linux: the backend test reads "landlock (Landlock ABI 8)", the first real Linux run; all 13
+      sandbox tests passed.
+    - Windows: the fail-closed rows passed; the enforcement tests skip by design (14 skips on win32
+      in all).
+  - What it is:
+    - `runSandboxed(argv, SandboxPolicy, opts)` in `src/sandbox/`: reads allowed, writes only
+      beneath `scratch`, no network. Backends: macOS `sandbox-exec` (deny-default SBPL profile);
+      Linux Landlock through `landlock.py`, run by the system `python3 -I` (ABI 4 or later; TCP
+      connect and bind denied).
+    - Elsewhere, `required: true` throws `sandbox_unavailable` before anything starts, and
+      `required: false` runs labelled `enforcement: "none"`.
+    - The environment is an allowlist (`SANDBOX_ENV`, plus `passEnv`; HOME and TMPDIR are the
+      scratch).
+    - A deadline (`timeoutMs`), an abort signal, and an output cap.
+    - reax kills the tree while the root is unreaped; core's termination barrier is off on POSIX
+      (D-20). ADR 0006 is `docs/decisions/0006-sandbox.md`.
+    - Core gained an `onSpawn` hook in the vendored orca process host.
+  - Review history:
+    - FAIL 1 to 3: process cleanup.
+    - FAIL 4: one false doc comment, B1.
+    - Under D-21: a text-only fix (B1 and five more overclaims), then a narrow check, PASS. It found
+      one token difference, in a test-title string.
+  - Pre-push checks on macOS: core, Assay (`assay.yml`'s check steps) and reax all exit 0. Two
+    environment notes:
+    - core's readelf differential test is meant for Linux and skips without readelf; on macOS it
+      fails only if Homebrew binutils is on PATH;
+    - Assay's LearnHarness tests are Linux-only; CI's check job runs them.
+  - The SBX stash is dropped; the ARM64 `.pdata` stash remains.
+  - Open advisories and follow-ups:
+    - A1: libuv reaps a batch of children before emitting their exit events, so the comment that an
+      unreaped root's pid "cannot have been reused" can be wrong for a synchronous abort of run B
+      inside run A's callback (`rootLive()` true for an already-reaped B; hit in 2 of 220
+      iterations, B still a zombie). Fix: defer with `setImmediate` and re-check, or reword to "has
+      not emitted exit".
+    - A2: G3 and G4 (the `finally` stdio destroy and the ref'd hold timer) are unreachable on POSIX
       and not exercised on the windows-2025 lane. Add a `forceBackend: "none"` deadline test that runs
       on Windows, or label them Windows-only.
-    - A3: keeping the barrier on Windows is correct. A pre-existing TOCTOU remains between
-      `childProcessHasExited` and `taskkill`.
-    - A4: the M4 mutant leaks test grandchildren, because their pid files can't be written.
-    - A5: the header comment at `tree.ts:1` overstates.
-  - Follow-ups: prove the escaped grandchild is still sandboxed; the Linux helper as
-    `PR_SET_CHILD_SUBREAPER`.
-  - Design decisions to keep: D-20.
-  - Resume (only after a new decision from the user; D-19 allowed no fifth round):
-    1. `git stash apply` the entry by its message;
-    2. apply B1's replacement text at `policy.ts:20`;
-    3. re-review.
-    The fix is one line, but whether a fifth round happens is the user's call, not the loop's. A1,
-    A2 and A5 are cheap to close in the same pass.
+    - `src/errors.ts`: `sandbox_unavailable`'s fix text says "nothing was started", which is
+      inaccurate on the Landlock exit-125 path (the helper started, and failed before exec).
+    - Escaped-grandchild confinement: prove an escaped grandchild is still sandboxed.
+    - The Linux helper as `PR_SET_CHILD_SUBREAPER`.
+    - UDP and other non-TCP sockets are not controlled on Linux (Landlock ABI 4 covers TCP only).
+    - The macOS `mach-lookup` DNS side channel (mDNSResponder is reachable; ADR 0006).
+    - Not in scope yet: Windows enforcement, read restriction, memory limits.
+
+## Active
+- **Wave 1, item 2: ENG**, the engine adapter contract and provider registry with LLVM as the first
+  provider, on the committed sandbox (`1001fd7`). Work order drafted; not started in the repository.
+- Then item 3, PM.
+
+## Parked
 - **NAT-4, ARM64 `.pdata`** (parked 2026-11-01 under the breadth rule, D-13; not committed, not
   pushed). The work is the git stash `arm64-pdata WIP (3 reviewer FAILs)` (now second in the stash
   list; refer to it by message), on `bc38202`, 13 files. Applying it is expected to conflict with `175f614` in
@@ -250,7 +254,7 @@ and the fixtures job all 190. The baseline reconciled at `bc38202` is in `BREADT
   dumps (recorded crashes and Apple IPS), and ARM64 `.pdata` (parked above).
 
 ## Next (in order)
-Wave 1 is stopped (**Active**). The order below holds once the user decides how SBX proceeds.
+Wave 1 resumed under D-21 (**Active**).
 The breadth plan in `BREADTH-COVERAGE.md` (waves and dependencies there; D-13, D-14):
 1. **Wave 1:** SBX, the sandbox foundation; then ENG, the adapter registry with LLVM as the first
    provider; the program model (PM) beside them.
