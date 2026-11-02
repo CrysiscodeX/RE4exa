@@ -4,6 +4,7 @@
 import { execFileSync } from "node:child_process";
 import { appendFileSync, existsSync, readFileSync } from "node:fs";
 import { delimiter, join } from "node:path";
+import { REAX_CMD_HOME, REAX_CMD_RUN } from "./reax-cmd.mjs";
 
 const args = process.argv.slice(2);
 if (process.env.FAKE_ARGS_FILE) appendFileSync(process.env.FAKE_ARGS_FILE, `${JSON.stringify(args)}\n`);
@@ -19,8 +20,15 @@ function reax(argv) {
   if (process.platform !== "win32") return execFileSync("reax", argv, { encoding: "utf8" });
   const key = Object.keys(process.env).find((k) => k.toUpperCase() === "PATH");
   const dir = process.env[key].split(delimiter).find((d) => existsSync(join(d, "reax.cmd")));
-  const [, node, script] = readFileSync(join(dir, "reax.cmd"), "utf8").match(/^@"([^"]+)" "([^"]+)" %\*/);
-  return execFileSync(node, [script, ...argv], { encoding: "utf8" });
+  const cmd = readFileSync(join(dir, "reax.cmd"), "utf8");
+  const run = cmd.match(REAX_CMD_RUN);
+  const home = cmd.match(REAX_CMD_HOME);
+  if (!run || !home) throw new Error(`reax.cmd in ${dir} has no ${run ? "REAX_HOME line" : "run line"}`);
+  const [, node, script] = run;
+  return execFileSync(node, [script, ...argv], {
+    encoding: "utf8",
+    env: { ...process.env, REAX_HOME: home[1] },
+  });
 }
 const ev = (o) => process.stdout.write(`${JSON.stringify(o)}\n`);
 ev({ type: "thread.started", thread_id: "t1" });

@@ -24,6 +24,7 @@ import { loadTasks } from "../src/bench/run.ts";
 import { opArgs } from "../src/cli.ts";
 import { OPERATIONS, runOperation } from "../src/ops/registry.ts";
 import { closePm } from "../src/pm/db.ts";
+import { REAX_CMD_HOME, REAX_CMD_RUN } from "./fixtures/reax-cmd.mjs";
 
 const REAX = join(import.meta.dirname, "..");
 const FIX = join(import.meta.dirname, "fixtures");
@@ -446,6 +447,12 @@ test("the CLI agents' reax shims set REAX_HOME to a directory under the run's ou
     );
     const cmd = readFileSync(join(dir, "reax.cmd"), "utf8");
     assert.ok(cmd.includes(`@set "REAX_HOME=${home}"\r\n`), cmd);
+    // the fake CLI agents run reax.cmd on Windows by these two patterns; check them everywhere
+    const run = cmd.match(REAX_CMD_RUN);
+    assert.ok(run, `reax.cmd has a run line the fake agents can read: ${cmd}`);
+    assert.equal(run[1], process.execPath);
+    assert.equal(run[2], join(REAX, "bin", "reax.mjs"));
+    assert.equal(cmd.match(REAX_CMD_HOME)?.[1], home, `reax.cmd sets REAX_HOME the fake agents can read: ${cmd}`);
     if (process.platform !== "win32") {
       // the shim's REAX_HOME wins over the caller's: a write lands under the run's output
       process.env.REAX_HOME = elsewhere;
