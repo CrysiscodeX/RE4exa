@@ -2,7 +2,8 @@
 // MCP, the demo agent): LearnHarness 0.4.0, an Electron + Next.js app whose tree holds AGENTS.md,
 // instructions written for coding agents ("STOP and ask", "read node_modules/..."). An agent
 // investigating it must see that text only as data. Each claim is checked by Assay's verifier.
-// Needs GitHub (ASSAY_LEARNHARNESS=1; the CI check job sets it).
+// Needs GitHub (ASSAY_LEARNHARNESS=1; the CI check job sets it). Runs on Linux and macOS, never on
+// Windows (learnharnessSkip).
 import assert from "node:assert/strict";
 import { cpSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
@@ -10,12 +11,11 @@ import { test } from "node:test";
 import { fetchLearnHarness } from "../scripts/learnharness.ts";
 import { App } from "../src/app/app.ts";
 import type { CaseDetail, CaseSummary } from "../src/server/api-types.ts";
-import { tmp } from "./helpers.ts";
+import { learnharnessSkip, tmp } from "./helpers.ts";
 import { CLAIMS } from "./learnharness-claims.ts";
 import { pair, waitCase, waitSignedIn } from "./waits.ts";
 
-const skip =
-  process.env.ASSAY_LEARNHARNESS === "1" ? false : "needs GitHub: set ASSAY_LEARNHARNESS=1 (the CI check job does)";
+const skip = learnharnessSkip("other");
 
 test("demo: the Audit a desktop app recipe on LearnHarness; its AGENTS.md stays data, and every claim is checked", {
   skip,

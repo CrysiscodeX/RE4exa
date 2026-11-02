@@ -420,7 +420,11 @@ test("router pack: valid, every row credited to leanrea, probes exist, missing t
 
 test("router: an available external tool runs through ctx.exec when the sweep allows it", async (t) => {
   if (process.platform !== "linux" || !which("readelf")) {
-    t.skip("readelf not on PATH");
+    t.skip(
+      process.platform !== "linux"
+        ? `Linux-only (the expected reasons are Linux's): on ${process.platform}`
+        : "readelf not on PATH",
+    );
     return;
   }
   const w = tmp("assay-ext-");

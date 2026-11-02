@@ -1,7 +1,16 @@
 // Differential tests against the system `file` and `readelf -d`, when present.
 
 import assert from "node:assert/strict";
-import { copyFileSync, existsSync, mkdirSync, realpathSync, writeFileSync } from "node:fs";
+import {
+  closeSync,
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  openSync,
+  readSync,
+  realpathSync,
+  writeFileSync,
+} from "node:fs";
 import { join } from "node:path";
 import { test } from "node:test";
 import { getEvidence } from "../src/evidence/store.ts";
@@ -94,7 +103,16 @@ test("differential vs readelf -d: NEEDED libraries of the ELF fixture and of /bi
       copyFileSync(realpathSync(ls), join(w.dir, "ls"));
       subjects.push("ls");
     } else t.diagnostic("no /bin/ls; comparing the fixture only");
+    // Each subject is decided by its own first 4 bytes, read here (not by file.identify or
+    // elf.info, which are under test): only an ELF file goes to readelf. /bin/ls is ELF on Linux
+    // and Mach-O on macOS.
+    assert.equal(magic(join(w.dir, "tiny.so")), "7f454c46", "our ELF fixture is ELF");
     for (const s of subjects) {
+      const m = magic(join(w.dir, s));
+      if (m !== "7f454c46") {
+        t.diagnostic(`readelf -d ${s}: skipped, not an ELF file (magic ${m})`);
+        continue;
+      }
       const theirs = readelfNeeded(await sh("readelf", ["-dW", join(w.dir, s)]));
       const rec = await engine.run({ caseId: null, probeId: "elf.info", path: s });
       const ours = (rec.result as { needed: string[] }).needed;
@@ -111,3 +129,14 @@ test("differential vs readelf -d: NEEDED libraries of the ELF fixture and of /bi
     w.cleanup();
   }
 });
+
+/** The first 4 bytes of a file, as hex (fewer if the file is shorter). */
+function magic(path: string): string {
+  const fd = openSync(path, "r");
+  try {
+    const b = Buffer.alloc(4);
+    return b.subarray(0, readSync(fd, b, 0, 4, 0)).toString("hex");
+  } finally {
+    closeSync(fd);
+  }
+}

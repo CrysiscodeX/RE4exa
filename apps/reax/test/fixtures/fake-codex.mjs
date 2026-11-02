@@ -4,7 +4,7 @@
 import { execFileSync } from "node:child_process";
 import { appendFileSync, existsSync, readFileSync } from "node:fs";
 import { delimiter, join } from "node:path";
-import { REAX_CMD_HOME, REAX_CMD_RUN } from "./reax-cmd.mjs";
+import { cmdUnescape, REAX_CMD_HOME, REAX_CMD_RUN } from "./reax-cmd.mjs";
 
 const args = process.argv.slice(2);
 if (process.env.FAKE_ARGS_FILE) appendFileSync(process.env.FAKE_ARGS_FILE, `${JSON.stringify(args)}\n`);
@@ -24,10 +24,10 @@ function reax(argv) {
   const run = cmd.match(REAX_CMD_RUN);
   const home = cmd.match(REAX_CMD_HOME);
   if (!run || !home) throw new Error(`reax.cmd in ${dir} has no ${run ? "REAX_HOME line" : "run line"}`);
-  const [, node, script] = run;
+  const [node, script] = [cmdUnescape(run[1]), cmdUnescape(run[2])];
   return execFileSync(node, [script, ...argv], {
     encoding: "utf8",
-    env: { ...process.env, REAX_HOME: home[1] },
+    env: { ...process.env, REAX_HOME: cmdUnescape(home[1]) },
   });
 }
 const ev = (o) => process.stdout.write(`${JSON.stringify(o)}\n`);

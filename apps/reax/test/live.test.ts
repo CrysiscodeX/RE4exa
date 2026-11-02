@@ -19,12 +19,12 @@ import {
   SYSTEM_PROMPT,
   searchFile,
 } from "../src/bench/backends/local.ts";
-import { cellPrompt, REAX_NOTE, reaxHomeFor, runLive, toolsDir } from "../src/bench/live.ts";
+import { cellPrompt, REAX_NOTE, reaxHomeFor, runLive, shQuote, toolsDir } from "../src/bench/live.ts";
 import { loadTasks } from "../src/bench/run.ts";
 import { opArgs } from "../src/cli.ts";
 import { OPERATIONS, runOperation } from "../src/ops/registry.ts";
 import { closePm } from "../src/pm/db.ts";
-import { REAX_CMD_HOME, REAX_CMD_RUN } from "./fixtures/reax-cmd.mjs";
+import { cmdUnescape, REAX_CMD_HOME, REAX_CMD_RUN } from "./fixtures/reax-cmd.mjs";
 
 const REAX = join(import.meta.dirname, "..");
 const FIX = join(import.meta.dirname, "fixtures");
@@ -441,18 +441,17 @@ test("the CLI agents' reax shims set REAX_HOME to a directory under the run's ou
     const home = reaxHomeFor(root);
     assert.equal(home, join(root, ".reax-home"));
     const sh = readFileSync(join(dir, "reax"), "utf8");
-    assert.match(
-      sh,
-      new RegExp(`^REAX_HOME="${home.replaceAll("\\", "/").replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}" exec `, "m"),
-    );
+    const fwd = (p: string) => (process.platform === "win32" ? p.replaceAll("\\", "/") : p);
+    assert.ok(sh.includes(`\nREAX_HOME=${shQuote(fwd(home))} exec `), sh);
     const cmd = readFileSync(join(dir, "reax.cmd"), "utf8");
-    assert.ok(cmd.includes(`@set "REAX_HOME=${home}"\r\n`), cmd);
+    assert.ok(cmd.startsWith("@setlocal DisableDelayedExpansion\r\n"), cmd);
     // the fake CLI agents run reax.cmd on Windows by these two patterns; check them everywhere
     const run = cmd.match(REAX_CMD_RUN);
     assert.ok(run, `reax.cmd has a run line the fake agents can read: ${cmd}`);
-    assert.equal(run[1], process.execPath);
-    assert.equal(run[2], join(REAX, "bin", "reax.mjs"));
-    assert.equal(cmd.match(REAX_CMD_HOME)?.[1], home, `reax.cmd sets REAX_HOME the fake agents can read: ${cmd}`);
+    assert.equal(cmdUnescape(run[1] ?? ""), process.execPath);
+    assert.equal(cmdUnescape(run[2] ?? ""), join(REAX, "bin", "reax.mjs"));
+    const set = cmd.match(REAX_CMD_HOME)?.[1];
+    assert.equal(set && cmdUnescape(set), home, `reax.cmd sets REAX_HOME the fake agents can read: ${cmd}`);
     if (process.platform !== "win32") {
       // the shim's REAX_HOME wins over the caller's: a write lands under the run's output
       process.env.REAX_HOME = elsewhere;
@@ -477,5 +476,86 @@ test("the CLI agents' reax shims set REAX_HOME to a directory under the run's ou
     else process.env.REAX_HOME = saved;
     rmSync(root, { recursive: true, force: true });
     rmSync(elsewhere, { recursive: true, force: true });
+  }
+});
+
+/** Every `%` in a reax.cmd value is doubled: with the pairs removed, no `%` is left. */
+const allPercentDoubled = (v: string) => !v.replaceAll("%%", "").includes("%");
+const SPECIAL = "sp 'q' $HOME `touch PWNED1` $(touch PWNED2) %CD% %% !PATH! ^& (x);=,";
+
+test("[+RX-1/bench-live] a run directory full of shell-special characters reaches reax as it is, through sh and cmd.exe alike", () => {
+  const root = mkdtempSync(join(tmpdir(), "reax-bench-out-"));
+  const cwd = mkdtempSync(join(tmpdir(), "reax-bench-cwd-"));
+  const elsewhere = mkdtempSync(join(tmpdir(), "reax-home-elsewhere-"));
+  try {
+    // on POSIX a backslash is a file-name byte, not a separator
+    const runRoot = join(root, SPECIAL + (process.platform === "win32" ? "" : " \\b"));
+    const home = join(runRoot, ".reax-home");
+    const dir = toolsDir(runRoot);
+    // content, on every platform
+    const cmd = readFileSync(join(dir, "reax.cmd"), "utf8");
+    assert.equal(cmd.split("\r\n")[0], "@setlocal DisableDelayedExpansion");
+    const set = cmd.match(REAX_CMD_HOME)?.[1];
+    const run = cmd.match(REAX_CMD_RUN);
+    assert.ok(set !== undefined && run, cmd);
+    assert.equal(cmdUnescape(set), home);
+    assert.equal(cmdUnescape(run[1] ?? ""), process.execPath);
+    assert.equal(cmdUnescape(run[2] ?? ""), join(REAX, "bin", "reax.mjs"));
+    for (const v of [set, run[1] ?? "", run[2] ?? ""]) assert.ok(allPercentDoubled(v), `every % doubled in ${v}`);
+    let r: ReturnType<typeof spawnSync>;
+    const argv = ["op", "session.index", "path=hello-x86_64-macos-s", "--workspace", join(REAX, "fixtures", "bin")];
+    const env = { ...process.env, REAX_HOME: elsewhere };
+    if (process.platform === "win32") {
+      // the special characters are in the cwd and in the file, never on the command line
+      r = spawnSync("cmd.exe", ["/d", "/v:on", "/c", "reax.cmd", ...argv], {
+        cwd: dir,
+        env,
+        encoding: "utf8",
+        timeout: 60_000,
+      });
+    } else {
+      for (const s of [`a'b"c$d\`e\\f\ng $(x) *`, "'", "''", "\\'"]) {
+        const p = spawnSync("/bin/sh", ["-c", `printf %s ${shQuote(s)}`], { encoding: "utf8", cwd });
+        assert.equal(p.stdout, s, `sh round-trips ${JSON.stringify(s)}`);
+      }
+      r = spawnSync("/bin/sh", [join(dir, "reax"), ...argv], { cwd, env, encoding: "utf8", timeout: 60_000 });
+    }
+    assert.equal(r.status, 0, String(r.stderr));
+    assert.ok(existsSync(join(home, "pm.db")), "pm.db is at exactly join(run directory, .reax-home)");
+    assert.deepEqual(readdirSync(elsewhere), [], "the caller's REAX_HOME was not used");
+    for (const d of [cwd, root, runRoot, dir])
+      assert.deepEqual(
+        readdirSync(d).filter((f) => f.startsWith("PWNED")),
+        [],
+        `no command ran from the directory name (${d})`,
+      );
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+    rmSync(cwd, { recursive: true, force: true });
+    rmSync(elsewhere, { recursive: true, force: true });
+  }
+});
+
+test("[-RX-1/bench-live] a run directory reax.cmd cannot carry (a double quote, a newline) is refused before anything is created", () => {
+  const tmp = mkdtempSync(join(tmpdir(), "reax-bench-out-"));
+  try {
+    for (const [name, shown] of [
+      ['a"b', '`"`'],
+      ["a\nb", "a line feed \\(LF\\)"],
+    ] as const) {
+      const root = join(tmp, name);
+      assert.throws(
+        () => toolsDir(root),
+        new RegExp(
+          `^Error: the bench run directory contains ${shown}, which reax\\.cmd cannot carry; choose another --out$`,
+        ),
+      );
+      assert.equal(existsSync(root), false, `nothing was created for ${JSON.stringify(name)}`);
+    }
+    // positive control: a plain root still gets both shims
+    const dir = toolsDir(join(tmp, "plain"));
+    assert.ok(existsSync(join(dir, "reax")) && existsSync(join(dir, "reax.cmd")));
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
   }
 });

@@ -3,3 +3,5 @@
 // both on every platform, so a change to the shim's format fails on macOS and Linux too.
 export const REAX_CMD_RUN = /^@"([^"]+)" "([^"]+)" %\*\r?$/m;
 export const REAX_CMD_HOME = /^@set "REAX_HOME=([^"]*)"\r?$/m;
+/** The inverse of reax.cmd's escaping: a `%` in a value is written `%%`. */
+export const cmdUnescape = (s) => s.replaceAll("%%", "%");

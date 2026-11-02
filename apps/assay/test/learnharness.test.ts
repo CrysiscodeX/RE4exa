@@ -2,7 +2,8 @@
 // of them .tsx). The tree is fetched at its pinned commit (scripts/learnharness.ts). Assay's
 // model-free sweep must read all of it, and claims about it must be checked the way Assay checks
 // an agent's claims: each true claim verified, and its realistic false twin refuted. Needs
-// GitHub, so it runs when ASSAY_LEARNHARNESS=1 (the CI check job sets it; Linux only).
+// GitHub, so it runs when ASSAY_LEARNHARNESS=1 (the CI check job sets it, on Linux). Never run on
+// Windows; the sweep test's expectations are Linux's, so it runs on Linux only (learnharnessSkip).
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
@@ -13,17 +14,16 @@ import { createProbeEngine } from "@re4exa/core/probes/engine";
 import { openTemp } from "@re4exa/core/testing/helpers";
 import { createVerifier } from "@re4exa/core/verifier/verifier";
 import { fetchLearnHarness, LEARNHARNESS, learnharnessDir } from "../scripts/learnharness.ts";
-import { tmp } from "./helpers.ts";
+import { learnharnessSkip, tmp } from "./helpers.ts";
 import { CLAIMS } from "./learnharness-claims.ts";
 
-const skip =
-  process.env.ASSAY_LEARNHARNESS === "1" ? false : "needs GitHub: set ASSAY_LEARNHARNESS=1 (the CI check job does)";
+const skip = learnharnessSkip("other");
 const CLI = join(import.meta.dirname, "..", "src", "cli.ts");
 /** Measured at about 2.2 s for the whole tree; the budget leaves room for a slower CI runner. */
 const SWEEP_BUDGET_MS = 15_000;
 
 test("LearnHarness: the pinned tree is fetched without .git, and Assay's sweep reads all of it within budget", {
-  skip,
+  skip: learnharnessSkip("sweep"),
   timeout: 600_000,
 }, () => {
   const tree = fetchLearnHarness();

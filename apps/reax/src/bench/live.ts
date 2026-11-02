@@ -90,21 +90,51 @@ const zeroRun = (): LiveCell["run"] => ({
 /** The reax home the CLI agents' `reax` uses: under the run's output directory. */
 export const reaxHomeFor = (root: string) => join(root, ".reax-home");
 
+/** A POSIX shell word that is exactly `s`: single-quoted, `'` written as `'\''`; nothing else is special. */
+export const shQuote = (s: string) => `'${s.replaceAll("'", "'\\''")}'`;
+
+/** A value for reax.cmd's double quotes: `%` (expanded at parse time, even inside quotes) as `%%`. */
+export const cmdEscape = (s: string) => s.replaceAll("%", "%%");
+
+/** Characters a double-quoted cmd value cannot carry (`"` ends the quotes; CR, LF and NUL end the line). */
+const CMD_UNSAFE: [string, string][] = [
+  ['"', '`"`'],
+  ["\r", "a carriage return (CR)"],
+  ["\n", "a line feed (LF)"],
+  ["\0", "a NUL byte"],
+];
+
+/** Throws, naming the character and the value's role, when reax.cmd cannot carry `value`. */
+export function assertCmdSafe(role: string, value: string, fix: string): void {
+  for (const [c, name] of CMD_UNSAFE)
+    if (value.includes(c)) throw new Error(`${role} contains ${name}, which reax.cmd cannot carry; ${fix}`);
+}
+
+/**
+ * A directory with a `reax` command for the agents: a POSIX shim and reax.cmd for Windows. Neither
+ * shell expands anything in the run directory, the node path or the reax.mjs path; a value
+ * reax.cmd cannot carry is refused on every platform, before anything is created.
+ */
 export function toolsDir(root: string): string {
+  const bin = join(import.meta.dirname, "..", "..", "bin", "reax.mjs");
+  assertCmdSafe("the bench run directory", root, "choose another --out");
+  assertCmdSafe("the node executable path", process.execPath, "run the bench with a node installed elsewhere");
+  assertCmdSafe("the reax bin path", bin, "run reax from a checkout elsewhere");
   const dir = join(root, ".tools");
   mkdirSync(dir, { recursive: true });
-  const bin = join(import.meta.dirname, "..", "..", "bin", "reax.mjs");
   const shim = join(dir, "reax");
-  // Forward slashes: Git Bash (Claude Code's shell on Windows) reads them; a backslash before a
-  // quote or a `$` would not survive sh's double quotes.
-  const fwd = (p: string) => p.replaceAll("\\", "/");
+  // Forward slashes on Windows only: Git Bash (Claude Code's shell there) reads them. On POSIX a
+  // backslash is a file-name byte like any other, and single quotes keep it as it is.
+  const fwd = (p: string) => (process.platform === "win32" ? p.replaceAll("\\", "/") : p);
   // the agents' reax keeps its state (pm.db) in this run's output, never in the developer's home
   const home = reaxHomeFor(root);
-  writeFileSync(shim, `#!/bin/sh\nREAX_HOME="${fwd(home)}" exec "${fwd(process.execPath)}" "${fwd(bin)}" "$@"\n`);
+  const q = (p: string) => shQuote(fwd(p));
+  writeFileSync(shim, `#!/bin/sh\nREAX_HOME=${q(home)} exec ${q(process.execPath)} ${q(bin)} "$@"\n`);
   chmodSync(shim, 0o755);
+  // DisableDelayedExpansion: `!` stays literal even when the caller's cmd runs /V:ON
   writeFileSync(
     join(dir, "reax.cmd"),
-    `@setlocal\r\n@set "REAX_HOME=${home}"\r\n@"${process.execPath}" "${bin}" %*\r\n`,
+    `@setlocal DisableDelayedExpansion\r\n@set "REAX_HOME=${cmdEscape(home)}"\r\n@"${cmdEscape(process.execPath)}" "${cmdEscape(bin)}" %*\r\n`,
   );
   return dir;
 }
