@@ -1649,6 +1649,8 @@ export type ProcessSpec = {
     onChildTerminated?: () => void;
     /** Every raw stderr chunk as it arrives, including any past the capture cap. */
     onStderr?: (chunk: Buffer | string) => void;
+    /** Called once with the child right after it is spawned (runProcess only), e.g. to learn its pid. */
+    onSpawn?: (child: ChildProcess) => void;
 };
 export type PipedChildProcess = ChildProcessWithoutNullStreams;
 export type PipedProcessSpec = Omit<ProcessSpec, 'stdio'> & {

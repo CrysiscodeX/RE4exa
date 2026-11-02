@@ -6,6 +6,7 @@ declare module "@re4exa/core/errors" {
     target_too_large: true;
     operation_unknown: true;
     result_too_large: true;
+    sandbox_unavailable: true;
   }
 }
 
@@ -24,5 +25,10 @@ export const REAX_FAILURE_MODES = defineFailureModes({
     retryable: false,
     message: "There is no operation with this name",
     fix: "List the operations with `session describe`, or see docs/operations.md",
+  },
+  sandbox_unavailable: {
+    retryable: false,
+    message: "This work must run in a sandbox, and no sandbox can be enforced on this machine",
+    fix: "Run it on macOS (sandbox-exec) or on Linux with Landlock ABI 4 or later (kernel 6.7+) and python3; nothing was started",
   },
 });

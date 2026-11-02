@@ -87,6 +87,7 @@ export function runProcess(
       reject(error)
       return
     }
+    spec.onSpawn?.(child)
 
     const stdout = createOutputSink(maxOutputBytes, outputCapture)
     const stderr = createOutputSink(maxOutputBytes, outputCapture)
