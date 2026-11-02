@@ -5,12 +5,11 @@
 2. Read this file.
 3. Continue with the first package under **Next**.
 
-**Last verified checkpoint: `1001fd7`.** CI green: reax run 41440711064 (all five jobs: three
-lanes, fixtures, parity; the macOS lane and parity on a re-run after a runner-capacity cancellation),
-assay 41440711018, tests 41440710879. The parity report of that run: 39 of 357 rea and leanrea rows
-covered, 31 of 31 reax rows covered, 21 of 244 weak points fixed. 203 tests declared on every lane;
-passed: Linux 202, macOS 200, Windows 189 (1, 3 and 14 skipped by platform), and the fixtures job all
-203. The baseline reconciled at `bc38202` is in `BREADTH-COVERAGE.md`.
+**Last verified checkpoint: `95c82c1`.** CI green: reax run 41450134753 (all five jobs: three
+lanes, fixtures, parity), assay 41450135019, tests 41450134853. The parity report of that run: 39 of
+357 rea and leanrea rows covered, 33 of 33 reax rows covered, 21 of 244 weak points fixed. 225 tests
+declared on every lane; passed: Linux 224, macOS 222, Windows 206 (1, 3 and 19 skipped by platform),
+and the fixtures job all 225. The baseline reconciled at `bc38202` is in `BREADTH-COVERAGE.md`.
 
 ## Done (verified in CI)
 - **Baseline re-measured:** see `BASELINE.md`.
@@ -214,10 +213,59 @@ passed: Linux 202, macOS 200, Windows 189 (1, 3 and 14 skipped by platform), and
     - The macOS `mach-lookup` DNS side channel (mDNSResponder is reachable; ADR 0006).
     - Not in scope yet: Windows enforcement, read restriction, memory limits.
 
+- **Wave 1, item 2: ENG, the engine adapter contract and provider registry, LLVM first**
+  (`95c82c1`; D-14, D-15, D-22). **PARTIAL_VERIFIED.**
+  - CI green:
+    - reax run 41450134753, all five jobs; tests 41450134853; assay 41450135019 (check, macos-15,
+      windows-2025).
+    - Parity report: 225 tests on each of darwin, linux-fixtures, linux and win32; gate passed;
+      `RX-ENG/contract` (linux, darwin, win32) and `RX-ENG/llvm` (linux, darwin) both "covered: all
+      required lanes passed + and - tests"; reax rows 33 of 33 covered.
+    - Discovery, as the JUnit test names record it:
+      - linux: `/usr/lib/llvm-18/bin/llvm-nm`, 18.1.3, landlock;
+      - darwin: `/opt/homebrew/Cellar/llvm@18/18.1.8/bin/llvm-nm`, 18.1.8, sandbox-exec;
+      - win32: `C:\Program Files\LLVM\bin\llvm-nm.exe`, 20.1.8, enforcement none.
+      This was CI's first sight of Windows LLVM discovery. Windows runs on targets fail closed
+      (D-22).
+  - Review history: round 1 FAIL (four missing tests), round 2 PASS.
+  - What it is:
+    - `src/engines/contract.ts`: the `EngineProvider` contract. Availability is the real path,
+      version, SHA-256 of the binary, and the sandbox label discovery ran under, or unavailable with
+      a reason and an install line;
+    - `src/engines/registry.ts`: one provider per id;
+    - `src/engines/run.ts`: the command-engine runner, and `mapRun` from a `SandboxResult` to results
+      and errors;
+    - `src/engines/llvm.ts`: the LLVM provider.
+      - Discovery order: `REAX_LLVM_BIN`, then PATH `llvm-nm-18`, then PATH `llvm-nm`, then fixed
+        directories. No install.
+      - LLVM 18 or later.
+      - `llvm-nm -P` runs through `runSandboxed`, always with `required: true` (`alwaysRequired`,
+        D-22), and is parsed by reax's own `parseNm`.
+  - Public additions:
+    - five failure codes: `engine_unavailable`, `engine_failed`, `engine_timeout`,
+      `engine_cancelled`, `engine_output_invalid` (`sandbox_unavailable` passes through);
+    - the environment variable `REAX_LLVM_BIN` (D-22). No operation or MCP change.
+  - Tests in `test/engines.test.ts`, with the fake engine `test/fixtures/fake-engine.mjs`. The key
+    for `RX-ENG/llvm` is `bench/oracle/symbols.json`.
+  - Known limit, in `docs/engines-known-limits.md`: a symbol name containing a newline makes
+    `parseNm` forge symbols, and the result still says `complete`. A test pins the current forged
+    result, so the fix will flip it.
+  - LEAN-C14 and LEAN-C46 stay untagged: reax has no consent-gated install step, only an install line.
+  - Follow-ups and advisories:
+    - **Before COD exposes symbols to callers:** mitigate the newline forgery, for example by
+      cross-checking against `--format=just-symbols`, or llvm-readobj JSON for ELF; then flip the
+      pinned test.
+    - M16 survives: an abort that arrives after the engine exits 0 is reported as success. Fix with a
+      deterministic `mapRun` test (code 0 with an aborted signal gives `engine_cancelled`).
+    - The symlink test's title ("REAX_LLVM_BIN is used first: …") overclaims the discovery order it
+      proves; reword it.
+    - Two tests tagged `RX-ENG/contract` use the real llvm-nm, while the row title says "against fake
+      engines": retitle the row or retag the tests.
+    - The A5 install grep matches only remediation strings and two "Homebrew LLVM version" fixture
+      strings; accepted by the Orchestrator.
+
 ## Active
-- **Wave 1, item 2: ENG**, the engine adapter contract and provider registry with LLVM as the first
-  provider, on the committed sandbox (`1001fd7`). Work order drafted; not started in the repository.
-- Then item 3, PM.
+- **Wave 1, item 3: PM, the program model** (D-23). In progress in the working tree.
 
 ## Parked
 - **NAT-4, ARM64 `.pdata`** (parked 2026-11-01 under the breadth rule, D-13; not committed, not

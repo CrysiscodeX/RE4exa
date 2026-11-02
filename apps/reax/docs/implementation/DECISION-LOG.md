@@ -312,3 +312,24 @@ recommendation.
     directory list.
 **Reopen if** Windows gains enforcement, DMN brings per-call configuration, or `REAX_LLVM_BIN` is
 found to change what runs in a way the sandbox does not cover.
+
+## D-23 (2026-11-02) PM: public names, storage, and no sandbox or engine
+The Orchestrator's decision under the user's no-questions directive, on the Task Master's
+recommendation (W1-3 work order).
+- **Operations:**
+  - `session.index` (tool `session`, effect `write`): stores `inventory.symbols` for a target under
+    its sha256;
+  - `search.symbols` (tool `read`, effect `read`): with no query, the stored symbols paged (the
+    read-back); with a query, an FTS5 search, always bound as one quoted phrase.
+- **Storage:** `pm.db` under `REAX_HOME`, defaulting to `<home>/.reax`. `OpContext.home` is internal
+  (the operation context), not visible to MCP clients.
+- **Failure codes:** one new code, `pm_not_indexed`. A store newer than the code reuses core's
+  existing `store_schema_newer`.
+- **No sandbox and no engine for PM.** It populates from reax's in-process `inventory.symbols`, never
+  from llvm-nm, because of llvm-nm's newline-forgery limit (`docs/engines-known-limits.md`). A
+  built-in reader starts no child process, so there is nothing to sandbox.
+- **Migrations:** reax's own runner over `node:sqlite`, with core's rules: every pending step and the
+  version bump in one transaction; a newer store refused unmodified. Not core's `Kernel`: its tables
+  and owner lock belong to the store's owner, and that ownership arrives with DMN.
+**Reopen if** DMN takes ownership of `pm.db`, SET needs another default location, or COD needs
+engine-derived data in the program model.

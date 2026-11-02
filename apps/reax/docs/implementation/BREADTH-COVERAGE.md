@@ -66,7 +66,7 @@ recorded; both were green on all three workflows, now recorded.
 | CLI | Tool surface, CLI and output | PARTIAL_VERIFIED | 3 |
 | BEN | Benchmark | PARTIAL_VERIFIED | 3 |
 | SBX | Sandbox and safety | PARTIAL_VERIFIED (since `1001fd7`) | 1 |
-| ENG | Engine adapters and provider registry | NOT_BUILT | 1 |
+| ENG | Engine adapters and provider registry | PARTIAL_VERIFIED (since `95c82c1`) | 1 |
 | COD | Code-level analysis | NOT_BUILT | 2 |
 | RUN | Runtime and devices | NOT_BUILT (Frida and ADB parts BLOCKED_EXTERNAL) | 2 |
 | MOB | Managed and mobile | NOT_BUILT (JEB part BLOCKED_EXTERNAL) | 2 |
@@ -97,8 +97,8 @@ recorded; both were green on all three workflows, now recorded.
 | LED | Ledger, parity and status machinery | PARTIAL_VERIFIED | 4 |
 | GATE | Breadth gate and completeness checker | NOT_BUILT | 4 (last) |
 
-**Counts (34 items, updated at `1001fd7`):** PARTIAL_VERIFIED 8 (NAT, CLI, BEN, PROC, FIX, KEY,
-LED, SBX); NOT_BUILT 26; SCAFFOLDED 0; PARTIAL_UNVERIFIED 0; COMPLETE_UNVERIFIED 0; COMPLETE_VERIFIED 0;
+**Counts (34 items, updated at `95c82c1`):** PARTIAL_VERIFIED 9 (NAT, CLI, BEN, PROC, FIX, KEY,
+LED, SBX, ENG); NOT_BUILT 25; SCAFFOLDED 0; PARTIAL_UNVERIFIED 0; COMPLETE_UNVERIFIED 0; COMPLETE_VERIFIED 0;
 BLOCKED_EXTERNAL 0 as whole items, with three blocked parts inside RUN, MOB and NAT (41 ledger rows:
 Frida 10, ADB 25, JEB 5, PE certificates 1).
 
@@ -178,17 +178,25 @@ the fixtures job and the parity job, unless another run is named.
 - **Next:** none in Wave 1 beyond ENG's use of it. Windows enforcement and the gaps above are deep
   work after the breadth gate (D-13).
 
-### ENG, engine adapters and provider registry: NOT_BUILT
-- **Evidence:** no adapter code; LLVM runs today only as an oracle (`scripts/oracle*.ts`). Related:
-  core's `ProbeContext.exec` (argv, no shell, bounded time and output) in `probes/engine.ts` and
-  `probes/router.ts`. Rows: REA-C38, LEAN-C14, LEAN-C46.
-- **Next (Wave 1, item 2):** the adapter contract (plan §3.6: id, version, binary digest,
-  availability and remediation, operations served, resource class, a streamed, cancellable run) and
-  the provider registry, with LLVM 18 as the first provider, run under SBX and PROC. A missing engine
-  gives a typed error with an install line and never installs (LEAN-C14, LEAN-C46). Positive: the
-  adapter's `llvm-nm` list equals NAT's built-in reader on every fixture; the binary digest equals
-  `shasum -a 256`. Negative: a missing binary, a wrong version and a cancelled run (no child left).
-  A live LLVM lane in CI (RCI).
+### ENG, engine adapters and provider registry: PARTIAL_VERIFIED (since `95c82c1`)
+- **Evidence:** `src/engines/{contract,registry,run,llvm}.ts`; tests `test/engines.test.ts` with
+  `test/fixtures/fake-engine.mjs`; key `bench/oracle/symbols.json`. Internal API, no operation. CI:
+  reax run 41450134753, where `RX-ENG/contract` (linux, darwin, win32) and `RX-ENG/llvm` (linux,
+  darwin) are covered; discovery found LLVM 18.1.3 (linux), 18.1.8 (darwin) and 20.1.8 (win32).
+- **Works:**
+  - the contract and registry: discovery (real path, version, SHA-256, sandbox label), timeout,
+    cancellation, and five typed errors (`engine_unavailable`, `engine_failed`, `engine_timeout`,
+    `engine_cancelled`, `engine_output_invalid`);
+  - the LLVM provider, found through `REAX_LLVM_BIN`, then PATH, then fixed directories. It runs
+    `llvm-nm` inside the sandbox and fails closed where none is enforced (D-22).
+- **Gaps:**
+  - LEAN-C14, LEAN-C46 and REA-C38 stay open;
+  - one provider and one LLVM tool;
+  - the newline-forgery limit (`docs/engines-known-limits.md`), to fix before COD;
+  - M16 (an abort after exit 0);
+  - Windows engine runs are refused (no enforcement);
+  - the nightly real-engine workflow (RCI).
+- **Next:** COD (Wave 2) exposes it through operations, after the forgery mitigation.
 
 ### PM, program model: NOT_BUILT
 - **Evidence:** none in reax. Core's kernel (`kernel/kernel.ts`, SQLite) is the storage precedent.
