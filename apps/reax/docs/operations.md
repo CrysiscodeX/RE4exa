@@ -532,3 +532,53 @@ Result includes:
 ```
 
 Ledger rows: `rea.tool/inspect_byte_entropy`.
+
+### `search.symbols`
+
+Read back the symbols session.index stored for a target (by path or digest), paged in the reader's order; with query, only those whose names contain the text (case-insensitive, 3 to 256 characters, matched literally; a query containing NUL is refused).
+
+Effect: read. Cost: cheap. Output from the target is untrusted (sent inside the untrusted-content envelope). Platforms: linux, darwin, win32.
+
+| Argument | Type | Required | Default | Meaning |
+|---|---|---|---|---|
+| `path` | string (≤ 4096 chars) | no |  | File path inside the workspace |
+| `digest` | string (≤ 64 chars) | no |  | The target's SHA-256 (hex), instead of path |
+| `query` | string (≤ 512 chars) | no |  | Keep names containing this text (3 to 256 characters, no NUL) |
+| `offset` | integer (≥ 0) | no | `0` | first row to return (page.next continues) |
+| `limit` | integer (≥ 1, ≤ 10000) | no | `200` | rows per page |
+
+Example: The indexed symbols of a C program whose names contain reax_.
+
+```json
+{"operation":"search.symbols","path":"hello-x86_64-linux-gnu.2.28-g","query":"reax_"}
+```
+
+Result includes:
+
+```json
+{"page":{"total":2}}
+```
+
+## session
+
+### `session.index`
+
+Store a target's symbols (inventory.symbols, every slice and page) in the program model, keyed by the SHA-256 of its bytes, for search.symbols. Indexing the same bytes again with the same reader is a no-op (reused).
+
+Effect: write. Cost: medium. Output from the target is untrusted (sent inside the untrusted-content envelope). Platforms: linux, darwin, win32.
+
+| Argument | Type | Required | Default | Meaning |
+|---|---|---|---|---|
+| `path` | string (≤ 4096 chars) | yes |  | File path inside the workspace |
+
+Example: Index a C program's symbols.
+
+```json
+{"operation":"session.index","path":"hello-x86_64-linux-gnu.2.28-g"}
+```
+
+Result includes:
+
+```json
+{"digest":"b208698b31ba7dccf93d56b6376a132ca047db873af1c6311196ba1af802c293","symbols":24}
+```

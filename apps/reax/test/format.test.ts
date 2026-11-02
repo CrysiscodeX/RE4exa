@@ -513,10 +513,20 @@ test("[+RX-1/output-formats] --filter-output keeps the named paths (and page), a
   assert.match(j.limitations.join(" "), /missing matched nothing/);
 });
 
-test("[+RX-1/output-formats] --llms lists every operation with its arguments and an example that runs", () => {
+test("[+RX-1/output-formats] --llms lists every operation with its arguments and an example that runs", (t) => {
   const r = cli("--llms");
   assert.equal(r.code, 0, r.err);
   assert.equal(r.out.trimEnd(), llms());
+  // the program model's examples write pm.db: the CLI children get a temporary REAX_HOME, never
+  // the real home
+  const home = mkdtempSync(join(tmpdir(), "reax-home-"));
+  const saved = process.env.REAX_HOME;
+  process.env.REAX_HOME = home;
+  t.after(() => {
+    if (saved === undefined) delete process.env.REAX_HOME;
+    else process.env.REAX_HOME = saved;
+    rmSync(home, { recursive: true, force: true });
+  });
   for (const op of OPERATIONS) {
     assert.match(r.out, new RegExp(`^## ${op.name.replace(".", "\\.")}$`, "m"));
     const ex = r.out.split("\n").find((l) => l.startsWith("  Example: ") && l.includes(` ${op.name}`))!;

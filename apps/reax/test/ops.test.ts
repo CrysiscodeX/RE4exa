@@ -11,6 +11,7 @@ import { isCoreError } from "@re4exa/core/errors";
 import { mapParity, operationsMd } from "../scripts/gen.ts";
 import type { NativeSlice } from "../src/ops/native.ts";
 import { OPERATIONS, runOperation, TEXT_CAP } from "../src/ops/registry.ts";
+import { closePm } from "../src/pm/db.ts";
 
 const REAX = join(import.meta.dirname, "..");
 const BIN = join(REAX, "fixtures", "bin");
@@ -39,13 +40,24 @@ function includes(got: unknown, want: unknown): boolean {
 
 test("[+RX-1/op-registry] every documented example runs and returns what the documentation says", async () => {
   assert.ok(OPERATIONS.length >= 2);
-  for (const op of OPERATIONS) {
-    assert.ok(op.examples.length > 0, `${op.name} has an example`);
-    for (const ex of op.examples) {
-      const ws = { workspace: ex.workspace === "extra" ? join(REAX, "fixtures", "extra") : BIN };
-      const r = await runOperation(op.name, ex.args, ws);
-      assert.ok(includes(r.data, ex.expect), `${op.name}: ${ex.title}: ${JSON.stringify(r.data).slice(0, 400)}`);
+  // the program model's examples write pm.db: into a temporary REAX_HOME, never the real home
+  const home = mkdtempSync(join(tmpdir(), "reax-home-"));
+  const saved = process.env.REAX_HOME;
+  process.env.REAX_HOME = home;
+  try {
+    for (const op of OPERATIONS) {
+      assert.ok(op.examples.length > 0, `${op.name} has an example`);
+      for (const ex of op.examples) {
+        const ws = { workspace: ex.workspace === "extra" ? join(REAX, "fixtures", "extra") : BIN };
+        const r = await runOperation(op.name, ex.args, ws);
+        assert.ok(includes(r.data, ex.expect), `${op.name}: ${ex.title}: ${JSON.stringify(r.data).slice(0, 400)}`);
+      }
     }
+  } finally {
+    if (saved === undefined) delete process.env.REAX_HOME;
+    else process.env.REAX_HOME = saved;
+    closePm(home);
+    rmSync(home, { recursive: true, force: true });
   }
   const md = readFileSync(join(REAX, "docs", "operations.md"), "utf8").replaceAll("\r\n", "\n");
   assert.equal(md, operationsMd(OPERATIONS), "docs/operations.md is current (node scripts/gen.ts)");

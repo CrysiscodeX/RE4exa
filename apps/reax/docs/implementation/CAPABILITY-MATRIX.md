@@ -8,7 +8,7 @@ on every platform the row names is the CI parity job's verdict (`scripts/parity-
 | | Tested | Total |
 |---|---:|---:|
 | rea and leanrea capability rows | 39 | 357 |
-| reax's own rows | 33 | 33 |
+| reax's own rows | 35 | 35 |
 | Recorded weak points | 21 | 244 |
 
 Open weak points by severity: degrades 150, cosmetic 32, blocks 41. Security review notes: 15 (status in `docs/review-notes.md`).

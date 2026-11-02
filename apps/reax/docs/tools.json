@@ -38,19 +38,33 @@
  },
  {
   "name": "read",
-  "description": "read.strings: Printable strings in any file (ASCII and UTF-16LE, at any offset), with their file offsets; optionally only those containing a search text. Pages with offset and limit. read.bytes: A slice of any file: `length` bytes from file offset `at`, as hex and a hexdump. search.bytes: Every file offset where a byte pattern occurs (hex with ?? wildcards, or text with optional ASCII case folding), overlapping matches included. Pages with offset and limit. read.address: Map a virtual address to its file offset, or a file offset to its virtual address, through the segments that load the file, and name the section that holds it. read.symbol: Look up a symbol or procedure: by name, its address, size, file offset and section; by address, the symbol and procedure that contain it and the offset into them. read.entropy: Shannon entropy (bits per byte, 0 to 8) of any file: the whole file, each block of a fixed size, and for native binaries each section's bytes. High entropy suggests compressed or encrypted data. Blocks page with offset and limit. Pass operation and its arguments; see session describe for one operation's schema.",
+  "description": "read.strings: Printable strings in any file (ASCII and UTF-16LE, at any offset), with their file offsets; optionally only those containing a search text. Pages with offset and limit. read.bytes: A slice of any file: `length` bytes from file offset `at`, as hex and a hexdump. search.bytes: Every file offset where a byte pattern occurs (hex with ?? wildcards, or text with optional ASCII case folding), overlapping matches included. Pages with offset and limit. read.address: Map a virtual address to its file offset, or a file offset to its virtual address, through the segments that load the file, and name the section that holds it. read.symbol: Look up a symbol or procedure: by name, its address, size, file offset and section; by address, the symbol and procedure that contain it and the offset into them. read.entropy: Shannon entropy (bits per byte, 0 to 8) of any file: the whole file, each block of a fixed size, and for native binaries each section's bytes. High entropy suggests compressed or encrypted data. Blocks page with offset and limit. search.symbols: Read back the symbols session.index stored for a target (by path or digest), paged in the reader's order; with query, only those whose names contain the text (case-insensitive, 3 to 256 characters, matched literally; a query containing NUL is refused). Pass operation and its arguments; see session describe for one operation's schema.",
   "operations": [
    "read.strings",
    "read.bytes",
    "search.bytes",
    "read.address",
    "read.symbol",
-   "read.entropy"
+   "read.entropy",
+   "search.symbols"
   ],
   "annotations": {
    "readOnlyHint": true,
    "destructiveHint": false,
    "idempotentHint": true,
+   "openWorldHint": false
+  }
+ },
+ {
+  "name": "session",
+  "description": "session.index: Store a target's symbols (inventory.symbols, every slice and page) in the program model, keyed by the SHA-256 of its bytes, for search.symbols. Indexing the same bytes again with the same reader is a no-op (reused). Pass operation and its arguments; see session describe for one operation's schema.",
+  "operations": [
+   "session.index"
+  ],
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": false,
    "openWorldHint": false
   }
  }

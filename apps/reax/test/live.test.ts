@@ -3,17 +3,27 @@
 // llama.cpp and signed-in CLIs (bench/mac-setup.sh); these tests prove the plumbing, the grading,
 // the memory cap, the sign-in and timeout paths and the hybrid's review round.
 import assert from "node:assert/strict";
-import { mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
 import { claudeArgv } from "../src/bench/backends/claude.ts";
 import { type BenchConfig, DEFAULTS } from "../src/bench/backends/config.ts";
-import { allocatedMiB, LlamaServer, searchFile } from "../src/bench/backends/local.ts";
-import { cellPrompt, REAX_NOTE, runLive } from "../src/bench/live.ts";
+import {
+  allocatedMiB,
+  BENCH_HOME,
+  BENCH_OPERATIONS,
+  LlamaServer,
+  TOOLS as LOCAL_TOOLS,
+  SYSTEM_PROMPT,
+  searchFile,
+} from "../src/bench/backends/local.ts";
+import { cellPrompt, REAX_NOTE, reaxHomeFor, runLive, toolsDir } from "../src/bench/live.ts";
 import { loadTasks } from "../src/bench/run.ts";
 import { opArgs } from "../src/cli.ts";
-import { OPERATIONS } from "../src/ops/registry.ts";
+import { OPERATIONS, runOperation } from "../src/ops/registry.ts";
+import { closePm } from "../src/pm/db.ts";
 
 const REAX = join(import.meta.dirname, "..");
 const FIX = join(import.meta.dirname, "fixtures");
@@ -323,14 +333,18 @@ const localCell = async (env: Record<string, string>, task = "identify-hello-x86
         server: s,
       }),
     );
-    return { cell: cells[0]!, summary: readFileSync(join(dir, "summary.md"), "utf8") };
+    return {
+      cell: cells[0]!,
+      summary: readFileSync(join(dir, "summary.md"), "utf8"),
+      transcript: readFileSync(join(dir, cells[0]!.transcript), "utf8"),
+    };
   } finally {
     for (const k of Object.keys(env)) delete process.env[k];
     rmSync(dir, { recursive: true, force: true });
   }
 };
 
-test("[+RX-1/bench-local-answer] the local model is told the output contract and every operation, can search a file, and is asked once to answer when reasoning runs out of tokens", async () => {
+test("[+RX-1/bench-local-answer] the local model is told the output contract and every read operation (no write operation), can search a file, and is asked once to answer when reasoning runs out of tokens", async () => {
   const sys = join(out(), "system.txt");
   const { cell } = await localCell({ STUB_REASON_LIMIT: "once", STUB_SYSTEM_FILE: sys });
   assert.equal(cell.error, null);
@@ -339,7 +353,8 @@ test("[+RX-1/bench-local-answer] the local model is told the output contract and
   const prompt = readFileSync(sys, "utf8");
   assert.match(prompt, /info string is exactly claims/);
   assert.match(prompt, /Do not use json as the info string/);
-  for (const op of OPERATIONS) assert.ok(prompt.includes(`${op.name}: ${op.summary}`), op.name);
+  for (const op of OPERATIONS)
+    assert.equal(prompt.includes(`${op.name}: ${op.summary}`), op.effect === "read", `${op.name} (${op.effect})`);
   assert.match(prompt, /search_file finds text inside a file/);
   const b = readFileSync(join(REAX, "fixtures", "bin", "hello-x86_64-linux-gnu.2.28-s"));
   const found = searchFile(b, "ld-linux");
@@ -368,4 +383,92 @@ test("[-RX-1/bench-local-answer] an answer that never comes is an error, not a g
     searchFile(Buffer.from(Array.from({ length: 300 }, (_, i) => `item${i}\0`).join("")), "item", false, 5),
     /^300 matching strings \(first 5 shown\)/,
   );
+});
+
+test("the local model is offered no write operation: neither in reax_op's enum nor in its system prompt", () => {
+  const writes = OPERATIONS.filter((o) => o.effect !== "read").map((o) => o.name);
+  assert.ok(writes.includes("session.index"), "there is a write operation to leave out");
+  assert.ok(BENCH_OPERATIONS.every((o) => o.effect === "read"));
+  const reaxOp = LOCAL_TOOLS.find((t) => t.function.name === "reax_op")!;
+  const ops = (reaxOp.function.parameters.properties as { operation: { enum: string[] } }).operation.enum;
+  assert.deepEqual(
+    ops,
+    OPERATIONS.filter((o) => o.effect === "read").map((o) => o.name),
+  );
+  assert.ok(SYSTEM_PROMPT.includes("\n  - search.symbols: "), "the listing format checked below");
+  for (const w of writes) {
+    assert.equal(ops.includes(w), false, w);
+    // listed as an operation (another operation's summary may mention it by name)
+    assert.equal(SYSTEM_PROMPT.includes(`\n  - ${w}: `), false, w);
+  }
+});
+
+test("a write operation the local model asks for is refused by reax_op, and the bench home is never created", async () => {
+  const { transcript } = await localCell({ STUB_OPERATION: "session.index" });
+  assert.match(transcript, /\[tool reax_op\] error: session\.index is not one of reax_op's operations/);
+  assert.equal(existsSync(BENCH_HOME), false, "the bench run's reax home was not created");
+});
+
+test("search.symbols in a bench run reads the run's own (empty) home, not REAX_HOME, and creates nothing", async () => {
+  // REAX_HOME holds an index of the task's file: a run that used it would find the symbols
+  const home = mkdtempSync(join(tmpdir(), "reax-home-"));
+  const saved = process.env.REAX_HOME;
+  try {
+    await runOperation(
+      "session.index",
+      { path: "hello-x86_64-linux-gnu.2.28-s" },
+      { workspace: join(REAX, "fixtures", "bin"), home },
+    );
+    process.env.REAX_HOME = home;
+    const { transcript } = await localCell({ STUB_OPERATION: "search.symbols" });
+    assert.match(transcript, /\[tool reax_op\] error: This target has not been indexed in the program model/);
+    assert.equal(existsSync(BENCH_HOME), false, "the bench run's reax home was not created");
+  } finally {
+    if (saved === undefined) delete process.env.REAX_HOME;
+    else process.env.REAX_HOME = saved;
+    closePm(home);
+    rmSync(home, { recursive: true, force: true });
+  }
+});
+
+test("the CLI agents' reax shims set REAX_HOME to a directory under the run's output, so their reax never writes the developer's home", () => {
+  const root = mkdtempSync(join(tmpdir(), "reax-bench-out-"));
+  const saved = process.env.REAX_HOME;
+  const elsewhere = mkdtempSync(join(tmpdir(), "reax-home-elsewhere-"));
+  try {
+    const dir = toolsDir(root);
+    const home = reaxHomeFor(root);
+    assert.equal(home, join(root, ".reax-home"));
+    const sh = readFileSync(join(dir, "reax"), "utf8");
+    assert.match(
+      sh,
+      new RegExp(`^REAX_HOME="${home.replaceAll("\\", "/").replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}" exec `, "m"),
+    );
+    const cmd = readFileSync(join(dir, "reax.cmd"), "utf8");
+    assert.ok(cmd.includes(`@set "REAX_HOME=${home}"\r\n`), cmd);
+    if (process.platform !== "win32") {
+      // the shim's REAX_HOME wins over the caller's: a write lands under the run's output
+      process.env.REAX_HOME = elsewhere;
+      const r = spawnSync(
+        "/bin/sh",
+        [
+          join(dir, "reax"),
+          "op",
+          "session.index",
+          "path=hello-x86_64-macos-s",
+          "--workspace",
+          join(REAX, "fixtures", "bin"),
+        ],
+        { encoding: "utf8", timeout: 60_000 },
+      );
+      assert.equal(r.status, 0, r.stderr);
+      assert.ok(existsSync(join(home, "pm.db")), "pm.db is under the run's output");
+      assert.deepEqual(readdirSync(elsewhere), [], "the caller's REAX_HOME was not used");
+    }
+  } finally {
+    if (saved === undefined) delete process.env.REAX_HOME;
+    else process.env.REAX_HOME = saved;
+    rmSync(root, { recursive: true, force: true });
+    rmSync(elsewhere, { recursive: true, force: true });
+  }
 });

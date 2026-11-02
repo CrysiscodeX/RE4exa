@@ -12,6 +12,9 @@ declare module "@re4exa/core/errors" {
     engine_timeout: true;
     engine_cancelled: true;
     engine_output_invalid: true;
+    pm_not_indexed: true;
+    pm_busy: true;
+    pm_target_changed: true;
   }
 }
 
@@ -55,6 +58,21 @@ export const REAX_FAILURE_MODES = defineFailureModes({
     retryable: true,
     message: "The engine run was cancelled by its caller",
     fix: "Start it again if the result is still wanted",
+  },
+  pm_not_indexed: {
+    retryable: false,
+    message: "This target has not been indexed in the program model",
+    fix: "Run session.index on it first (a changed file has a new digest and needs indexing again)",
+  },
+  pm_busy: {
+    retryable: true,
+    message: "The program model is locked by another process's write, past the busy timeout",
+    fix: "Retry when the other process's indexing has finished",
+  },
+  pm_target_changed: {
+    retryable: true,
+    message: "The target changed while it was being read; nothing was stored",
+    fix: "Retry once the file has stopped changing",
   },
   engine_output_invalid: {
     retryable: false,

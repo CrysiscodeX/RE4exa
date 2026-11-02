@@ -7,6 +7,7 @@ import { inventorySegments, readAddress, readEntropy } from "./layout.ts";
 import { inventoryModel } from "./model.ts";
 import { identifyFile, inventoryNative } from "./native.ts";
 import type { Page } from "./page.ts";
+import { searchSymbols, sessionIndex } from "./pm.ts";
 import { inventoryRust } from "./rust.ts";
 import { checkInput } from "./schema.ts";
 import { inventoryOverview, inventoryProcedures, inventorySymbols, readSymbol } from "./symbols.ts";
@@ -32,6 +33,10 @@ export const OPERATIONS: readonly Operation[] = [
   readAddress,
   readSymbol,
   readEntropy,
+  // session.index before search.symbols: the examples (doctests, --llms) run in this order, and
+  // search.symbols' example reads what session.index's example stored
+  sessionIndex,
+  searchSymbols,
 ];
 
 const byName = new Map<string, Operation>();

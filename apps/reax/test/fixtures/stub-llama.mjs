@@ -1,7 +1,9 @@
 // A stand-in for llama-server: /health and an OpenAI-style /v1/chat/completions that calls
 // reax_op once, then answers from the tool output. Prints the buffer sizes llama.cpp prints at
 // load; STUB_KV_MIB sets the KV size so the memory cap can be tested. --list-devices prints
-// STUB_DEVICES (default: none).
+// STUB_DEVICES (default: none). STUB_OPERATION names the operation of that one reax_op call
+// (default inventory.native); with it set, the stub answers with an empty claims block whatever the
+// tool returned.
 import { appendFileSync } from "node:fs";
 import http from "node:http";
 
@@ -86,7 +88,10 @@ http
                     type: "function",
                     function: {
                       name: "reax_op",
-                      arguments: JSON.stringify({ operation: "inventory.native", path: file }),
+                      arguments: JSON.stringify({
+                        operation: process.env.STUB_OPERATION ?? "inventory.native",
+                        path: file,
+                      }),
                     },
                   },
                 ],
@@ -95,6 +100,12 @@ http
           ],
         });
       }
+      if (process.env.STUB_OPERATION)
+        return reply(res, {
+          model: "stub-qwen3-4b",
+          usage,
+          choices: [{ finish_reason: "stop", message: { role: "assistant", content: "Checked.\n```claims\n[]\n```" } }],
+        });
       const file = tool.content.match(/([\w.-]+): ([\w-]+)\s*\n- /);
       const arch = tool.content.match(/- (\w+) (\d+)-bit/);
       const claims = [

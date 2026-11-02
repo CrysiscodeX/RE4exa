@@ -87,6 +87,9 @@ const zeroRun = (): LiveCell["run"] => ({
   ms: 0,
 });
 
+/** The reax home the CLI agents' `reax` uses: under the run's output directory. */
+export const reaxHomeFor = (root: string) => join(root, ".reax-home");
+
 export function toolsDir(root: string): string {
   const dir = join(root, ".tools");
   mkdirSync(dir, { recursive: true });
@@ -95,9 +98,14 @@ export function toolsDir(root: string): string {
   // Forward slashes: Git Bash (Claude Code's shell on Windows) reads them; a backslash before a
   // quote or a `$` would not survive sh's double quotes.
   const fwd = (p: string) => p.replaceAll("\\", "/");
-  writeFileSync(shim, `#!/bin/sh\nexec "${fwd(process.execPath)}" "${fwd(bin)}" "$@"\n`);
+  // the agents' reax keeps its state (pm.db) in this run's output, never in the developer's home
+  const home = reaxHomeFor(root);
+  writeFileSync(shim, `#!/bin/sh\nREAX_HOME="${fwd(home)}" exec "${fwd(process.execPath)}" "${fwd(bin)}" "$@"\n`);
   chmodSync(shim, 0o755);
-  writeFileSync(join(dir, "reax.cmd"), `@"${process.execPath}" "${bin}" %*\r\n`);
+  writeFileSync(
+    join(dir, "reax.cmd"),
+    `@setlocal\r\n@set "REAX_HOME=${home}"\r\n@"${process.execPath}" "${bin}" %*\r\n`,
+  );
   return dir;
 }
 

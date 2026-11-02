@@ -43,6 +43,9 @@ export type JsonSchema = {
 export interface OpContext {
   /** Absolute workspace directory; every path argument is resolved inside it. */
   workspace: string;
+  /** The reax home (state directory, holding pm.db). Internal: absent, it is $REAX_HOME, or by
+   * default <home>/.reax. */
+  home?: string;
 }
 
 export interface OpResult {
