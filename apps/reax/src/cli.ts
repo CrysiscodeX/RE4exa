@@ -1,5 +1,9 @@
-// The reax command line, on the operation registry. Until the daemon and MCP server exist (WP-3)
-// this is how agents and people call operations.
+// The reax command line, on the operation registry. Until the MCP server exists (WP-3) this is how
+// agents and people call operations. The daemon (ADR 0007) has its own commands; it serves ping,
+// status and shutdown so far, for the home in $REAX_HOME (or <home>/.reax):
+//   reax serve [--tcp [--host 127.0.0.1|::1] [--port N]]   the daemon, in the foreground
+//   reax daemon start [--tcp ...]                          the same, detached; waits until it answers
+//   reax daemon ping | status | shutdown
 //   reax op --list
 //   reax describe <operation>
 //   reax op <operation> [key=value ...] [--json '{"path":"..."}'] [--workspace dir]
@@ -7,12 +11,19 @@
 //   reax --llms          every operation, its arguments and an example, for a model's context
 // key=value needs no quoting in any shell (sh, PowerShell, cmd), so it is the form agents are told
 // to use; a value that parses as JSON (a number, true, a list) is taken as JSON, else as a string.
+import { spawn } from "node:child_process";
+import { chmodSync, closeSync, mkdirSync, openSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { isCoreError } from "@re4exa/core/errors";
 import { envelope } from "@re4exa/core/policy/taint";
+import { daemonCall } from "./daemon/client.ts";
+import { checkHome, files, POSIX, readSmall } from "./daemon/paths.ts";
+import { type DaemonOptions, startDaemon, validateBind } from "./daemon/server.ts";
 import { filterOutput } from "./format/filter.ts";
 import { FORMATS, type Format, limitTokens, render } from "./format/index.ts";
 import { OPERATIONS, operation, runOperation } from "./ops/registry.ts";
 import type { JsonSchema, Operation } from "./ops/types.ts";
+import { reaxHome } from "./pm/db.ts";
 
 /** Options that take a value; everything else after the operation name is key=value. */
 const VALUE_FLAGS = new Set(["--json", "--workspace", "--format", "--filter-output", "--token-limit"]);
@@ -103,6 +114,100 @@ function tokenLimit(rest: string[]): number | null {
   return n;
 }
 
+class UsageError extends Error {}
+
+/** serve's and daemon start's options: --tcp, and with it --host and --port. */
+function bindOptions(rest: string[]): Pick<DaemonOptions, "transport" | "host" | "port"> {
+  let tcp = false;
+  let host: string | undefined;
+  let port: string | undefined;
+  for (let i = 0; i < rest.length; i++) {
+    const a = rest[i]!;
+    if (a === "--tcp") tcp = true;
+    else if ((a === "--host" || a === "--port") && i + 1 < rest.length) {
+      if (a === "--host") host = rest[++i]!;
+      else port = rest[++i]!;
+    } else throw new UsageError(`unknown option ${a}`);
+  }
+  if (!tcp && (host !== undefined || port !== undefined)) throw new UsageError("--host and --port need --tcp");
+  if (!tcp) return { transport: "local" };
+  // refused here, before any file or socket, as well as inside startDaemon
+  const bind = validateBind(host ?? "127.0.0.1", port === undefined ? 0 : /^\d+$/.test(port) ? Number(port) : port);
+  return { transport: "tcp", ...bind };
+}
+
+async function serve(rest: string[], out: (s: string) => void): Promise<number> {
+  const h = await startDaemon({
+    home: reaxHome(),
+    ...bindOptions(rest),
+    log: (line) => process.stderr.write(`${line}\n`),
+  });
+  out(JSON.stringify({ ready: true, pid: h.pid, instance: h.instance, endpoint: h.endpoint, recovered: h.recovered }));
+  const stop = () => void h.close();
+  process.on("SIGTERM", stop);
+  process.on("SIGINT", stop);
+  await h.closed;
+  process.off("SIGTERM", stop);
+  process.off("SIGINT", stop);
+  return 0;
+}
+
+const START_WAIT_MS = 10_000;
+
+/** `daemon start`: serve, detached, its output appended to logs/daemon.log; wait until it answers. */
+async function startDetached(rest: string[], out: (s: string) => void): Promise<number> {
+  bindOptions(rest);
+  const home = reaxHome();
+  checkHome(home);
+  const f = files(home);
+  mkdirSync(f.logs, { recursive: true, mode: 0o700 });
+  if (POSIX) chmodSync(f.logs, 0o700);
+  const fd = openSync(f.log, "a", 0o600);
+  const child = spawn(process.execPath, [...process.execArgv, fileURLToPath(import.meta.url), "serve", ...rest], {
+    detached: true,
+    windowsHide: true,
+    stdio: ["ignore", fd, fd],
+  });
+  closeSync(fd);
+  let exited: number | null = null;
+  child.on("exit", (code) => {
+    exited = code ?? 1;
+  });
+  child.on("error", () => {
+    exited = 1;
+  });
+  child.unref();
+  for (let waited = 0; waited < START_WAIT_MS; waited += 100) {
+    await new Promise((r) => setTimeout(r, 100));
+    if (exited !== null) {
+      // the daemon's own last line says why (daemon_running, daemon_home_unsafe, ...)
+      const last = (readSmall(f.log) ?? "").trimEnd().split("\n").at(-1) ?? "";
+      throw new Error(last || `the daemon exited with code ${exited}; see ${f.log}`);
+    }
+    try {
+      const s = (await daemonCall(home, "status", 2000)) as { pid?: number };
+      if (s.pid === child.pid) {
+        out(JSON.stringify(s));
+        return 0;
+      }
+    } catch {
+      // not answering yet
+    }
+  }
+  if (exited === null) child.kill();
+  throw new Error(`the daemon did not answer within ${START_WAIT_MS / 1000} s; see ${f.log}`);
+}
+
+async function daemonCommand(rest: string[], out: (s: string) => void): Promise<number | null> {
+  const [sub, ...more] = rest;
+  if (sub === "start") return startDetached(more, out);
+  if ((sub === "ping" || sub === "status" || sub === "shutdown") && more.length === 0) {
+    out(JSON.stringify(await daemonCall(reaxHome(), sub)));
+    return 0;
+  }
+  return null;
+}
+
 export async function main(argv: string[]): Promise<number> {
   const [cmd, ...rest] = argv;
   const out = (s: string) => process.stdout.write(`${s}\n`);
@@ -160,11 +265,20 @@ export async function main(argv: string[]): Promise<number> {
         out(`coverage: ${r.coverage}${limitations.length ? `; limitations: ${limitations.join("; ")}` : ""}`);
       return 0;
     }
+    if (cmd === "serve") return await serve(rest, out);
+    if (cmd === "daemon") {
+      const code = await daemonCommand(rest, out);
+      if (code !== null) return code;
+    }
     process.stderr.write(
-      `usage: reax op --list | reax --llms | reax describe <operation> | reax op <operation> [key=value ...] [--json '{...}'] [--workspace dir] [--format ${FORMATS.join("|")}] [--filter-output a.b,c] [--token-limit N]\n`,
+      `usage: reax serve [--tcp [--host 127.0.0.1|::1] [--port N]] | reax daemon start [--tcp ...] | reax daemon ping|status|shutdown | reax op --list | reax --llms | reax describe <operation> | reax op <operation> [key=value ...] [--json '{...}'] [--workspace dir] [--format ${FORMATS.join("|")}] [--filter-output a.b,c] [--token-limit N]\n`,
     );
     return 2;
   } catch (e) {
+    if (e instanceof UsageError) {
+      process.stderr.write(`${e.message}\n`);
+      return 2;
+    }
     if (isCoreError(e)) {
       process.stderr.write(`${e.message} [${e.code}]${e.detail ? ` ${JSON.stringify(e.detail)}` : ""}\n`);
       return 1;

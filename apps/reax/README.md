@@ -94,6 +94,16 @@ contain details of your machine (paths, `PATH`, folder names). This repository i
 results private. Mac and Windows results are reported separately. The rules are in
 [`bench/PREREG-v2-smoke.md`](bench/PREREG-v2-smoke.md).
 
+## Daemon (ADR 0007; first slice)
+
+`reax serve` runs the daemon in the foreground for the home in `REAX_HOME` (or `<home>/.reax`);
+`reax daemon start` runs it detached and waits until it answers; `reax daemon ping`, `status` and
+`shutdown` talk to it. There is one daemon per home. It listens on a Unix socket (a named pipe on
+Windows), or with `--tcp` on 127.0.0.1 or ::1 only, and every connection must present the token
+from `<home>/run/daemon.token`, which is new on each start and readable only by you (on Windows it
+inherits the home's ACL: see the ADR). A daemon that crashed leaves a stale lock; the next start
+recovers it and says so. It serves no operations yet: MCP and sessions come in later slices.
+
 ## Status rules (ADR 0001)
 
 A row is covered only when tests tagged `[+KEY]` and `[-KEY]` both passed on every platform the row

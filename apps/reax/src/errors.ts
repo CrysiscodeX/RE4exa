@@ -15,6 +15,12 @@ declare module "@re4exa/core/errors" {
     pm_not_indexed: true;
     pm_busy: true;
     pm_target_changed: true;
+    daemon_running: true;
+    daemon_not_running: true;
+    daemon_unauthorized: true;
+    daemon_bind_refused: true;
+    daemon_home_unsafe: true;
+    daemon_protocol_mismatch: true;
   }
 }
 
@@ -78,5 +84,35 @@ export const REAX_FAILURE_MODES = defineFailureModes({
     retryable: false,
     message: "The engine's output could not be read as the expected format",
     fix: "Check the engine's version (detail.version); report the excerpt in detail.excerpt (untrusted) if it is a supported one",
+  },
+  daemon_running: {
+    retryable: false,
+    message: "A reax daemon is already running for this home",
+    fix: "Use the running daemon (detail names its pid, instance and endpoint), or stop it with `reax daemon shutdown` first",
+  },
+  daemon_not_running: {
+    retryable: true,
+    message: "No reax daemon is answering for this home",
+    fix: "Start one with `reax daemon start` (or `reax serve` in the foreground), then retry",
+  },
+  daemon_unauthorized: {
+    retryable: false,
+    message: "The connection did not authenticate with the daemon's current token",
+    fix: "Read the token from <home>/run/daemon.token at each connection; it changes on every start",
+  },
+  daemon_bind_refused: {
+    retryable: false,
+    message: "The daemon binds only a Unix socket, a named pipe, 127.0.0.1 or ::1",
+    fix: "Drop --host, or pass --host 127.0.0.1 or --host ::1",
+  },
+  daemon_home_unsafe: {
+    retryable: false,
+    message: "A daemon file or directory is not private to this user",
+    fix: "Make the path in detail owned by you and closed to others (chmod 700 for directories, 600 for the token), or remove the file that is in the way",
+  },
+  daemon_protocol_mismatch: {
+    retryable: false,
+    message: "The client and the daemon speak different protocol versions",
+    fix: "Use the reax CLI of the same version as the running daemon, or restart the daemon with this version",
   },
 });
