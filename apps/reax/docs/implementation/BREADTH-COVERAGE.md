@@ -71,7 +71,7 @@ recorded; both were green on all three workflows, now recorded.
 | RUN | Runtime and devices | NOT_BUILT (Frida and ADB parts BLOCKED_EXTERNAL) | 2 |
 | MOB | Managed and mobile | NOT_BUILT (JEB part BLOCKED_EXTERNAL) | 2 |
 | SET | Setup, skill, router | NOT_BUILT | 2 |
-| DMN | Daemon, MCP, sessions, jobs | NOT_BUILT | 2 |
+| DMN | Daemon, MCP, sessions, jobs | PARTIAL_VERIFIED (since `69dde2e`) | 2 |
 | ARC | Archives and app bundles | NOT_BUILT | 3 |
 | JSE | JavaScript and Electron | NOT_BUILT | 3 |
 | EVD | Evidence, unknowns, verification | NOT_BUILT | 3 |
@@ -97,8 +97,8 @@ recorded; both were green on all three workflows, now recorded.
 | LED | Ledger, parity and status machinery | PARTIAL_VERIFIED | 4 |
 | GATE | Breadth gate and completeness checker | NOT_BUILT | 4 (last) |
 
-**Counts (34 items, updated at `d804135`):** PARTIAL_VERIFIED 10 (NAT, CLI, BEN, PROC, FIX, KEY,
-LED, SBX, ENG, PM); NOT_BUILT 24; SCAFFOLDED 0; PARTIAL_UNVERIFIED 0; COMPLETE_UNVERIFIED 0; COMPLETE_VERIFIED 0;
+**Counts (34 items, updated at `69dde2e`):** PARTIAL_VERIFIED 11 (NAT, CLI, BEN, PROC, FIX, KEY,
+LED, SBX, ENG, PM, DMN); NOT_BUILT 23; SCAFFOLDED 0; PARTIAL_UNVERIFIED 0; COMPLETE_UNVERIFIED 0; COMPLETE_VERIFIED 0;
 BLOCKED_EXTERNAL 0 as whole items, with three blocked parts inside RUN, MOB and NAT (41 ledger rows:
 Frida 10, ADB 25, JEB 5, PE certificates 1).
 
@@ -259,14 +259,37 @@ the fixtures job and the parity job, unless another run is named.
   equals install once; uninstall restores the original files byte for byte. Negative: a malformed
   existing configuration is left untouched and reported. Oracle: JSON and Python `tomllib` parsers.
 
-### DMN, daemon, MCP, sessions and jobs: NOT_BUILT
-- **Evidence:** none in reax. Related: core's `mcp/{handles,paths,suggest}.ts` (Assay's). 11 rows,
-  two owned by SNAP (REA-C33) and PROC (REA-C39).
-- **Next (Wave 2):** `reax serve` over stdio exposing the registry's operations (REA-C01), then
-  streamable HTTP bound to loopback with a bearer token (REA-C02). Positive: the official MCP SDK
-  client (dev-only, pinned) lists and calls every operation; `tools/list` measured at or under
-  16 KiB. Negative: a non-loopback bind, a missing token and a wrong token are refused. Weak points
-  it targets: REA-A6.3, REA-C02-LIMIT.
+### DMN, daemon, MCP, sessions and jobs: PARTIAL_VERIFIED (since `69dde2e`)
+- **Evidence:** `src/daemon/{paths,lock,token,protocol,server,client}.ts`; entry `reax serve` and
+  `reax daemon start|ping|status|shutdown` (CLI commands; internal API, no operation); ADR 0007
+  (`docs/decisions/0007-daemon.md`), D-25, D-26; tests `test/daemon.test.ts` and
+  `test/daemon-lock.test.ts`, with the independent raw wire client `test/fixtures/daemon-wire.ts`.
+  CI: reax run 41540866637, where `RX-DMN/lifecycle`, `auth`, `single-instance`, `stale-lock` and
+  `loopback` (linux, darwin, win32) and `RX-DMN/token-file` (linux, darwin) are covered.
+- **Works:**
+  - one daemon per `REAX_HOME`, decided by a node:sqlite owner lock; racing starts leave exactly one;
+    a lock left by a dead or unreachable daemon is recovered and reported;
+  - a Unix socket (Linux, macOS) or named pipe (Windows), and opt-in `--tcp` on loopback only, any
+    other host refused before a file or socket is created;
+  - a per-start token, owner-only on POSIX, checked in constant time; missing, wrong, stale and late
+    tokens refused; the token in no argv, log, reply or file other than its own;
+  - ping, status and shutdown, with cleanup of the lock, endpoint, socket and token;
+  - bounded resources (connections, sockets, pending input, reply backpressure, log rate).
+- **Gaps:**
+  - the 11 capability rows are all open (none moved): MCP over stdio and HTTP (REA-C01, REA-C02),
+    sessions and targets (REA-C05 and its five tools), progress and cancellation (REA-C36); REA-C33
+    and REA-C39 are owned by SNAP and PROC;
+  - `tools/list` is not measured yet (no MCP);
+  - the daemon does not own `pm.db` (D-23's reopen trigger untouched);
+  - Windows: no ACL on the token file or pipe (D-25); SR-9 open;
+  - at the connection cap a client is told `daemon_unauthorized`, not busy (to fix in SCH);
+  - the other follow-ups in EXECUTION-STATE.
+  - Weak points advanced, not fixed: SR-9, REA-C01-LIMIT, REA-C02-LIMIT.
+- **Next (a later DMN slice):** `reax serve` over stdio exposing the registry's operations (REA-C01),
+  then streamable HTTP bound to loopback with a bearer token (REA-C02), both as clients of this
+  daemon. Positive: the official MCP SDK client (dev-only, pinned) lists and calls every operation;
+  `tools/list` measured at or under 16 KiB. Negative: a non-loopback bind, a missing token and a
+  wrong token are refused. Weak points it targets: REA-A6.3, REA-C02-LIMIT.
 
 ### ARC, archives and app bundles: NOT_BUILT
 - **Evidence:** none in reax. Related: core's `probes/builtin/archive.ts` (`archive.list`: zip,
@@ -367,7 +390,8 @@ the fixtures job and the parity job, unless another run is named.
 ### SEC, security-review remediation: NOT_BUILT
 - `docs/review-notes.md` holds 15 notes; none is closed. SR-1 to SR-5 are open; SR-6 to SR-12 are
   design inputs; SR-13 to SR-15 record mitigations "for review". **Next:** SR-6 and SR-7 close with
-  SBX and RUN, SR-9 with DMN; the rest in Wave 4, each with a test where the note allows one.
+  SBX and RUN, SR-9 with DMN (advanced by `69dde2e`, not closed: no Windows ACL, D-25); the rest
+  in Wave 4, each with a test where the note allows one.
 
 ### FAIL, failure injection: NOT_BUILT
 - **Evidence:** no failure injection over any reax code. **Exists to build on** (foundations, not
@@ -439,10 +463,13 @@ NAT-4 items.
 
 ## Where a status was a judgement
 
-- **ARC, JSE, EVD, DMN: NOT_BUILT, though core has tested code.** Core's archive listing, JS probes,
-  evidence store, verifier and MCP handles work and are tested, mostly in `packages/core`. No reax
-  operation exposes them, and none of these components' rows is tagged, so they count as foundations,
-  not status.
+- **ARC, JSE, EVD: NOT_BUILT, though core has tested code.** Core's archive listing, JS probes,
+  evidence store and verifier work and are tested, mostly in `packages/core`. No reax operation
+  exposes them, and none of these components' rows is tagged, so they count as foundations, not
+  status.
+- **DMN: PARTIAL_VERIFIED on reax's own rows only** (since `69dde2e`; until then it was listed with
+  ARC, JSE and EVD above). The six RX-DMN rows are covered in CI; all 11 of its capability rows stay
+  open, as SBX's REA-C34 does. Core's MCP handles are still Assay's, not a reax server.
 - **SCH: NOT_BUILT, though the kernel's lease machinery is verified.** The verified part is the
   state machine a scheduler would use; nothing schedules.
 - **PROC: PARTIAL_VERIFIED.** It rests on reax's own code (`src/bench/backends/proc.ts`, on core's

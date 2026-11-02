@@ -1,7 +1,8 @@
 # 0007. The daemon: one per home, local transport only, token-authenticated
 
-Status: proposed (W2-1, DMN, first slice). Decisions D-25 (the Windows transport and its limits) and
-D-26 (the names, files and lock) record it once the Task Master writes them.
+Status: accepted (W2-1, DMN, first slice; `69dde2e`, reax run 41540866637). Recorded as D-25 (the
+Windows transport and its limits) and D-26 (the names, files and lock) in
+`docs/implementation/DECISION-LOG.md`.
 
 ## Context
 

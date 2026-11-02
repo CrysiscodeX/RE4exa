@@ -357,3 +357,55 @@ found to pass on darwin.
 - **Why:** gating all four on darwin would hide three passing tests.
 **Reopen if** the sweep's expectations become platform-aware, or the tests are run on Windows (the
 skip reason must then state the observed cause, or the gate is lifted).
+
+## D-25 (2026-11-03) DMN on Windows: a named pipe by default, and no ACL
+The Orchestrator's decision (Wave 2 item 1, work order W2-1), recorded after the Reviewer-Debugger's
+PASS and green CI on `69dde2e`. ADR 0007 (`docs/decisions/0007-daemon.md`).
+- **Transport:** a named pipe `\\.\pipe\reax-<32 hex of sha256(lowercased realpath(home))>` by
+  default; `--tcp` is opt-in and binds loopback only (`127.0.0.1` or `::1`), as on every platform.
+  Rejected: loopback TCP as the Windows default, because every local user can reach it and the token
+  would be the only barrier.
+- **Enforced and tested on Windows (windows-2025, reax run 41540866637):** O_EXCL creation of the
+  lock and the token; token rotation; every authentication refusal; single instance, with pipe
+  exclusivity confirmed by CI (the single-instance and racing-start tests passed on windows-2025);
+  stale-lock recovery; cleanup.
+- **Not enforced (stated limit):** reax sets no ACL (Node has no ACL API, and `src/` runs no host
+  tool). The token file inherits the ACL of `REAX_HOME`; the pipe keeps Windows' default DACL; the
+  home-safety checks are POSIX-only. Plan §3.3's "pipe ACL to the user's SID" is not met, and **SR-9
+  stays open**. The tests print `icacls` for the token file as a diagnostic only.
+**Reopen if** Node gains an ACL API, SET or SEC brings a vetted helper, or a user puts `REAX_HOME` on
+a shared directory.
+
+## D-26 (2026-11-03) DMN: names, run directory and lock
+The Orchestrator's decision (W2-1), recorded after review and CI on `69dde2e`.
+- **CLI:** `reax serve [--tcp [--host 127.0.0.1|::1] [--port N]]` (foreground, one JSON ready line
+  without the token) and `reax daemon start|ping|status|shutdown`. Rejected: `daemon stop`, `mcp`.
+- **Failure codes:** `daemon_running`, `daemon_not_running` (retryable), `daemon_unauthorized`,
+  `daemon_bind_refused`, `daemon_home_unsafe`, `daemon_protocol_mismatch`. Malformed frames reuse
+  core's `bad_request`.
+- **No new environment variable.** `REAX_HOME` selects the home; clients find the daemon through
+  `run/endpoint.json`. No variable or flag accepts the token.
+- **Layout:** `run/` (0700) with `daemon.oslock`, `daemon.lock`, `daemon.token`, `endpoint.json` and
+  (POSIX) `daemon.sock`, as in ADR 0007.
+- **Lock:** a node:sqlite owner lock on `run/daemon.oslock` decides. Core does not export
+  `takeOwnerLock`, so the technique is reimplemented in reax and core is unchanged. The O_EXCL
+  `daemon.lock` and token files, with the pid and endpoint diagnosis, are defence in depth and the
+  source of the `recovered` report. `daemon.oslock` is kept after shutdown by design.
+- **Test seam:** `DAEMON_HOOKS`, in process only (as PM's `MIGRATE_HOOKS`); no environment seam.
+- **Approved deviations from the work order:** the Orchestrator approved the lock design and the
+  eight deviations listed in the Coding Agent's report:
+  - the raw wire client is a typed fixture, `test/fixtures/daemon-wire.ts` (not `.mjs`);
+  - the socket path is cleared after the lock is taken, by its owner only;
+  - a pid that is alive, with no endpoint for its instance and a lock older than 10 s, counts as
+    `unreachable`;
+  - a fallback socket path over 103 bytes is refused with a plain error (no failure code);
+  - `daemon.oslock` is created 0600;
+  - the token is checked before the protocol version;
+  - `--host` or `--port` without `--tcp` is a usage error (exit 2);
+  - ADR 0007 was committed as "proposed" and becomes "accepted" once D-25 and D-26 are recorded
+    (done with this entry).
+- **Caps added by the Coding Agent's own audit** (in ADR 0007): at most 64 sockets at once, refused
+  ones still draining included; a permanent server `error` handler; per-connection log lines limited
+  to 20 per 10 s; shutdown proceeds after 1 s.
+**Reopen if** the MCP slice needs another transport, DMN takes `pm.db`, or auto-start needs an idle
+timeout.

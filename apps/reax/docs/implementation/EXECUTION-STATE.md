@@ -5,11 +5,11 @@
 2. Read this file.
 3. Continue with the first package under **Next**.
 
-**Last verified checkpoint: `ac70493`** (Wave 2 item 0). CI green on all three workflows: reax run
-41521374732 (fixtures, three lanes, parity), tests 41521374941, assay 41521374728. Rows unchanged: 39
-of 357 rea and leanrea rows covered, 35 of 35 reax rows covered, 21 of 244 weak points fixed. The
-previous checkpoint was `d804135` (reax run 41480699513: 247 tests declared on every lane). The baseline
-reconciled at `bc38202` is in `BREADTH-COVERAGE.md`.
+**Last verified checkpoint: `69dde2e`** (Wave 2 item 1, DMN). CI green: reax run 41540866637
+(fixtures, three lanes, parity), tests 41540866667; assay not triggered (core unchanged). Rows: 39 of
+357 rea and leanrea rows covered (unchanged), 41 of 41 reax rows covered (35 before), 21 of 244 weak
+points fixed (unchanged). The previous checkpoint was `ac70493` (Wave 2 item 0; reax run
+41521374732). The baseline reconciled at `bc38202` is in `BREADTH-COVERAGE.md`.
 
 ## Done (verified in CI)
 - **Baseline re-measured:** see `BASELINE.md`.
@@ -371,9 +371,68 @@ reconciled at `bc38202` is in `BREADTH-COVERAGE.md`.
   - Advisory: the NUL refusal has no test of its own (the `[-RX-1/bench-live]` test covers `"` and
     LF).
 
+- **Wave 2, item 1: DMN, the daemon, first slice** (`69dde2e`; D-25, D-26; ADR 0007, now accepted).
+  **PARTIAL_VERIFIED** on reax's own rows. Work order W2-1. Computer use: none.
+  - What it is:
+    - `reax serve` (foreground, one JSON ready line) and `reax daemon start|ping|status|shutdown`;
+      `src/daemon/{paths,lock,token,protocol,server,client}.ts`, six failure codes in
+      `src/errors.ts`. Internal API only: no operation, so the registry, `docs/operations.md` and
+      `docs/tools.json` are unchanged.
+    - One daemon per `REAX_HOME`: a node:sqlite owner lock on `run/daemon.oslock` decides
+      (reimplemented in reax; core does not export `takeOwnerLock`); O_EXCL `daemon.lock` and
+      `daemon.token` plus the pid and endpoint diagnosis are defence in depth and the source of the
+      `recovered` report.
+    - Endpoints: a Unix socket on Linux and macOS (a `TMPDIR` fallback for long paths), a named pipe
+      on Windows (D-25), opt-in `--tcp` on `127.0.0.1` or `::1` only, any other host refused before a
+      file or socket exists.
+    - A per-start token (0600 on POSIX), checked in constant time on every connection's hello; never
+      in argv, logs, status, errors or the lock and endpoint files.
+    - Bounded resources: refused peers closed within 1 s; reply backpressure with a 1 MiB / 5 s cap;
+      pending input capped (UTF-16 code units); 32 connections, 64 sockets; log lines rate-limited
+      (20 per 10 s); shutdown proceeds after 1 s.
+  - Tests: `test/daemon.test.ts`, `test/daemon-lock.test.ts`, with the independent raw wire client
+    `test/fixtures/daemon-wire.ts` and `test/fixtures/umask-serve.mjs`; temporary homes only.
+  - CI on `69dde2e`, all green: reax run 41540866637 (fixtures, macos-15, ubuntu-24.04,
+    windows-2025, parity); tests 41540866667. Every RX-DMN test passed on all four lanes, including
+    win32's single-instance and racing-start tests (pipe exclusivity), auth, loopback, stale-lock and
+    lifecycle.
+  - Parity report (run 41540866637): darwin 277, linux-fixtures 277, linux 277, win32 275 tests; gate
+    passed; `RX-DMN/lifecycle`, `auth`, `single-instance`, `stale-lock`, `loopback` and `token-file`
+    all "covered: all required lanes passed + and - tests" (`token-file` names linux and darwin
+    only); reax rows 41 of 41 covered; rea and leanrea 39 of 357 (rea 28, leanrea 11); weak points 21
+    fixed, unchanged.
+  - Rows newly tested: the six RX-DMN rows (reax 35 to 41). No rea or leanrea row moved. Weak points
+    SR-9, REA-C01-LIMIT and REA-C02-LIMIT are advanced, not fixed.
+  - Review history:
+    1. FAIL (code): refused peers were half-closed, so 32 open refused peers locked out the owner.
+    2. FAIL (code): an authenticated peer that never read grew the daemon's RSS from 109 to 488 MB
+       (no backpressure); (test) the "no listener" check ran after the pid had died.
+    3. PASS: all prior fixes reproduced; the DMN tests run three times and once under full CPU load;
+       the security mutations killed.
+    - Then D-21 text-only fixes (the pending cap counts UTF-16 code units; the wrong-token close
+      timing; the stated limit at the connection cap), and a narrow check: PASS.
+  - Pre-push on macOS: all 23 steps exit 0 (core, Assay, reax including the oracle steps).
+  - Process note: during implementation the Coding Agent stopped, by exact pid only, processes it had
+    started itself (a stray smoke-test daemon, hung test runs, children of mutated runs); one first
+    kill attempt was denied by the auto-mode check. No other process was touched. `~/.reax` was never
+    created.
+  - Follow-ups:
+    - At the 32-connection cap the client is told `daemon_unauthorized`, not busy (stated limit in
+      ADR 0007). **To fix in SCH**, with a retryable busy code or frame.
+    - Test gap: the mutation "remove `run/`'s chmod and loosen its check" survives. **To add in SCH.**
+    - The 1000 ms refusal deadline is not triggered by any test (a backstop; accepted).
+    - M18a, M18b and M19b survive as the defence-in-depth halves of a two-part check (accepted).
+    - The fallback socket path refusal (over 103 bytes) has no failure code.
+    - ADR nit: the no-frame close also applies while stopping and at the 64-socket cap; ADR 0007 names
+      it only at the 32-connection cap.
+    - The Windows ACL limit (D-25, SR-9).
+    - Later DMN slices: MCP over stdio and HTTP (REA-C01, REA-C02), sessions (REA-C05), jobs,
+      progress and cancellation (REA-C36), `tools/list` measured, ownership of `pm.db`.
+
 ## Active
-- **Wave 2, item 1: DMN** is in progress (work order being written). Wave 2 item 0 is done
-  (`ac70493`, under **Done**).
+- **Wave 2, item 2: SCH, the scheduler** is in progress (work order being written). Wave 2 items 0
+  and 1 are done (`ac70493`, `69dde2e`, under **Done**). SCH also owns two DMN follow-ups: a busy
+  reply at the connection cap, and the test for `run/`'s chmod (see DMN under **Done**).
 
 ## Parked
 - **NAT-4, ARM64 `.pdata`** (parked 2026-11-01 under the breadth rule, D-13; not committed, not
@@ -410,7 +469,8 @@ reconciled at `bc38202` is in `BREADTH-COVERAGE.md`.
   dumps (recorded crashes and Apple IPS), and ARM64 `.pdata` (parked above).
 
 ## Next (in order)
-Wave 1 is complete; Wave 2 item 0 is done and item 1 (DMN) is **Active**.
+Wave 1 is complete; Wave 2 items 0 and 1 (DMN) are done and item 2 (SCH) is **Active**; then COD,
+RUN, MOB and SET.
 The breadth plan in `BREADTH-COVERAGE.md` (waves and dependencies there; D-13, D-14):
 1. **Wave 1:** SBX, the sandbox foundation; then ENG, the adapter registry with LLVM as the first
    provider; the program model (PM) beside them.

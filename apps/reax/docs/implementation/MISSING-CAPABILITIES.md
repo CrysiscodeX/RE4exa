@@ -375,8 +375,8 @@ correctness 30 and 10, coverage 32 and 3, tests 20 and 0, state 18 and 2, instal
 
 ## DMN: Daemon, MCP, sessions, jobs (11 open)
 
-- **Component status:** NOT_BUILT (core's MCP handle store is Assay's, not a reax server).
-- **Required implementation:** `reax serve` over stdio, then streamable HTTP on loopback with a bearer token; sessions and targets; progress and cancellation; the job model.
+- **Component status:** PARTIAL_VERIFIED since `69dde2e`, on reax's own rows `RX-DMN/lifecycle`, `auth`, `token-file`, `single-instance`, `stale-lock` and `loopback` (`BREADTH-COVERAGE.md`): the daemon, its token and its lock (ADR 0007, D-25, D-26). None of the 11 rows below moved; core's MCP handle store is still Assay's, not a reax server. Weak points SR-9, REA-C01-LIMIT and REA-C02-LIMIT are advanced, not fixed.
+- **Required implementation:** `reax serve` over stdio (as a client of the daemon), then streamable HTTP on loopback with a bearer token; sessions and targets; progress and cancellation; the job model.
 - **Dependencies:** FW and the registry; SBX for anything that runs a child.
 - **Acceptance criteria:** `tools/list` measured at or under 16 KiB; a non-loopback bind, a missing token and a wrong token are refused; every registered operation is callable; plus the common bar in `MASTER-PLAN.md`.
 - **Verification:** the official MCP SDK client (dev-only, pinned) as the conformance oracle.
