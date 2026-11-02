@@ -227,3 +227,42 @@ The Orchestrator's decision under the user's no-questions directive.
   absent, the Linux backend counts as unavailable and the same fail-closed rule applies.
 **Reopen if** Landlock's ABI on the ubuntu-24.04 runner is too old for network control (TCP connect
 rules need ABI 4).
+
+## D-19 (2026-11-02) SBX gets a fourth review round: a one-time exception to the 3-FAIL rule
+The user's decision, in their words: "Option 1, as a one-time exception to the 3-FAIL rule. I'm
+granting it, not the loop. … SBX gets a 4th review because the findings narrowed every round, all of
+them were in process cleanup, and enforcement passed all three times. There will be no 5th round."
+- **Scope:** SBX (Wave 1, item 1) only, and only one extra round. The loop's rule is unchanged: an
+  item that fails review three times is parked. The exception sets no precedent; the Task Master,
+  the Orchestrator and the agents cannot grant it.
+- **Why:** each round's findings were narrower than the last; all were in process cleanup (escaped
+  grandchildren, a stale pid signalled after the reap, core's stop path signalling a reaped group);
+  enforcement passed in all three reviews.
+- **If the fourth review fails:** SBX is stashed with its review history, as ARM64 `.pdata` was, and
+  Wave 1 stops until the user decides how to proceed.
+**Reopen:** not reopenable by anyone but the user. A fifth round would need a new decision from the
+user.
+
+## D-20 (2026-11-02) The D-19 round failed; SBX is parked and Wave 1 stops. The SBX design kept for resumption
+**Outcome of D-19.** The fourth review of SBX failed on one blocking finding, B1: the doc comment on
+`SandboxResult.timedOut` claimed the whole process tree is killed at the deadline, while a measured
+timed-out run can keep an escaped grandchild alive and return the root's own exit code. As the user
+instructed, SBX is stashed (`EXECUTION-STATE.md`, **Parked**) and Wave 1 stops. ENG and PM, which
+depend on SBX, are not started. The 3-FAIL rule is unchanged. A fifth round, though B1 is a one-line
+fix, needs a new decision from the user.
+
+**Design decisions made during SBX**, recorded here so they survive while the code is in the stash:
+- **Option 3, process cleanup ownership.** Core's termination barrier is off on POSIX
+  (`terminationBarrier: !posix`), so core sends no pid-addressed signal there. reax owns the tree kill,
+  and only while the root is unreaped; once the root is reaped, nothing signals its pid or group,
+  apart from the documented exit-turn residual. Windows keeps core's barrier.
+- **Descendants are listed with `ps -A -o pid=,ppid=`** at kill time. A descendant that escaped its
+  group and the snapshot can survive: ADR 0006's known limit.
+- **The child's environment is an allowlist**, not the parent's environment minus a denylist.
+- **Rejected: a kill gate** (reax vetoing core's tree kills after the reap). Core's
+  `setProcessTreeKillGate` replaces a module-private gate, and there is no getter. So reax could not
+  compose its gate with one a host process might already have installed; it could only overwrite it.
+  Probing the installed gate through `admitProcessTreeKill` would recurse or cause side effects.
+- **Core change:** an `onSpawn` hook in the vendored orca process host (`process-spec.ts`,
+  `run-process.ts`, its README), with the MIT notice kept and `api-snapshot.txt` updated.
+**Reopen when** the user decides on SBX: a fifth round, a redesign, or a different order for Wave 1.
