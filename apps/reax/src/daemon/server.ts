@@ -160,7 +160,7 @@ export async function startDaemon(opts: DaemonOptions): Promise<DaemonHandle> {
   }
 
   function serve(token: string) {
-    /** Connections that count toward MAX_CONNECTIONS (refused ones leave at once). */
+    /** Connections that count toward MAX_CONNECTIONS (refused ones, and peers whose end of stream was read, leave at once). */
     const conns = new Set<Socket>();
     /** Every open socket, so shutdown can destroy refused ones that are still draining. */
     const all = new Set<Socket>();
@@ -280,6 +280,7 @@ export async function startDaemon(opts: DaemonOptions): Promise<DaemonHandle> {
         return;
       }
       all.add(sock);
+      DAEMON_HOOKS.onAccept?.(sock);
       // at the connection cap: one retryable daemon_busy hello frame before the peer sends anything,
       // then the socket ends; it is destroyed once flushed, or after DROP_AFTER_MS
       if (conns.size >= MAX_CONNECTIONS) {
@@ -308,7 +309,18 @@ export async function startDaemon(opts: DaemonOptions): Promise<DaemonHandle> {
       };
       const timer = setTimeout(() => drop("no hello in time"), HELLO_TIMEOUT_MS);
       sock.on("error", () => {});
-      sock.on("close", () => {
+      // A peer that has closed stops counting toward MAX_CONNECTIONS as soon as its end of stream is
+      // read: Node emits "close" only after the socket's own shutdown and handle close, at least one
+      // event-loop turn later, and a new connection accepted in between would be refused as busy.
+      // Until "close" it still counts toward MAX_SOCKETS, and it is destroyed after DROP_AFTER_MS
+      // whatever the peer does, as a refused one is: a peer that half-closes without reading would
+      // otherwise hold the socket for ever (its last replies never flush, so "close" never comes).
+      // Its jobs are cancelled at that close (D-27), so at most DROP_AFTER_MS later than its end.
+      sock.on("end", () => {
+        conns.delete(sock);
+        setTimeout(() => sock.destroy(), DROP_AFTER_MS).unref();
+      });
+      const cleanup = () => {
         conns.delete(sock);
         all.delete(sock);
         clearTimeout(timer);
@@ -316,7 +328,8 @@ export async function startDaemon(opts: DaemonOptions): Promise<DaemonHandle> {
         pending.length = 0;
         // the jobs this connection submitted are cancelled; jobs it only waited on are not
         sched.dropOwner(conn);
-      });
+      };
+      sock.on("close", () => (DAEMON_HOOKS.onConnClose ? DAEMON_HOOKS.onConnClose(cleanup) : cleanup()));
       // A refused connection stops counting toward MAX_CONNECTIONS at once, and is destroyed as soon
       // as its error frame is flushed, or after DROP_AFTER_MS whatever the peer does: a peer that
       // never reads or closes cannot hold a slot (a half-closed socket would otherwise stay open).

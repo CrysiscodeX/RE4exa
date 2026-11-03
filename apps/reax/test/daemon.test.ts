@@ -12,6 +12,7 @@ import { networkInterfaces } from "node:os";
 import { join } from "node:path";
 import { after, test } from "node:test";
 import { isCoreError } from "@re4exa/core/errors";
+import { DAEMON_HOOKS } from "../src/daemon/lock.ts";
 import { type DaemonHandle, startDaemon } from "../src/daemon/server.ts";
 import {
   alive,
@@ -314,8 +315,224 @@ test(
       assert.equal(await extra.next(3000), null, "the 33rd connection is then closed");
       for (const x of conns) x.end();
       await Promise.all(conns.map((x) => x.done));
-      assert.equal(((await call(box, "ping")).result as { pong: boolean }).pong, true);
+      // the clients' `done` says nothing about the daemon (a separate process): a close it has not
+      // read yet still counts (ADR 0007), so the signal is its own hello reply, busy ones retried
+      assert.equal(((await callPastBusy(box, "ping")).result as { pong: boolean }).pong, true);
     });
+  },
+);
+
+/** One call on a fresh connection, retried (at most `tries` times) only while the daemon's hello
+ * reply is daemon_busy; each retry starts after the refused connection has closed. */
+async function callPastBusy(box: Box, method: string, tries = 100): Promise<Frame> {
+  for (let i = 0; i < tries; i++) {
+    const raw = await rawConnect(readEndpointFile(box));
+    try {
+      const h = await raw.call({ type: "hello", protocol: 1, token: readTokenFile(box) });
+      assert.ok(h && h !== "timeout", "the hello is answered");
+      if (h.ok !== true && errCode(h) === "daemon_busy") {
+        assert.equal(await raw.next(3000), null, "a busy connection is closed");
+        continue;
+      }
+      assert.equal(h.ok, true, `hello accepted: ${JSON.stringify(h)}`);
+      const r = await raw.call({ id: 1, method });
+      assert.ok(r && r !== "timeout", `${method} answered`);
+      return r;
+    } finally {
+      raw.end();
+    }
+  }
+  assert.fail(`still daemon_busy after ${tries} tries`);
+}
+
+// --- a closed peer's slot (the macOS flake of reax run 41612759551) ----------------------------------
+// The client's `done` resolves on its own socket's close, which needs nothing from the daemon. The
+// daemon learns of it when it reads the end of stream; its socket's "close" comes at least one
+// event-loop turn later. DAEMON_HOOKS.onConnClose holds that close clean-up (a barrier, no timing),
+// so a new connection is judged exactly in the window where the flake's final ping was.
+
+/** An in-process daemon whose connection close clean-ups are held until release(). */
+async function heldCloses(): Promise<{
+  box: Box;
+  h: DaemonHandle;
+  /** Resolves once the daemon's socket "close" has fired for n connections (n ≤ 64). */
+  closed(n: number): Promise<void>;
+  release(): void;
+  done(): Promise<void>;
+}> {
+  const box = tempBox();
+  const held: (() => void)[] = [];
+  let want = 0;
+  let wake: () => void = () => {};
+  const release = () => {
+    delete DAEMON_HOOKS.onConnClose;
+    for (const f of held.splice(0, held.length)) f();
+  };
+  DAEMON_HOOKS.onConnClose = (cleanup) => {
+    held.push(cleanup);
+    if (held.length >= want) wake();
+  };
+  let h: DaemonHandle;
+  try {
+    h = await startDaemon({ home: box.home });
+  } catch (e) {
+    release();
+    box.done();
+    throw e;
+  }
+  return {
+    box,
+    h,
+    closed: (n) => {
+      assert.ok(n >= 1 && n <= 64, "a bounded barrier");
+      want = n;
+      return held.length >= n ? Promise.resolve() : new Promise<void>((r) => (wake = r));
+    },
+    release,
+    done: async () => {
+      release();
+      await h.close();
+      box.done();
+    },
+  };
+}
+
+test(
+  "[+RX-DMN/busy] a peer that has closed frees its slot before the daemon's socket close: with 32 closes held at the barrier, the next hello is accepted",
+  LIMIT,
+  async () => {
+    const d = await heldCloses();
+    try {
+      const conns = [];
+      for (let i = 0; i < 32; i++) conns.push(await authed(d.box));
+      for (const x of conns) x.end();
+      await Promise.all(conns.map((x) => x.done));
+      await d.closed(32);
+      // the daemon has read all 32 ends of stream and has not run one close clean-up
+      const r = await call(d.box, "status");
+      assert.equal(r.ok, true, `the hello after 32 closed peers is accepted: ${JSON.stringify(r)}`);
+      assert.equal((r.result as { connections: number }).connections, 1, "only the status connection counts");
+    } finally {
+      await d.done();
+    }
+  },
+);
+
+test(
+  "[-RX-DMN/busy] with closes held, a closed peer frees exactly its own slot: 31 live plus one new fill the cap, the next gets daemon_busy, and releasing the held close frees nothing more",
+  LIMIT,
+  async () => {
+    const d = await heldCloses();
+    try {
+      const conns = [];
+      for (let i = 0; i < 32; i++) conns.push(await authed(d.box));
+      const gone1 = conns.shift()!;
+      gone1.end();
+      await gone1.done;
+      await d.closed(1);
+      conns.push(await authed(d.box));
+      const busyOf = async () => {
+        const extra = await rawConnect(readEndpointFile(d.box));
+        const f = await extra.next(3000);
+        assert.ok(f && f !== "timeout", "the connection past the cap gets a frame");
+        assert.equal((f.error as { code: string }).code, "daemon_busy", "32 live connections are the cap");
+        assert.equal(await extra.next(3000), null, "and is then closed");
+      };
+      await busyOf();
+      d.release();
+      await busyOf();
+      for (const x of conns) x.end();
+      await Promise.all(conns.map((x) => x.done));
+    } finally {
+      await d.done();
+    }
+  },
+);
+
+test(
+  "[-RX-DMN/busy] closing sockets still count toward the 64-socket cap: with 32 closes held and 32 live connections, the next socket is closed without a frame; once the closes finish, the next gets daemon_busy",
+  LIMIT,
+  async () => {
+    const d = await heldCloses();
+    try {
+      const closing = [];
+      for (let i = 0; i < 32; i++) closing.push(await authed(d.box));
+      for (const x of closing) x.end();
+      await Promise.all(closing.map((x) => x.done));
+      await d.closed(32);
+      const live = [];
+      for (let i = 0; i < 32; i++) live.push(await authed(d.box));
+      const over = await rawConnect(readEndpointFile(d.box));
+      assert.equal(await over.next(3000), null, "64 open sockets: the next is closed without a frame");
+      d.release();
+      const extra = await rawConnect(readEndpointFile(d.box));
+      const f = await extra.next(3000);
+      assert.ok(f && f !== "timeout", "with the closing sockets gone, the next gets a frame");
+      assert.equal(errCode(f), "daemon_busy");
+      assert.equal(await extra.next(3000), null);
+      for (const x of live) x.end();
+      await Promise.all(live.map((x) => x.done));
+    } finally {
+      await d.done();
+    }
+  },
+);
+
+test(
+  "[+RX-DMN/busy] a peer that half-closes without reading its replies is destroyed within the deadline; its slot and socket are freed and the next connection is served",
+  LIMIT,
+  async () => {
+    const box = tempBox();
+    const seen: Socket[] = [];
+    DAEMON_HOOKS.onAccept = (s) => {
+      if (seen.length < 4) seen.push(s);
+    };
+    let h: DaemonHandle | null = null;
+    let peer: Socket | null = null;
+    try {
+      h = await startDaemon({ home: box.home });
+      const ep = readEndpointFile(box);
+      peer = await new Promise<Socket>((ok, fail) => {
+        const s = connect({ path: ep.path, allowHalfOpen: true });
+        s.once("connect", () => ok(s));
+        s.once("error", fail);
+      });
+      peer.on("error", () => {});
+      const daemonSide = seen[0]!;
+      const helloReply = new Promise<void>((ok) => peer!.once("data", () => ok()));
+      peer.write(`${JSON.stringify({ type: "hello", protocol: 1, token: readTokenFile(box) })}\n`);
+      await helloReply;
+      peer.pause();
+      // pings unread until a reply is stuck in the daemon's own write queue, below the 16 KiB at
+      // which backpressure (and its stall timer) would start; bounded
+      let stuck = false;
+      for (let i = 0; i < 200_000 && !stuck; i++) {
+        peer.write('{"id":3,"method":"ping"}\n');
+        await new Promise((r) => setImmediate(r));
+        stuck = daemonSide.writableLength > 0;
+      }
+      assert.ok(stuck, "a reply is stuck in the daemon's write queue");
+      assert.ok(daemonSide.writableLength < 16 * 1024, "below the backpressure threshold");
+      const gone = new Promise<void>((ok) => daemonSide.once("close", () => ok()));
+      peer.end();
+      let timer: NodeJS.Timeout | undefined;
+      const r = await Promise.race([
+        gone.then(() => "closed"),
+        new Promise<string>((ok) => {
+          timer = setTimeout(() => ok("still open"), 10_000);
+        }),
+      ]);
+      clearTimeout(timer);
+      assert.equal(r, "closed", "the half-closed peer's socket is destroyed by the deadline");
+      const st = await call(box, "status");
+      assert.equal((st.result as { connections: number }).connections, 1, "only the status connection counts");
+      assert.equal(((await call(box, "ping")).result as { pong: boolean }).pong, true);
+    } finally {
+      delete DAEMON_HOOKS.onAccept;
+      peer?.destroy();
+      await h?.close();
+      box.done();
+    }
   },
 );
 

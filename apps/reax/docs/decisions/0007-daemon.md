@@ -73,7 +73,16 @@ Nothing may be installed, and only Node 24 built-ins are used (`node:net`, `node
   stopping, a connection is closed without a frame); a connection with no valid hello within 2 s is
   closed. A refused connection stops counting at once and is destroyed once its error frame is
   flushed, or after 1 s whatever the peer does, so peers that never read cannot hold the slots.
-  At most 64 sockets are open at once, refused ones still draining included. Replies use
+  A connection whose peer has closed also stops counting as soon as the daemon reads its end of
+  stream, not when its own socket has finished closing (an event-loop turn or more later; W2-4:
+  a client that had closed 32 connections was otherwise told `daemon_busy`). A close the daemon
+  has not read yet still counts, and the next connection may then be told `daemon_busy`
+  (retryable, D-28). Such a closing socket is destroyed after 1 s whatever the peer does, as a
+  refused one is, so a peer that half-closes without reading its replies cannot hold it; its jobs
+  are cancelled when it closes (D-27), so at most 1 s after its end of stream. At most 64 sockets
+  are open at once, refused and closing ones included. A peer that stays open and never reads
+  keeps its slot while its unread replies are below the backpressure threshold (no idle timeout):
+  it still counts toward the 32, so the cap and `daemon_busy` still apply. Replies use
   backpressure: while a peer's replies are backed up, its requests are not read; a peer whose
   replies stay backed up for 5 s, or exceed 1 MiB unread, is disconnected; requests read but not
   yet handled are capped at 256 Ki characters (UTF-16 code units) per connection. Per-connection log lines are rate-limited

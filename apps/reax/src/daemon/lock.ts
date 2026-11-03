@@ -15,14 +15,23 @@
 // lock in step 1 is what makes the whole sequence single-owner.
 import { createHash } from "node:crypto";
 import { chmodSync, closeSync, fsyncSync, lstatSync, openSync, statSync, unlinkSync, writeSync } from "node:fs";
+import type { Socket } from "node:net";
 import { DatabaseSync } from "node:sqlite";
 import { CoreError } from "@re4exa/core/errors";
 import { probe } from "./client.ts";
 import { type Endpoint, files, POSIX, readEndpoint, readSmall } from "./paths.ts";
 import { MAX_TOKEN_CHARS } from "./token.ts";
 
-/** Test seam (in process only, like PM's MIGRATE_HOOKS): turn off step 1, or pause after step 2. */
-export const DAEMON_HOOKS: { osLock: boolean; afterDiagnose?: () => Promise<void> | void } = { osLock: true };
+/** Test seam (in process only, like PM's MIGRATE_HOOKS): turn off step 1, or pause after step 2.
+ * `onConnClose` (server.ts) receives each accepted connection's close clean-up and decides when
+ * to run it, so a test can hold the daemon between a peer's end of stream and its socket's close;
+ * `onAccept` sees each socket the daemon keeps (counted or refused), so a test can observe it. */
+export const DAEMON_HOOKS: {
+  osLock: boolean;
+  afterDiagnose?: () => Promise<void> | void;
+  onConnClose?: (cleanup: () => void) => void;
+  onAccept?: (sock: Socket) => void;
+} = { osLock: true };
 
 /** An unparsable lock younger than this may be a start in progress, so it is left alone. */
 export const STALE_AFTER_MS = 10_000;
