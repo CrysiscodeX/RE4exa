@@ -11,6 +11,91 @@
 points fixed (unchanged). The previous checkpoint was `69dde2e` (Wave 2 item 1, DMN; reax run
 41540866637). The baseline reconciled at `bc38202` is in `BREADTH-COVERAGE.md`.
 
+## Hard limits
+These come from the user and outrank any session's memory (a subset is also in DECISION-LOG D-16 and `BREADTH-COVERAGE.md`; this list is the complete one).
+- Push only to claude/admiring-volta-uc87nj. No pull requests, tags, releases or npm publish. Never force-push, rebase, reset --hard or git clean.
+- No system-wide installs. Toolchains go only under /tmp or the project, pinned.
+- Never kill a process this session didn't start, and never by pattern; only by exact verified pid.
+- Never read or write the real ~/.claude, ~/.codex, ~/.config, ~/.kube or ~/.reax. Tests use temporary homes.
+- No live model runs and no API keys. No credential stores or tokens.
+- The daemon and MCP listen on loopback or local sockets only, with a token.
+- RUN inspects only processes that reax's own tests start. ADB and Frida stay BLOCKED_EXTERNAL.
+- Never push a commit that fails the local pre-push checks. After 2 CI failures with the same cause, stop that item.
+- The loop: work order, then coding-agent, then reviewer-debugger. After 3 FAILs, park the item. D-21 applies.
+- GitHub research gives ideas only: no copied code, record licences, and GPL tools only as separate processes.
+- Each report lists computer-use actions ("none" expected).
+
+## Open follow-ups
+The single list of every open follow-up and advisory, gathered from the **Done**, **Parked** and
+**Blocked** entries (which keep their detail). Items are open unless marked closed; "closed" is used
+only where an entry below already records the closure.
+- **NAT-3 / NAT-4 (deferred to after the breadth gate, D-13):**
+  - the PE COFF symbol table;
+  - `LC_FUNCTION_STARTS` against an oracle: closed by NAT-4 part 4b (`d5285e7`);
+  - Rust `.dep-v0` (D-11): no real ELF, PE or wasm fixture; `features` checked only on a synthetic
+    document; ELF, PE and fat Mach-O checked by hand only, with no committed test.
+- **Wave 1 item 0, x64 `.pdata`:** mutant M6 survives; needs a case with the `.pdata` directory
+  partway into its section (the `- (pd.rva - sec.rva)` term).
+- **SBX:**
+  - A1: the "cannot have been reused" comment on an unreaped root's pid can be wrong (libuv batch
+    reaping); defer with `setImmediate` and re-check, or reword;
+  - A2: G3 and G4 are unreachable on POSIX and not exercised on windows-2025; add a
+    `forceBackend: "none"` deadline test on Windows, or label them Windows-only;
+  - `src/errors.ts`: `sandbox_unavailable`'s "nothing was started" is inaccurate on the Landlock
+    exit-125 path;
+  - escaped-grandchild confinement: prove an escaped grandchild is still sandboxed;
+  - the Linux helper as `PR_SET_CHILD_SUBREAPER`;
+  - UDP and other non-TCP sockets are not controlled on Linux (Landlock ABI 4);
+  - the macOS `mach-lookup` DNS side channel (mDNSResponder reachable; ADR 0006);
+  - Windows enforcement (and read restriction, memory limits) not in scope yet;
+  - the two pre-push environment notes: closed by W2-0 (`ac70493`).
+- **ENG:**
+  - the `parseNm` newline forgery (`docs/engines-known-limits.md`): must be mitigated, and the pinned
+    test flipped, before COD exposes symbols to callers (COD is **Active**);
+  - M16 survives: an abort after the engine exits 0 is reported as success; add a deterministic
+    `mapRun` test (code 0 with an aborted signal gives `engine_cancelled`);
+  - the symlink test's title ("REAX_LLVM_BIN is used first: …") overclaims; reword;
+  - two `RX-ENG/contract` tests use the real llvm-nm while the row says "against fake engines";
+    retitle the row or retag the tests;
+  - the A5 install grep: accepted by the Orchestrator (no action).
+- **PM:**
+  - P3: test the ROLLBACK in `search.symbols`' `finally`;
+  - P3b: the count-and-rows transaction has no deterministic test;
+  - P4: test the busy mapping of the version reads in rollback mode (expecting `pm_busy`);
+  - the exported mutable test seams (`MIGRATE_HOOKS`, `PM_LIMITS`, `PM_HOOKS`): mark `@internal` or
+    freeze;
+  - NOHOME is not testable with the fake;
+  - closed: bench shim quoting and the Windows `reax.cmd` `REAX_HOME` test (W2-0, `ac70493`); the
+    digest race (re-hashing).
+- **W2-0:**
+  - the NUL refusal in `src/bench/live.ts` has no test of its own;
+  - P2c: closed by the content assertion on every lane, but the behavioural kill on Windows (the
+    mutant run under `cmd.exe /v:on`) was never run; not proven.
+- **DMN:**
+  - the 1000 ms refusal deadline is not triggered by any test (backstop; accepted);
+  - M18a, M18b and M19b survive as defence-in-depth halves (accepted);
+  - the fallback socket path refusal (over 103 bytes) has no failure code;
+  - ADR 0007 nit: the no-frame close also applies while stopping and at the 64-socket cap;
+  - the Windows ACL limit (D-25, SR-9);
+  - later slices: MCP over stdio and HTTP (REA-C01, REA-C02), sessions (REA-C05), jobs, progress and
+    cancellation (REA-C36), `tools/list` measured, ownership of `pm.db`;
+  - closed by SCH (`40467bd`): `daemon_busy` at the connection cap; the `run/` chmod mutant.
+- **SCH:**
+  - nothing tests that `dropOwner` forgets the owner's record, or the `MAX_OWNERS` cap; the mutation
+    removing `this.#owners.delete(owner)` (`src/sched/scheduler.ts:378`) survives;
+  - ADR 0008's Bound says "at most 32 owners ahead"; the tight figure is 31;
+  - `test/sched-daemon.test.ts:746` (and :910, :963) restore `PM_LIMITS.busyTimeoutMs` to a literal
+    5000, not the saved value;
+  - no end-to-end SIGINT or SIGTERM test for `reax daemon run`;
+  - the child-`serve` shutdown test cannot prove the job waited in `withImmediate`;
+  - aging (or "joins at the back") and priorities are a later slice; single-flight needs SNAP.
+- **Parked ARM64 `.pdata` stash** (see **Parked**): findings (a), (b) and the advisory (c) open;
+  (d) closed for x64 by `175f614`; its oracle entries never confirmed by CI's LLVM 18.1.3.
+- **Blocked and BLOCKED_EXTERNAL** (see **Blocked**): PE certificates (no signed sample); Frida
+  (REA-C16, 10 rows) and ADB (REA-C26, 25 rows) BLOCKED_EXTERNAL (D-16); JEB (REA-C25, 5 rows)
+  BLOCKED_EXTERNAL (no licence; the user has not ruled); the automatic session hook (D-5); the local
+  machine's toolchain differences.
+
 ## Done (verified in CI)
 - **Baseline re-measured:** see `BASELINE.md`.
 - **Workspace and reconciliation:** this folder; `scripts/status.ts` generates `CAPABILITY-MATRIX.md`.
@@ -56,7 +141,7 @@ points fixed (unchanged). The previous checkpoint was `69dde2e` (Wave 2 item 1, 
     llvm-dwarfdump;
   - rows tagged: list_names, list_procedures, search_procedures, procedure_address,
     procedure_info, address_name, resolve_containing_procedure, binary_overview.
-  - Open within NAT-3's scope:
+  - Open within NAT-3's scope (all consolidated under **Open follow-ups**):
     - the PE COFF symbol table and ARM64 `.pdata`;
     - `LC_FUNCTION_STARTS` against an oracle (the zig fixtures carry an empty table; the
       LearnHarness dylibs carry real ones).
@@ -122,7 +207,7 @@ points fixed (unchanged). The previous checkpoint was `69dde2e` (Wave 2 item 1, 
   - fixture `rust-deps-aarch64-apple-darwin`, sources and `Cargo.lock` in `fixtures/extra-src/rust-deps`;
   - not an Assay sweep probe, on cost (D-12);
   - rows tagged: rea.tool/inspect_rust_binary, LEAN-C29, LEAN-T13.
-  - Known gaps (D-11): ELF, PE and wasm `.dep-v0` have no real fixture (the host has only the
+  - Known gaps (D-11; also under **Open follow-ups**): ELF, PE and wasm `.dep-v0` have no real fixture (the host has only the
     aarch64-apple-darwin std, and no cross route is cleared); wasm is covered only by a synthetic unit
     test; cargo-auditable 0.7.7 records no features, so `features` is checked only against a synthetic
     document. ELF, PE and fat Mach-O were checked by hand only (the real blob spliced into copies of
@@ -150,7 +235,7 @@ points fixed (unchanged). The previous checkpoint was `69dde2e` (Wave 2 item 1, 
     unchanged (38,444 procedures). That direct dump is the corpus evidence, because
     `test/corpus-lh.test.ts` does not exercise procedures. Mutations of the bound and of both notes
     fail the tests.
-  - Follow-up: mutant M6 survives. Every case puts the `.pdata` directory at the start of its
+  - Follow-up (also under **Open follow-ups**): mutant M6 survives. Every case puts the `.pdata` directory at the start of its
     section, so the `- (pd.rva - sec.rva)` term in the room computation is untested. It needs a case
     with the directory partway into the section.
   - Parked ARM64 finding (d) is fixed for x64 by this commit.
@@ -196,7 +281,7 @@ points fixed (unchanged). The previous checkpoint was `69dde2e` (Wave 2 item 1, 
       fails only if Homebrew binutils is on PATH;
     - Assay's LearnHarness tests are Linux-only; CI's check job runs them.
   - The SBX stash is dropped; the ARM64 `.pdata` stash remains.
-  - Open advisories and follow-ups:
+  - Open advisories and follow-ups (all consolidated under **Open follow-ups**):
     - A1: libuv reaps a batch of children before emitting their exit events, so the comment that an
       unreaped root's pid "cannot have been reused" can be wrong for a synchronous abort of run B
       inside run A's callback (`rootLive()` true for an already-reaped B; hit in 2 of 220
@@ -251,7 +336,7 @@ points fixed (unchanged). The previous checkpoint was `69dde2e` (Wave 2 item 1, 
     `parseNm` forge symbols, and the result still says `complete`. A test pins the current forged
     result, so the fix will flip it.
   - LEAN-C14 and LEAN-C46 stay untagged: reax has no consent-gated install step, only an install line.
-  - Follow-ups and advisories:
+  - Follow-ups and advisories (all consolidated under **Open follow-ups**):
     - **Before COD exposes symbols to callers:** mitigate the newline forgery, for example by
       cross-checking against `--format=just-symbols`, or llvm-readobj JSON for ELF; then flip the
       pinned test.
@@ -298,7 +383,7 @@ points fixed (unchanged). The previous checkpoint was `69dde2e` (Wave 2 item 1, 
     - the local bench offers only read operations, and uses a per-run home;
     - the live-arm reax shim sets a per-run `REAX_HOME`;
     - `~/.reax` was never created during this work.
-  - Follow-ups:
+  - Follow-ups (all consolidated under **Open follow-ups**):
     - P2c: `reax.cmd` without `setlocal` (Windows only). Closed by Wave 2 item 0 (`ac70493`), see
       there for what is and is not proven.
     - P3: test the ROLLBACK in `search.symbols`' `finally` (drop `pm_symbol_fts`, then search
@@ -368,7 +453,7 @@ points fixed (unchanged). The previous checkpoint was `69dde2e` (Wave 2 item 1, 
       in both shim tests). A behavioural kill on Windows (without it, `!PATH!` in the directory name
       would expand under `/v:on`, so `pm.db` would land elsewhere) follows from the test but the
       mutant was never run on Windows; not proven.
-  - Advisory: the NUL refusal has no test of its own (the `[-RX-1/bench-live]` test covers `"` and
+  - Advisory (also under **Open follow-ups**): the NUL refusal has no test of its own (the `[-RX-1/bench-live]` test covers `"` and
     LF).
 
 - **Wave 2, item 1: DMN, the daemon, first slice** (`69dde2e`; D-25, D-26; ADR 0007, now accepted).
@@ -416,7 +501,7 @@ points fixed (unchanged). The previous checkpoint was `69dde2e` (Wave 2 item 1, 
     started itself (a stray smoke-test daemon, hung test runs, children of mutated runs); one first
     kill attempt was denied by the auto-mode check. No other process was touched. `~/.reax` was never
     created.
-  - Follow-ups:
+  - Follow-ups (all consolidated under **Open follow-ups**):
     - At the 32-connection cap the client is told `daemon_unauthorized`, not busy (stated limit in
       ADR 0007). **To fix in SCH**, with a retryable busy code or frame.
     - Test gap: the mutation "remove `run/`'s chmod and loosen its check" survives. **To add in SCH.**
@@ -484,7 +569,7 @@ points fixed (unchanged). The previous checkpoint was `69dde2e` (Wave 2 item 1, 
   - Process note: the Coding Agent stopped, by exact pid, two test-runner processes it had started
     (orphaned by its own script timeout); busy-loop load generators were killed through their own
     handles. Nothing else was touched. `~/.reax` was never created.
-  - Follow-ups:
+  - Follow-ups (all consolidated under **Open follow-ups**):
     - Test gap: nothing tests that `dropOwner` forgets the owner's record, or the `MAX_OWNERS` cap.
       The mutation removing `this.#owners.delete(owner)` (`src/sched/scheduler.ts:378`) survives;
       without that line a long-lived daemon would refuse every submit after 1024 connections.
@@ -517,7 +602,7 @@ points fixed (unchanged). The previous checkpoint was `69dde2e` (Wave 2 item 1, 
     1. FAIL: the `.xdata` file-bound guard had no test, and a note was wrong.
     2. FAIL: the walk was not bounded by the section's raw bytes.
     3. FAIL: the open findings below.
-  - Open findings, to fix before it is resumed:
+  - Open findings, to fix before it is resumed (all consolidated under **Open follow-ups**):
     - (a) `src/readers/symbols.ts:556-557` (stash line numbers): when the `.pdata` directory RVA has
       no file bytes (a virtual-only tail, no section, or `SizeOfRawData` 0), `.pdata` is skipped
       silently, with no procedures and no note. That leaves the `sec ? … : 0` fallback in
