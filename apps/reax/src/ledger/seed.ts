@@ -2,7 +2,7 @@
 // the profile section it reads; a renamed or restructured section makes the seeder throw.
 //
 // Re-seeding is idempotent and keeps triage: fields a person or the code sets (fix, phase,
-// platforms, wont, category overrides, reax mapping) survive; only the fields the profile owns
+// platforms, deferred, wont, category overrides, reax mapping) survive; only the fields the profile owns
 // (title, evidence, severity, kind) are refreshed. A row the profile no longer contains is kept and
 // marked orphaned, never deleted.
 
@@ -556,7 +556,7 @@ export function merge<T extends { source: SourceRef | null; orphaned?: boolean }
     const merged = { ...old } as T;
     // The profile wins for the fields it owns, but only where it states a value: a severity or
     // kind the profile leaves "unrated"/"unknown" keeps the triaged one. Category, fix, phase,
-    // platforms, wont and note are triage and are never overwritten.
+    // platforms, deferred (D-33), wont and note are triage and are never overwritten.
     for (const field of owned) if (!UNSTATED.has(f[field] as unknown as string)) merged[field] = f[field];
     delete merged.orphaned;
     out.push(merged);

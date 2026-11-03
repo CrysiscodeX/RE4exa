@@ -8,6 +8,12 @@
 //   exit code not 0                        -> engine_failed, stderr excerpt capped at 2 KiB
 //   output that does not parse             -> engine_output_invalid
 //   outputTruncated                        -> a partial result with a limitation naming the cap
+//   the parser's own limitations           -> a partial result with those limitations (e.g. a
+//                                             name that was not valid UTF-8, D-31)
+// Order of checks before anything starts: the request (validate: bad_request), then the sandbox
+// (sandbox_unavailable when required and not enforced), then the per-run preparation (prepare:
+// arguments and this run's parser, e.g. a per-run path that frames the output; released after the
+// run whatever its outcome).
 // Text taken from the engine's output (stderr, excerpts) is target-derived: it is wrapped in core's
 // untrusted-content envelope before it goes into an error.
 import { createHash } from "node:crypto";
@@ -17,7 +23,7 @@ import { delimiter, join } from "node:path";
 import { CoreError } from "@re4exa/core/errors";
 import { envelope } from "@re4exa/core/policy/taint";
 import "../errors.ts";
-import { runSandboxed } from "../sandbox/index.ts";
+import { requireSandbox, runSandboxed } from "../sandbox/index.ts";
 import type { SandboxResult } from "../sandbox/policy.ts";
 import type { Availability, EngineProvider, EngineResult, EngineRunOptions } from "./contract.ts";
 
@@ -56,6 +62,22 @@ export function firstFile(candidates: string[]): { given: string; real: string }
 
 export const sha256File = (path: string) => createHash("sha256").update(readFileSync(path)).digest("hex");
 
+/** A parser's verdict on one run's stdout. `cut` says the output was cut at the cap (its last line
+ * already dropped), so a record that may continue past the cut can be left out. Limitations make
+ * the result partial. */
+export type ParseResult<Out> =
+  | { ok: true; data: Out; limitations?: string[] }
+  | { ok: false; line: number; text: string };
+export type Parser<Out> = (stdout: string, cut: boolean) => ParseResult<Out>;
+
+/** What one run needs, made after the sandbox check: the engine's arguments (after the launcher's
+ * prefix), the parser for this run's output, and what to undo after the run. */
+export interface PreparedRun<Out> {
+  args: string[];
+  parse: Parser<Out>;
+  release?: () => void;
+}
+
 export interface CommandEngineSpec<Req, Out> {
   id: string;
   operations: readonly string[];
@@ -70,20 +92,21 @@ export interface CommandEngineSpec<Req, Out> {
   minMajor: number;
   /** The per-platform install line (never run). */
   remediation: () => string;
-  /** The engine's arguments for a request (after the launcher's prefix). */
-  args: (req: Req) => string[];
+  /** Check a request before anything is created or started; throws bad_request. */
+  validate?: (req: Req) => void;
+  /** Per run, after the request and sandbox checks: arguments and this run's parser. `scratch` is
+   * the run's scratch directory (the only place the engine may write). */
+  prepare: (req: Req, run: { scratch: string }) => PreparedRun<Out>;
   /** The default cap on stdout and on stderr each. */
   maxOutputBytes: number;
   /** Runs always require the sandbox, whatever the caller's `required` says (engines that read
    * targets; D-22). Only a contract-test engine leaves it off. */
   alwaysRequired: boolean;
-  /** Parse stdout; return null when it does not have the expected format (bad: the first bad line). */
-  parse: (stdout: string) => { ok: true; data: Out } | { ok: false; line: number; text: string };
 }
 
 /** Map a finished sandbox run to an engine result or a typed error. */
 export function mapRun<Out>(
-  spec: Pick<CommandEngineSpec<unknown, Out>, "id" | "parse">,
+  spec: { id: string; parse: Parser<Out> },
   r: SandboxResult,
   signal: AbortSignal | undefined,
   cap: number,
@@ -114,7 +137,7 @@ export function mapRun<Out>(
     const nl = stdout.lastIndexOf("\n");
     stdout = nl >= 0 ? stdout.slice(0, nl + 1) : "";
   }
-  const p = spec.parse(stdout);
+  const p = spec.parse(stdout, r.outputTruncated);
   if (!p.ok)
     throw new CoreError("engine_output_invalid", {
       ...base,
@@ -122,9 +145,10 @@ export function mapRun<Out>(
       line: p.line,
       excerpt: envelope(p.text.slice(0, EXCERPT_CHARS), `${spec.id} output`).text,
     });
+  limitations.push(...(p.limitations ?? []));
   return {
     data: p.data,
-    coverage: r.outputTruncated ? "partial" : "complete",
+    coverage: limitations.length ? "partial" : "complete",
     limitations,
     enforcement: r.enforcement,
     engine,
@@ -187,17 +211,27 @@ export function commandEngine<Req, Out>(spec: CommandEngineSpec<Req, Out>): Engi
         throw new CoreError("engine_unavailable", { engine: spec.id, reason: a.reason, remediation: a.remediation });
       const cap = opts.maxOutputBytes ?? spec.maxOutputBytes;
       const l = launch(a.path);
-      const r = await runSandboxed(
-        [l.program, ...l.prefix, ...spec.args(req)],
-        { scratch: opts.scratch, network: false, required: spec.alwaysRequired || (opts.required ?? true) },
-        {
-          maxOutputBytes: cap,
-          ...(opts.timeoutMs !== undefined ? { timeoutMs: opts.timeoutMs } : {}),
-          ...(opts.signal ? { signal: opts.signal } : {}),
-          ...(opts.forceBackend ? { forceBackend: opts.forceBackend } : {}),
-        },
-      );
-      return mapRun(spec, r, opts.signal, cap, { id: spec.id, path: a.path, version: a.version, sha256: a.sha256 });
+      const required = spec.alwaysRequired || (opts.required ?? true);
+      spec.validate?.(req);
+      // refused before the run's preparation, so a refusal creates nothing in scratch
+      requireSandbox(required, opts.forceBackend);
+      const prepared = spec.prepare(req, { scratch: opts.scratch });
+      try {
+        const r = await runSandboxed(
+          [l.program, ...l.prefix, ...prepared.args],
+          { scratch: opts.scratch, network: false, required },
+          {
+            maxOutputBytes: cap,
+            ...(opts.timeoutMs !== undefined ? { timeoutMs: opts.timeoutMs } : {}),
+            ...(opts.signal ? { signal: opts.signal } : {}),
+            ...(opts.forceBackend ? { forceBackend: opts.forceBackend } : {}),
+          },
+        );
+        const engine = { id: spec.id, path: a.path, version: a.version, sha256: a.sha256 };
+        return mapRun({ id: spec.id, parse: prepared.parse }, r, opts.signal, cap, engine);
+      } finally {
+        prepared.release?.();
+      }
     },
   };
 }

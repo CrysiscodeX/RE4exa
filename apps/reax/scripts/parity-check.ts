@@ -65,6 +65,7 @@ const all = [...ledger.limitations.map((x) => x.row), ...ledger.parity.map((x) =
 const { rows: statuses, unknownTags } = computeStatus(all, lanes, documented);
 const byKey = new Map(statuses.map((s) => [s.key, s]));
 
+for (const s of statuses) if (s.note) notes.push(`${s.key}: ${s.note}`);
 for (const t of unknownTags) problems.push(`a test is tagged with ${t}, which no ledger row has`);
 for (const s of statuses) if (s.status === "regressed") problems.push(`${s.key} regressed: ${s.why}`);
 for (const r of all)

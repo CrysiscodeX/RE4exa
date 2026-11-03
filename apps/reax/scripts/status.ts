@@ -5,10 +5,16 @@
 // - a row counts as "tested" when the test suite carries both its [+KEY] and [-KEY] tags. Whether
 //   those tests passed on every platform is CI's parity job's verdict (scripts/parity-check.ts),
 //   which this script does not repeat;
+// - a tested row is given in one of two columns (D-30): "tested on every listed platform" (no
+//   deferral) or "tested, partial (missing: ...)" (its `deferred` platforms are the missing ones).
+//   A deferred row is never in the first column;
+// - the ledger is read through the loader, so a malformed deferral fails this script too;
 // - weak points and security notes are counted the same way.
 //   node scripts/status.ts [--check]
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { loadLedger } from "../src/ledger/load.ts";
+import type { Deferral } from "../src/ledger/schema.ts";
 
 const REAX = join(import.meta.dirname, "..");
 const LEDGER = join(REAX, "docs", "ledger");
@@ -135,22 +141,33 @@ export const COMPONENTS: Record<string, string[]> = {
 interface Row {
   key: string;
   family?: string | null;
-  phase: number;
+  phase: number | null;
   title: string;
-}
-interface Weak {
-  id: string;
-  category: string;
-  severity: string;
-  phase: number;
-  title: string;
+  deferred?: Deferral;
 }
 
-const jsonl = <T>(p: string): T[] =>
-  readFileSync(p, "utf8")
-    .split("\n")
-    .filter((l) => l.trim())
-    .map((l) => JSON.parse(l) as T);
+/** Tested rows in two columns: on every listed platform (no deferral), and partial (deferred), with
+ * the missing platforms counted. A deferred row is only ever in the second. */
+export interface Split {
+  total: number;
+  full: number;
+  partial: number;
+  missing: Record<string, number>;
+}
+
+export function split<T extends { deferred?: Deferral }>(rows: T[], tested: (r: T) => boolean): Split {
+  const t = rows.filter(tested);
+  const partial = t.filter((r) => r.deferred);
+  const missing: Record<string, number> = {};
+  for (const r of partial) for (const p of r.deferred!.platforms) missing[p] = (missing[p] ?? 0) + 1;
+  return { total: rows.length, full: t.length - partial.length, partial: partial.length, missing };
+}
+
+/** "0", or "3 (missing: win32 3)". */
+export function partialCell(s: Split): string {
+  const m = Object.entries(s.missing).map(([p, n]) => `${p} ${n}`);
+  return m.length ? `${s.partial} (missing: ${m.join(", ")})` : String(s.partial);
+}
 
 /** Every [+KEY] and [-KEY] tag in reax's test files. */
 export function testTags(dir = join(REAX, "test")): { plus: Set<string>; minus: Set<string> } {
@@ -166,16 +183,13 @@ export function familyOf(r: Row): string {
   return r.family ?? r.key.split("/").pop()!;
 }
 
-export function reconcile() {
-  const parity = [
-    ...jsonl<Row>(join(LEDGER, "parity", "rea.jsonl")),
-    ...jsonl<Row>(join(LEDGER, "parity", "leanrea.jsonl")),
-  ];
-  const reaxRows = jsonl<Row>(join(LEDGER, "parity", "reax.jsonl"));
-  const weak = readdirSync(join(LEDGER, "limitations"))
-    .filter((f) => f.endsWith(".jsonl"))
-    .flatMap((f) => jsonl<Weak>(join(LEDGER, "limitations", f)));
-  const { plus, minus } = testTags();
+export function reconcile(ledgerDir = LEDGER, testDir = join(REAX, "test")) {
+  const ledger = loadLedger(ledgerDir);
+  const of = (f: string) => ledger.parity.filter((p) => p.file === f).map((p) => p.row as Row);
+  const parity = [...of("rea.jsonl"), ...of("leanrea.jsonl")];
+  const reaxRows = of("reax.jsonl");
+  const weak = ledger.limitations.map((l) => l.row);
+  const { plus, minus } = testTags(testDir);
   const tested = (k: string) => {
     const short = k.split("/").pop()!;
     return (plus.has(k) || plus.has(short)) && (minus.has(k) || minus.has(short));
@@ -190,20 +204,18 @@ export function reconcile() {
   if (unmapped.length) throw new Error(`parity rows with no component: ${unmapped.map((r) => r.key).join(", ")}`);
   const components = Object.keys(COMPONENTS).map((c) => {
     const rows = parity.filter((r) => owner.get(familyOf(r)) === c);
-    const phases: Record<number, number> = {};
-    for (const r of rows) phases[r.phase] = (phases[r.phase] ?? 0) + 1;
-    return { name: c, rows: rows.length, tested: rows.filter((r) => tested(r.key)).length, phases };
+    const phases: Record<string, number> = {};
+    for (const r of rows) phases[String(r.phase)] = (phases[String(r.phase)] ?? 0) + 1;
+    return { name: c, rows: rows.length, split: split(rows, (r) => tested(r.key)), phases };
   });
   const sum = components.reduce((a, c) => a + c.rows, 0);
   if (sum !== parity.length) throw new Error(`components hold ${sum} rows, the ledger ${parity.length}`);
-  const weakTested = weak.filter((w) => tested(w.id));
   const notes = readFileSync(join(REAX, "docs", "review-notes.md"), "utf8").match(/^### SR-\d+\./gm) ?? [];
   return {
-    parity: { total: parity.length, tested: parity.filter((r) => tested(r.key)).length },
-    reax: { total: reaxRows.length, tested: reaxRows.filter((r) => tested(r.key)).length },
+    parity: split(parity, (r) => tested(r.key)),
+    reax: split(reaxRows, (r) => tested(r.key)),
     weak: {
-      total: weak.length,
-      tested: weakTested.length,
+      ...split(weak, (w) => tested(w.id)),
       openBySeverity: count(weak.filter((w) => !tested(w.id)).map((w) => w.severity)),
     },
     securityNotes: notes.length,
@@ -223,24 +235,28 @@ export function matrix(s: ReturnType<typeof reconcile>): string {
     "",
     "Generated by `scripts/status.ts` from the ledgers and the test suite. Do not edit.",
     "",
-    "**Tested** means the suite has both a `[+KEY]` and a `[-KEY]` test for the row. Whether they passed",
-    "on every platform the row names is the CI parity job's verdict (`scripts/parity-check.ts`).",
+    "**Tested** means the suite has both a `[+KEY]` and a `[-KEY]` test for the row. A tested row is",
+    "**tested on every listed platform** unless the ledger defers some of its platforms by a recorded",
+    "decision (D-30); then it is **tested, partial**, and the deferred platforms are the missing ones.",
+    "A deferred row is never in the first column. **Covered** is the CI parity job's verdict",
+    "(`scripts/parity-check.ts`): passing `[+KEY]` and `[-KEY]` tests on every platform the row lists,",
+    "deferred ones included.",
     "",
-    "| | Tested | Total |",
-    "|---|---:|---:|",
-    `| rea and leanrea capability rows | ${s.parity.tested} | ${s.parity.total} |`,
-    `| reax's own rows | ${s.reax.tested} | ${s.reax.total} |`,
-    `| Recorded weak points | ${s.weak.tested} | ${s.weak.total} |`,
+    "| | Tested on every listed platform | Tested, partial (missing: …) | Total |",
+    "|---|---:|---:|---:|",
+    `| rea and leanrea capability rows | ${s.parity.full} | ${partialCell(s.parity)} | ${s.parity.total} |`,
+    `| reax's own rows | ${s.reax.full} | ${partialCell(s.reax)} | ${s.reax.total} |`,
+    `| Recorded weak points | ${s.weak.full} | ${partialCell(s.weak)} | ${s.weak.total} |`,
     "",
     `Open weak points by severity: ${Object.entries(s.weak.openBySeverity)
       .map(([k, v]) => `${k} ${v}`)
       .join(", ")}. Security review notes: ${s.securityNotes} (status in \`docs/review-notes.md\`).`,
     "",
-    "| Component | Rows | Tested | By phase |",
-    "|---|---:|---:|---|",
+    "| Component | Rows | Tested on every listed platform | Tested, partial (missing: …) | By phase |",
+    "|---|---:|---:|---:|---|",
     ...s.components.map(
       (c) =>
-        `| ${c.name} | ${c.rows} | ${c.tested} | ${Object.entries(c.phases)
+        `| ${c.name} | ${c.rows} | ${c.split.full} | ${partialCell(c.split)} | ${Object.entries(c.phases)
           .map(([p, n]) => `p${p}: ${n}`)
           .join(", ")} |`,
     ),

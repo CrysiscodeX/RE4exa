@@ -1,6 +1,8 @@
 // The parity report: counts per ledger file and status, the gate result, and every row that is not
 // planned. Written to reports/parity.md and to the CI step summary; never committed, because the
 // numbers belong to one CI run.
+// rea and leanrea rows are given as two numbers (D-30): covered (passing on every platform the row
+// lists, deferred ones included) and tested, partial (with the missing platforms grouped).
 
 import type { Lane, RowStatus } from "./status.ts";
 
@@ -10,6 +12,21 @@ export interface ReportInput {
   gate: { phase: number; kind: string | null; failures: RowStatus[] } | null;
   problems: string[];
   notes: string[];
+}
+
+/** The ledger files whose rows are reported as two numbers. */
+export const TWO_NUMBER_FILES = ["parity/rea.jsonl", "parity/leanrea.jsonl"];
+
+/** "rea and leanrea: covered N of T; tested, partial M (missing: win32 M)". Only a covered row counts
+ * as covered; a partial one counts only in the second number. */
+export function twoNumbers(files: ReportInput["files"]): string {
+  const rows = files.filter((f) => TWO_NUMBER_FILES.includes(f.file)).flatMap((f) => f.statuses);
+  const covered = rows.filter((s) => s.status === "covered").length;
+  const partial = rows.filter((s) => s.status === "partial");
+  const by = new Map<string, number>();
+  for (const s of partial) for (const p of s.missing) by.set(p, (by.get(p) ?? 0) + 1);
+  const groups = [...by.entries()].map(([p, n]) => `${p} ${n}`).join(", ");
+  return `rea and leanrea: covered ${covered} of ${rows.length}; tested, partial ${partial.length}${groups ? ` (missing: ${groups})` : ""}`;
 }
 
 const ORDER = ["covered", "fixed", "partial", "planned", "regressed", "wont"] as const;
@@ -37,6 +54,7 @@ export function renderReport(r: ReportInput): string {
     out.push(`| ${f.file} | ${f.statuses.length} | ${ORDER.map((k) => n[k] ?? 0).join(" | ")} | ${t} |`);
   }
   out.push(`| **all** | ${rows} | ${ORDER.map((k) => total[k] ?? 0).join(" | ")} | ${triaged} |`, "");
+  if (r.files.some((f) => TWO_NUMBER_FILES.includes(f.file))) out.push(`**${twoNumbers(r.files)}.**`, "");
   if (r.gate) {
     const n = r.gate.failures.length;
     const what = `${r.gate.kind ? `${r.gate.kind} ` : ""}row`;

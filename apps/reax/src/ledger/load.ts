@@ -1,4 +1,5 @@
-// Load every ledger row from docs/ledger, validate it, and refuse a key that appears twice.
+// Load every ledger row from docs/ledger, validate it, refuse a key that appears twice, and refuse a
+// deferral whose lifting row does not exist.
 
 import { join } from "node:path";
 import { readDir } from "./io.ts";
@@ -26,5 +27,11 @@ export function loadLedger(ledgerDir: string): Ledger {
     validateParity(row);
     claim(row.key, `parity/${file}`);
   }
+  // a deferral names the row whose item would lift it: that row must exist (D-33)
+  for (const row of [...limitations.map((x) => x.row), ...parity.map((x) => x.row)])
+    if (row.deferred && !seen.has(row.deferred.until))
+      throw new Error(
+        `ledger row ${"id" in row ? row.id : row.key}: deferred.until names ${row.deferred.until}, which no ledger row has`,
+      );
   return { limitations, parity };
 }

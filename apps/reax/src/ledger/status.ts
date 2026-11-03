@@ -10,9 +10,15 @@
 //   wont                               a reviewed decision with a reason
 //
 // A row that names an operation is covered only when docs/operations.md documents it.
+// A deferred row (D-30, D-33) follows the same rule over every platform it lists, deferred ones
+// included: it is never covered while a deferred platform is missing. When its only missing
+// platforms are deferred ones it is partial, with the reason "tested, partial (missing: win32;
+// deferred by D-30 until RX-SBX/windows-engines)". A failing test on any lane, a deferred one
+// included, still makes it regressed. If a deferred platform passes too, the row is covered and
+// carries a note to remove the deferral.
 
 import { type Case, tagsOf } from "./junit.ts";
-import type { LimitationRow, ParityRow, Platform } from "./schema.ts";
+import type { Deferral, LimitationRow, ParityRow, Platform } from "./schema.ts";
 
 export type Computed = "planned" | "partial" | "covered" | "fixed" | "regressed" | "wont";
 
@@ -34,6 +40,12 @@ export interface RowStatus {
   status: Computed;
   why: string;
   phase: number | null;
+  /** Platforms the row lists without a passing [+key] and [-key] test (no lane counts as missing). */
+  missing: Platform[];
+  /** The row's deferral, copied. */
+  deferred?: Deferral;
+  /** Advice that is not a failure (a deferred platform that now passes). */
+  note?: string;
 }
 
 interface Tally {
@@ -70,38 +82,60 @@ export function computeStatus(
     const key = "id" in r ? r.id : r.key;
     const isLimit = "id" in r;
     const done: Computed = isLimit ? "fixed" : "covered";
+    const d = r.deferred;
+    const base = { key, phase: r.phase, ...(d ? { deferred: d } : {}) };
     if (r.wont) {
-      out.push({ key, status: "wont", why: `wont: ${r.wont.reason} (${r.wont.reviewer})`, phase: r.phase });
+      out.push({ ...base, status: "wont", why: `wont: ${r.wont.reason} (${r.wont.reviewer})`, missing: [] });
       continue;
     }
     const perLane = t.get(key);
     if (!perLane) {
-      out.push({ key, status: "planned", why: "no tagged test ran", phase: r.phase });
+      out.push({ ...base, status: "planned", why: "no tagged test ran", missing: [...r.platforms] });
       continue;
     }
+    // every lane, deferred platforms included
     const failures = [...perLane.values()].flatMap((x) => x.failed);
-    if (failures.length) {
-      out.push({ key, status: "regressed", why: `failed: ${failures.slice(0, 3).join("; ")}`, phase: r.phase });
-      continue;
-    }
-    const missing: string[] = [];
+    const reasons: string[] = [];
+    const missing: Platform[] = [];
+    // every platform the row lists, deferred ones included
     for (const p of r.platforms) {
       const ls = lanes.filter((l) => l.platform === p);
       if (!ls.length) {
-        missing.push(`${p}: no lane in this run`);
+        reasons.push(`${p}: no lane in this run`);
+        missing.push(p);
         continue;
       }
       const pos = ls.some((l) => (perLane.get(l.name)?.pos.size ?? 0) > 0);
       const neg = ls.some((l) => (perLane.get(l.name)?.neg.size ?? 0) > 0);
-      if (!pos) missing.push(`${p}: no passing [+${key}] test`);
-      if (!neg) missing.push(`${p}: no passing [-${key}] test`);
+      if (!pos) reasons.push(`${p}: no passing [+${key}] test`);
+      if (!neg) reasons.push(`${p}: no passing [-${key}] test`);
+      if (!pos || !neg) missing.push(p);
+    }
+    if (failures.length) {
+      out.push({ ...base, status: "regressed", why: `failed: ${failures.slice(0, 3).join("; ")}`, missing });
+      continue;
     }
     const op = "reax" in r ? r.reax.operation : null;
-    if (op && !documented(op)) missing.push(`operation ${op} is not in docs/operations.md`);
+    const undocumented = !!op && !documented(op);
+    if (undocumented) reasons.push(`operation ${op} is not in docs/operations.md`);
     const anyPass = [...perLane.values()].some((x) => x.pos.size + x.neg.size > 0);
-    if (!missing.length)
-      out.push({ key, status: done, why: "all required lanes passed + and - tests", phase: r.phase });
-    else out.push({ key, status: anyPass ? "partial" : "planned", why: missing.join("; "), phase: r.phase });
+    if (!reasons.length) {
+      const note = d ? `deferred platform now passes: remove the deferral (${d.decision})` : undefined;
+      out.push({
+        ...base,
+        status: done,
+        why: `all required lanes passed + and - tests${note ? `; ${note}` : ""}`,
+        missing,
+        ...(note ? { note } : {}),
+      });
+    } else {
+      const onlyDeferred = !!d && !undocumented && missing.every((p) => d.platforms.includes(p));
+      const why =
+        onlyDeferred && anyPass
+          ? `tested, partial (missing: ${missing.join(", ")}; deferred by ${d.decision} until ${d.until})`
+          : reasons.join("; ");
+      out.push({ ...base, status: anyPass ? "partial" : "planned", why, missing });
+    }
   }
   return { rows: out, unknownTags };
 }

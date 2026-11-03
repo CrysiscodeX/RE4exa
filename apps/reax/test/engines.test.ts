@@ -23,10 +23,19 @@ import { delimiter, join } from "node:path";
 import { test } from "node:test";
 import { isCoreError } from "@re4exa/core/errors";
 import { setSpawnObserver } from "@re4exa/core/vendor/orca-process-host/spawn-observer";
-import { llvmCandidates, llvmProvider, llvmSpec, llvmVersion, type NmSymbol, parseNm } from "../src/engines/llvm.ts";
+import { deriveNameFixtures } from "../scripts/name-fixtures.ts";
+import {
+  llvmCandidates,
+  llvmProvider,
+  llvmSpec,
+  llvmVersion,
+  type NmSymbol,
+  nmFrame,
+  parseNm,
+} from "../src/engines/llvm.ts";
 import { provider, providers, registerProvider } from "../src/engines/registry.ts";
-import { type CommandEngineSpec, commandEngine } from "../src/engines/run.ts";
-import { sandboxBackend } from "../src/sandbox/index.ts";
+import { type CommandEngineSpec, commandEngine, mapRun } from "../src/engines/run.ts";
+import { type SandboxResult, sandboxBackend } from "../src/sandbox/index.ts";
 
 const FAKE = join(import.meta.dirname, "fixtures", "fake-engine.mjs");
 const REAX = join(import.meta.dirname, "..");
@@ -73,13 +82,13 @@ function fakeSpec(o: { candidates?: string[]; claim?: string } = {}): CommandEng
     parseVersion: (out) => /^fake-engine version (\S+)$/m.exec(out)?.[1] ?? null,
     minMajor: 18,
     remediation: () => "install it with: fake-pkg add fake-engine",
-    args: (r) => [r.mode, ...(r.n !== undefined ? [String(r.n)] : [])],
     maxOutputBytes: 1 << 20,
     alwaysRequired: false,
-    parse: (s) => {
-      const p = parseNm(s);
-      return p.ok ? { ok: true, data: p.data } : p;
-    },
+    // the fake prints unframed llvm-nm -P lines (no -A): each is framed here with a fixed prefix
+    prepare: (r) => ({
+      args: [r.mode, ...(r.n !== undefined ? [String(r.n)] : [])],
+      parse: (s, cut) => parseNm(s.replace(/^(?=.)/gm, "F: "), "F: ", cut),
+    }),
   };
 }
 const fake = (o: { candidates?: string[]; claim?: string } = {}) => commandEngine(fakeSpec(o));
@@ -533,32 +542,196 @@ test("[-RX-ENG/llvm] where no sandbox is enforced, an LLVM run on a target is re
   }
 });
 
-test("known limit: a symbol name with a newline is read as two symbols, the first forged by the target (docs/engines-known-limits.md)", {
+// ------------------------------------------------------------------- llvm-nm framing (D-31)
+
+const NAMES = JSON.parse(readFileSync(join(REAX, "bench", "oracle", "names.json"), "utf8")) as {
+  source: string;
+  slot: string;
+  cases: Record<string, { sha256: string; hex: string; readobj: { name: string; value: string; size: number }[] }>;
+};
+/** The slot's own llvm-nm type in the committed key (llvm-nm, not reax's readers). */
+const SLOT_TYPE = KEY[NAMES.source]!.slices[0]!.symtab!.find((x) => x.name === NAMES.slot)!.cls;
+
+/** The crafted copies (scripts/name-fixtures.ts) in a temp dir, each checked against its pin. */
+function crafted() {
+  const d = scratchDir();
+  return { ...d, files: deriveNameFixtures(d.root, join(REAX, "fixtures", "bin")) };
+}
+
+test("[+RX-ENG/nm-names] a symbol name with a newline is read as one symbol, exactly", {
   skip: noLlvmRun,
 }, async () => {
-  // a copy of a fixture whose 14-byte name "_IO_stdin_used" is replaced by "a T 1 1\nevil_x"
-  const d = scratchDir();
+  const d = crafted();
   try {
-    const b = readFileSync(join(REAX, "fixtures", "bin", "hello-x86_64-linux-gnu.2.28-g"));
-    const from = Buffer.from("\0_IO_stdin_used\0", "latin1");
-    const to = Buffer.from("\0a T 1 1\nevil_x\0", "latin1");
-    assert.equal(from.length, to.length);
-    let n = 0;
-    for (let i = b.indexOf(from); i >= 0 && n < 16; i = b.indexOf(from, i + 1), n++) to.copy(b, i);
-    assert.ok(n >= 1);
-    const target = join(d.root, "forged.elf");
-    writeFileSync(target, b);
-    const r = await llvm.run({ target }, { scratch: d.scratch, timeoutMs: 30_000 });
-    // current behaviour, to be turned around when the parser is fixed
+    const f = d.files.find((x) => x.case.id === "newline")!;
+    const r = await llvm.run({ target: f.path }, { scratch: d.scratch, timeoutMs: 30_000 });
     assert.equal(r.coverage, "complete");
     assert.deepEqual(
-      r.data.filter((x) => ["a", "evil_x", "_IO_stdin_used"].includes(x.name)),
-      [
-        { name: "a", type: "T", addr: "0x1", size: 1 },
-        { name: "evil_x", type: "R", addr: "0x1000480", size: 4 },
-      ],
+      r.data.filter((x) => ["a", "evil_x", "_IO_stdin_used", "a T 1 1\nevil_x"].includes(x.name)),
+      [{ name: "a T 1 1\nevil_x", type: "R", addr: "0x1000480", size: 4 }],
     );
+    assert.deepEqual(readdirSync(d.scratch), [], "the per-run path is removed after the run");
   } finally {
     d.done();
   }
+});
+
+test("[+RX-ENG/nm-names] each crafted name is returned exactly once, as constructed, with the real type, address and size, and nothing else changes", {
+  skip: noLlvmRun,
+}, async () => {
+  const d = crafted();
+  try {
+    const target = join(REAX, "fixtures", "bin", NAMES.source);
+    const base = (await llvm.run({ target }, { scratch: d.scratch, timeoutMs: 30_000 })).data;
+    assert.equal(base.filter((x) => x.name === NAMES.slot).length, 1);
+    const line = (x: NmSymbol) => JSON.stringify([x.name, x.type, x.addr, x.size]);
+    assert.equal(Object.keys(NAMES.cases).length, d.files.length);
+    for (const f of d.files) {
+      const k = NAMES.cases[f.case.id]!;
+      assert.equal(f.sha256, k.sha256, `${f.case.id}: the derived file is the one the key was made from`);
+      assert.equal(k.readobj.length, 1);
+      const want = {
+        name: f.name.toString("utf8"),
+        type: SLOT_TYPE,
+        addr: k.readobj[0]!.value,
+        size: k.readobj[0]!.size,
+      };
+      assert.equal(want.name, k.readobj[0]!.name, `${f.case.id}: the construction is what llvm-readobj reads`);
+      const r = await llvm.run({ target: f.path }, { scratch: d.scratch, timeoutMs: 30_000 });
+      assert.deepEqual(
+        r.data.map(line).sort(),
+        base
+          .map((x) => (x.name === NAMES.slot ? want : x))
+          .map(line)
+          .sort(),
+        `${f.case.id}: only the crafted name differs from the source's listing`,
+      );
+      assert.equal(r.coverage, f.case.id === "not-utf8" ? "partial" : "complete", f.case.id);
+    }
+  } finally {
+    d.done();
+  }
+});
+
+test("[-RX-ENG/nm-names] a name that is not valid UTF-8 makes the result partial, with a limitation that counts it", {
+  skip: noLlvmRun,
+}, async () => {
+  const d = crafted();
+  try {
+    const f = d.files.find((x) => x.case.id === "not-utf8")!;
+    const r = await llvm.run({ target: f.path }, { scratch: d.scratch, timeoutMs: 30_000 });
+    assert.equal(r.coverage, "partial");
+    assert.deepEqual(r.limitations.length, 1);
+    assert.match(r.limitations[0]!, /^1 symbol name is not valid UTF-8 .*U\+FFFD/);
+    assert.equal(r.data.filter((x) => x.name.includes("�")).length, 1);
+  } finally {
+    d.done();
+  }
+});
+
+test("[-RX-ENG/nm-names] parseNm refuses output that does not frame, and keeps every byte of a framed name", () => {
+  const P = "/s/0123456789abcdef0123456789abcdef/t: ";
+  const ok = (s: string, cut = false) => {
+    const r = parseNm(s, P, cut);
+    assert.ok(r.ok, JSON.stringify(r));
+    return r;
+  };
+  const bad = (s: string, line: number) => {
+    const r = parseNm(s, P);
+    assert.equal(r.ok, false, JSON.stringify(s));
+    if (!r.ok) assert.equal(r.line, line, JSON.stringify(s));
+  };
+  bad("a T 1 1\n", 1); // the first line lacks the prefix
+  bad("/s/0123456789abcdef0123456789abcdee/t: a T 1 1\n", 1); // another path
+  bad(`${P}a T 1\n`, 1); // a bad tail (no size)
+  bad(`${P}a T 1 1\n${P}b TT 2 2\n`, 2);
+  bad(`${P}a T 1 1\n${P.slice(0, -2)}[m.o]: b T 2 2\n`, 2); // an archive member's framing
+  bad(`${P}a T 1 1`, 1); // no final newline
+  assert.throws(() => parseNm("", ""), /per-run prefix/);
+  assert.throws(() => parseNm("", "a T 1 1\n: "), /per-run prefix/);
+  assert.deepEqual(ok("").data, []);
+  assert.deepEqual(ok(`\n${P}a T 1 1\n`).data, [{ name: "a", type: "T", addr: "0x1", size: 1 }]);
+  // continuation lines join the name; a guessed prefix, CR, tabs and field-like spaces stay in it
+  const names = (s: string) => ok(s).data.map((x) => x.name);
+  assert.deepEqual(names(`${P}a T 1 1\nevil_x R 1000480 4\n`), ["a T 1 1\nevil_x"]);
+  assert.deepEqual(names(`${P}crlf\r\nx\r T 10 1\n`), ["crlf\r\nx\r"]);
+  assert.deepEqual(names(`${P}q\n/gg: z T 2 0 R 10 4\n`), ["q\n/gg: z T 2 0"]);
+  assert.deepEqual(names(`${P}x T 10 T 20 30 R 10 4\n${P}\t y\t T 2 0\n`), ["x T 10 T 20 30", "\t y\t"]);
+  assert.deepEqual(names(`${P}a\n\nb T 1 1\n`), ["a\n\nb"]);
+  // a cut output leaves out its last record, which may be missing continuation lines
+  assert.deepEqual(
+    ok(`${P}a T 1 1\n${P}b T 2 2\n`, true).data.map((x) => x.name),
+    ["a"],
+  );
+  assert.deepEqual(ok(`${P}a� T 1 1\n`).limitations?.length, 1);
+  assert.deepEqual(ok(`${P}a T 1 1\n`).limitations, []);
+});
+
+test("[+RX-ENG/nm-names] each run frames llvm-nm's output with a fresh, unguessable path, removed after the run", {
+  skip: posixOnly,
+}, () => {
+  const d = scratchDir();
+  try {
+    const target = join(REAX, "fixtures", "bin", NAMES.source);
+    const a = nmFrame(target, d.scratch);
+    const b = nmFrame(target, d.scratch);
+    assert.notEqual(a.prefix, b.prefix);
+    for (const f of [a, b]) {
+      assert.match(f.link, /[/\\][0-9a-f]{32}[/\\]hello-x86_64-linux-gnu\.2\.28-g$/);
+      assert.equal(f.prefix, `${f.link}: `);
+      assert.equal(realpathSync(f.link), realpathSync(target));
+    }
+    // a name that guesses another run's prefix is a continuation line in this run
+    const forged = `${a.prefix}x T 1 1\n${b.prefix}z T 2 0\n`;
+    assert.deepEqual(
+      (parseNm(forged, a.prefix) as { data: NmSymbol[] }).data.map((x) => x.name),
+      [`x T 1 1\n${b.prefix}z`],
+    );
+    const odd = nmFrame(join(d.root, "odd name\n.elf"), d.scratch);
+    assert.match(odd.link, /[/\\][0-9a-f]{32}[/\\]target$/, "a file name that is not plain is not used");
+    for (const f of [a, b, odd]) f.release();
+    assert.deepEqual(readdirSync(d.scratch), []);
+  } finally {
+    d.done();
+  }
+});
+
+test("[-RX-ENG/nm-names] an archive is refused with bad_request before anything starts (its member names cannot be framed)", async () => {
+  assert.ok(found.available, "LLVM is needed to reach the request check");
+  const d = scratchDir();
+  const started: string[] = [];
+  try {
+    await llvm.discover();
+    setSpawnObserver((cmd, args) => started.push([cmd, ...args].join(" ")));
+    await assert.rejects(
+      llvm.run({ target: join(REAX, "fixtures", "bin", "lib-x86_64-windows-gnu-s.lib") }, { scratch: d.scratch }),
+      (e) => isCoreError(e, "bad_request") && /archive/.test(String(e.detail?.why)),
+    );
+    assert.deepEqual(started, [], "nothing was started");
+    assert.deepEqual(readdirSync(d.scratch), []);
+  } finally {
+    setSpawnObserver(null);
+    d.done();
+  }
+});
+
+test("[-RX-ENG/contract] an abort that arrives after the engine exits 0 gives engine_cancelled", () => {
+  const ac = new AbortController();
+  ac.abort();
+  const r: SandboxResult = {
+    code: 0,
+    signal: null,
+    stdout: "",
+    stderr: "",
+    timedOut: false,
+    outputTruncated: false,
+    enforcement: "none",
+  };
+  const engine = { id: "fake", path: "/x", version: "18.2.0", sha256: "0" };
+  const spec = { id: "fake", parse: () => ({ ok: true as const, data: [] }) };
+  assert.throws(
+    () => mapRun(spec, r, ac.signal, 1024, engine),
+    (e) => isCoreError(e, "engine_cancelled"),
+  );
+  assert.deepEqual(mapRun(spec, r, new AbortController().signal, 1024, engine).data, [], "not aborted: the result");
 });

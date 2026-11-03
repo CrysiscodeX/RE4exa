@@ -4,8 +4,12 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "nod
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after, before, test } from "node:test";
+import { matrix, reconcile } from "../scripts/status.ts";
 import { type Case, parseJunit, tagsOf } from "../src/ledger/junit.ts";
+import { loadLedger } from "../src/ledger/load.ts";
+import { renderReport, twoNumbers } from "../src/ledger/report.ts";
 import type { LimitationRow, ParityRow, Platform } from "../src/ledger/schema.ts";
+import { merge, OWNED } from "../src/ledger/seed.ts";
 import { computeStatus, gateFailures, laneOf } from "../src/ledger/status.ts";
 
 const REAX = join(import.meta.dirname, "..");
@@ -242,5 +246,168 @@ test("[-RX-0b/unknown-tags] parity-check exits 1 on an unknown tag, a regression
     assert.match(runCheck(ledger, join(d, "reports")).stderr, /no JUnit reports/);
   } finally {
     rmSync(d, { recursive: true, force: true });
+  }
+});
+
+// --------------------------------------------------------------- deferred platforms (D-30, D-33)
+
+const DEFER = { platforms: ["win32" as Platform], decision: "D-30", until: "RX-SBX/windows-engines" };
+const deferredRow = (key: string, over: Partial<ParityRow> = {}) => row(key, { deferred: DEFER, phase: 1, ...over });
+const one = (rows: ParityRow[], ls: ReturnType<typeof lanes>, key: string) =>
+  computeStatus(rows, ls, () => true).rows.find((s) => s.key === key)!;
+
+test("[+RX-0b/deferred] a deferred row passing on linux and darwin only is partial, missing win32, with the D-30 reason; passing on win32 too it is covered, with a note to remove the deferral", () => {
+  const r = deferredRow("D");
+  // win32 runs only the refusal test, as the COD rows do
+  const s = one([r], lanes({ linux: both("D"), darwin: both("D"), win32: [c("[-D] refuses")] }), "D");
+  assert.equal(s.status, "partial");
+  assert.deepEqual(s.missing, ["win32"]);
+  assert.equal(s.why, "tested, partial (missing: win32; deferred by D-30 until RX-SBX/windows-engines)");
+  assert.deepEqual(s.deferred, DEFER);
+  assert.equal(s.note, undefined);
+  const full = one([r], lanes({ linux: both("D"), darwin: both("D"), win32: both("D") }), "D");
+  assert.equal(full.status, "covered");
+  assert.deepEqual(full.missing, []);
+  assert.equal(full.note, "deferred platform now passes: remove the deferral (D-30)");
+  assert.match(full.why, /remove the deferral/);
+  // a row missing a platform it does not defer gets the ordinary reason
+  const other = one([r], lanes({ linux: both("D"), win32: both("D") }), "D");
+  assert.equal(other.status, "partial");
+  assert.match(other.why, /^darwin: no lane in this run$/);
+});
+
+test("[+RX-0b/deferred] the parity report gives rea and leanrea rows as two numbers, covered counting only rows passing everywhere", () => {
+  const rows = [row("A"), deferredRow("D"), row("P")];
+  const ls = lanes({ linux: [...both("A"), ...both("D")], darwin: [...both("A"), ...both("D")], win32: both("A") });
+  const st = computeStatus([...rows, row("X")], ls, () => true).rows;
+  const by = (k: string) => st.find((s) => s.key === k)!;
+  const files = [
+    { file: "parity/rea.jsonl", statuses: [by("A"), by("D")] },
+    { file: "parity/leanrea.jsonl", statuses: [by("P")] },
+    { file: "parity/reax.jsonl", statuses: [by("X")] },
+  ];
+  assert.equal(twoNumbers(files), "rea and leanrea: covered 1 of 3; tested, partial 1 (missing: win32 1)");
+  const md = renderReport({ files, lanes: ls, gate: null, problems: [], notes: [] });
+  assert.match(md, /\*\*rea and leanrea: covered 1 of 3; tested, partial 1 \(missing: win32 1\)\.\*\*/);
+  assert.match(
+    md,
+    /\| D \| 1 \| partial \| tested, partial \(missing: win32; deferred by D-30 until RX-SBX\/windows-engines\) \|/,
+  );
+  assert.equal(twoNumbers([files[2]!]), "rea and leanrea: covered 0 of 0; tested, partial 0");
+});
+
+/** A temporary ledger and test directory for scripts/status.ts: rea rows of one mapped family. */
+function statusFixture(reaRows: ParityRow[], tags: string[]) {
+  const d = mkdtempSync(join(tmpdir(), "reax-status-"));
+  mkdirSync(join(d, "ledger", "parity"), { recursive: true });
+  mkdirSync(join(d, "ledger", "limitations"), { recursive: true });
+  mkdirSync(join(d, "test"));
+  const put = (f: string, rs: ParityRow[]) =>
+    writeFileSync(join(d, "ledger", "parity", f), rs.map((x) => JSON.stringify(x)).join("\n"));
+  put("rea.jsonl", reaRows);
+  put("leanrea.jsonl", []);
+  put("reax.jsonl", [row("RX-SBX/windows-engines", { platforms: ["win32"] })]);
+  writeFileSync(join(d, "test", "t.test.ts"), tags.map((t) => `// ${t}`).join("\n"));
+  return { s: reconcile(join(d, "ledger"), join(d, "test")), done: () => rmSync(d, { recursive: true, force: true }) };
+}
+
+test("[+RX-0b/deferred] status.ts puts a tagged deferred row only under tested, partial, with its missing platform", () => {
+  const fam = { family: "REA-C08", kind: "rea-tool" as const };
+  const f = statusFixture(
+    [row("rea.tool/zz_full", fam), deferredRow("rea.tool/zz_deferred", fam), row("rea.tool/zz_none", fam)],
+    ["[+rea.tool/zz_full]", "[-rea.tool/zz_full]", "[+rea.tool/zz_deferred]", "[-rea.tool/zz_deferred]"],
+  );
+  try {
+    assert.deepEqual(f.s.parity, { total: 3, full: 1, partial: 1, missing: { win32: 1 } });
+    const md = matrix(f.s);
+    assert.match(md, /\| rea and leanrea capability rows \| 1 \| 1 \(missing: win32 1\) \| 3 \|/);
+    assert.match(md, /\| Code-level analysis \| 3 \| 1 \| 1 \(missing: win32 1\) \| p0: 2, p1: 1 \|/);
+    assert.match(md, /never in the first column/);
+  } finally {
+    f.done();
+  }
+});
+
+test("[+RX-0b/deferred] a re-seed keeps a row's deferral (it is triage, like platforms and wont)", () => {
+  const seeded = { file: "docs/profiles/rea.md", section: "### 3.", key: "x" };
+  const old = { ...row("rea.tool/x", { source: seeded }), deferred: DEFER };
+  const fresh = row("rea.tool/x", { title: "reworded", source: seeded });
+  const [m] = merge([old], [fresh], (r) => r.key, OWNED.parity, new Set([seeded.file]));
+  assert.equal(m!.title, "reworded");
+  assert.deepEqual(m!.deferred, DEFER);
+});
+
+test("[-RX-0b/deferred] the loader refuses each malformed deferral", () => {
+  const d = mkdtempSync(join(tmpdir(), "reax-defer-"));
+  mkdirSync(join(d, "parity"), { recursive: true });
+  const lift = row("RX-SBX/windows-engines", { platforms: ["win32"] });
+  const load = (r: object) => {
+    writeFileSync(join(d, "parity", "x.jsonl"), [lift, r].map((x) => JSON.stringify(x)).join("\n"));
+    return () => loadLedger(d);
+  };
+  const withD = (over: object, rowOver: Partial<ParityRow> = {}) =>
+    load({ ...row("K", rowOver), deferred: { ...DEFER, ...over } });
+  try {
+    assert.doesNotThrow(withD({}));
+    assert.throws(withD({ platforms: ["beos"] }), /deferred: unknown platform beos/);
+    assert.throws(withD({ platforms: [] }), /deferred.platforms is empty/);
+    assert.throws(withD({}, { platforms: ["linux", "darwin"] }), /win32 is not one of the row's platforms/);
+    assert.throws(withD({ platforms: ["linux", "darwin", "win32"] }), /every platform is deferred/);
+    assert.throws(withD({ platforms: ["win32"] }, { platforms: ["win32"] }), /every platform is deferred/);
+    assert.throws(withD({ platforms: ["win32", "win32"] }), /listed twice/);
+    for (const decision of ["D30", "d-30", "D-", "D-30 ", "ADR-1"])
+      assert.throws(withD({ decision }), /decision id such as D-30/, decision);
+    assert.throws(
+      withD({ until: "RX-SBX/no-such-row" }),
+      /deferred.until names RX-SBX\/no-such-row, which no ledger row has/,
+    );
+    assert.throws(withD({ until: "" }), /must be a ledger key/);
+    assert.throws(withD({}, { wont: { reason: "r", reviewer: "x" } }), /a wont cannot also defer/);
+    assert.throws(load({ ...row("K"), deferred: null }), /deferred needs platforms/);
+    // limitation rows follow the same rules
+    writeFileSync(join(d, "parity", "x.jsonl"), JSON.stringify(lift));
+    mkdirSync(join(d, "limitations"), { recursive: true });
+    const limit = { ...lim("L-9"), platforms: ["linux", "win32"], deferred: { ...DEFER, until: "NOPE" } };
+    writeFileSync(join(d, "limitations", "x.jsonl"), JSON.stringify(limit));
+    assert.throws(() => loadLedger(d), /L-9: deferred.until names NOPE/);
+  } finally {
+    rmSync(d, { recursive: true, force: true });
+  }
+});
+
+test("[-RX-0b/deferred] a failing test on a deferred platform's lane makes the row regressed", () => {
+  const s = one(
+    [deferredRow("D")],
+    lanes({ linux: both("D"), darwin: both("D"), win32: [c("[-D] refuses"), c("[-D] refuses again", "fail")] }),
+    "D",
+  );
+  assert.equal(s.status, "regressed");
+  assert.match(s.why, /refuses again/);
+});
+
+test("[-RX-0b/deferred] a deferred row is never counted as covered or as tested on every listed platform, and a gate including it fails", () => {
+  const ls = lanes({ linux: both("D"), darwin: both("D") });
+  const st = computeStatus([deferredRow("D")], ls, () => true).rows;
+  assert.equal(st[0]!.status, "partial");
+  assert.equal(
+    twoNumbers([{ file: "parity/leanrea.jsonl", statuses: st }]).startsWith("rea and leanrea: covered 0 of 1;"),
+    true,
+  );
+  assert.deepEqual(
+    gateFailures(st, 1).map((s) => s.key),
+    ["D"],
+    "inside its phase the gate lists it",
+  );
+  assert.deepEqual(gateFailures(st, 0), [], "a gate before its phase does not");
+  const f = statusFixture(
+    [deferredRow("leanrea/zz_only", { family: "LEAN-C08", kind: "leanrea-capability" })],
+    ["[+leanrea/zz_only]", "[-leanrea/zz_only]"],
+  );
+  try {
+    assert.equal(f.s.parity.full, 0);
+    assert.equal(f.s.parity.partial, 1);
+    assert.match(matrix(f.s), /\| rea and leanrea capability rows \| 0 \| 1 \(missing: win32 1\) \| 1 \|/);
+  } finally {
+    f.done();
   }
 });

@@ -93,6 +93,21 @@ export function sandboxBackend(): SandboxBackend {
 const enforces = (b: SandboxBackend): b is SandboxBackend & { name: "sandbox-exec" | "landlock" } =>
   b.name === "sandbox-exec" || b.name === "landlock";
 
+/** The backend a run would use; throws sandbox_unavailable when the run requires enforcement and
+ * none is available. runSandboxed calls it first; a caller may call it earlier, before it prepares
+ * anything for the run (nothing is created or started when it throws). */
+export function requireSandbox(required: boolean, forceBackend?: "none"): SandboxBackend {
+  const backend: SandboxBackend =
+    forceBackend === "none" ? { name: "none", why: "forced to none (test seam)" } : sandboxBackend();
+  if (!enforces(backend) && required)
+    throw new CoreError("sandbox_unavailable", {
+      platform: process.platform,
+      backend: backend.name,
+      why: backend.why,
+    });
+  return backend;
+}
+
 export async function runSandboxed(
   argv: readonly string[],
   policy: SandboxPolicy,
@@ -105,14 +120,7 @@ export async function runSandboxed(
     });
   if (policy.network !== false)
     throw new CoreError("bad_request", { field: "policy.network", why: "only false (no network) is supported" });
-  const backend: SandboxBackend =
-    opts.forceBackend === "none" ? { name: "none", why: "forced to none (test seam)" } : sandboxBackend();
-  if (!enforces(backend) && policy.required)
-    throw new CoreError("sandbox_unavailable", {
-      platform: process.platform,
-      backend: backend.name,
-      why: backend.why,
-    });
+  const backend = requireSandbox(policy.required, opts.forceBackend);
   // SBPL and Landlock both match the real path: /var is /private/var on macOS, and a scratch
   // reached through a symlink must be named by its target
   let scratch: string;

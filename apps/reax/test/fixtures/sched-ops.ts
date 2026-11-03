@@ -117,13 +117,10 @@ function engineOp(): Operation {
     parseVersion: (out) => /^fake-engine version (\S+)$/m.exec(out)?.[1] ?? null,
     minMajor: 18,
     remediation: () => "test only",
-    args: (r) => [r.mode],
     maxOutputBytes: 1 << 20,
     alwaysRequired: false,
-    parse: (s) => {
-      const p = parseNm(s);
-      return p.ok ? { ok: true, data: p.data } : p;
-    },
+    // the fake prints unframed llvm-nm -P lines: each is framed here with a fixed prefix
+    prepare: (r) => ({ args: [r.mode], parse: (s, cut) => parseNm(s.replace(/^(?=.)/gm, "F: "), "F: ", cut) }),
   });
   return {
     tool: "verify",

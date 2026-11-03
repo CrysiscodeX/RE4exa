@@ -34,6 +34,19 @@ export type Platform = (typeof PLATFORMS)[number];
 export const SEVERITIES = ["blocks", "degrades", "cosmetic", "unrated"] as const;
 export type Severity = (typeof SEVERITIES)[number];
 
+/** Platforms a row defers, by a recorded decision, until a named item lifts the deferral (D-30,
+ * D-33). `platforms` keeps the row's whole scope; the deferred ones are a non-empty proper subset of
+ * it. A deferred row is never covered (or fixed) until it passes on every platform it lists,
+ * deferred ones included; while only a deferred platform is missing it is reported as "tested,
+ * partial (missing: ...)". */
+export interface Deferral {
+  platforms: Platform[];
+  /** The decision that allows it, e.g. "D-30". */
+  decision: string;
+  /** The key of the ledger row whose item would lift it, e.g. "RX-SBX/windows-engines". */
+  until: string;
+}
+
 /** Where a row came from: a profile section (seeded) or reax itself (written with the code). */
 export interface SourceRef {
   /** e.g. "docs/profiles/rea.md" */
@@ -64,6 +77,8 @@ export interface LimitationRow {
   orphaned?: boolean;
   /** A triage caveat: an unconfirmed source, a row that may be a duplicate, a doubt about scope. */
   note?: string;
+  /** Platforms deferred by a recorded decision (triage; kept on re-seed). */
+  deferred?: Deferral;
 }
 
 export interface ParityRow {
@@ -79,11 +94,14 @@ export interface ParityRow {
   wont: { reason: string; reviewer: string } | null;
   source: SourceRef | null;
   orphaned?: boolean;
+  /** Platforms deferred by a recorded decision (triage; kept on re-seed). */
+  deferred?: Deferral;
 }
 
 export type Status = "planned" | "partial" | "covered" | "regressed" | "wont";
 
 const KEY_RE = /^[A-Za-z0-9][A-Za-z0-9_.:/#-]{0,95}$/;
+const DECISION_RE = /^D-\d{1,4}$/;
 
 function fail(where: string, why: string): never {
   throw new Error(`ledger row ${where}: ${why}`);
@@ -98,6 +116,7 @@ export function validateLimitation(r: LimitationRow): void {
   if (r.phase !== null && !(Number.isInteger(r.phase) && r.phase >= 0 && r.phase <= 4)) fail(w, "phase is 0-4 or null");
   for (const p of r.platforms) if (!PLATFORMS.includes(p)) fail(w, `unknown platform ${p}`);
   if (r.wont && (!r.wont.reason || !r.wont.reviewer)) fail(w, "a wont needs a reason and a reviewer");
+  validateDeferral(w, r);
 }
 
 export function validateParity(r: ParityRow): void {
@@ -107,4 +126,24 @@ export function validateParity(r: ParityRow): void {
   if (r.phase !== null && !(Number.isInteger(r.phase) && r.phase >= 0 && r.phase <= 4)) fail(w, "phase is 0-4 or null");
   for (const p of r.platforms) if (!PLATFORMS.includes(p)) fail(w, `unknown platform ${p}`);
   if (r.wont && (!r.wont.reason || !r.wont.reviewer)) fail(w, "a wont needs a reason and a reviewer");
+  validateDeferral(w, r);
+}
+
+/** The deferral's own shape; that `until` names a row is checked by the loader, which sees every row. */
+function validateDeferral(w: string, r: { platforms: Platform[]; wont: unknown; deferred?: Deferral }): void {
+  const d = r.deferred;
+  if (d === undefined) return;
+  if (d === null || typeof d !== "object" || !Array.isArray(d.platforms))
+    fail(w, "deferred needs platforms, decision and until");
+  if (r.wont) fail(w, "a row with a wont cannot also defer platforms");
+  if (!d.platforms.length) fail(w, "deferred.platforms is empty");
+  for (const p of d.platforms) {
+    if (!PLATFORMS.includes(p)) fail(w, `deferred: unknown platform ${p}`);
+    if (!r.platforms.includes(p)) fail(w, `deferred: ${p} is not one of the row's platforms`);
+  }
+  if (new Set(d.platforms).size !== d.platforms.length) fail(w, "deferred: a platform is listed twice");
+  if (r.platforms.every((p) => d.platforms.includes(p))) fail(w, "deferred: every platform is deferred");
+  if (typeof d.decision !== "string" || !DECISION_RE.test(d.decision))
+    fail(w, "deferred.decision must be a decision id such as D-30");
+  if (typeof d.until !== "string" || !KEY_RE.test(d.until)) fail(w, "deferred.until must be a ledger key");
 }

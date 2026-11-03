@@ -44,3 +44,24 @@ status into the ledger, with a drift check in CI and a committed `docs/parity.md
   untriaged register is visible rather than silently ungated.
 - Locally, `npm run test:lane` writes only this platform's report, so every row stays `partial`;
   only CI, with all three lanes, can mark a row covered.
+
+## Amendment (W2-3, D-30 and D-33): deferred platforms
+
+- A ledger row (parity or limitation) may carry an optional triage field
+  `deferred: { platforms, decision, until }`. `platforms` stays the row's whole scope; the deferred
+  platforms are a non-empty proper subset of it, `decision` is a decision id (`D-30`), and `until`
+  is the key of the row whose item would lift the deferral (`RX-SBX/windows-engines`). The loader
+  (used by `parity-check.ts` and `scripts/status.ts`) refuses an unknown, empty, duplicated or
+  out-of-scope deferred platform, all platforms deferred, a malformed decision id, an `until` that
+  names no row, and a deferral together with a `wont`. Re-seeding keeps it, like `platforms`.
+- The covered rule above is unchanged and applies to every platform the row lists, deferred ones
+  included: a deferred row is never covered while a deferred platform is missing. When only deferred
+  platforms are missing it is `partial`, with the reason `tested, partial (missing: win32; deferred
+  by D-30 until RX-SBX/windows-engines)`. A failing test on any lane still makes it `regressed`. If a
+  deferred platform passes as well, the row is covered and the report notes that the deferral can be
+  removed. The phase gate is unchanged, so a gate that includes a deferred row fails until it is
+  lifted.
+- Reports give rea and leanrea rows as two numbers: the parity report's line "rea and leanrea:
+  covered N of T; tested, partial M (missing: …)", and the capability matrix's columns "Tested on
+  every listed platform" and "Tested, partial (missing: …)" (a tagged row with a deferral is only in
+  the second).
