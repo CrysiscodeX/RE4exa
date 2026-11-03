@@ -409,6 +409,16 @@ The Orchestrator's decision (W2-1), recorded after review and CI on `69dde2e`.
   to 20 per 10 s; shutdown proceeds after 1 s.
 **Reopen if** the MCP slice needs another transport, DMN takes `pm.db`, or auto-start needs an idle
 timeout.
+- **Amendment (2026-11-03, W2-4), connection accounting,** recorded after review (PASS) and green CI
+  on `b2f9be8` (reax run 41633622213). The 32-connection slot of a peer is freed when the daemon
+  reads the peer's end of stream (`'end'`), not on `'close'` a turn later (the cause of the macOS
+  flake); the socket then gets a 1 s destroy deadline, as refused connections do. The 64-socket cap
+  still counts sockets that are closing. Jobs are still cancelled on `'close'` (D-27 unchanged). The
+  half-close guarantee holds for Unix sockets and `--tcp`; on Windows named pipes (no half-close) a
+  half-closing peer holds its slot until it closes, like an open one, within the 32. A peer that
+  never reads and never closes keeps its slot below the backpressure threshold (no idle timeout).
+  New in-process seams `DAEMON_HOOKS.onConnClose` and `onAccept`. Recorded as an amendment, not a
+  new number, so the RUN work order's proposed D-37 to D-41 keep their numbers. ADR 0007 updated.
 
 ## D-27 (2026-11-03) SCH: the job model, limits and dispatch rule
 The Orchestrator's decision (Wave 2 item 2, work order W2-2), recorded after the Reviewer-Debugger's
@@ -483,6 +493,9 @@ Task Master's feasibility analysis, "with two conditions".
   decision after review.
 **Reopen if** SBX-W lands (lift the deferrals; the rows must then pass on win32 to count as covered),
 or the user changes the reporting rule.
+- **Scope note (2026-11-03, the Orchestrator's ruling on work order W2-5):** this decision covers
+  only COD's rows. RUN's first slice tags no rea or leanrea row, so it needs no deferral; a future
+  win32 deferral of a capture row (e.g. `capture_process_scenario`) would need a new user decision.
 
 ## D-31 (2026-11-03) ENG: llvm-nm output is framed per run
 The Orchestrator's decision (Wave 2 item 3, work order W2-3, Part A), recorded after the

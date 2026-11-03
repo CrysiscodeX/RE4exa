@@ -5,12 +5,12 @@
 2. Read this file.
 3. Continue with the first package under **Next**.
 
-**Last verified checkpoint: `681fae9`** (Wave 2 item 3, COD Part A; see **Wave 2 checkpoint**). CI
-green: reax run 41597961652 (fixtures, three lanes, parity), tests 41597961651. Rows (D-30's two
-numbers): rea and leanrea covered 39 of 357, tested, partial 0 (unchanged); reax's own rows 49 of 50
-tested on every listed platform, tested, partial 0 (`RX-SBX/windows-engines` planned); weak points 21
-of 244 fixed (unchanged). The previous checkpoint was `40467bd` (Wave 2 item 2, SCH; reax run
-41565482186). The baseline reconciled at `bc38202` is in `BREADTH-COVERAGE.md`.
+**Last verified checkpoint: `b2f9be8`** (Wave 2 item 4, the DMN flake fix; see **Wave 2
+checkpoint**). CI green: reax run 41633622213 (fixtures, three lanes, parity), tests 41633622047.
+Rows (D-30's two numbers): rea and leanrea covered 39 of 357, tested, partial 0 (unchanged); reax's
+own rows 49 of 50 tested on every listed platform, tested, partial 0 (`RX-SBX/windows-engines`
+planned); weak points 21 of 244 fixed (unchanged). The previous checkpoint was `681fae9` (Wave 2
+item 3, COD Part A; reax run 41597961652). The baseline reconciled at `bc38202` is in `BREADTH-COVERAGE.md`.
 
 ## Hard limits
 These come from the user and outrank any session's memory (a subset is also in DECISION-LOG D-16 and `BREADTH-COVERAGE.md`; this list is the complete one).
@@ -113,7 +113,15 @@ only where an entry below already records the closure.
   - the Windows ACL limit (D-25, SR-9);
   - later slices: MCP over stdio and HTTP (REA-C01, REA-C02), sessions (REA-C05), jobs, progress and
     cancellation (REA-C36), `tools/list` measured, ownership of `pm.db`;
-  - closed by SCH (`40467bd`): `daemon_busy` at the connection cap; the `run/` chmod mutant.
+  - closed by SCH (`40467bd`): `daemon_busy` at the connection cap; the `run/` chmod mutant;
+  - closed by W2-4 (`32b13c6`, `b2f9be8`): the macOS flake (a closed peer's slot is freed on
+    `'end'`); the ADR 0007 half-close text (W2);
+  - a peer that never reads and never closes keeps its slot while below the backpressure threshold
+    (no idle timeout); it stays within the 32 cap;
+  - on Windows named pipes a half-closing peer also holds its slot until it closes (no half-close on
+    pipes; ADR 0007), within the 32 cap; the half-close test is skipped on win32 (W1);
+  - surviving harmless mutants of W2-4: destroying at once on `'end'`; the 1 s destroy timer not
+    `unref`'d; `dropOwner` moved to `'end'`.
 - **SCH:**
   - nothing tests that `dropOwner` forgets the owner's record, or the `MAX_OWNERS` cap; the mutation
     removing `this.#owners.delete(owner)` (`src/sched/scheduler.ts:378`) survives;
@@ -131,9 +139,7 @@ only where an entry below already records the closure.
   instruction throws TypeError rather than a clean refusal; both refuse); advisory Ylast looks
   unreachable; the CI fixtures step name (`.github` is out of scope); CI against binutils 2.42 never
   ran for Part B. D-32 and D-34 are PROPOSED only.
-- **DMN macOS flake** (see **Known defects**): the final ping of the 33rd-connection test got
-  `daemon_busy` once on macos-15; root cause and a deterministic test: **Active** (work order
-  W2-4).
+- **DMN macOS flake:** closed by W2-4 (`32b13c6`, `b2f9be8`; see **Done** and **Known defects**).
 - **Parked ARM64 `.pdata` stash** (see **Parked**): findings (a), (b) and the advisory (c) open;
   (d) closed for x64 by `175f614`; its oracle entries never confirmed by CI's LLVM 18.1.3.
 - **Blocked and BLOCKED_EXTERNAL** (see **Blocked**): PE certificates (no signed sample); Frida
@@ -657,13 +663,60 @@ only where an entry below already records the closure.
   - Advisory: an archive form that passes the magic check (fat Mach-O archive, AIX `<bigaf>`) with no
     defined symbols returns an empty complete list; nothing forgeable (under **Open follow-ups**).
 
+- **Wave 2, item 4: the DMN macOS flake** (`32b13c6`, `b2f9be8`; amendment to D-26). Work order
+  W2-4. Computer use: none.
+  - Root cause: the daemon freed a connection slot only on the socket's `'close'`, at least one
+    event-loop turn after it read the peer's end of stream; a connection accepted in between still
+    counted 32 and got `daemon_busy` (macos-15, reax run 41612759551 attempt 1). Evidence: an
+    in-process probe gave `daemon_busy` 100 of 100 times without the `'end'` release and 0 of 100
+    with it; a trace showed an accept after 32 `'end'` events but before 31 of the 32 `'close'`
+    events. It never reproduced naturally (0 of 300).
+  - The fix (`32b13c6`): a slot is freed on `'end'`, and the socket gets a 1 s destroy deadline (as
+    refused connections do); the 64-socket cap still counts closing sockets; in-process seams
+    `DAEMON_HOOKS.onConnClose` and `onAccept`; jobs are still cancelled on `'close'`, at most 1 s
+    after `'end'` (D-27 intact). ADR 0007 updated.
+  - Tests added: a held `'close'` does not block a new hello; a closed peer frees exactly one slot;
+    the 64-socket cap; a half-closed peer that does not read is destroyed and its slot freed; the
+    original test's final ping retries only on a `daemon_busy` hello.
+  - `b2f9be8`: the half-close test reads the daemon's socket after the hello (not right after the
+    client's connect), and is skipped on win32: Windows named pipes have no half-close (libuv
+    delivers `'end'` only through its EOF timer while a read is pending). ADR 0007 limits the
+    half-close guarantee to Unix sockets and `--tcp`, and says a Windows-pipe peer holds its slot
+    like one that stays open, within the 32.
+  - CI:
+    - `32b13c6`: reax run 41630305393 FAILED on windows-2025 only: the half-close test read the
+      daemon's socket (through `onAccept`) right after the client's connect, before the daemon had
+      accepted it, so a TypeError at `test/daemon.test.ts:512`. A test race on every platform, seen
+      only on Windows (CI failure 1 of this cause). Tests run 41630305410 green.
+    - `b2f9be8`, all green: reax run 41633622213 (fixtures, macos-15, ubuntu-24.04, windows-2025,
+      parity); tests 41633622047. `RX-DMN/busy` still has 2 + and 3 - tests passing on
+      windows-2025.
+  - Rows: none new; `RX-DMN/busy` and `RX-DMN/lifecycle` gain tests. reax 49 of 50 covered
+    (`RX-SBX/windows-engines` planned); rea and leanrea covered 39 of 357, tested, partial 0.
+  - Review history:
+    1. FAIL (code): freeing on `'end'` let a half-closed peer that never reads hold a socket outside
+       the 32 cap (64 sockets held, no `daemon_busy`); also no 64-socket-cap test, a hook leak, and
+       the old final ping still racy.
+    2. PASS: the probe left 0 sockets, 32 accepted and 8 `daemon_busy`; 7 mutations killed; jobs
+       still cancelled on `'close'` at most 1 s after `'end'`; no reax client half-closes.
+       Advisories W1 (Windows pipes) and W2 (ADR text), both addressed by `b2f9be8`, reviewed PASS.
+  - Process note: the Coding Agent's first CPU-load loop (zsh) did not stop its busy loops; it
+    verified each pid's command line as its own and stopped them by exact pid. Nothing else was
+    touched.
+  - Follow-ups (under **Open follow-ups**, DMN): a peer that never reads and never closes keeps its
+    slot below the backpressure threshold (no idle timeout); a half-closing peer on Windows pipes
+    holds its slot; three harmless surviving mutants.
+
 ## Active
-- **DMN macOS flake** (the first item of the Wave 2 queue under **Next**; work order W2-4): find the root cause of the final ping
-  getting `daemon_busy` in `[-RX-DMN/lifecycle] … a 33rd connection gets daemon_busy and is closed`
-  (`test/daemon.test.ts:287-319`), reproduce it with a deterministic test (a seam or barrier, no
-  sleeps) that fails before the fix and passes after, and fix it, justified against D-26 and D-28.
-  Rows: `RX-DMN/lifecycle` or `RX-DMN/busy` gain tests; no rea or leanrea row moves. Nothing else is
-  in progress; the working tree is clean at `f7160f3`.
+- **RUN, first slice** (Wave 2 item 5, work order W2-5; the Coding Agent started it after W2-4 was
+  recorded). Capture and compare a process that reax's own tests start, off by default, gated by
+  approval. Proposed decisions D-37 to D-41 are in the work order, not decided. The Orchestrator's
+  rulings on the order's two questions:
+  1. No win32 deferral is needed: RUN tags no rea or leanrea row. A future deferral of a capture row
+     (e.g. `capture_process_scenario`) would need a new user decision beyond D-30, which covers only
+     COD's rows.
+  2. `rea.tool/compare_process_captures` is not claimed: the rea profile describes captures of
+     frames, and comparing frameless captures does not match the row.
 
 ## Wave 2 checkpoint
 - **Items and commits:**
@@ -679,6 +732,8 @@ only where an entry below already records the closure.
     gate)"). Not committed, so no CI.
   - The COD Part A outcome, D-31, D-33 and this checkpoint (docs): `9d486ce`.
   - D-35, D-36 and the ~/.reax rule (docs): `f7160f3`.
+  - COD Part B parked after the D-35 round (docs): `2b6c987`.
+  - The DMN flake (W2-4): `32b13c6`, then `b2f9be8`.
 - **CI per commit, all green in the end; no capacity re-runs in Wave 2; one re-run for a flake:**
   - `ac70493`: reax 41521374732, tests 41521374941, assay 41521374728.
   - `69dde2e`: reax 41540866637, tests 41540866667.
@@ -690,10 +745,13 @@ only where an entry below already records the closure.
     (`test/daemon.test.ts:287-319`; the final ping got `daemon_busy`), and parity failed with it;
     fixtures, ubuntu-24.04 and windows-2025 passed. The failed jobs were re-run once (attempt 2):
     green. A known defect (see **Known defects**), not a capacity re-run; nothing in a docs-only
-    commit can cause it.
+    commit can cause it. Fixed by W2-4.
+  - `32b13c6`: reax 41630305393 failed on windows-2025 only (a test race in the new half-close
+    test; see **Done**); tests 41630305410 green. Fixed by `b2f9be8`, not by a re-run.
+  - `b2f9be8`: reax 41633622213, tests 41633622047.
 - **Review histories:** W2-0 PASS; DMN FAIL, FAIL, PASS (plus a D-21 text fix); SCH FAIL, PASS; COD
   Part A text-only FAIL, narrow PASS; COD Part B FAIL, FAIL, FAIL, parked; D-35 round FAIL, parked
-  until the breadth gate.
+  until the breadth gate; DMN flake FAIL, PASS (and PASS for `b2f9be8`).
 - **Rows:** reax's own rows 35 to 47 at SCH, then 49 of 50 at `681fae9` (`RX-ENG/nm-names`,
   `RX-0b/deferred`; `RX-SBX/windows-engines` planned). rea and leanrea covered 39 of 357, tested,
   partial 0: unchanged through Wave 2. Weak points 21 of 244 fixed: unchanged.
@@ -701,8 +759,8 @@ only where an entry below already records the closure.
   NOT_BUILT; RUN, MOB and SET not started.
 - **Incidents:** five, all during COD Part B, under **Hard limits**.
 - **Computer use:** none in Wave 2.
-- **Next:** the DMN macOS flake (**Active**); then RUN, MOB, SET; SBX-W is Wave 3 item 0. COD Part
-  B is parked until the breadth gate (D-35).
+- **Next:** RUN (**Active**); then MOB, SET; SBX-W is Wave 3 item 0. COD Part B is parked until
+  the breadth gate (D-35).
 
 ## Parked
 - **COD Part B, disassembly** (Wave 2 item 3; parked 2026-11-03 after 3 reviewer FAILs, resumed
@@ -807,15 +865,11 @@ only where an entry below already records the closure.
 
 ## Next (in order)
 Wave 1 is complete; Wave 2 items 0, 1 (DMN) and 2 (SCH) are done; item 3 (COD) Part A is done, and
-Part B is parked until the breadth gate after its D-35 round failed review (see **Parked**).
+Part B is parked until the breadth gate after its D-35 round failed review (see **Parked**); item 4
+(the DMN macOS flake) is done.
 The Wave 2 queue, in order:
-1. **DMN macOS flake (Active, work order W2-4).** Find the root cause of the final ping getting
-   `daemon_busy` in
-   `[-RX-DMN/lifecycle] … a 33rd connection gets daemon_busy and is closed`
-   (`test/daemon.test.ts:287-319`; failed once on macos-15 in reax run 41612759551 attempt 1 for the
-   docs-only commit `9d486ce`, passed when the failed jobs were re-run, attempt 2). Fix it with a
-   deterministic test that reproduces it (fails before the fix, passes after).
-2. **RUN.** RUN inspects only processes that its own tests start.
+1. ~~DMN macOS flake~~: done (`32b13c6`, `b2f9be8`; see **Done**).
+2. **RUN (Active, work order W2-5).** RUN inspects only processes that its own tests start.
 3. **MOB.** MOB builds static APK and IPA readers only; ADB and Frida stay BLOCKED_EXTERNAL.
 4. **SET.** SET works only against a temporary HOME.
 SBX-W is Wave 3 item 0.
@@ -855,10 +909,11 @@ target (DMN measures the real `tools/list`).
   The setup script stands in for it.
 
 ## Known defects
-- **DMN macOS flake (open):** `[-RX-DMN/lifecycle] … a 33rd connection gets daemon_busy and is
-  closed` (`test/daemon.test.ts:287-319`) failed once on macos-15 (reax run 41612759551 attempt 1,
-  commit `9d486ce`, docs only): the final ping got `daemon_busy`. It passed on the single re-run of the failed jobs (attempt 2). Root cause not
-  known; it is **Active** (work order W2-4).
+- **DMN macOS flake (closed by `32b13c6` and `b2f9be8`):** `[-RX-DMN/lifecycle] … a 33rd
+  connection gets daemon_busy and is closed` (`test/daemon.test.ts:287-319`) failed once on
+  macos-15 (reax run 41612759551 attempt 1, commit `9d486ce`, docs only): the final ping got
+  `daemon_busy`. Root cause: a closed peer's slot was freed only on `'close'`, a turn after its
+  `'end'`; now freed on `'end'` (see **Done**, Wave 2 item 4). CI green on `b2f9be8`.
 - Otherwise none beyond the ledgers' weak points (the three Wave 0 defects were fixed by `175f614`;
   see **Done**).
 
