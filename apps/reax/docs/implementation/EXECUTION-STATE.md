@@ -5,11 +5,11 @@
 2. Read this file.
 3. Continue with the first package under **Next**.
 
-**Last verified checkpoint: `69dde2e`** (Wave 2 item 1, DMN). CI green: reax run 41540866637
-(fixtures, three lanes, parity), tests 41540866667; assay not triggered (core unchanged). Rows: 39 of
-357 rea and leanrea rows covered (unchanged), 41 of 41 reax rows covered (35 before), 21 of 244 weak
-points fixed (unchanged). The previous checkpoint was `ac70493` (Wave 2 item 0; reax run
-41521374732). The baseline reconciled at `bc38202` is in `BREADTH-COVERAGE.md`.
+**Last verified checkpoint: `40467bd`** (Wave 2 item 2, SCH). CI green: reax run 41565482186
+(fixtures, three lanes, parity), tests 41565482171; assay not triggered (core unchanged). Rows: 39 of
+357 rea and leanrea rows covered (unchanged), 47 of 47 reax rows covered (41 before), 21 of 244 weak
+points fixed (unchanged). The previous checkpoint was `69dde2e` (Wave 2 item 1, DMN; reax run
+41540866637). The baseline reconciled at `bc38202` is in `BREADTH-COVERAGE.md`.
 
 ## Done (verified in CI)
 - **Baseline re-measured:** see `BASELINE.md`.
@@ -429,10 +429,77 @@ points fixed (unchanged). The previous checkpoint was `ac70493` (Wave 2 item 0; 
     - Later DMN slices: MCP over stdio and HTTP (REA-C01, REA-C02), sessions (REA-C05), jobs,
       progress and cancellation (REA-C36), `tools/list` measured, ownership of `pm.db`.
 
+- **Wave 2, item 2: SCH, the scheduler, first slice** (`40467bd`; D-27, D-28, D-29; ADR 0008, now
+  accepted). **PARTIAL_VERIFIED** on reax's own rows. Work order W2-2. Computer use: none.
+  - What it is:
+    - `src/sched/scheduler.ts`: registered operations run as jobs; classes from `Operation.cost`;
+      64 queued per daemon, 16 per connection, 4 running, one cheap slot reserved, one write job at a
+      time; a full queue is refused with the retryable `job_queue_full` (D-27).
+    - Dispatch: round-robin by connection, lowest sequence first within each, no head-of-line
+      blocking across classes; an owner's round-robin record lasts for the connection (dropped in
+      `dropOwner`); in-process callers are refused past 1024 owners.
+    - Deadlines count from the start of the run (`job_timeout`, distinct from `job_cancelled`);
+      cancellation is cooperative: a queued job never starts, a running job's `AbortSignal` kills a
+      sandboxed engine's process tree and rolls back a `pm.db` write; an op that resolves after a
+      cancel request is `succeeded`. A disconnect cancels only that connection's jobs; shutdown
+      cancels and drains all. No retries, persistence, single-flight or aging.
+    - Protocol version 1, additive: `job.submit`, `status`, `list`, `wait`, `result`, `cancel`
+      after an authenticated hello; results capped at 512 KiB; CLI `reax daemon run|jobs|cancel`;
+      `daemon_busy` at the connection cap (D-28).
+    - `session.index` takes the `pm.db` write lock without blocking the event loop (D-29).
+    - `serve` installs its signal handlers before printing the ready line (a DMN SIGTERM test had
+      flaked once under load with exit `null`).
+  - Tests: `test/sched.test.ts`, `test/sched-daemon.test.ts`, `test/daemon.test.ts` (busy, and a
+    pre-existing 0755 `run/` made 0700 at `test/daemon.test.ts:545`), with the independent reference
+    queue model `test/fixtures/sched-model.ts` (checks the fairness bound at every dispatch; hand
+    cases and 50 seeds) and the raw wire client `test/fixtures/daemon-wire.ts`.
+  - CI on `40467bd`, all green: reax run 41565482186 (fixtures, macos-15, ubuntu-24.04,
+    windows-2025, parity); tests 41565482171. No RX-SCH or RX-DMN test failed or was skipped on any
+    lane, Windows engine cancel and timeout included.
+  - Parity report (run 41565482186): darwin 311, linux-fixtures 311, linux 311, win32 307 tests; gate
+    passed; `RX-SCH/queue`, `cancel`, `timeout`, `protocol`, `write-busy` and `RX-DMN/busy` all
+    "covered: all required lanes passed + and - tests"; reax rows 47 of 47 covered; rea and leanrea
+    39 of 357 (rea 28, leanrea 11); weak points 21 fixed, unchanged.
+  - Rows newly tested: the five RX-SCH rows and `RX-DMN/busy` (reax 41 to 47). No rea or leanrea row
+    moved. Weak points AB-P10, LEAN-C05-LIMIT and REA-C36-LIMIT are advanced, not fixed.
+  - Deviations from the work order, accepted by the reviewer:
+    - the `pm.db` lock holder in tests is an inline node:sqlite child (`writer-worker.ts` is core's
+      kernel worker; the order's "(exists)" was wrong);
+    - the DMN status-keys assertion includes `jobs`;
+    - the wire timeout test holds the 300 ms deadline until `pids.json` appears;
+    - the rollback and `afterRead` tests use an in-process `Scheduler`;
+    - job times are epoch ms.
+  - Orchestrator decisions: single-flight by cache key and aging are left out of this slice
+    (follow-ups).
+  - DMN follow-ups closed: `daemon_busy` at the connection cap (`RX-DMN/busy`); the `run/` chmod
+    mutant is now killed by the pre-existing-0755 test (present at `test/daemon.test.ts:545`).
+  - Review history:
+    1. FAIL (code and tests): `#finish` deleted an owner's record once it had no live job, so an
+       owner keeping one job in flight always went first: starvation, reproduced. The reference
+       model shared the flaw; the text (F2) overclaimed "nothing can starve".
+    2. PASS: with the round-1 bug put into both scheduler and model at once, the per-dispatch bound
+       check alone still failed; S1 to S26 killed; engine root and grandchild pids verified gone after
+       cancel and timeout (`job_cancelled` / `job_timeout` with cause `engine_cancelled`).
+  - Pre-push on macOS: all steps exit 0.
+  - Process note: the Coding Agent stopped, by exact pid, two test-runner processes it had started
+    (orphaned by its own script timeout); busy-loop load generators were killed through their own
+    handles. Nothing else was touched. `~/.reax` was never created.
+  - Follow-ups:
+    - Test gap: nothing tests that `dropOwner` forgets the owner's record, or the `MAX_OWNERS` cap.
+      The mutation removing `this.#owners.delete(owner)` (`src/sched/scheduler.ts:378`) survives;
+      without that line a long-lived daemon would refuse every submit after 1024 connections.
+    - ADR 0008's Bound says "at most 32 owners ahead"; the tight figure is 31.
+    - `test/sched-daemon.test.ts:746` (and the other restores, e.g. :910, :963) reset
+      `PM_LIMITS.busyTimeoutMs` to a literal 5000, not the saved value.
+    - No end-to-end test of SIGINT or SIGTERM for `reax daemon run`.
+    - The child-`serve` shutdown test cannot prove the job waited in `withImmediate` (an in-process
+      test does).
+    - A stream of short-lived connections can keep delaying a job of an older connection: aging (or
+      "joins at the back") and priorities are a later slice; single-flight needs SNAP.
+
 ## Active
-- **Wave 2, item 2: SCH, the scheduler** is in progress (work order being written). Wave 2 items 0
-  and 1 are done (`ac70493`, `69dde2e`, under **Done**). SCH also owns two DMN follow-ups: a busy
-  reply at the connection cap, and the test for `run/`'s chmod (see DMN under **Done**).
+- **Wave 2, item 3: COD, code-level analysis** is in progress (work order being written). Wave 2
+  items 0, 1 and 2 are done (`ac70493`, `69dde2e`, `40467bd`, under **Done**).
 
 ## Parked
 - **NAT-4, ARM64 `.pdata`** (parked 2026-11-01 under the breadth rule, D-13; not committed, not
@@ -469,8 +536,8 @@ points fixed (unchanged). The previous checkpoint was `ac70493` (Wave 2 item 0; 
   dumps (recorded crashes and Apple IPS), and ARM64 `.pdata` (parked above).
 
 ## Next (in order)
-Wave 1 is complete; Wave 2 items 0 and 1 (DMN) are done and item 2 (SCH) is **Active**; then COD,
-RUN, MOB and SET.
+Wave 1 is complete; Wave 2 items 0, 1 (DMN) and 2 (SCH) are done and item 3 (COD) is **Active**;
+then RUN, MOB and SET.
 The breadth plan in `BREADTH-COVERAGE.md` (waves and dependencies there; D-13, D-14):
 1. **Wave 1:** SBX, the sandbox foundation; then ENG, the adapter registry with LLVM as the first
    provider; the program model (PM) beside them.

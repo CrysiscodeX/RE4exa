@@ -77,7 +77,7 @@ recorded; both were green on all three workflows, now recorded.
 | EVD | Evidence, unknowns, verification | NOT_BUILT | 3 |
 | OTH | Other formats | NOT_BUILT | 3 |
 | PM | Program model | PARTIAL_VERIFIED (since `fb1e03e`/`d804135`) | 1 |
-| SCH | Scheduler | NOT_BUILT | 2 |
+| SCH | Scheduler | PARTIAL_VERIFIED (since `40467bd`) | 2 |
 | SNAP | Snapshot cache | NOT_BUILT | 4 |
 | POOL | Resource pools | NOT_BUILT | 4 |
 | PROC | Process supervision | PARTIAL_VERIFIED | 1 (with SBX) |
@@ -97,8 +97,8 @@ recorded; both were green on all three workflows, now recorded.
 | LED | Ledger, parity and status machinery | PARTIAL_VERIFIED | 4 |
 | GATE | Breadth gate and completeness checker | NOT_BUILT | 4 (last) |
 
-**Counts (34 items, updated at `69dde2e`):** PARTIAL_VERIFIED 11 (NAT, CLI, BEN, PROC, FIX, KEY,
-LED, SBX, ENG, PM, DMN); NOT_BUILT 23; SCAFFOLDED 0; PARTIAL_UNVERIFIED 0; COMPLETE_UNVERIFIED 0; COMPLETE_VERIFIED 0;
+**Counts (34 items, updated at `40467bd`):** PARTIAL_VERIFIED 12 (NAT, CLI, BEN, PROC, FIX, KEY,
+LED, SBX, ENG, PM, DMN, SCH); NOT_BUILT 22; SCAFFOLDED 0; PARTIAL_UNVERIFIED 0; COMPLETE_UNVERIFIED 0; COMPLETE_VERIFIED 0;
 BLOCKED_EXTERNAL 0 as whole items, with three blocked parts inside RUN, MOB and NAT (41 ledger rows:
 Frida 10, ADB 25, JEB 5, PE certificates 1).
 
@@ -265,7 +265,8 @@ the fixtures job and the parity job, unless another run is named.
   (`docs/decisions/0007-daemon.md`), D-25, D-26; tests `test/daemon.test.ts` and
   `test/daemon-lock.test.ts`, with the independent raw wire client `test/fixtures/daemon-wire.ts`.
   CI: reax run 41540866637, where `RX-DMN/lifecycle`, `auth`, `single-instance`, `stale-lock` and
-  `loopback` (linux, darwin, win32) and `RX-DMN/token-file` (linux, darwin) are covered.
+  `loopback` (linux, darwin, win32) and `RX-DMN/token-file` (linux, darwin) are covered;
+  `RX-DMN/busy` covered since `40467bd` (reax run 41565482186, D-28). Jobs over the daemon: see SCH.
 - **Works:**
   - one daemon per `REAX_HOME`, decided by a node:sqlite owner lock; racing starts leave exactly one;
     a lock left by a dead or unreachable daemon is recovered and reported;
@@ -274,6 +275,7 @@ the fixtures job and the parity job, unless another run is named.
   - a per-start token, owner-only on POSIX, checked in constant time; missing, wrong, stale and late
     tokens refused; the token in no argv, log, reply or file other than its own;
   - ping, status and shutdown, with cleanup of the lock, endpoint, socket and token;
+  - a retryable `daemon_busy` at the connection cap (since `40467bd`, D-28);
   - bounded resources (connections, sockets, pending input, reply backpressure, log rate).
 - **Gaps:**
   - the 11 capability rows are all open (none moved): MCP over stdio and HTTP (REA-C01, REA-C02),
@@ -282,7 +284,6 @@ the fixtures job and the parity job, unless another run is named.
   - `tools/list` is not measured yet (no MCP);
   - the daemon does not own `pm.db` (D-23's reopen trigger untouched);
   - Windows: no ACL on the token file or pipe (D-25); SR-9 open;
-  - at the connection cap a client is told `daemon_unauthorized`, not busy (to fix in SCH);
   - the other follow-ups in EXECUTION-STATE.
   - Weak points advanced, not fixed: SR-9, REA-C01-LIMIT, REA-C02-LIMIT.
 - **Next (a later DMN slice):** `reax serve` over stdio exposing the registry's operations (REA-C01),
@@ -333,14 +334,38 @@ the fixtures job and the parity job, unless another run is named.
 - **Next (Wave 1, with SBX):** every sandboxed child runs supervised; the memory tripwire doubles as
   the RSS limit test.
 
-### SCH, scheduler: NOT_BUILT
-- **Evidence:** no scheduler. Core's kernel has tasks, attempts, leases and checkpoints, verified
-  through reax's `conformance.test.ts` (AB-P1, P4, P6, P8, P12, PD-5 `fixed`); that is the
-  substrate, not a scheduler.
-- **Next (Wave 2):** an in-process scheduler with resource classes, a reserved cheap lane,
-  single-flight by cache key, and aging. Positive: a flood of deep jobs does not delay cheap ones
-  past a bound; duplicate keys run once. Negative: submissions over quota are refused. Oracle: an
-  injected clock and a reference queue model written separately.
+### SCH, scheduler: PARTIAL_VERIFIED (since `40467bd`)
+- **Evidence:** `src/sched/scheduler.ts`, `src/daemon/jobs.ts`; the job methods in
+  `src/daemon/{protocol,server,client}.ts`; CLI `reax daemon run|jobs|cancel`; ADR 0008
+  (`docs/decisions/0008-scheduler.md`), D-27, D-28, D-29; tests `test/sched.test.ts` and
+  `test/sched-daemon.test.ts`, with the independent reference queue model
+  `test/fixtures/sched-model.ts` and the raw wire client `test/fixtures/daemon-wire.ts`. CI: reax run
+  41565482186, where `RX-SCH/queue`, `cancel`, `timeout`, `protocol` and `write-busy` are covered.
+  Below it, core's kernel (tasks, attempts, leases, checkpoints; AB-P1, P4, P6, P8, P12, PD-5
+  `fixed`) is still not used by the scheduler.
+- **Works:**
+  - registered operations as jobs, classed by `Operation.cost`; caps of 64 queued per daemon, 16 per
+    connection, 4 running, one reserved cheap slot, one write job at a time; `job_queue_full`
+    (retryable) past them;
+  - round-robin by connection, oldest first within each, no head-of-line blocking; the reference
+    model checks the fairness bound at every dispatch (hand cases and 50 seeds);
+  - deadlines from the start of the run (`job_timeout`) and cooperative cancellation
+    (`job_cancelled`): a cancelled queued job never starts; a running engine's process tree is
+    killed (root and grandchild verified gone, Windows included) and an open `pm.db` write rolled
+    back; a disconnect cancels only that connection's jobs;
+  - `session.index` waits for the `pm.db` write lock without blocking the event loop (D-29).
+- **Gaps:**
+  - no single-flight by cache key (needs SNAP), no aging or priorities: a stream of short-lived
+    connections can keep delaying a job of an older connection;
+  - no memory- or disk-aware admission (POOL), no stall watchdog, no retries, no job persistence
+    (XST); the MASTER-PLAN check "RSS limits hold" is not met;
+  - no test that `dropOwner` forgets an owner's record or of the `MAX_OWNERS` cap (a surviving
+    mutant), and the other follow-ups in EXECUTION-STATE;
+  - weak points advanced, not fixed: AB-P10, LEAN-C05-LIMIT, REA-C36-LIMIT. SCH owns no rea or
+    leanrea capability row; REA-C36 (progress and cancellation) stays open under DMN.
+- **Next (a later SCH slice):** aging (or "joins at the back") with a test that a stream of new
+  connections cannot delay a waiting job past a bound; single-flight by cache key once SNAP exists
+  (duplicate keys run once). Oracle: the injected clock and the reference queue model.
 
 ### SNAP, snapshot cache: NOT_BUILT
 - REA-C33 (exact-key reuse across CLI calls). Related: content-addressed probe keys in core
@@ -470,14 +495,16 @@ NAT-4 items.
 - **DMN: PARTIAL_VERIFIED on reax's own rows only** (since `69dde2e`; until then it was listed with
   ARC, JSE and EVD above). The six RX-DMN rows are covered in CI; all 11 of its capability rows stay
   open, as SBX's REA-C34 does. Core's MCP handles are still Assay's, not a reax server.
-- **SCH: NOT_BUILT, though the kernel's lease machinery is verified.** The verified part is the
-  state machine a scheduler would use; nothing schedules.
+- **SCH: PARTIAL_VERIFIED on reax's own rows only** (since `40467bd`; NOT_BUILT before it). The
+  five RX-SCH rows are covered in CI; SCH owns no rea or leanrea capability row, and single-flight,
+  aging and memory-aware admission are not built. Core's kernel lease machinery is still a
+  foundation the scheduler does not use.
 - **PROC: PARTIAL_VERIFIED.** It rests on reax's own code (`src/bench/backends/proc.ts`, on core's
   vendored process host) with positive and negative tests: RX-1/bench-process and RX-1/bench-close
   `covered`, REA-A7.2 `fixed`.
 - **FAIL and XST: NOT_BUILT, though core's kernel tests pass in reax's CI.** Their only evidence
   (REA-A5.1, PD-6, PD-1, AB-P6) is core kernel code that no reax operation uses, so under D-13 it is
-  a foundation, as for EVD and SCH. (Corrected after review: Wave 0's first draft rated both
+  a foundation, as for EVD and for the kernel substrate under SCH. (Corrected after review: Wave 0's first draft rated both
   PARTIAL_VERIFIED.)
 - **XST and WFC: the names were interpreted.** XST is read as run state (jobs and checkpoints that
   survive a restart); the work state (this folder and `status.ts --check`) belongs to LED. WFC is read as end-to-end

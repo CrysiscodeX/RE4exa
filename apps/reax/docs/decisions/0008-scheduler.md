@@ -1,8 +1,9 @@
 # 0008. The scheduler: registered operations as jobs under a bounded queue
 
-Status: proposed (W2-2, SCH, first slice). To be recorded as D-27 (the job model, limits and
-dispatch rule), D-28 (`daemon_busy` and the additive protocol) and D-29 (`session.index` takes the
-`pm.db` write lock without blocking the event loop) in `docs/implementation/DECISION-LOG.md`.
+Status: accepted (W2-2, SCH, first slice; `40467bd`, reax run 41565482186). Recorded as D-27 (the
+job model, limits and dispatch rule), D-28 (`daemon_busy` and the additive protocol) and D-29
+(`session.index` takes the `pm.db` write lock without blocking the event loop) in
+`docs/implementation/DECISION-LOG.md`.
 
 ## Context
 

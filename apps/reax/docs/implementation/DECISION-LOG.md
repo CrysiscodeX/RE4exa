@@ -409,3 +409,43 @@ The Orchestrator's decision (W2-1), recorded after review and CI on `69dde2e`.
   to 20 per 10 s; shutdown proceeds after 1 s.
 **Reopen if** the MCP slice needs another transport, DMN takes `pm.db`, or auto-start needs an idle
 timeout.
+
+## D-27 (2026-11-03) SCH: the job model, limits and dispatch rule
+The Orchestrator's decision (Wave 2 item 2, work order W2-2), recorded after the Reviewer-Debugger's
+PASS and green CI on `40467bd` (reax run 41565482186). ADR 0008 (`docs/decisions/0008-scheduler.md`).
+- **Jobs:** registered operations run as jobs; the class (cheap, medium, deep) comes from
+  `Operation.cost`. No operation is added.
+- **Caps:** 64 queued per daemon, 16 per connection, 4 running, one slot reserved for cheap work, one
+  write job at a time. A full queue is refused with the retryable `job_queue_full`.
+- **Dispatch:** round-robin by connection, lowest sequence first within each; no head-of-line blocking
+  across classes. An owner's round-robin record lasts for the connection and is dropped in
+  `dropOwner`; in-process callers are refused past `MAX_OWNERS` (1024). Each new connection goes ahead
+  once, so a stream of short-lived connections can keep delaying a job of an older connection (aging
+  is a follow-up).
+- **Deadlines** count from the start of the run, not the submit. **Cancellation** is cooperative; an
+  operation that resolves is `succeeded` even after a cancel request. A disconnect cancels only that
+  connection's jobs.
+- **Left out of this slice (the Orchestrator's decision):** retries, job persistence, single-flight by
+  cache key, aging and priorities.
+**Reopen if** priorities are needed, single-flight arrives (SNAP), memory-aware admission arrives
+(POOL), or jobs must survive a restart (XST).
+
+## D-28 (2026-11-03) SCH: `daemon_busy` and the additive job protocol
+The Orchestrator's decision (W2-2), recorded after review and CI on `40467bd`.
+- **`daemon_busy`:** at the connection cap the daemon sends a retryable busy hello frame instead of
+  `daemon_unauthorized`; a close before the hello reply is reported to the client as `daemon_busy`.
+  This closes DMN's follow-up (row `RX-DMN/busy`).
+- **Job methods** `job.submit`, `job.status`, `job.list`, `job.wait`, `job.result`, `job.cancel`,
+  added under protocol version 1 (no version bump), after an authenticated hello. Results are capped
+  at 512 KiB.
+- **CLI:** `reax daemon run|jobs|cancel`.
+**Reopen if** clients need feature negotiation.
+
+## D-29 (2026-11-03) PM: `session.index` takes the `pm.db` write lock without blocking the event loop
+The Orchestrator's decision (W2-2), recorded after review and CI on `40467bd`. Amends D-23.
+- `session.index` acquires the write lock through `withImmediate`, which is async and cancellable, so
+  a lock held by another process does not block the daemon's other connections.
+- **Amends D-23's `pm_busy`:** same code, same 5 s budget; only the wait is now non-blocking.
+- **No `await` between BEGIN and COMMIT:** a transaction body that returns a promise is refused and
+  rolled back.
+**Reopen if** the daemon takes ownership of `pm.db`, or another write operation arrives.
