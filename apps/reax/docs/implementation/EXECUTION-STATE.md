@@ -133,14 +133,23 @@ only where an entry below already records the closure.
   - aging (or "joins at the back") and priorities are a later slice; single-flight needs SNAP.
 - **COD Part B, disassembly** (parked until the breadth gate after the D-35 round's FAIL, the 4th;
   see **Parked**): the three tests (Yhitcov, Ycutcomplete, Yfirst) and the two text fixes are done in
-  stash@{0} but not committed; open: the Yfirst cut-dump bypass (`src/cod/disasm.ts:427-431` in the
+  the stash "cod-partB WIP after D-35 round (4th FAIL; parked to breadth gate)" (stash@{1} since RUN
+  was stashed; this line said stash@{0}, corrected) but not committed; open: the Yfirst cut-dump bypass (`src/cod/disasm.ts:427-431` in the
   stash: on a cut dump `procedureInsns` returns before the procedure-start check), with its proposed
   fix and a cut-dump test and mutant; advisory Ycomment survives (a comment line before any
   instruction throws TypeError rather than a clean refusal; both refuse); advisory Ylast looks
   unreachable; the CI fixtures step name (`.github` is out of scope); CI against binutils 2.42 never
   ran for Part B. D-32 and D-34 are PROPOSED only.
+- **RUN, first slice** (parked until the breadth gate after 3 reviewer FAILs, D-35's rule; see
+  **Parked**): round 3's two test gaps (FAIL-1, the "listed twice" guard, `src/run/tree.ts:236-241`
+  in the stash; FAIL-2, the "null name means partial" guard, `tree.ts:360`); the ADR 0010 text at
+  lines 76-77 (procps-ng repeating a format field is expected, confirmed only by CI's Linux lane, not
+  by its docs); the advisory hardening at `tree.ts:181-184` (skip pgid members in the names query
+  when `rootRow` is present at exit); Linux behaviour (procps's repeated column, `?` escaping) never
+  run, as no CI lane ran RUN; D-37 to D-41 PROPOSED only; a production approval channel (CLI,
+  daemon) is a later slice.
 - **DMN macOS flake:** closed by W2-4 (`32b13c6`, `b2f9be8`; see **Done** and **Known defects**).
-- **Parked ARM64 `.pdata` stash** (see **Parked**): findings (a), (b) and the advisory (c) open;
+- **Parked ARM64 `.pdata` stash** (stash@{3} now; see **Parked**): findings (a), (b) and the advisory (c) open;
   (d) closed for x64 by `175f614`; its oracle entries never confirmed by CI's LLVM 18.1.3.
 - **Blocked and BLOCKED_EXTERNAL** (see **Blocked**): PE certificates (no signed sample); Frida
   (REA-C16, 10 rows) and ADB (REA-C26, 25 rows) BLOCKED_EXTERNAL (D-16); JEB (REA-C25, 5 rows)
@@ -708,15 +717,10 @@ only where an entry below already records the closure.
     holds its slot; three harmless surviving mutants.
 
 ## Active
-- **RUN, first slice** (Wave 2 item 5, work order W2-5; the Coding Agent started it after W2-4 was
-  recorded). Capture and compare a process that reax's own tests start, off by default, gated by
-  approval. Proposed decisions D-37 to D-41 are in the work order, not decided. The Orchestrator's
-  rulings on the order's two questions:
-  1. No win32 deferral is needed: RUN tags no rea or leanrea row. A future deferral of a capture row
-     (e.g. `capture_process_scenario`) would need a new user decision beyond D-30, which covers only
-     COD's rows.
-  2. `rea.tool/compare_process_captures` is not claimed: the rea profile describes captures of
-     frames, and comparing frameless captures does not match the row.
+- **MOB, first slice** (Wave 2 item 6, work order W2-6, issued 2026-11-03; not started). Static APK
+  and IPA readers only, in memory, no extraction; ADB and Frida stay BLOCKED_EXTERNAL (the user's
+  constraint). Proposed decisions D-42 onwards are in the work order, not decided. RUN is parked
+  (see **Parked**).
 
 ## Wave 2 checkpoint
 - **Items and commits:**
@@ -734,6 +738,8 @@ only where an entry below already records the closure.
   - D-35, D-36 and the ~/.reax rule (docs): `f7160f3`.
   - COD Part B parked after the D-35 round (docs): `2b6c987`.
   - The DMN flake (W2-4): `32b13c6`, then `b2f9be8`.
+  - RUN (W2-5): parked after 3 reviewer FAILs, until the breadth gate (D-35's rule); not committed
+    (`git stash` "run WIP (3 reviewer FAILs; parked to breadth gate)"), so no CI.
 - **CI per commit, all green in the end; no capacity re-runs in Wave 2; one re-run for a flake:**
   - `ac70493`: reax 41521374732, tests 41521374941, assay 41521374728.
   - `69dde2e`: reax 41540866637, tests 41540866667.
@@ -751,23 +757,67 @@ only where an entry below already records the closure.
   - `b2f9be8`: reax 41633622213, tests 41633622047.
 - **Review histories:** W2-0 PASS; DMN FAIL, FAIL, PASS (plus a D-21 text fix); SCH FAIL, PASS; COD
   Part A text-only FAIL, narrow PASS; COD Part B FAIL, FAIL, FAIL, parked; D-35 round FAIL, parked
-  until the breadth gate; DMN flake FAIL, PASS (and PASS for `b2f9be8`).
+  until the breadth gate; DMN flake FAIL, PASS (and PASS for `b2f9be8`); RUN FAIL, FAIL, FAIL,
+  parked until the breadth gate.
 - **Rows:** reax's own rows 35 to 47 at SCH, then 49 of 50 at `681fae9` (`RX-ENG/nm-names`,
   `RX-0b/deferred`; `RX-SBX/windows-engines` planned). rea and leanrea covered 39 of 357, tested,
   partial 0: unchanged through Wave 2. Weak points 21 of 244 fixed: unchanged.
 - **Breadth:** DMN and SCH became PARTIAL_VERIFIED; 12 of 34 items PARTIAL_VERIFIED. COD stays
-  NOT_BUILT; RUN, MOB and SET not started.
+  NOT_BUILT; RUN NOT_BUILT (parked); MOB active; SET not started.
 - **Incidents:** five, all during COD Part B, under **Hard limits**.
 - **Computer use:** none in Wave 2.
-- **Next:** RUN (**Active**); then MOB, SET; SBX-W is Wave 3 item 0. COD Part B is parked until
-  the breadth gate (D-35).
+- **Next:** MOB (**Active**); then SET; SBX-W is Wave 3 item 0. COD Part B and RUN are parked
+  until the breadth gate (D-35).
 
 ## Parked
+- **RUN, first slice** (Wave 2 item 5, work order W2-5; parked 2026-11-03 after 3 reviewer FAILs,
+  until the breadth gate under D-35's rule: "an item parked after 3 FAILs stays parked until the
+  breadth gate"; not committed, not pushed, so no CI). The work is the git stash "run WIP (3 reviewer
+  FAILs; parked to breadth gate)" (stash@{0} at `fbcec73`; refer to it by message). ADR 0010 is in
+  the stash. Proposed D-37 to D-41 stay PROPOSED (`DECISION-LOG.md`).
+  - What it was: `observe.process`, a sandboxed capture of a workspace Node fixture, approval-gated
+    and off by default (the CLI and the daemon cannot supply an approval in this slice), and
+    `compare.process`. `process_not_owned` before any ps run or signal. The global ps reads pid,
+    ppid and pgid only; names are queried only for the root's descendants (`ucomm` on darwin, procps
+    `comm` on Linux), framed as `pid=,ppid=,pgid=,<name>=,pid=`.
+  - Review history (Reviewer-Debugger):
+    1. FAIL: F1 children of a reused root pid in the names query, untested (code and tests); F2
+       procps `name <defunct>` not treated as stale (code); F3 macOS `ps -o comm` reads argv[0] (part
+       of the command line), switched to `ucomm`; F4 the synthetic-pair doctest title (text).
+    2. FAIL (code): a 16-byte `ucomm` holding a newline forged a vanished pid's record, so a tree
+       was served complete with fragment names. Fixed by the framed query; names that are not valid
+       UTF-8 now give null.
+    3. FAIL (tests only; the reviewer judged the code right):
+       - FAIL-1: the "listed twice" guard (`src/run/tree.ts:236-241` in the stash) is untested: on
+         macOS, member 301 with `ucomm` `" 301\n301 1 300 y"` gives two valid frames for 301; the
+         mutant names it "y" (the tree stays partial).
+       - FAIL-2: the "null name means partial" guard (`tree.ts:360`) is untested: a member shown
+         only as `node <defunct>` gives `complete: true` with a null name under the mutant
+         (reachable on Linux).
+       - Text: ADR 0010:76-77 says procps-ng's docs allow a format list to repeat a field; unverified.
+         It should say "expected; confirmed only by CI's Linux lane".
+       - Observation: `tree.ts:181-184`, pgid members of a pid reused within the exit turn could
+         still be names-queried (`ucomm` only; the tree is already partial; practically
+         unreachable). Harden by skipping pgid members when `rootRow` is present at exit.
+       - Fuzz: 22.3M forged names, 0 wrong names, 0 complete trees.
+  - Never run: Linux behaviour (procps's repeated column, `?` escaping); no CI lane ran RUN.
+  - Process notes: the Coding Agent stopped only its own processes, by exact pid (a manual trial's
+    child and grandchild; 14 load loops left running about 3 minutes by a zsh word-split bug). One
+    mutant (M15) left a fixture child and grandchild unkilled, relying on the fixtures' own 300 s
+    safety exits (`child.mjs:9`, `grandchild.mjs:6`, `scenario.mjs:44`); nobody scanned for them
+    afterwards. The Reviewer's in-place mutation was blocked by the permission system; mutations ran
+    on scratch copies. Not incidents against **Hard limits** (no process outside the session's own
+    was touched), but recorded. Computer use: none.
+  - Rows: none moved. reax stays 49 of 50 covered; rea and leanrea covered 39 of 357, tested,
+    partial 0. RUN stays NOT_BUILT.
+  - To resume after the breadth gate: `git stash apply` the entry by message; add the FAIL-1 and
+    FAIL-2 tests (each killing its mutant), the ADR 0010 text fix and the `tree.ts:181-184`
+    hardening; then a full review and CI with a Linux lane that runs the capture tests.
 - **COD Part B, disassembly** (Wave 2 item 3; parked 2026-11-03 after 3 reviewer FAILs, resumed
   for the one D-35 round, which failed; parked again until the breadth gate; not committed, not
   pushed). The work is the git stash "cod-partB WIP after D-35 round (4th FAIL; parked to breadth
-  gate)" (stash@{0} at `f7160f3`; refer to it by message); it includes round 4's three tests and text
-  fixes. The earlier stash "cod-partB WIP (3 reviewer FAILs)" (stash@{1}) is superseded by it; kept,
+  gate)" (stash@{1} since RUN was stashed, at `f7160f3`; refer to it by message); it includes round 4's
+  three tests and text fixes. The earlier stash "cod-partB WIP (3 reviewer FAILs)" (stash@{2}) is superseded by it; kept,
   not dropped. Scope: an llvm-objdump provider in the sandbox, dumped once and
   sliced; `read.disassembly` and `search.disassembly`; the answer key `bench/oracle/disasm.json` from
   GNU objdump and GNU readelf; rows `rea.tool/procedure_assembly`,
@@ -831,8 +881,8 @@ only where an entry below already records the closure.
     review and CI including the fixtures job's `oracle.ts --check` of `bench/oracle/disasm.json`
     against binutils 2.42. This is the reviewer's proposed fix, not yet reviewed.
 - **NAT-4, ARM64 `.pdata`** (parked 2026-11-01 under the breadth rule, D-13; not committed, not
-  pushed). The work is the git stash `arm64-pdata WIP (3 reviewer FAILs)` (stash@{2} at `f7160f3`;
-  refer to it by message), on `bc38202`, 13 files. Applying it is expected to conflict with `175f614` in
+  pushed). The work is the git stash `arm64-pdata WIP (3 reviewer FAILs)` (stash@{3} since RUN was
+  stashed; refer to it by message), on `bc38202`, 13 files. Applying it is expected to conflict with `175f614` in
   `src/readers/symbols.ts` (not tried). The files:
   - new: `fixtures/extra/pdata-hello-aarch64-windows-gnu.exe`,
     `fixtures/extra/pdata-lib-aarch64-windows-gnu.dll`, their sources
@@ -866,11 +916,13 @@ only where an entry below already records the closure.
 ## Next (in order)
 Wave 1 is complete; Wave 2 items 0, 1 (DMN) and 2 (SCH) are done; item 3 (COD) Part A is done, and
 Part B is parked until the breadth gate after its D-35 round failed review (see **Parked**); item 4
-(the DMN macOS flake) is done.
+(the DMN macOS flake) is done; item 5 (RUN) is parked until the breadth gate.
 The Wave 2 queue, in order:
 1. ~~DMN macOS flake~~: done (`32b13c6`, `b2f9be8`; see **Done**).
-2. **RUN (Active, work order W2-5).** RUN inspects only processes that its own tests start.
-3. **MOB.** MOB builds static APK and IPA readers only; ADB and Frida stay BLOCKED_EXTERNAL.
+2. ~~RUN~~: parked until the breadth gate after 3 reviewer FAILs (see **Parked**). RUN inspects
+   only processes that its own tests start.
+3. **MOB (Active, work order W2-6).** MOB builds static APK and IPA readers only; ADB and Frida stay
+   BLOCKED_EXTERNAL.
 4. **SET.** SET works only against a temporary HOME.
 SBX-W is Wave 3 item 0.
 The breadth plan in `BREADTH-COVERAGE.md` (waves and dependencies there; D-13, D-14):

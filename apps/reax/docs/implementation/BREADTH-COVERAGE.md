@@ -68,7 +68,7 @@ recorded; both were green on all three workflows, now recorded.
 | SBX | Sandbox and safety | PARTIAL_VERIFIED (since `1001fd7`) | 1 |
 | ENG | Engine adapters and provider registry | PARTIAL_VERIFIED (since `95c82c1`) | 1 |
 | COD | Code-level analysis | NOT_BUILT | 2 |
-| RUN | Runtime and devices | NOT_BUILT (Frida and ADB parts BLOCKED_EXTERNAL) | 2 |
+| RUN | Runtime and devices | NOT_BUILT (first slice parked to the breadth gate; Frida and ADB parts BLOCKED_EXTERNAL) | 2 |
 | MOB | Managed and mobile | NOT_BUILT (JEB part BLOCKED_EXTERNAL) | 2 |
 | SET | Setup, skill, router | NOT_BUILT | 2 |
 | DMN | Daemon, MCP, sessions, jobs | PARTIAL_VERIFIED (since `69dde2e`) | 2 |
@@ -268,7 +268,10 @@ the fixtures job and the parity job, unless another run is named.
   71 rows. Frida (REA-C16, 10 rows) and ADB (REA-C26, 25 rows) are blocked: no fixture device.
   Unblock: a fixture device or emulator cleared with the user (for ADB), and the same or a local
   Frida install confined to /tmp cleared with the user (for Frida).
-- **Next (Wave 2):** capture and compare a test-started process (capture_process_scenario,
+  - W2-5 (the first slice below) is parked until the breadth gate after 3 reviewer FAILs (D-35's
+    rule), in `git stash` "run WIP (3 reviewer FAILs; parked to breadth gate)"; not committed, so no
+    row is tagged and RUN stays NOT_BUILT (`EXECUTION-STATE.md`, **Parked**).
+- **Next (after the breadth gate):** capture and compare a test-started process (capture_process_scenario,
   compare_process_captures): argv, exit code, output, child tree, files written in scratch, under
   SBX, off by default and approval-gated. Positive: the capture of a fixture program equals what its
   source does. Negative: no approval, no run; a PID reax did not start is refused; a failed run
@@ -277,11 +280,19 @@ the fixtures job and the parity job, unless another run is named.
 ### MOB, managed and mobile: NOT_BUILT; JEB part BLOCKED_EXTERNAL
 - **Evidence:** none in reax. 29 rows. REA-C25 (JEB, 5 rows) is blocked: JEB is commercial and not
   licensed or installed. Unblock: a licence, or the user's decision to mark the rows `wont`.
-- **Next (Wave 2):** .NET metadata from a PE's CLI header (inspect_managed_artifact, LEAN-C30) and
-  framework markers in an APK listing (LEAN-T08), read in memory with core's zip listing, no
-  extraction. Fixtures built by a .NET SDK confined to /tmp. Oracle: `System.Reflection.Metadata` in a
-  small checked-in program, and Python `zipfile`. Negative: a non-.NET PE, a damaged table (partial,
-  never invented).
+- **The user's constraint (2026-11-03):** "MOB builds static APK and IPA readers only; ADB and Frida
+  stay BLOCKED_EXTERNAL."
+- **Next (Wave 2, work order W2-6; amended to the user's constraint):** static APK and IPA readers,
+  in memory, with core's zip listing and no extraction, on untrusted input with bounds. APK: the
+  listing, the binary `AndroidManifest.xml` (package, version code and name, min and target SDK,
+  permissions, components) and framework markers (`lib/<abi>/libflutter.so`, `libhermes.so`; row
+  LEAN-T08). IPA: `Payload/<name>.app/Info.plist`, XML and binary (bundle id, version, minimum OS,
+  URL schemes, privacy strings; row LEAN-T17), and framework markers. Fixtures hand-built
+  byte-exact by a script; the key from Python's stdlib (`zipfile`, `plistlib`) and a separately
+  written binary-XML decoder.
+  - Moved out by the constraint: the .NET metadata reader (inspect_managed_artifact, LEAN-C30) that
+    this entry planned before. It is not an APK or IPA reader; it waits for a later MOB slice
+    (after the breadth gate, or sooner if the user says so).
 
 ### SET, setup, skill and router: NOT_BUILT
 - **Evidence:** none in reax. Related: core's `probes/router-pack.json` (leanrea's router as data,

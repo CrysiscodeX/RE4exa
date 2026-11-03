@@ -587,3 +587,23 @@ CI's."
 - **Why:** COD Part B's three FAILs were each one of these cases found late (prefix-only lines split
   across records; a missing section served as complete; a cut dump reported complete; a procedure
   starting inside an instruction).
+
+## D-37 to D-41 (PROPOSED, not decided) RUN's first slice
+Proposed in work order W2-5 (RUN, parked until the breadth gate after 3 reviewer FAILs; `git stash`
+"run WIP (3 reviewer FAILs; parked to breadth gate)", which also holds ADR 0010). Not recorded as
+decisions: nothing was committed or verified in CI. Numbers reserved so later items do not reuse
+them:
+- **D-37:** the names `observe.process` and `compare.process`, the format `reax.capture/1`, six
+  RX-RUN rows, no attach mode, `process_not_owned` outside the live-root registry; REA-C22's rows
+  untagged.
+- **D-38:** the approval gate: core's `ApprovalQueue` through the internal `ctx.approvals` only; no
+  channel, sandbox, program, approval, spawn, in that order; one approval per run; the code
+  `runtime_approval_required`; no production approval channel in this slice.
+- **D-39:** child-tree observation: global ps of pid, ppid and pgid only; names only for the owned
+  root's descendants (`ucomm` on darwin, procps `comm` on Linux), framed
+  `pid=,ppid=,pgid=,<name>=,pid=`; never args, environment, `/proc` or memory.
+- **D-40:** the RUN answer key: the fixture's source plus `scripts/oracle-run.py` (Python stdlib).
+- **D-41:** refusal doctests (`Example.expectError`) and the `"run"` example workspace; overlaps
+  D-34's refusal doctests (also PROPOSED, in COD Part B's stash).
+To be decided when RUN resumes after the breadth gate and passes review. Detail in
+`EXECUTION-STATE.md` **Parked**.
