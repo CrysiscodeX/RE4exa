@@ -478,63 +478,67 @@ test(
   },
 );
 
-test(
-  "[+RX-DMN/busy] a peer that half-closes without reading its replies is destroyed within the deadline; its slot and socket are freed and the next connection is served",
-  LIMIT,
-  async () => {
-    const box = tempBox();
-    const seen: Socket[] = [];
-    DAEMON_HOOKS.onAccept = (s) => {
-      if (seen.length < 4) seen.push(s);
-    };
-    let h: DaemonHandle | null = null;
-    let peer: Socket | null = null;
-    try {
-      h = await startDaemon({ home: box.home });
-      const ep = readEndpointFile(box);
-      peer = await new Promise<Socket>((ok, fail) => {
-        const s = connect({ path: ep.path, allowHalfOpen: true });
-        s.once("connect", () => ok(s));
-        s.once("error", fail);
-      });
-      peer.on("error", () => {});
-      const daemonSide = seen[0]!;
-      const helloReply = new Promise<void>((ok) => peer!.once("data", () => ok()));
-      peer.write(`${JSON.stringify({ type: "hello", protocol: 1, token: readTokenFile(box) })}\n`);
-      await helloReply;
-      peer.pause();
-      // pings unread until a reply is stuck in the daemon's own write queue, below the 16 KiB at
-      // which backpressure (and its stall timer) would start; bounded
-      let stuck = false;
-      for (let i = 0; i < 200_000 && !stuck; i++) {
-        peer.write('{"id":3,"method":"ping"}\n');
-        await new Promise((r) => setImmediate(r));
-        stuck = daemonSide.writableLength > 0;
-      }
-      assert.ok(stuck, "a reply is stuck in the daemon's write queue");
-      assert.ok(daemonSide.writableLength < 16 * 1024, "below the backpressure threshold");
-      const gone = new Promise<void>((ok) => daemonSide.once("close", () => ok()));
-      peer.end();
-      let timer: NodeJS.Timeout | undefined;
-      const r = await Promise.race([
-        gone.then(() => "closed"),
-        new Promise<string>((ok) => {
-          timer = setTimeout(() => ok("still open"), 10_000);
-        }),
-      ]);
-      clearTimeout(timer);
-      assert.equal(r, "closed", "the half-closed peer's socket is destroyed by the deadline");
-      const st = await call(box, "status");
-      assert.equal((st.result as { connections: number }).connections, 1, "only the status connection counts");
-      assert.equal(((await call(box, "ping")).result as { pong: boolean }).pong, true);
-    } finally {
-      delete DAEMON_HOOKS.onAccept;
-      peer?.destroy();
-      await h?.close();
-      box.done();
+test("[+RX-DMN/busy] a peer that half-closes without reading its replies is destroyed within the deadline; its slot and socket are freed and the next connection is served", {
+  ...LIMIT,
+  // libuv named pipes have no half-close and never complete a write synchronously, so neither
+  // the stuck reply below 16 KiB nor a non-reading peer's end of stream exists there (ADR 0007)
+  skip: POSIX ? false : "Windows named pipes have no half-close",
+}, async () => {
+  const box = tempBox();
+  const seen: Socket[] = [];
+  DAEMON_HOOKS.onAccept = (s) => {
+    if (seen.length < 4) seen.push(s);
+  };
+  let h: DaemonHandle | null = null;
+  let peer: Socket | null = null;
+  try {
+    h = await startDaemon({ home: box.home });
+    const ep = readEndpointFile(box);
+    peer = await new Promise<Socket>((ok, fail) => {
+      const s = connect({ path: ep.path, allowHalfOpen: true });
+      s.once("connect", () => ok(s));
+      s.once("error", fail);
+    });
+    peer.on("error", () => {});
+    const helloReply = new Promise<void>((ok) => peer!.once("data", () => ok()));
+    peer.write(`${JSON.stringify({ type: "hello", protocol: 1, token: readTokenFile(box) })}\n`);
+    await helloReply;
+    // read only now: the client's "connect" can fire before the daemon has accepted the socket
+    // (it did on windows-2025), but a hello reply means the daemon has
+    const daemonSide = seen[0];
+    assert.ok(daemonSide, "the daemon accepted the connection");
+    peer.pause();
+    // pings unread until a reply is stuck in the daemon's own write queue, below the 16 KiB at
+    // which backpressure (and its stall timer) would start; bounded
+    let stuck = false;
+    for (let i = 0; i < 200_000 && !stuck; i++) {
+      peer.write('{"id":3,"method":"ping"}\n');
+      await new Promise((r) => setImmediate(r));
+      stuck = daemonSide.writableLength > 0;
     }
-  },
-);
+    assert.ok(stuck, "a reply is stuck in the daemon's write queue");
+    assert.ok(daemonSide.writableLength < 16 * 1024, "below the backpressure threshold");
+    const gone = new Promise<void>((ok) => daemonSide.once("close", () => ok()));
+    peer.end();
+    let timer: NodeJS.Timeout | undefined;
+    const r = await Promise.race([
+      gone.then(() => "closed"),
+      new Promise<string>((ok) => {
+        timer = setTimeout(() => ok("still open"), 10_000);
+      }),
+    ]);
+    clearTimeout(timer);
+    assert.equal(r, "closed", "the half-closed peer's socket is destroyed by the deadline");
+    const st = await call(box, "status");
+    assert.equal((st.result as { connections: number }).connections, 1, "only the status connection counts");
+    assert.equal(((await call(box, "ping")).result as { pong: boolean }).pong, true);
+  } finally {
+    delete DAEMON_HOOKS.onAccept;
+    peer?.destroy();
+    await h?.close();
+    box.done();
+  }
+});
 
 // --- auth -------------------------------------------------------------------------------------------
 

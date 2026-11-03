@@ -78,7 +78,9 @@ Nothing may be installed, and only Node 24 built-ins are used (`node:net`, `node
   a client that had closed 32 connections was otherwise told `daemon_busy`). A close the daemon
   has not read yet still counts, and the next connection may then be told `daemon_busy`
   (retryable, D-28). Such a closing socket is destroyed after 1 s whatever the peer does, as a
-  refused one is, so a peer that half-closes without reading its replies cannot hold it; its jobs
+  refused one is, so on a Unix socket or `--tcp` a peer that half-closes without reading its
+  replies cannot hold it (Windows named pipes have no half-close: such a peer delivers no end of
+  stream and holds its slot like one that stays open, still within the 32); its jobs
   are cancelled when it closes (D-27), so at most 1 s after its end of stream. At most 64 sockets
   are open at once, refused and closing ones included. A peer that stays open and never reads
   keeps its slot while its unread replies are below the backpressure threshold (no idle timeout):
