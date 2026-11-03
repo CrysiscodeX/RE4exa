@@ -49,6 +49,14 @@ only where an entry below already records the closure.
   - the macOS `mach-lookup` DNS side channel (mDNSResponder reachable; ADR 0006);
   - Windows enforcement (and read restriction, memory limits) not in scope yet;
   - the two pre-push environment notes: closed by W2-0 (`ac70493`).
+- **Reporting rule (D-30, the user's):** every report gives rea and leanrea rows as two numbers:
+  "covered" (passing on every listed platform) and "tested, partial" (with the missing platform
+  named). A row whose platforms are narrowed is never counted as covered. The 39 stay covered. The
+  COD rows of W2-3 count only as "tested, partial (missing: win32)".
+- **SBX-W, Windows engine enforcement** (planned, D-30; Wave 3 item 0; key
+  `RX-SBX/windows-engines`): a Job Object plus AppContainer through a small pinned helper, with no
+  system-wide install. It would complete the rows deferred on win32 by D-30: procedure_assembly,
+  read_function_instructions, LEAN-C08 (and LEAN-C18 if tagged).
 - **ENG:**
   - the `parseNm` newline forgery (`docs/engines-known-limits.md`): must be mitigated, and the pinned
     test flipped, before COD exposes symbols to callers (COD is **Active**);
@@ -583,7 +591,9 @@ only where an entry below already records the closure.
       "joins at the back") and priorities are a later slice; single-flight needs SNAP.
 
 ## Active
-- **Wave 2, item 3: COD, code-level analysis** is in progress (work order being written). Wave 2
+- **Wave 2, item 3: COD, code-level analysis** is in progress. Work order W2-3: Part A fixes the
+  llvm-nm forgery; Part B is disassembly keyed by GNU objdump. The user decided D-30: the COD rows
+  defer win32, and the ledger and reports gain the "covered" / "tested, partial" split. Wave 2
   items 0, 1 and 2 are done (`ac70493`, `69dde2e`, `40467bd`, under **Done**).
 
 ## Parked
@@ -627,7 +637,7 @@ The breadth plan in `BREADTH-COVERAGE.md` (waves and dependencies there; D-13, D
 1. **Wave 1:** SBX, the sandbox foundation; then ENG, the adapter registry with LLVM as the first
    provider; the program model (PM) beside them.
 2. **Wave 2:** DMN, then the scheduler (SCH); COD, RUN, MOB and SET.
-3. **Wave 3:** ARC, then JSE; EVD, OTH, CLI and BEN.
+3. **Wave 3:** SBX-W (Windows engine enforcement, D-30); ARC, then JSE; EVD, OTH, CLI and BEN.
 4. **Wave 4:** the supporting infrastructure, then the breadth gate.
 
 `docs/tools.json` is the tool catalog: 6,294 bytes at `bc38202`, against the 16 KiB `tools/list`

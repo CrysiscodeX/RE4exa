@@ -175,8 +175,34 @@ the fixtures job and the parity job, unless another run is named.
   - the macOS `mach-lookup` DNS side channel;
   - REA-C34 (effect audit, MCP hints), which needs DMN;
   - the open advisories in EXECUTION-STATE (A1, A2, the `sandbox_unavailable` fix text).
-- **Next:** none in Wave 1 beyond ENG's use of it. Windows enforcement and the gaps above are deep
-  work after the breadth gate (D-13).
+- **Next:** Windows engine enforcement is now the breadth item SBX-W (Wave 3, item 0; D-30), below.
+  The other gaps above are deep work after the breadth gate (D-13).
+
+### SBX-W, Windows engine enforcement: NOT_BUILT (planned by D-30)
+- **Why:** under D-22, engine runs on targets fail closed on Windows. So rows that need an engine
+  cannot pass a positive test on win32. By D-30, such rows defer win32 in the ledger until this item
+  lands, and they count only as "tested, partial (missing: win32)".
+- **Scope:** Windows backend for `runSandboxed`. A Job Object (kill on close, process count, memory)
+  plus an AppContainer (no write outside scratch, no network capability). It runs through a small
+  helper that is pinned (by digest, built or vendored in the project, licence recorded), with **no
+  system-wide install**, as the user's hard limits require. Engines run under it with `required: true`
+  as on Linux and macOS (D-22 unchanged in spirit: the fail-closed rule stays where the helper is
+  unavailable).
+- **Ledger key:** `RX-SBX/windows-engines` (platform win32; added by work order W2-3 as planned).
+- **Rows it would complete** (deferred on win32 by D-30; each must then pass `[+KEY]` and `[-KEY]` on
+  windows-2025, and its deferral is removed):
+  - `rea.tool/procedure_assembly`, `rea.tool/read_function_instructions`, `leanrea/LEAN-C08`
+    (W2-3);
+  - `leanrea/LEAN-C18`, if W2-3 tags it;
+  - any later row deferred under D-30 (the ledger's `deferred.until` lists them: a row whose
+    `until` is `RX-SBX/windows-engines`).
+  - It would also let the linux+darwin reax rows `RX-ENG/llvm` and `RX-COD/*` be widened to win32.
+- **Acceptance:** a tripwire child on windows-2025 that writes outside scratch, opens a socket, or
+  exceeds its memory or process limit is stopped and seen from outside. A helper that is missing or
+  altered fails closed with `sandbox_unavailable`. The deferred rows pass on win32, and the parity
+  report counts them as covered.
+- **Wave:** 3, item 0, before ARC (ARC's extraction on Windows benefits too), and before the breadth
+  gate.
 
 ### ENG, engine adapters and provider registry: PARTIAL_VERIFIED (since `95c82c1`)
 - **Evidence:** `src/engines/{contract,registry,run,llvm}.ts`; tests `test/engines.test.ts` with
@@ -229,6 +255,9 @@ the fixtures job and the parity job, unless another run is named.
   LEAN-C18). Positive: each instruction's address and bytes equal `read.bytes` at the procedure's
   file offset; boundaries match NAT's procedure table; mnemonics equal the compiler's `-S` output for
   the zig fixture sources. Negative: an address in no procedure, a non-code section, a missing engine.
+  - Amended by W2-3: the key is GNU objdump, run as a process in the fixtures job. It is not the
+    compiler's `-S` output, and not Capstone, which derives from LLVM. The rows defer win32 (D-30)
+    until SBX-W.
 
 ### RUN, runtime and devices: NOT_BUILT; Frida and ADB parts BLOCKED_EXTERNAL
 - **Evidence:** none. Related: core's approval queue (`policy/approvals.ts`), the process host.
@@ -295,7 +324,7 @@ the fixtures job and the parity job, unless another run is named.
 ### ARC, archives and app bundles: NOT_BUILT
 - **Evidence:** none in reax. Related: core's `probes/builtin/archive.ts` (`archive.list`: zip,
   zip64, tar, pax, gzip-wrapped tar, ASAR; listing only), tested in core. 14 rows.
-- **Next (Wave 3, first in it):** `inventory.archive` on core's listing, and plist XML and binary
+- **Next (Wave 3, after SBX-W):** `inventory.archive` on core's listing, and plist XML and binary
   (inspect_artifact if the slice matches the row, inspect_plist, LEAN-T17, LEAN-T03). Oracle: Python
   `zipfile`, `tarfile`, `plistlib`; `@electron/asar` (dev-only, pinned). Negative: traversal, symlink,
   bomb and depth tripwires reported, never followed. Extraction waits for SBX's check in this wave.
@@ -468,7 +497,7 @@ item's next package needs, not its full MASTER-PLAN dependencies.
 | 0 | This inventory and `MISSING-CAPABILITIES.md` (documentation only) | — |
 | 1 | SBX (with PROC), then ENG with LLVM as the first provider (with an RCI LLVM lane); PM beside them | SBX: PROC. ENG: SBX, PROC. PM: NAT |
 | 2 | DMN, then SCH; COD; RUN; MOB; SET | DMN: FW. SCH: core's kernel. COD: ENG, PM. RUN: SBX, PROC, core's approvals. MOB: NAT, core's zip listing. SET: DMN |
-| 3 | ARC, then JSE; EVD; OTH; CLI; BEN | ARC: SBX (for extraction). JSE: ARC. EVD: core's store. OTH: FW, SBX. CLI: DMN (schema profiles). BEN: DMN, SET |
+| 3 | SBX-W (Windows engine enforcement, D-30); ARC, then JSE; EVD; OTH; CLI; BEN | SBX-W: SBX, ENG. ARC: SBX (for extraction). JSE: ARC. EVD: core's store. OTH: FW, SBX. CLI: DMN (schema profiles). BEN: DMN, SET |
 | 4 | Supporting infrastructure: SNAP, POOL, RCI (nightly), CSF, SKL, REL, SBOM, ATT, SEC, FAIL, WFC, OBS, XST, LED, FIX and KEY gaps; then GATE | the components they serve |
 
 After Wave 4 the breadth gate runs, and deep work resumes, starting with the parked and deferred

@@ -449,3 +449,37 @@ The Orchestrator's decision (W2-2), recorded after review and CI on `40467bd`. A
 - **No `await` between BEGIN and COMMIT:** a transaction body that returns a promise is refused and
   rolled back.
 **Reopen if** the daemon takes ownership of `pm.db`, or another write operation arrives.
+
+## D-30 (2026-11-03) COD's rows on Windows: required platforms narrowed by a recorded deferral, and two numbers in every report
+The user's decision (Wave 2 item 3, work order W2-3), relayed by the Orchestrator: option 1 of the
+Task Master's feasibility analysis, "with two conditions".
+- **The facts it answers.** A row is `covered` only when its `[+KEY]` and `[-KEY]` tests passed on
+  every platform it lists (`src/ledger/status.ts`). Every rea and leanrea row lists linux, darwin and
+  win32. Under D-22 an engine run on a target fails closed on Windows, so no COD disassembly row can
+  pass a positive test there.
+- **The decision.** The COD rows of this slice (`rea.tool/procedure_assembly`,
+  `rea.tool/read_function_instructions`, `leanrea/LEAN-C08`; `leanrea/LEAN-C18` only if it is built
+  honestly) have their required platforms narrowed to linux and darwin. win32 stays in the ledger as a
+  recorded deferred platform, naming this decision and the item that would lift it. It is not
+  dropped.
+- **Condition 1, two numbers.** From now on every report gives rea and leanrea rows as two separate
+  numbers: "covered" (passing on every listed platform, deferred ones included) and "tested,
+  partial" (with the missing platform named). A row whose platforms are narrowed is never counted as
+  covered. The 39 stay "covered" until a row also passes on Windows. The COD rows count only under
+  "tested, partial (missing: win32)". This applies to EXECUTION-STATE, the parity report,
+  `scripts/status.ts` and the generated `CAPABILITY-MATRIX.md`.
+- **Condition 2, Windows engine enforcement.** Windows engine enforcement becomes a planned breadth
+  item, SBX-W: Job Object plus AppContainer, through a small pinned helper, with no system-wide
+  install. It is placed in Wave 3, as item 0, before the breadth gate (`BREADTH-COVERAGE.md`). Its
+  ledger key is `RX-SBX/windows-engines`. It would complete the rows deferred on win32 by this
+  decision.
+- **The answer key is unchanged.** It still comes from a tool that shares no code with llvm-objdump:
+  GNU objdump, run as a separate process. Capstone is excluded because it derives from LLVM's MC
+  tables.
+- **No D-22 exception.** Engine runs on targets on Windows still fail closed until SBX-W.
+- **Mechanism.** The work order W2-3 designs the ledger field (an optional `deferred` with
+  platforms, decision and `until`). The `platforms` list is kept as the original. The computed status
+  is never `covered` while a deferred platform is missing. The mechanism is recorded as its own
+  decision after review.
+**Reopen if** SBX-W lands (lift the deferrals; the rows must then pass on win32 to count as covered),
+or the user changes the reporting rule.

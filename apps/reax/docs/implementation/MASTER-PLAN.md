@@ -10,7 +10,8 @@ waves in `BREADTH-COVERAGE.md`: one first package per component, in this order:
 1. **Wave 1:** SBX (with process supervision), then ENG with LLVM as the first provider; PM beside
    them.
 2. **Wave 2:** DMN, then the scheduler (SCH); COD, RUN, MOB and SET.
-3. **Wave 3:** ARC, then JS (JSE); EVD, FMT (OTH), the rest of FW's rows (CLI) and BEN.
+3. **Wave 3:** SBX-W (Windows engine enforcement through a small pinned helper, D-30), then ARC,
+   then JS (JSE); EVD, FMT (OTH), the rest of FW's rows (CLI) and BEN.
 4. **Wave 4:** the supporting infrastructure (FAIL, REL and the others), then the breadth gate.
 
 The rest of NAT-4 (the PE COFF symbol table, crash dumps, ARM64 `.pdata`) resumes after the gate.
