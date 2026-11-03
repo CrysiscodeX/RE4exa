@@ -46,6 +46,10 @@ export interface OpContext {
   /** The reax home (state directory, holding pm.db). Internal: absent, it is $REAX_HOME, or by
    * default <home>/.reax. */
   home?: string;
+  /** Internal (never in a schema, tools.json or the docs): aborted when the caller cancels the run
+   * or its deadline passes (the daemon's scheduler). Operations check it at their own points;
+   * cancellation in process is cooperative. */
+  signal?: AbortSignal;
 }
 
 export interface OpResult {

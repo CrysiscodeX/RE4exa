@@ -194,6 +194,9 @@ export class Raw {
   readonly sock: Socket;
   #buf = "";
   #frames: Frame[] = [];
+  /** Frames read while looking for another id's reply (job.wait replies can arrive out of order). */
+  #stash: Frame[] = [];
+  #ids = 1000;
   #wait: ((f: Frame | null) => void) | null = null;
   closed = false;
   readonly done: Promise<void>;
@@ -253,6 +256,44 @@ export class Raw {
   end(): void {
     this.sock.destroy();
   }
+
+  /** The reply with this id, keeping other replies for later; rejects when the connection closes
+   * or nothing arrives within ms. */
+  async reply(id: number, ms = 10_000): Promise<Frame> {
+    const i = this.#stash.findIndex((f) => f.id === id);
+    if (i >= 0) return this.#stash.splice(i, 1)[0]!;
+    for (let n = 0; n < 1000; n++) {
+      const f = await this.next(ms);
+      if (f === null || f === "timeout") throw new Error(`no reply to request ${id}: ${f}`);
+      if (f.id === id) return f;
+      this.#stash.push(f);
+    }
+    throw new Error(`no reply to request ${id} among 1000 frames`);
+  }
+
+  /** Send a job.* (or any) request with a fresh id, hand-written: {"id","method","params"}. */
+  request(method: string, params?: unknown): number {
+    const id = ++this.#ids;
+    this.send(params === undefined ? { id, method } : { id, method, params });
+    return id;
+  }
+
+  /** request(), then its reply. */
+  async job(method: string, params?: unknown, ms = 10_000): Promise<Frame> {
+    return this.reply(this.request(method, params), ms);
+  }
+}
+
+/** A reply's result, asserting it is ok. */
+export function ok<T = Record<string, unknown>>(f: Frame): T {
+  assert.equal(f.ok, true, `expected ok: ${JSON.stringify(f)}`);
+  return f.result as T;
+}
+
+/** A reply's error code, asserting it failed. */
+export function failCode(f: Frame): string {
+  assert.equal(f.ok, false, `expected an error: ${JSON.stringify(f)}`);
+  return (f.error as { code: string }).code;
 }
 
 /** Connect to an endpoint as written in endpoint.json. Rejects with the socket error. */

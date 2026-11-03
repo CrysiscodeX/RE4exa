@@ -8,12 +8,17 @@
 //   stops at NUL, so the phrase could not be closed.
 // Both run in process (no child process, so no sandbox), on the reax home's pm.db (OpContext.home,
 // else $REAX_HOME, else <home>/.reax).
+// Cancellation (OpContext.signal, D-29) is cooperative: session.index checks it after each slice
+// is read, after the reads, before the write and once more inside the write transaction, just
+// before COMMIT, so an abort there rolls the transaction back. Nothing is checked after COMMIT. The
+// write lock is taken with withImmediate: waiting for another process's lock never blocks the
+// event loop, and an abort ends the wait.
 import { createHash } from "node:crypto";
 import { closeSync, openSync, readSync } from "node:fs";
 import { CoreError } from "@re4exa/core/errors";
 import "../errors.ts";
 import type { DatabaseSync } from "node:sqlite";
-import { openPm, pmCall, reaxHome } from "../pm/db.ts";
+import { openPm, pmCall, reaxHome, withImmediate } from "../pm/db.ts";
 import { target } from "./file.ts";
 import { inventoryNative } from "./native.ts";
 import { PAGE_INPUT, PAGE_MAX } from "./page.ts";
@@ -80,8 +85,10 @@ async function readSlice(ctx: OpContext, path: string, arch: string): Promise<{ 
   return { format, rows };
 }
 
-/** Test seam: called after the reads and before the second hash (a test changes the file there). */
-export const PM_HOOKS: { afterRead?: (abs: string) => void } = {};
+/** Test seams: afterRead is called after the reads and before the second hash (a test changes the
+ * file there); inTransaction (synchronous) inside the write transaction, after the inserts and
+ * before COMMIT. */
+export const PM_HOOKS: { afterRead?: (abs: string) => void; inTransaction?: (db: DatabaseSync) => void } = {};
 
 const sliceCount = (db: DatabaseSync, digest: string) =>
   Number((db.prepare("SELECT count(*) AS n FROM pm_symbol WHERE target = ?").get(digest) as { n: number }).n);
@@ -144,16 +151,19 @@ export const sessionIndex: Operation = {
       const r = await readSlice(ctx, String(args.path), s.arch);
       format = r.format;
       slices.push({ arch: s.arch, rows: r.rows });
+      ctx.signal?.throwIfAborted();
     }
     // the bytes read must be the bytes hashed: hash again, and store nothing if the file changed
     PM_HOOKS.afterRead?.(t.abs);
+    ctx.signal?.throwIfAborted();
     const now = digestFile(t.abs).digest;
     if (now !== digest) throw new CoreError("pm_target_changed", { path: t.rel, before: digest, after: now });
     const ins = db.prepare(
       "INSERT INTO pm_symbol (target, slice, arch, name, addr, size, kind, bind, defined, section, library, source) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
     );
-    pmCall(() => db.exec("BEGIN IMMEDIATE"));
-    try {
+    ctx.signal?.throwIfAborted();
+    // BEGIN to COMMIT runs synchronously inside withImmediate: no await in between
+    await withImmediate(db, { signal: ctx.signal }, (db) => {
       db.prepare("DELETE FROM pm_symbol WHERE target = ?").run(digest);
       db.prepare("DELETE FROM pm_target WHERE digest = ?").run(digest);
       db.prepare(
@@ -176,11 +186,10 @@ export const sessionIndex: Operation = {
             x.source,
           );
       });
-      pmCall(() => db.exec("COMMIT"));
-    } catch (e) {
-      if (db.isTransaction) db.exec("ROLLBACK");
-      throw e;
-    }
+      PM_HOOKS.inTransaction?.(db);
+      // an abort raised inside the transaction rolls it back
+      ctx.signal?.throwIfAborted();
+    });
     const n = slices.reduce((a, s) => a + s.rows.length, 0);
     return {
       data: { file: t.rel, digest, symbols: n, reused: false },

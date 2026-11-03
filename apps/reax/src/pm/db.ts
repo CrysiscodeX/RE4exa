@@ -5,7 +5,9 @@
 // - every pending step and the version bump run in one BEGIN IMMEDIATE transaction, so a failure
 //   leaves the previous version and schema;
 // - a store newer than this code is refused, unmodified, with core's store_schema_newer;
-// - WAL, and a 5 s busy timeout, so two processes indexing at once wait rather than fail.
+// - WAL, and a 5 s busy timeout, so two processes indexing at once wait rather than fail;
+// - session.index's write takes its lock through withImmediate (D-29): never blocking the event
+//   loop while another process holds the lock, cancellable, the same 5 s budget, then pm_busy.
 // One connection per store per process.
 import { existsSync, mkdirSync } from "node:fs";
 import { homedir } from "node:os";
@@ -73,6 +75,78 @@ export function migrate(db: DatabaseSync, steps: readonly Migration[] = MIGRATIO
     return latest;
   } catch (e) {
     db.exec("ROLLBACK");
+    throw e;
+  }
+}
+
+/** The longest pause between two attempts at the write lock. */
+export const LOCK_RETRY_MS = 50;
+
+/** One attempt at BEGIN IMMEDIATE that never waits: busy_timeout is 0 for this statement only,
+ * then restored. True when the transaction is open. */
+function tryBegin(db: DatabaseSync): boolean {
+  const prev = Number((db.prepare("PRAGMA busy_timeout").get() as { timeout: number }).timeout);
+  db.exec("PRAGMA busy_timeout = 0");
+  try {
+    db.exec("BEGIN IMMEDIATE");
+    return true;
+  } catch (e) {
+    if (isBusy(e)) return false;
+    throw e;
+  } finally {
+    db.exec(`PRAGMA busy_timeout = ${prev}`);
+  }
+}
+
+/** A pause of ms that an abort ends early, rejecting with the signal's reason. */
+function pause(ms: number, signal: AbortSignal | undefined): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(signal.reason);
+      return;
+    }
+    const onAbort = () => {
+      clearTimeout(t);
+      reject(signal!.reason);
+    };
+    const t = setTimeout(() => {
+      signal?.removeEventListener("abort", onAbort);
+      resolve();
+    }, ms);
+    signal?.addEventListener("abort", onAbort, { once: true });
+  });
+}
+
+/** Run body in a BEGIN IMMEDIATE transaction without blocking the event loop while another
+ * connection holds the write lock: each attempt does not wait (busy_timeout 0), and between attempts
+ * a timer of at most LOCK_RETRY_MS is awaited, which the signal can end. Past budgetMs (default
+ * PM_LIMITS.busyTimeoutMs) it throws the retryable pm_busy; an abort while waiting throws the
+ * signal's reason. Once BEGIN succeeds, body, COMMIT and ROLLBACK run synchronously in the same
+ * tick: the connection is shared by every job of a process, so an await inside the transaction
+ * would let another job's statements run in it. body must therefore be synchronous. */
+export async function withImmediate<T>(
+  db: DatabaseSync,
+  opts: { signal?: AbortSignal; budgetMs?: number },
+  body: (db: DatabaseSync) => T,
+): Promise<T> {
+  const budget = opts.budgetMs ?? PM_LIMITS.busyTimeoutMs;
+  const start = Date.now();
+  // each pause is at least 1 ms, so this many attempts always outlast the budget
+  for (let attempt = 0; ; attempt++) {
+    opts.signal?.throwIfAborted();
+    if (tryBegin(db)) break;
+    const left = budget - (Date.now() - start);
+    if (left <= 0 || attempt > budget + 1) throw new CoreError("pm_busy", { store: PM_FILE, timeoutMs: budget });
+    await pause(Math.max(1, Math.min(LOCK_RETRY_MS, left)), opts.signal);
+  }
+  // from here to COMMIT or ROLLBACK: no await
+  try {
+    const out = body(db);
+    if (out instanceof Promise) throw new Error("withImmediate's body must be synchronous");
+    pmCall(() => db.exec("COMMIT"));
+    return out;
+  } catch (e) {
+    if (db.isTransaction) db.exec("ROLLBACK");
     throw e;
   }
 }

@@ -1,13 +1,15 @@
 // The reax daemon: one per reax home, reachable only through a Unix socket (a named pipe on
 // Windows) or, by opt-in, a loopback TCP port, and only with the token from its owner-only token
-// file. It answers ping, status and shutdown (ADR 0007; MCP, sessions and jobs come in later
-// slices).
+// file. It answers ping, status and shutdown (ADR 0007), and runs registered operations as jobs
+// through the scheduler (ADR 0008; src/daemon/jobs.ts). MCP and sessions come in later slices.
 //
 // Start order: bind validation (before any file or socket), home safety, run/, the OS lock, the
 // stale-lock diagnosis and recovery, daemon.lock (O_EXCL), clearing the socket path, the token
 // (O_EXCL), listen, the post-listen address check, endpoint.json. Shutdown order: endpoint.json
 // first (clients stop connecting), the server, the socket, the token, daemon.lock, then the OS
-// lock; each file only while daemon.lock still names this instance.
+// lock; each file only while daemon.lock still names this instance. Before the files: no new
+// connections, then the scheduler's close (every job cancelled with reason shutdown, the running
+// ones drained for up to shutdownDrainMs).
 import { randomUUID } from "node:crypto";
 import { createServer, type Server, type Socket } from "node:net";
 import { resolve } from "node:path";
@@ -15,6 +17,8 @@ import type { DatabaseSync } from "node:sqlite";
 import { CoreError, isCoreError } from "@re4exa/core/errors";
 import "../errors.ts";
 import { REAX_VERSION } from "../ops/probes.ts";
+import { Scheduler, type SchedulerOptions } from "../sched/scheduler.ts";
+import { jobCall, jobError } from "./jobs.ts";
 import {
   clearSocket,
   createLock,
@@ -33,6 +37,8 @@ import {
   errorBody,
   FrameReader,
   HELLO_TIMEOUT_MS,
+  JOB_METHODS,
+  type JobMethod,
   MAX_CONNECTIONS,
   METHODS,
   type Method,
@@ -66,6 +72,9 @@ export interface DaemonOptions {
   port?: number;
   /** One line per event (start, stop, refusals); never the token. */
   log?: (line: string) => void;
+  /** In process only (tests): the scheduler's limits, clock, hooks and operation resolver. `reax
+   * serve` never passes it, so only registered operations run there. */
+  sched?: Omit<SchedulerOptions, "home" | "log">;
 }
 
 export interface DaemonHandle {
@@ -159,6 +168,8 @@ export async function startDaemon(opts: DaemonOptions): Promise<DaemonHandle> {
     let endpoint: Endpoint | null = null;
     let recovered: Recovered = null;
     let settle: () => void = () => {};
+    const sched = new Scheduler({ ...opts.sched, home, log });
+    let connSeq = 0;
     const closed = new Promise<void>((r) => {
       settle = r;
     });
@@ -174,6 +185,7 @@ export async function startDaemon(opts: DaemonOptions): Promise<DaemonHandle> {
       endpoint,
       connections: conns.size,
       recovered,
+      jobs: sched.counts(),
     });
 
     const close = (): Promise<void> => {
@@ -189,10 +201,16 @@ export async function startDaemon(opts: DaemonOptions): Promise<DaemonHandle> {
       stopping ??= (async () => {
         log(`reax daemon: stopping instance ${instance}`);
         if (readEndpoint(home)?.instance === instance) remove(f.endpoint);
-        await new Promise<void>((r) => {
-          srv.close(() => r());
-          for (const s of all) s.destroy();
-        });
+        // no new connections; the scheduler cancels and drains every job before the sockets go, so
+        // the jobs end with reason shutdown, not disconnect
+        const serverClosed = new Promise<void>((r) => srv.close(() => r()));
+        try {
+          await sched.close();
+        } catch (e) {
+          log(`reax daemon: the scheduler did not close cleanly: ${(e as Error).message}`);
+        }
+        for (const s of all) s.destroy();
+        await serverClosed;
         if (ownsLock(home, instance)) {
           if (endpoint?.transport === "unix") remove(endpoint.path);
           remove(f.token);
@@ -208,12 +226,26 @@ export async function startDaemon(opts: DaemonOptions): Promise<DaemonHandle> {
       return stopping;
     };
 
-    const handle = (frame: Record<string, unknown>): unknown => {
+    const handle = (frame: Record<string, unknown>, conn: string): unknown => {
       const id = typeof frame.id === "number" && Number.isInteger(frame.id) ? frame.id : null;
       const method = frame.method;
       if (id === null || typeof method !== "string" || !(METHODS as readonly string[]).includes(method))
-        return { id, ok: false, error: errorBody(new CoreError("bad_request", { method: String(method) })) };
-      switch (method as Method) {
+        return {
+          id,
+          ok: false,
+          error: errorBody(new CoreError("bad_request", { method: String(method).slice(0, 64) })),
+        };
+      if ((JOB_METHODS as readonly string[]).includes(method)) {
+        const fail = (e: unknown) => ({ id, ok: false, error: jobError(e) });
+        try {
+          const r = jobCall(sched, conn, method as JobMethod, frame);
+          if (r instanceof Promise) return r.then((result) => ({ id, ok: true, result }), fail);
+          return { id, ok: true, result: r };
+        } catch (e) {
+          return fail(e);
+        }
+      }
+      switch (method as Exclude<Method, JobMethod>) {
         case "ping":
           return { id, ok: true, result: { pong: true, instance } };
         case "status":
@@ -241,13 +273,27 @@ export async function startDaemon(opts: DaemonOptions): Promise<DaemonHandle> {
     };
 
     const srv = createServer((sock) => {
-      // counted slots, and a hard cap on every open socket (refused ones still draining included)
-      if (stopping || conns.size >= MAX_CONNECTIONS || all.size >= MAX_SOCKETS) {
+      // a hard cap on every open socket (refused ones still draining included), and no frame while
+      // stopping
+      if (stopping || all.size >= MAX_SOCKETS) {
         sock.destroy();
         return;
       }
-      conns.add(sock);
       all.add(sock);
+      // at the connection cap: one retryable daemon_busy hello frame before the peer sends anything,
+      // then the socket ends; it is destroyed once flushed, or after DROP_AFTER_MS
+      if (conns.size >= MAX_CONNECTIONS) {
+        connLog("reax daemon: refused a connection [daemon_busy]");
+        sock.on("error", () => {});
+        sock.on("close", () => all.delete(sock));
+        setTimeout(() => sock.destroy(), DROP_AFTER_MS).unref();
+        sock.end(encode({ type: "hello", ok: false, error: errorBody(new CoreError("daemon_busy")) }), () =>
+          sock.destroy(),
+        );
+        return;
+      }
+      conns.add(sock);
+      const conn = `conn-${++connSeq}`;
       const reader = new FrameReader();
       let state: "hello" | "ready" | "closed" = "hello";
       /** Frames read but not yet handled (while replies are backed up); bounded by PENDING_BYTES (characters). */
@@ -268,6 +314,8 @@ export async function startDaemon(opts: DaemonOptions): Promise<DaemonHandle> {
         clearTimeout(timer);
         clearTimeout(stall);
         pending.length = 0;
+        // the jobs this connection submitted are cancelled; jobs it only waited on are not
+        sched.dropOwner(conn);
       });
       // A refused connection stops counting toward MAX_CONNECTIONS at once, and is destroyed as soon
       // as its error frame is flushed, or after DROP_AFTER_MS whatever the peer does: a peer that
@@ -334,7 +382,14 @@ export async function startDaemon(opts: DaemonOptions): Promise<DaemonHandle> {
           send({ type: "hello", ok: true, protocol: PROTOCOL_VERSION, instance });
           return;
         }
-        const reply = handle(frame);
+        const reply = handle(frame, conn);
+        if (reply instanceof Promise) {
+          // job.wait: answered when it resolves, possibly after later requests' replies
+          void reply.then((r) => {
+            if (state !== "closed" && !sock.destroyed) send(r);
+          });
+          return;
+        }
         if (frame.method === "shutdown" && (reply as { ok: boolean }).ok) {
           state = "closed";
           pending.length = 0;

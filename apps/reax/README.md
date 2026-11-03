@@ -102,7 +102,17 @@ results private. Mac and Windows results are reported separately. The rules are 
 Windows), or with `--tcp` on 127.0.0.1 or ::1 only, and every connection must present the token
 from `<home>/run/daemon.token`, which is new on each start and readable only by you (on Windows it
 inherits the home's ACL: see the ADR). A daemon that crashed leaves a stale lock; the next start
-recovers it and says so. It serves no operations yet: MCP and sessions come in later slices.
+recovers it and says so. MCP and sessions come in later slices.
+
+### Jobs (ADR 0008)
+
+`reax daemon run <operation> key=value ... [--workspace dir] [--timeout-ms N]` runs a registered
+operation as a job through the daemon and prints it as `reax op` does; Ctrl-C cancels it.
+`reax daemon jobs` lists the jobs and `reax daemon cancel <job>` cancels one. The daemon runs at
+most 4 jobs at once (one slot kept for cheap work, one deep job and one write job at a time), takes
+connections in turn, and refuses more than 16 jobs per connection or 64 waiting jobs with the
+retryable `job_queue_full`. Each job has a deadline from its start (`job_timeout`); a cancelled
+engine run's processes are killed, and a cancelled index write is rolled back.
 
 ## Status rules (ADR 0001)
 

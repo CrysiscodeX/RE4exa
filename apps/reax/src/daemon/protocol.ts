@@ -2,9 +2,14 @@
 //   client: {"type":"hello","protocol":1,"token":"..."}
 //   daemon: {"type":"hello","ok":true,"protocol":1,"instance":"..."}  or an error frame, then close
 //   client: {"id":n,"method":"ping"|"status"|"shutdown"}
+//   client: {"id":n,"method":"job.submit"|"job.status"|"job.list"|"job.wait"|"job.result"|"job.cancel",
+//            "params":{...}}   (additive, still version 1; ADR 0008, D-28)
 //   daemon: {"id":n,"ok":true,"result":...} | {"id":n,"ok":false,"error":{code,message,retryable,fix}}
-// Limits: a frame is at most MAX_FRAME bytes; at most MAX_CONNECTIONS at once; a connection that
-// has not sent a valid hello within HELLO_TIMEOUT_MS is closed.
+//           (job.* errors also carry the failure's detail; job.wait replies may arrive out of order,
+//           so clients match replies by id)
+// Limits: a frame is at most MAX_FRAME bytes; at most MAX_CONNECTIONS at once (the next one gets a
+// {"type":"hello","ok":false,"error":{code:"daemon_busy",...}} frame and is closed); a connection
+// that has not sent a valid hello within HELLO_TIMEOUT_MS is closed.
 import { CoreError, type FailureCode } from "@re4exa/core/errors";
 import "../errors.ts";
 
@@ -12,7 +17,9 @@ export const PROTOCOL_VERSION = 1;
 export const MAX_FRAME = 64 * 1024;
 export const MAX_CONNECTIONS = 32;
 export const HELLO_TIMEOUT_MS = 2000;
-export const METHODS = ["ping", "status", "shutdown"] as const;
+export const JOB_METHODS = ["job.submit", "job.status", "job.list", "job.wait", "job.result", "job.cancel"] as const;
+export const METHODS = ["ping", "status", "shutdown", ...JOB_METHODS] as const;
+export type JobMethod = (typeof JOB_METHODS)[number];
 export type Method = (typeof METHODS)[number];
 
 /** Splits a byte stream into lines. A line (or an unterminated tail) over MAX_FRAME is an error. */
@@ -59,6 +66,17 @@ export function parseFrame(line: string): Record<string, unknown> {
 }
 
 export const encode = (frame: unknown) => `${JSON.stringify(frame)}\n`;
+
+/** A job method's params: an object (absent counts as {}) with only the allowed keys; bad_request
+ * otherwise. */
+export function params(frame: Record<string, unknown>, allowed: readonly string[]): Record<string, unknown> {
+  const p = frame.params ?? {};
+  if (typeof p !== "object" || p === null || Array.isArray(p))
+    throw new CoreError("bad_request", { field: "params", why: "an object" });
+  for (const k of Object.keys(p))
+    if (!allowed.includes(k)) throw new CoreError("bad_request", { field: `params.${k.slice(0, 64)}`, why: "unknown" });
+  return p as Record<string, unknown>;
+}
 
 /** The wire form of a failure: code, message, retryable and fix (from the failure table). */
 export function errorBody(e: CoreError | FailureCode): Record<string, unknown> {

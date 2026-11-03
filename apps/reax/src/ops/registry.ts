@@ -98,13 +98,28 @@ export function applyBudget(name: string, r: OpResult, budget = RESPONSE_BUDGET)
   };
 }
 
-export async function runOperation(
+/** Run a resolved operation: its input checked, the caller's signal checked before it starts, its
+ * result within the budget. */
+export async function runOp(
+  op: Operation,
+  args: unknown,
+  ctx: OpContext,
+  opts: { budget?: number } = {},
+): Promise<OpResult & { operation: string }> {
+  const checked = checkInput(op.name, op.input, args);
+  ctx.signal?.throwIfAborted();
+  return { ...applyBudget(op.name, await op.run(ctx, checked), opts.budget ?? RESPONSE_BUDGET), operation: op.name };
+}
+
+export function runOperation(
   name: string,
   args: unknown,
   ctx: OpContext,
   opts: { budget?: number } = {},
 ): Promise<OpResult & { operation: string }> {
-  const op = operation(name);
-  const checked = checkInput(name, op.input, args);
-  return { ...applyBudget(name, await op.run(ctx, checked), opts.budget ?? RESPONSE_BUDGET), operation: name };
+  try {
+    return runOp(operation(name), args, ctx, opts);
+  } catch (e) {
+    return Promise.reject(e);
+  }
 }

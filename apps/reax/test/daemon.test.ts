@@ -6,7 +6,7 @@
 // through its own handle, and the after hook checks each recorded pid is gone.
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { chmodSync, existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { connect, createServer, type Server, type Socket } from "node:net";
 import { networkInterfaces } from "node:os";
 import { join } from "node:path";
@@ -129,6 +129,8 @@ test(
         "endpoint",
         "home",
         "instance",
+        // added by SCH (ADR 0008): the job counts
+        "jobs",
         "pid",
         "protocol",
         "recovered",
@@ -136,6 +138,7 @@ test(
         "uptimeMs",
         "version",
       ]);
+      assert.deepEqual(st.jobs, { queued: 0, running: 0, retained: 0 });
       assert.equal(st.pid, c.pid);
       assert.equal(st.home, box.home);
       assert.equal(st.instance, ready.instance);
@@ -282,7 +285,7 @@ test(
 );
 
 test(
-  "[-RX-DMN/lifecycle] an unknown method is bad_request and the connection still answers; a 65 KiB frame is bad_request and closes; a 33rd connection is closed",
+  "[-RX-DMN/lifecycle] an unknown method is bad_request and the connection still answers; a 65 KiB frame is bad_request and closes; a 33rd connection gets daemon_busy and is closed",
   LIMIT,
   async () => {
     await withDaemon([], async (box) => {
@@ -305,7 +308,10 @@ test(
       const conns = [];
       for (let i = 0; i < 32; i++) conns.push(await authed(box));
       const extra = await rawConnect(readEndpointFile(box));
-      assert.equal(await extra.next(3000), null, "the 33rd connection is closed at once");
+      const busy = await extra.next(3000);
+      assert.ok(busy && busy !== "timeout", "the 33rd connection gets a frame");
+      assert.equal((busy.error as { code: string }).code, "daemon_busy");
+      assert.equal(await extra.next(3000), null, "the 33rd connection is then closed");
       for (const x of conns) x.end();
       await Promise.all(conns.map((x) => x.done));
       assert.equal(((await call(box, "ping")).result as { pong: boolean }).pong, true);
@@ -531,6 +537,48 @@ if (POSIX) {
           await reap(c);
           box.done();
         }
+      }
+    },
+  );
+
+  test(
+    "[+RX-DMN/token-file] a run/ pre-created 0755 (allowed by the home check) is made 0700 before the start goes on",
+    LIMIT,
+    async () => {
+      const box = tempBox();
+      const run = join(box.home, "run");
+      mkdirSync(run);
+      chmodSync(run, 0o755);
+      assert.equal(sysStat(run), `755 ${uid()}`, "the precondition, by the system's stat");
+      const c = serve(box);
+      try {
+        assert.ok(await c.ready, `ready: ${c.err()}`);
+        assert.equal(sysStat(run), `700 ${uid()}`, "run/ is 0700");
+        assert.equal(await shutdown(box, c), 0);
+      } finally {
+        await reap(c);
+        box.done();
+      }
+    },
+  );
+
+  test(
+    "[-RX-DMN/token-file] a run/ pre-created 0775 is refused with daemon_home_unsafe, and nothing is created in it",
+    LIMIT,
+    async () => {
+      const box = tempBox();
+      const run = join(box.home, "run");
+      mkdirSync(run);
+      chmodSync(run, 0o775);
+      const c = serve(box);
+      try {
+        assert.equal(await exitWithin(c), 1);
+        assert.match(c.err(), /\[daemon_home_unsafe\]/);
+        assert.deepEqual(readdirSync(run), [], "nothing is created in run/");
+        assert.equal(sysStat(run), `775 ${uid()}`, "run/ is left as it was");
+      } finally {
+        await reap(c);
+        box.done();
       }
     },
   );

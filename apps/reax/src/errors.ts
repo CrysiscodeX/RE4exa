@@ -21,6 +21,12 @@ declare module "@re4exa/core/errors" {
     daemon_bind_refused: true;
     daemon_home_unsafe: true;
     daemon_protocol_mismatch: true;
+    daemon_busy: true;
+    job_queue_full: true;
+    job_not_found: true;
+    job_cancelled: true;
+    job_timeout: true;
+    job_failed: true;
   }
 }
 
@@ -114,5 +120,35 @@ export const REAX_FAILURE_MODES = defineFailureModes({
     retryable: false,
     message: "The client and the daemon speak different protocol versions",
     fix: "Use the reax CLI of the same version as the running daemon, or restart the daemon with this version",
+  },
+  daemon_busy: {
+    retryable: true,
+    message: "The daemon is serving as many connections as it allows",
+    fix: "Retry in a moment, once another client has disconnected",
+  },
+  job_queue_full: {
+    retryable: true,
+    message: "The daemon's job queue is full (detail.scope says whether for this connection or for the daemon)",
+    fix: "Retry once some of the queued jobs have finished, or cancel jobs this connection no longer needs",
+  },
+  job_not_found: {
+    retryable: false,
+    message: "There is no job with this id (it never existed, or it finished long enough ago to be forgotten)",
+    fix: "List the current jobs with `reax daemon jobs`; read a job's result soon after it finishes",
+  },
+  job_cancelled: {
+    retryable: false,
+    message: "The job was cancelled before it finished (detail.reason: client, disconnect or shutdown)",
+    fix: "Submit it again if the result is still wanted",
+  },
+  job_timeout: {
+    retryable: false,
+    message: "The job ran past its deadline (counted from its start) and was stopped",
+    fix: "Raise timeoutMs, up to the maximum, or narrow the request",
+  },
+  job_failed: {
+    retryable: false,
+    message: "The job failed with an internal error",
+    fix: "Read detail.excerpt; report it if it persists",
   },
 });

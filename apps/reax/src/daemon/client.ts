@@ -1,5 +1,7 @@
-// The daemon's client, used by the CLI (`reax daemon ping|status|shutdown`) and by the stale-lock
-// diagnosis. It finds the daemon through run/endpoint.json, reads the token from run/daemon.token at
+// The daemon's client, used by the CLI (`reax daemon ping|status|shutdown|run|jobs|cancel`) and by
+// the stale-lock diagnosis. A connection the daemon closes before answering the hello means it is
+// at its connection cap: daemon_busy (retryable), not daemon_unauthorized (D-28); a wrong token
+// always gets its own daemon_unauthorized frame. It finds the daemon through run/endpoint.json, reads the token from run/daemon.token at
 // every call (never cached, never from an argument or the environment), refuses files another user
 // could read or write, and connects only to a Unix socket, a named pipe or a loopback address.
 import { connect, type Socket } from "node:net";
@@ -93,24 +95,31 @@ function withDeadline<T>(p: Promise<T>, ms: number, onTimeout: () => void): Prom
 }
 
 function failure(frame: Record<string, unknown> | null, fallback: FailureCode): CoreError {
-  const err = (frame?.error ?? null) as { code?: string } | null;
+  const err = (frame?.error ?? null) as { code?: string; detail?: unknown } | null;
   const code = typeof err?.code === "string" ? err.code : fallback;
+  const detail =
+    typeof err?.detail === "object" && err.detail !== null && !Array.isArray(err.detail)
+      ? (err.detail as Record<string, unknown>)
+      : undefined;
   try {
-    return new CoreError(code as FailureCode);
+    return new CoreError(code as FailureCode, detail);
   } catch {
     return new CoreError(fallback);
   }
 }
 
-/** Hello on an open connection; returns the daemon's instance id. */
+/** Hello on an open connection; returns the daemon's instance id. A close before any reply is the
+ * daemon at its connection cap. */
 async function hello(conn: Conn, token: string): Promise<string> {
   const r = await conn.request({ type: "hello", protocol: PROTOCOL_VERSION, token });
-  if (r?.type !== "hello" || r.ok !== true || typeof r.instance !== "string") throw failure(r, "daemon_unauthorized");
+  if (r === null) throw new CoreError("daemon_busy");
+  if (r.type !== "hello" || r.ok !== true || typeof r.instance !== "string") throw failure(r, "daemon_unauthorized");
   return r.instance;
 }
 
-/** Call one method on the daemon of this home, and return its result. */
-export async function daemonCall(home: string, method: Method, timeoutMs = CALL_TIMEOUT_MS): Promise<unknown> {
+/** Connect to the daemon of this home and say hello: the connection and the token-checked
+ * instance. */
+async function connectHome(home: string, timeoutMs: number): Promise<{ conn: Conn; token: string }> {
   let token: string;
   try {
     token = readToken(home);
@@ -120,18 +129,27 @@ export async function daemonCall(home: string, method: Method, timeoutMs = CALL_
   }
   const ep = readEndpoint(home);
   if (!ep) throw new CoreError("daemon_not_running", { home });
-  let conn: Conn;
   try {
-    conn = await open(ep, timeoutMs);
+    return { conn: await open(ep, timeoutMs), token };
   } catch (e) {
     if (refused(e)) throw new CoreError("daemon_not_running", { home });
     throw e;
   }
+}
+
+/** Call one method on the daemon of this home, and return its result. */
+export async function daemonCall(
+  home: string,
+  method: Method,
+  timeoutMs = CALL_TIMEOUT_MS,
+  params?: Record<string, unknown>,
+): Promise<unknown> {
+  const { conn, token } = await connectHome(home, timeoutMs);
   try {
     return await withDeadline(
       (async () => {
         await hello(conn, token);
-        const r = await conn.request({ id: 1, method });
+        const r = await conn.request({ id: 1, method, ...(params ? { params } : {}) });
         if (r?.id !== 1 || r.ok !== true) {
           // the connection closing on shutdown before the reply arrives still means it stopped
           if (r === null && method === "shutdown") return { stopping: true };
@@ -145,6 +163,34 @@ export async function daemonCall(home: string, method: Method, timeoutMs = CALL_
   } finally {
     conn.close();
   }
+}
+
+/** One authenticated connection for several sequential calls (`reax daemon run`). Each call has its
+ * own deadline; close() ends the connection, which makes the daemon cancel the jobs it submitted. */
+export interface DaemonSession {
+  call(method: Method, params: Record<string, unknown>, timeoutMs?: number): Promise<unknown>;
+  close(): void;
+}
+
+export async function daemonSession(home: string, timeoutMs = CALL_TIMEOUT_MS): Promise<DaemonSession> {
+  const { conn, token } = await connectHome(home, timeoutMs);
+  try {
+    await withDeadline(hello(conn, token), timeoutMs, () => conn.close());
+  } catch (e) {
+    conn.close();
+    throw e;
+  }
+  let id = 0;
+  return {
+    async call(method, params, ms = CALL_TIMEOUT_MS) {
+      const n = ++id;
+      const r = await withDeadline(conn.request({ id: n, method, params }), ms, () => conn.close());
+      if (r === null) throw new CoreError("daemon_not_running", { why: "the daemon closed the connection" });
+      if (r.id !== n || r.ok !== true) throw failure(r, "daemon_not_running");
+      return r.result;
+    },
+    close: () => conn.close(),
+  };
 }
 
 /** What answers at an endpoint, for the stale-lock diagnosis: nothing (refused outright), no answer

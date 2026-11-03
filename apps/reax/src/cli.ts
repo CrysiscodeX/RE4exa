@@ -1,9 +1,16 @@
 // The reax command line, on the operation registry. Until the MCP server exists (WP-3) this is how
 // agents and people call operations. The daemon (ADR 0007) has its own commands; it serves ping,
-// status and shutdown so far, for the home in $REAX_HOME (or <home>/.reax):
+// status and shutdown, and runs operations as jobs (ADR 0008), for the home in $REAX_HOME (or
+// <home>/.reax):
 //   reax serve [--tcp [--host 127.0.0.1|::1] [--port N]]   the daemon, in the foreground
 //   reax daemon start [--tcp ...]                          the same, detached; waits until it answers
 //   reax daemon ping | status | shutdown
+//   reax daemon run <operation> [key=value ...] [--json '{...}'] [--workspace dir] [--timeout-ms N]
+//        [--format ...] [--filter-output ...] [--token-limit N]
+//                       one job through the daemon, printed as `reax op` prints it; SIGINT or
+//                       SIGTERM closes the connection, so the daemon cancels the job (exit 1,
+//                       [job_cancelled])
+//   reax daemon jobs | cancel <job>                        job.list, job.cancel
 //   reax op --list
 //   reax describe <operation>
 //   reax op <operation> [key=value ...] [--json '{"path":"..."}'] [--workspace dir]
@@ -13,16 +20,17 @@
 // to use; a value that parses as JSON (a number, true, a list) is taken as JSON, else as a string.
 import { spawn } from "node:child_process";
 import { chmodSync, closeSync, mkdirSync, openSync } from "node:fs";
+import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { isCoreError } from "@re4exa/core/errors";
+import { CoreError, isCoreError } from "@re4exa/core/errors";
 import { envelope } from "@re4exa/core/policy/taint";
-import { daemonCall } from "./daemon/client.ts";
+import { CALL_TIMEOUT_MS, daemonCall, daemonSession } from "./daemon/client.ts";
 import { checkHome, files, POSIX, readSmall } from "./daemon/paths.ts";
 import { type DaemonOptions, startDaemon, validateBind } from "./daemon/server.ts";
 import { filterOutput } from "./format/filter.ts";
 import { FORMATS, type Format, limitTokens, render } from "./format/index.ts";
 import { OPERATIONS, operation, runOperation } from "./ops/registry.ts";
-import type { JsonSchema, Operation } from "./ops/types.ts";
+import type { JsonSchema, Operation, OpResult } from "./ops/types.ts";
 import { reaxHome } from "./pm/db.ts";
 
 /** Options that take a value; everything else after the operation name is key=value. */
@@ -33,13 +41,16 @@ function flag(args: string[], name: string): string | undefined {
   return i >= 0 ? args[i + 1] : undefined;
 }
 
+/** `daemon run` also takes --timeout-ms. */
+const RUN_FLAGS = new Set([...VALUE_FLAGS, "--timeout-ms"]);
+
 /** The operation's arguments: --json first, then each key=value on top. */
-export function opArgs(rest: string[]): Record<string, unknown> {
+export function opArgs(rest: string[], flags: ReadonlySet<string> = VALUE_FLAGS): Record<string, unknown> {
   const args = JSON.parse(flag(rest, "--json") ?? "{}") as Record<string, unknown>;
   for (let i = 1; i < rest.length; i++) {
     const a = rest[i]!;
     if (a.startsWith("--")) {
-      if (!VALUE_FLAGS.has(a)) throw new Error(`unknown option ${a}`);
+      if (!flags.has(a)) throw new Error(`unknown option ${a}`);
       i++;
       continue;
     }
@@ -142,10 +153,12 @@ async function serve(rest: string[], out: (s: string) => void): Promise<number> 
     ...bindOptions(rest),
     log: (line) => process.stderr.write(`${line}\n`),
   });
-  out(JSON.stringify({ ready: true, pid: h.pid, instance: h.instance, endpoint: h.endpoint, recovered: h.recovered }));
+  // the handlers are in place before the ready line, so a signal sent on seeing it always runs the
+  // cleanup (it would otherwise end the process with the default action)
   const stop = () => void h.close();
   process.on("SIGTERM", stop);
   process.on("SIGINT", stop);
+  out(JSON.stringify({ ready: true, pid: h.pid, instance: h.instance, endpoint: h.endpoint, recovered: h.recovered }));
   await h.closed;
   process.off("SIGTERM", stop);
   process.off("SIGINT", stop);
@@ -198,11 +211,106 @@ async function startDetached(rest: string[], out: (s: string) => void): Promise<
   throw new Error(`the daemon did not answer within ${START_WAIT_MS / 1000} s; see ${f.log}`);
 }
 
+/** One result as `reax op` prints it: format, filter, token limit, and the untrusted envelope. */
+function printResult(
+  r: OpResult & { operation: string },
+  untrusted: boolean,
+  rest: string[],
+  out: (s: string) => void,
+): void {
+  const format = formatOf(rest);
+  const tokens = tokenLimit(rest);
+  const filter = flag(rest, "--filter-output");
+  let data = r.data;
+  const limitations = [...r.limitations];
+  if (filter !== undefined) {
+    const f = filterOutput(r.data, filter.split(","));
+    data = f.data;
+    for (const p of f.unmatched) limitations.push(`--filter-output path ${p} matched nothing`);
+  }
+  const view = { operation: r.operation, coverage: r.coverage, limitations, data, text: r.text };
+  // with a filter, the text form shows the filtered data, not the operation's full summary
+  if (filter !== undefined && format === "text") view.text = JSON.stringify(data, null, 1);
+  let body = render(format, view);
+  if (tokens !== null) body = limitTokens(body, tokens);
+  // machine formats keep target text inside JSON strings; the others reach a model as prose
+  const wrap = untrusted && format !== "json" && format !== "jsonl";
+  out(wrap ? envelope(body, r.operation).text : body);
+  if (format === "text")
+    out(`coverage: ${r.coverage}${limitations.length ? `; limitations: ${limitations.join("; ")}` : ""}`);
+}
+
+/** How long one job.wait asks the daemon to hold the reply, and the most waits one run makes. */
+const RUN_WAIT_MS = 30_000;
+const RUN_MAX_WAITS = 1000;
+
+/** `daemon run`: submit, wait, result, on one connection. A signal closes the connection, and the
+ * daemon cancels the job. */
+async function daemonRun(rest: string[], out: (s: string) => void): Promise<number> {
+  const name = rest[0]!;
+  formatOf(rest);
+  tokenLimit(rest);
+  const args = opArgs(rest, RUN_FLAGS);
+  const workspace = resolve(flag(rest, "--workspace") ?? process.cwd());
+  const t = flag(rest, "--timeout-ms");
+  if (t !== undefined && !/^\d+$/.test(t)) throw new UsageError(`--timeout-ms is a whole number of ms, got ${t}`);
+  // the daemon runs only registered operations; an unknown name is refused there
+  let untrusted = true;
+  try {
+    untrusted = operation(name).untrusted;
+  } catch {
+    // keep the envelope
+  }
+  const s = await daemonSession(reaxHome());
+  let stopped = false;
+  const stop = () => {
+    stopped = true;
+    s.close();
+  };
+  process.on("SIGINT", stop);
+  process.on("SIGTERM", stop);
+  try {
+    const sub = (await s.call("job.submit", {
+      operation: name,
+      args,
+      workspace,
+      ...(t !== undefined ? { timeoutMs: Number(t) } : {}),
+    })) as { job: string };
+    let done = false;
+    for (let i = 0; i < RUN_MAX_WAITS && !done; i++) {
+      const w = (await s.call("job.wait", { job: sub.job, timeoutMs: RUN_WAIT_MS }, RUN_WAIT_MS + CALL_TIMEOUT_MS)) as {
+        done: boolean;
+      };
+      done = w.done;
+    }
+    if (!done) throw new Error(`job ${sub.job} did not finish within ${RUN_MAX_WAITS} waits; it is cancelled`);
+    const r = (await s.call("job.result", { job: sub.job })) as { result: OpResult & { operation: string } };
+    printResult(r.result, untrusted, rest, out);
+    return 0;
+  } catch (e) {
+    if (stopped) throw new CoreError("job_cancelled", { reason: "disconnect" });
+    throw e;
+  } finally {
+    process.off("SIGINT", stop);
+    process.off("SIGTERM", stop);
+    s.close();
+  }
+}
+
 async function daemonCommand(rest: string[], out: (s: string) => void): Promise<number | null> {
   const [sub, ...more] = rest;
   if (sub === "start") return startDetached(more, out);
   if ((sub === "ping" || sub === "status" || sub === "shutdown") && more.length === 0) {
     out(JSON.stringify(await daemonCall(reaxHome(), sub)));
+    return 0;
+  }
+  if (sub === "run" && more[0] && !more[0].startsWith("--")) return daemonRun(more, out);
+  if (sub === "jobs" && more.length === 0) {
+    out(JSON.stringify(await daemonCall(reaxHome(), "job.list", CALL_TIMEOUT_MS, {})));
+    return 0;
+  }
+  if (sub === "cancel" && more.length === 1) {
+    out(JSON.stringify(await daemonCall(reaxHome(), "job.cancel", CALL_TIMEOUT_MS, { job: more[0] })));
     return 0;
   }
   return null;
@@ -239,30 +347,13 @@ export async function main(argv: string[]): Promise<number> {
       return 0;
     }
     if (cmd === "op" && rest[0] && !rest[0].startsWith("--")) {
-      const format = formatOf(rest);
-      const tokens = tokenLimit(rest);
+      formatOf(rest);
+      tokenLimit(rest);
       const args = opArgs(rest);
       const workspace = flag(rest, "--workspace") ?? process.cwd();
       const op = operation(rest[0]);
       const r = await runOperation(rest[0], args, { workspace });
-      const filter = flag(rest, "--filter-output");
-      let data = r.data;
-      const limitations = [...r.limitations];
-      if (filter !== undefined) {
-        const f = filterOutput(r.data, filter.split(","));
-        data = f.data;
-        for (const p of f.unmatched) limitations.push(`--filter-output path ${p} matched nothing`);
-      }
-      const view = { operation: r.operation, coverage: r.coverage, limitations, data, text: r.text };
-      // with a filter, the text form shows the filtered data, not the operation's full summary
-      if (filter !== undefined && format === "text") view.text = JSON.stringify(data, null, 1);
-      let body = render(format, view);
-      if (tokens !== null) body = limitTokens(body, tokens);
-      // machine formats keep target text inside JSON strings; the others reach a model as prose
-      const wrap = op.untrusted && format !== "json" && format !== "jsonl";
-      out(wrap ? envelope(body, r.operation).text : body);
-      if (format === "text")
-        out(`coverage: ${r.coverage}${limitations.length ? `; limitations: ${limitations.join("; ")}` : ""}`);
+      printResult(r, op.untrusted, rest, out);
       return 0;
     }
     if (cmd === "serve") return await serve(rest, out);
@@ -271,7 +362,7 @@ export async function main(argv: string[]): Promise<number> {
       if (code !== null) return code;
     }
     process.stderr.write(
-      `usage: reax serve [--tcp [--host 127.0.0.1|::1] [--port N]] | reax daemon start [--tcp ...] | reax daemon ping|status|shutdown | reax op --list | reax --llms | reax describe <operation> | reax op <operation> [key=value ...] [--json '{...}'] [--workspace dir] [--format ${FORMATS.join("|")}] [--filter-output a.b,c] [--token-limit N]\n`,
+      `usage: reax serve [--tcp [--host 127.0.0.1|::1] [--port N]] | reax daemon start [--tcp ...] | reax daemon ping|status|shutdown | reax daemon run <operation> [key=value ...] [--json '{...}'] [--workspace dir] [--timeout-ms N] [--format ...] [--filter-output ...] [--token-limit N] | reax daemon jobs | reax daemon cancel <job> | reax op --list | reax --llms | reax describe <operation> | reax op <operation> [key=value ...] [--json '{...}'] [--workspace dir] [--format ${FORMATS.join("|")}] [--filter-output a.b,c] [--token-limit N]\n`,
     );
     return 2;
   } catch (e) {
