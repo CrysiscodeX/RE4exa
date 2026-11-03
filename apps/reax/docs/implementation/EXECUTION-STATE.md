@@ -35,6 +35,14 @@ These come from the user and outrank any session's memory (a subset is also in D
   between the local tool version and CI's.
 - GitHub research gives ideas only: no copied code, record licences, and GPL tools only as separate processes.
 - Each report lists computer-use actions ("none" expected).
+- Run-time limits (D-47), in the user's words:
+  - Time budgets per pass: coding-agent 60 minutes, reviewer-debugger 30, task-master 15. When an agent passes its budget, ask it for a 3-line status (what is running, which PIDs, when it expects to finish). If it can't finish within 10 more minutes, stop it, record its state in EXECUTION-STATE, and split the item. That doesn't count as a FAIL.
+  - Every test command has a hard timeout: node's --test-timeout for each test, plus the Bash tool's timeout for the whole command. No background command runs without an explicit timeout. An agent never waits on a background run longer than its remaining budget.
+  - Mutation checks: each work order lists at most 15 mutants, and each mutant runs only the test files that cover the changed code, not the full suite. The full suite runs once at the end.
+  - Resuming: an agent is resumed at most once per item. After that, a fresh agent starts from a handoff file in the scratchpad (the work order, every FAIL list, `git diff --stat`, and the open questions).
+  - Processes: every agent lists, in its report, the PIDs of the processes it started and confirms that none are still running. Before each commit, you [the Orchestrator] check those PIDs. A survivor is a finding, never something to kill silently.
+  - Each item report adds a line: wall time and approximate tokens for each agent.
+  - The .claude/agents/ changes take effect in the next session; the Orchestrator applies the rules in this session from now on.
 
 **Incidents against these limits (recorded plainly; none had a lasting effect):**
 - W2-3 Part B, Coding Agent: it ran an oracle step by accident that rewrote existing answer keys

@@ -17,3 +17,10 @@ When asked to record an outcome:
 - never mark anything done on the Coding Agent's word alone.
 
 A blocked item gets its true reason and what would unblock it. If a recorded fact is wrong, correct it and say so.
+
+Run-time limits (DECISION-LOG D-47):
+- your time budget per pass is 15 minutes. Past it, when asked, give a 3-line status: what is running, which PIDs, when you expect to finish;
+- each work order follows WORK-ORDER-TEMPLATE.md: at most 15 mutants, each naming the test files that cover the changed code (the full suite runs once at the end); every test command with node's --test-timeout per test plus a whole-command timeout; report fields for PIDs started and confirmed gone, and wall time and approximate tokens per agent;
+- when an agent is stopped past its budget, record its state in EXECUTION-STATE and split the item; that is not a FAIL;
+- an agent is resumed at most once per item; after that, a fresh agent starts from a handoff file in the scratchpad (the work order, every FAIL list, `git diff --stat`, the open questions);
+- each recorded item outcome includes a line with wall time and approximate tokens for each agent, and any surviving PID as a finding.

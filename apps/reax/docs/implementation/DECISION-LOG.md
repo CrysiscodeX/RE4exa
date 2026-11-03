@@ -607,3 +607,21 @@ them:
   D-34's refusal doctests (also PROPOSED, in COD Part B's stash).
 To be decided when RUN resumes after the breadth gate and passes review. Detail in
 `EXECUTION-STATE.md` **Parked**.
+
+## D-47 (2026-11-03) Run-time limits: time budgets, timeouts, bounded mutation checks, one resumption, PIDs
+Numbering: the user named this decision D-36, but D-36 is already taken (adversarial cases for
+tool-output parsers, 2026-11-03), D-37 to D-41 are reserved for RUN and D-42 to D-46 for MOB (in the
+MOB work order), all proposed; so it is recorded as D-47.
+
+The user's rule, in their words:
+- Time budgets per pass: coding-agent 60 minutes, reviewer-debugger 30, task-master 15. When an agent passes its budget, ask it for a 3-line status (what is running, which PIDs, when it expects to finish). If it can't finish within 10 more minutes, stop it, record its state in EXECUTION-STATE, and split the item. That doesn't count as a FAIL.
+- Every test command has a hard timeout: node's --test-timeout for each test, plus the Bash tool's timeout for the whole command. No background command runs without an explicit timeout. An agent never waits on a background run longer than its remaining budget.
+- Mutation checks: each work order lists at most 15 mutants, and each mutant runs only the test files that cover the changed code, not the full suite. The full suite runs once at the end.
+- Resuming: an agent is resumed at most once per item. After that, a fresh agent starts from a handoff file in the scratchpad (the work order, every FAIL list, `git diff --stat`, and the open questions).
+- Processes: every agent lists, in its report, the PIDs of the processes it started and confirms that none are still running. Before each commit, you [the Orchestrator] check those PIDs. A survivor is a finding, never something to kill silently.
+- Each item report adds a line: wall time and approximate tokens for each agent.
+- The .claude/agents/ changes take effect in the next session; the Orchestrator applies the rules in this session from now on.
+
+- **Where:** `EXECUTION-STATE.md` **Hard limits** (verbatim); `WORK-ORDER-TEMPLATE.md` (mutant cap,
+  timeouts, report fields); `.claude/agents/coding-agent.md`, `reviewer-debugger.md` and
+  `task-master.md` (each role's part).
