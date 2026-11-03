@@ -549,6 +549,16 @@ FAILs stays parked until the breadth gate."
 - **The rule from now on:** an item parked after 3 FAILs stays parked until the breadth gate. No
   further exception round of this kind (D-19, D-35) will be granted. D-21 (narrow confirmation for
   text-only findings) is unchanged.
+- **Outcome (amendment, 2026-11-03): FAIL; Part B parked until the breadth gate.** The Coding
+  Agent stayed in scope (the three tests, each killing its mutant, and the two text fixes; local
+  checks exit 0, 353 tests, 350 pass, 0 fail). The fresh Reviewer-Debugger failed it on code: on a
+  cut dump, `procedureInsns` (`src/cod/disasm.ts:427-431` in the stash) returns before the
+  procedure-start check, so a procedure starting inside an instruction is served `partial` from the
+  next boundary with a false reason, reproduced end to end (D-36's "entries starting inside another
+  entry"). Per this decision the work was stashed again ("cod-partB WIP after D-35 round (4th FAIL;
+  parked to breadth gate)") and is not resumed before the gate. Nothing was committed, so CI against
+  binutils 2.42 never ran. COD stays NOT_BUILT; no rea or leanrea row moved in Wave 2. D-32 and D-34
+  stay PROPOSED. Detail in `EXECUTION-STATE.md` **Parked**.
 
 ## D-36 (2026-11-03) Work orders for parsers of external tool output list the adversarial cases up front
 The user's rule, in their words: "every work order for code that parses an external tool's output

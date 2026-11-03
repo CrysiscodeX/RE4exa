@@ -47,6 +47,8 @@ These come from the user and outrank any session's memory (a subset is also in D
   permission system denied it and nothing was read.
 - W2-3 Part B, Coding Agent: it edited `.github/workflows/reax.yml` (out of scope); the Orchestrator
   had it reverted before review. Nothing was committed from it.
+- W2-3 Part B (D-35 round), Reviewer-Debugger: it ran `scripts/status.ts` once without `--check`,
+  which rewrote `CAPABILITY-MATRIX.md`; the rewrite was byte-identical, so it had no effect.
 
 ## Open follow-ups
 The single list of every open follow-up and advisory, gathered from the **Done**, **Parked** and
@@ -121,13 +123,17 @@ only where an entry below already records the closure.
   - no end-to-end SIGINT or SIGTERM test for `reax daemon run`;
   - the child-`serve` shutdown test cannot prove the job waited in `withImmediate`;
   - aging (or "joins at the back") and priorities are a later slice; single-flight needs SNAP.
-- **COD Part B, disassembly** (parked after 3 FAILs; see **Parked**): the three missing tests
-  (Yhitcov, Ycutcomplete, Yfirst) and three text fixes (ADR 0009's byte-limited map entries,
-  `search.disassembly`'s null procedure, the CI fixtures step name, which is outside `apps/reax`);
-  D-32 and D-34 are PROPOSED only. Resumed under D-35 (one bounded round: the three tests and the
-  first two text fixes only). The CI fixtures step name stays open (`.github` is out of scope).
+- **COD Part B, disassembly** (parked until the breadth gate after the D-35 round's FAIL, the 4th;
+  see **Parked**): the three tests (Yhitcov, Ycutcomplete, Yfirst) and the two text fixes are done in
+  stash@{0} but not committed; open: the Yfirst cut-dump bypass (`src/cod/disasm.ts:427-431` in the
+  stash: on a cut dump `procedureInsns` returns before the procedure-start check), with its proposed
+  fix and a cut-dump test and mutant; advisory Ycomment survives (a comment line before any
+  instruction throws TypeError rather than a clean refusal; both refuse); advisory Ylast looks
+  unreachable; the CI fixtures step name (`.github` is out of scope); CI against binutils 2.42 never
+  ran for Part B. D-32 and D-34 are PROPOSED only.
 - **DMN macOS flake** (see **Known defects**): the final ping of the 33rd-connection test got
-  `daemon_busy` once on macos-15; root cause and a deterministic test are the item after COD Part B.
+  `daemon_busy` once on macos-15; root cause and a deterministic test: **Active** (work order
+  W2-4).
 - **Parked ARM64 `.pdata` stash** (see **Parked**): findings (a), (b) and the advisory (c) open;
   (d) closed for x64 by `175f614`; its oracle entries never confirmed by CI's LLVM 18.1.3.
 - **Blocked and BLOCKED_EXTERNAL** (see **Blocked**): PE certificates (no signed sample); Frida
@@ -652,13 +658,12 @@ only where an entry below already records the closure.
     defined symbols returns an empty complete list; nothing forgeable (under **Open follow-ups**).
 
 ## Active
-- **COD Part B resumption, one bounded round (D-35).** The user granted it on 2026-11-03. The stash
-  "cod-partB WIP (3 reviewer FAILs)" is applied to the working tree (uncommitted); the stash entry is
-  kept until CI is green. Work order W2-3B-R (scope: exactly round 3's findings, the three missing
-  tests and the two text fixes in `apps/reax`; no other changes). On PASS: pre-push, commit, push, CI
-  including `oracle.ts --check` of `bench/oracle/disasm.json` against CI's binutils 2.42; drop the
-  stash only after green CI. On FAIL: stash again, record it, and move on; it then stays parked until
-  the breadth gate. Nothing else is in progress.
+- **DMN macOS flake** (the first item of the Wave 2 queue under **Next**; work order W2-4): find the root cause of the final ping
+  getting `daemon_busy` in `[-RX-DMN/lifecycle] … a 33rd connection gets daemon_busy and is closed`
+  (`test/daemon.test.ts:287-319`), reproduce it with a deterministic test (a seam or barrier, no
+  sleeps) that fails before the fix and passes after, and fix it, justified against D-26 and D-28.
+  Rows: `RX-DMN/lifecycle` or `RX-DMN/busy` gain tests; no rea or leanrea row moves. Nothing else is
+  in progress; the working tree is clean at `f7160f3`.
 
 ## Wave 2 checkpoint
 - **Items and commits:**
@@ -669,8 +674,11 @@ only where an entry below already records the closure.
   - D-30, COD rows narrowed with win32 deferred, two-number reporting; SBX-W planned (docs): `acb55c9`.
   - COD Part A: `681fae9`.
   - COD Part B: parked after 3 reviewer FAILs, not committed (`git stash`, "cod-partB WIP (3 reviewer
-    FAILs)"); resumed under D-35 (see **Active**).
+    FAILs)"); resumed under D-35 for one bounded round, which failed review (4th FAIL); parked again
+    until the breadth gate (stash "cod-partB WIP after D-35 round (4th FAIL; parked to breadth
+    gate)"). Not committed, so no CI.
   - The COD Part A outcome, D-31, D-33 and this checkpoint (docs): `9d486ce`.
+  - D-35, D-36 and the ~/.reax rule (docs): `f7160f3`.
 - **CI per commit, all green in the end; no capacity re-runs in Wave 2; one re-run for a flake:**
   - `ac70493`: reax 41521374732, tests 41521374941, assay 41521374728.
   - `69dde2e`: reax 41540866637, tests 41540866667.
@@ -684,21 +692,25 @@ only where an entry below already records the closure.
     green. A known defect (see **Known defects**), not a capacity re-run; nothing in a docs-only
     commit can cause it.
 - **Review histories:** W2-0 PASS; DMN FAIL, FAIL, PASS (plus a D-21 text fix); SCH FAIL, PASS; COD
-  Part A text-only FAIL, narrow PASS; COD Part B FAIL, FAIL, FAIL, parked.
+  Part A text-only FAIL, narrow PASS; COD Part B FAIL, FAIL, FAIL, parked; D-35 round FAIL, parked
+  until the breadth gate.
 - **Rows:** reax's own rows 35 to 47 at SCH, then 49 of 50 at `681fae9` (`RX-ENG/nm-names`,
   `RX-0b/deferred`; `RX-SBX/windows-engines` planned). rea and leanrea covered 39 of 357, tested,
   partial 0: unchanged through Wave 2. Weak points 21 of 244 fixed: unchanged.
 - **Breadth:** DMN and SCH became PARTIAL_VERIFIED; 12 of 34 items PARTIAL_VERIFIED. COD stays
   NOT_BUILT; RUN, MOB and SET not started.
-- **Incidents:** four, all during COD Part B, under **Hard limits**.
+- **Incidents:** five, all during COD Part B, under **Hard limits**.
 - **Computer use:** none in Wave 2.
-- **Next:** COD Part B resumption (D-35, decided by the user); the DMN macOS flake; then RUN, MOB,
-  SET; SBX-W is Wave 3 item 0.
+- **Next:** the DMN macOS flake (**Active**); then RUN, MOB, SET; SBX-W is Wave 3 item 0. COD Part
+  B is parked until the breadth gate (D-35).
 
 ## Parked
-- **COD Part B, disassembly** (Wave 2 item 3; parked 2026-11-03 after 3 reviewer FAILs; not
-  committed, not pushed). The work is the git stash "cod-partB WIP (3 reviewer FAILs)" (first in the
-  stash list; refer to it by message). Scope: an llvm-objdump provider in the sandbox, dumped once and
+- **COD Part B, disassembly** (Wave 2 item 3; parked 2026-11-03 after 3 reviewer FAILs, resumed
+  for the one D-35 round, which failed; parked again until the breadth gate; not committed, not
+  pushed). The work is the git stash "cod-partB WIP after D-35 round (4th FAIL; parked to breadth
+  gate)" (stash@{0} at `f7160f3`; refer to it by message); it includes round 4's three tests and text
+  fixes. The earlier stash "cod-partB WIP (3 reviewer FAILs)" (stash@{1}) is superseded by it; kept,
+  not dropped. Scope: an llvm-objdump provider in the sandbox, dumped once and
   sliced; `read.disassembly` and `search.disassembly`; the answer key `bench/oracle/disasm.json` from
   GNU objdump and GNU readelf; rows `rea.tool/procedure_assembly`,
   `rea.tool/read_function_instructions`, `leanrea/LEAN-C08` deferred on win32 (D-30). Its rows are not
@@ -735,12 +747,34 @@ only where an entry below already records the closure.
     read_function_instructions, LEAN-C08); reax 52 of 53. Not verified in CI.
   - Proposed, not recorded as decisions: D-32 (GNU objdump key) and D-34 (COD names, cache, refusal
     doctests), in `DECISION-LOG.md` as PROPOSED.
-  - Resumed (2026-11-03): the user chose one bounded round, D-35. The stash is applied to the working
-    tree; the entry stays in the stash list until CI is green (see **Active**). If that round fails,
-    it is stashed again and stays parked until the breadth gate.
+  - Resumed (2026-11-03): the user chose one bounded round, D-35 (work order W2-3B-R).
+    4. FAIL (code), the D-35 round. The Coding Agent stayed in scope: three tests (Yhitcov,
+       Ycutcomplete, Yfirst), each killing its mutant; ADR 0009 names both byte-limited map entries
+       (`66 90`, `f3 48 ab`); the `search.disassembly` description says "or null where no sized
+       procedure holds it". All checks exited 0 locally; 353 tests, 350 pass, 0 fail; the prior
+       mutation set all killed. The fresh reviewer's finding: `src/cod/disasm.ts:427-431` (stash
+       line numbers): on a cut dump `procedureInsns` returns before the procedure-start check, so a
+       procedure starting inside an instruction is listed from the next boundary, labelled only
+       `partial` with the false reason "cut before this procedure's end: only the instructions before
+       the cut are listed" (its start instruction is missing too). Reproduced end to end on a copy of
+       the hello fixture with main's `.eh_frame` FDE moved from `0x10015c0` to `0x10015c2` (inside
+       `mov ebp,esp` at `0x10015c1`): uncut gives `engine_output_invalid`; with `maxOutputBytes` 2048
+       it is served `partial`, first item `0x10015c4`. llvm-objdump restarts at symtab symbols, so a
+       symbol start is caught as an overlap, but starts that come only from `.eh_frame`, `.pdata` or
+       function starts are not; the default cap is 256 MiB, so a large target needs no forged cap.
+       This is D-36's case "entries starting inside another entry". Advisory: Ycomment survives (a
+       comment line before any instruction throws TypeError rather than a clean refusal; both
+       refuse); Ylast looks unreachable. CI against binutils 2.42 never ran for Part B.
+    - Outcome (D-35): stashed again and parked until the breadth gate. No rea or leanrea row moved;
+      COD stays NOT_BUILT.
+  - To resume after the breadth gate: `git stash apply` the D-35-round entry (by message); run the
+    start check before the cut return (`if (out.length && out[0]!.addr !== start) invalid(...)`; an
+    empty list on a cut dump stays `partial`), with a cut-dump test and its mutant; then a full
+    review and CI including the fixtures job's `oracle.ts --check` of `bench/oracle/disasm.json`
+    against binutils 2.42. This is the reviewer's proposed fix, not yet reviewed.
 - **NAT-4, ARM64 `.pdata`** (parked 2026-11-01 under the breadth rule, D-13; not committed, not
-  pushed). The work is the git stash `arm64-pdata WIP (3 reviewer FAILs)` (now second in the stash
-  list; refer to it by message), on `bc38202`, 13 files. Applying it is expected to conflict with `175f614` in
+  pushed). The work is the git stash `arm64-pdata WIP (3 reviewer FAILs)` (stash@{2} at `f7160f3`;
+  refer to it by message), on `bc38202`, 13 files. Applying it is expected to conflict with `175f614` in
   `src/readers/symbols.ts` (not tried). The files:
   - new: `fixtures/extra/pdata-hello-aarch64-windows-gnu.exe`,
     `fixtures/extra/pdata-lib-aarch64-windows-gnu.dll`, their sources
@@ -772,18 +806,18 @@ only where an entry below already records the closure.
   dumps (recorded crashes and Apple IPS), and ARM64 `.pdata` (parked above).
 
 ## Next (in order)
-Wave 1 is complete; Wave 2 items 0, 1 (DMN) and 2 (SCH) are done; item 3 (COD) Part A is done.
+Wave 1 is complete; Wave 2 items 0, 1 (DMN) and 2 (SCH) are done; item 3 (COD) Part A is done, and
+Part B is parked until the breadth gate after its D-35 round failed review (see **Parked**).
 The Wave 2 queue, in order:
-1. **COD Part B resumption (D-35).** One bounded round, scope exactly round 3's findings (see
-   **Active** and **Parked**). Work order W2-3B-R.
-2. **DMN macOS flake.** Find the root cause of the final ping getting `daemon_busy` in
+1. **DMN macOS flake (Active, work order W2-4).** Find the root cause of the final ping getting
+   `daemon_busy` in
    `[-RX-DMN/lifecycle] … a 33rd connection gets daemon_busy and is closed`
    (`test/daemon.test.ts:287-319`; failed once on macos-15 in reax run 41612759551 attempt 1 for the
    docs-only commit `9d486ce`, passed when the failed jobs were re-run, attempt 2). Fix it with a
    deterministic test that reproduces it (fails before the fix, passes after).
-3. **RUN.** RUN inspects only processes that its own tests start.
-4. **MOB.** MOB builds static APK and IPA readers only; ADB and Frida stay BLOCKED_EXTERNAL.
-5. **SET.** SET works only against a temporary HOME.
+2. **RUN.** RUN inspects only processes that its own tests start.
+3. **MOB.** MOB builds static APK and IPA readers only; ADB and Frida stay BLOCKED_EXTERNAL.
+4. **SET.** SET works only against a temporary HOME.
 SBX-W is Wave 3 item 0.
 The breadth plan in `BREADTH-COVERAGE.md` (waves and dependencies there; D-13, D-14):
 1. **Wave 1:** SBX, the sandbox foundation; then ENG, the adapter registry with LLVM as the first
@@ -824,7 +858,7 @@ target (DMN measures the real `tools/list`).
 - **DMN macOS flake (open):** `[-RX-DMN/lifecycle] … a 33rd connection gets daemon_busy and is
   closed` (`test/daemon.test.ts:287-319`) failed once on macos-15 (reax run 41612759551 attempt 1,
   commit `9d486ce`, docs only): the final ping got `daemon_busy`. It passed on the single re-run of the failed jobs (attempt 2). Root cause not
-  known; it is item 2 under **Next**.
+  known; it is **Active** (work order W2-4).
 - Otherwise none beyond the ledgers' weak points (the three Wave 0 defects were fixed by `175f614`;
   see **Done**).
 
