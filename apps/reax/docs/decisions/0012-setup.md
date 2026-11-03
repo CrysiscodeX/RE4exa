@@ -1,7 +1,7 @@
 # 0012. Setup, doctor and uninstall: Claude Code first, temporary homes only in development
 
-Status: proposed (W2-7, SET, first slice). To be recorded as D-48 to D-53 in
-`docs/implementation/DECISION-LOG.md` after review and green CI. (0010 and 0011 are reserved for
+Status: accepted (W2-7, SET, first slice; `884cad2`, `7925cb3`; reax run 41698459561 green).
+Recorded as D-48 to D-53 in `docs/implementation/DECISION-LOG.md`. (0010 and 0011 are reserved for
 RUN and MOB.)
 
 ## Context

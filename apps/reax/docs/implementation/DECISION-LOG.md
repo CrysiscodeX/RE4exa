@@ -624,7 +624,7 @@ committed or verified in CI. Numbers reserved:
   0.3.31 (Apache-2.0) as a separate process.
 - **D-46:** MOB takes ADR 0011; ADR 0010 stays reserved for RUN.
 To be decided when MOB resumes after the breadth gate and passes review. Detail in
-`EXECUTION-STATE.md` **Parked**. D-48 onwards: SET (work order W2-7), proposed.
+`EXECUTION-STATE.md` **Parked**. D-48 to D-53: SET (work order W2-7), recorded below.
 
 ## D-47 (2026-11-03) Run-time limits: time budgets, timeouts, bounded mutation checks, one resumption, PIDs
 Numbering: the user named this decision D-36, but D-36 is already taken (adversarial cases for
@@ -643,3 +643,27 @@ The user's rule, in their words:
 - **Where:** `EXECUTION-STATE.md` **Hard limits** (verbatim); `WORK-ORDER-TEMPLATE.md` (mutant cap,
   timeouts, report fields); `.claude/agents/coding-agent.md`, `reviewer-debugger.md` and
   `task-master.md` (each role's part).
+
+## D-48 to D-53 (2026-11-03) SET's first slice: Claude Code setup, doctor and uninstall
+Proposed in work order W2-7 and ADR 0012; recorded after review (R1 FAIL, R2 FAIL, R3 PASS; CI-fix
+review PASS) and green CI: `884cad2` and `7925cb3`, reax run 41698459561 (after one re-run of the
+failed jobs for macos-15 capacity), tests 41698459481.
+- **D-48:** SET's first slice is Claude Code only; CLI commands `reax setup`, `reax doctor` and
+  `reax uninstall` (internal API, not registered operations, as for `reax daemon`); five RX-SET rows
+  (`config-intact`, `doctor`, `idempotent`, `temp-home`, `uninstall-restore`). No rea or leanrea row
+  is tagged: REA-C40 needs its full client list (15+ clients), and the other SET rows describe other
+  features.
+- **D-49:** Codex (TOML) waits for a later slice: reax has no TOML parser and its only dependency is
+  `@re4exa/core`; adding one is a dependency decision. Its key would be Python `tomllib`.
+- **D-50:** the entry registers the planned `reax mcp` stdio command before an MCP stdio server
+  exists (DMN later slice, REA-C01): setup writes the entry, doctor reports
+  `mcp_server: "not_built"`, and setup says the entry will not start until that slice lands.
+- **D-51:** the backup sits beside the original with its mode; records live under `REAX_HOME`;
+  writes are atomic with a digest re-check; the failure codes and the 16 MiB cap are as in ADR 0012.
+  After R1 and R2: a symlink at the backup path is never followed and uninstall does not trust the
+  record's backup field; the record is written before the config.
+- **D-52:** the SET answer key is `scripts/oracle-set.py` (Python stdlib `json`, `hashlib`).
+  Fixtures under `fixtures/set` are checked out byte for byte on every platform
+  (`fixtures/.gitattributes`: `set/** -text`, `7925cb3`).
+- **D-53:** ADR 0012 is setup's ADR (0010 RUN and 0011 MOB stay reserved in their stashes).
+- **Where:** `docs/decisions/0012-setup.md` (accepted); `EXECUTION-STATE.md` **Done** (SET).

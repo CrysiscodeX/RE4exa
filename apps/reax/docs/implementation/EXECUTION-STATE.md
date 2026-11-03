@@ -5,12 +5,13 @@
 2. Read this file.
 3. Continue with the first package under **Next**.
 
-**Last verified checkpoint: `b2f9be8`** (Wave 2 item 4, the DMN flake fix; see **Wave 2
-checkpoint**). CI green: reax run 41633622213 (fixtures, three lanes, parity), tests 41633622047.
-Rows (D-30's two numbers): rea and leanrea covered 39 of 357, tested, partial 0 (unchanged); reax's
-own rows 49 of 50 tested on every listed platform, tested, partial 0 (`RX-SBX/windows-engines`
-planned); weak points 21 of 244 fixed (unchanged). The previous checkpoint was `681fae9` (Wave 2
-item 3, COD Part A; reax run 41597961652). The baseline reconciled at `bc38202` is in `BREADTH-COVERAGE.md`.
+**Last verified checkpoint: `7925cb3`** (Wave 2 item 7, SET; Wave 2 complete, see **Wave 2
+summary**). CI green: reax run 41698459561 (after one re-run of the failed jobs: macos-15 got no
+runner in attempt 1), tests 41698459481. Rows (D-30's two numbers): rea and leanrea covered 39 of
+357, tested, partial 0 (unchanged through Wave 2); reax's own rows 54 of 55 tested on every listed
+platform, tested, partial 0 (`RX-SBX/windows-engines` planned); weak points 21 of 244 fixed
+(unchanged). The previous checkpoint was `b2f9be8` (Wave 2 item 4, the DMN flake fix; reax run
+41633622213). The baseline reconciled at `bc38202` is in `BREADTH-COVERAGE.md`.
 
 ## Hard limits
 These come from the user and outrank any session's memory (a subset is also in DECISION-LOG D-16 and `BREADTH-COVERAGE.md`; this list is the complete one).
@@ -170,6 +171,17 @@ only where an entry below already records the closure.
   (`apps.slice`); text nits in `scripts/oracle-mob-crosscheck.py:9` and `src/readers/mobile.ts:270`
   (stash line numbers); D-42 to D-46 PROPOSED only; the `packages/core` `zipEntryData` export (D-43)
   is in the stash, not committed, so assay CI never ran on it.
+- **SET** (`884cad2`, `7925cb3`; R3 reviewer's test gaps and text):
+  - G1: `writeCopy`'s `removeQuiet` on a failed write is untested.
+  - G2: uninstall's finish order (record vs backup) is untested.
+  - G3: `assertUnchanged` on uninstall's delete path is untested; the `beforeRename` hook is unused.
+  - T1: `doctor.ts:10` reads `package.json` with an unwrapped `readFileSync`, while ADR 0012:63
+    says every failed file operation is `setup_io_failed`.
+  - T2: `detail.op` values `"record"` and `"rename"` are undocumented.
+  - Accepted: an empty `reax-home/setup` directory may remain after a failure.
+  - Windows: `O_NOFOLLOW` is absent (a read-only race; writes never follow a link); the 0600
+    permission test is skipped on win32.
+  - Later slices: Codex (D-49, needs a TOML decision); the MCP stdio server (D-50).
 - **DMN macOS flake:** closed by W2-4 (`32b13c6`, `b2f9be8`; see **Done** and **Known defects**).
 - **Parked ARM64 `.pdata` stash** (stash@{4} now; see **Parked**): findings (a), (b) and the advisory (c) open;
   (d) closed for x64 by `175f614`; its oracle entries never confirmed by CI's LLVM 18.1.3.
@@ -738,63 +750,106 @@ only where an entry below already records the closure.
     slot below the backpressure threshold (no idle timeout); a half-closing peer on Windows pipes
     holds its slot; three harmless surviving mutants.
 
-## Active
-- **SET, first slice** (Wave 2 item 7, work order W2-7, issued 2026-11-03; not started). `reax
-  setup`, `reax doctor` and `reax uninstall` for two clients (Claude Code, Codex), developed and
-  tested only against a temporary HOME (the user's constraint: "SET works only against a temporary
-  HOME."). Proposed decisions D-48 onwards are in the work order, not decided. RUN and MOB are
-  parked (see **Parked**).
+- **SET, first slice** (Wave 2 item 7, work order W2-7; ADR 0012, accepted; D-48 to D-53).
+  - Commits: `884cad2` "reax: setup, doctor and uninstall for Claude Code against a given home
+    (SET)"; `7925cb3` "reax: SET fixtures keep their exact bytes on every checkout"
+    (`fixtures/.gitattributes`: `set/** -text`).
+  - Scope: `reax setup`, `reax doctor` and `reax uninstall` for Claude Code only (D-48), developed
+    and tested only against a temporary home; Codex out (D-49, no TOML dependency); doctor reports
+    `mcp_server: "not_built"` because setup writes the entry before an MCP stdio server exists
+    (D-50). Key: `scripts/oracle-set.py` (D-52).
+  - CI:
+    - `884cad2`: reax run 41693870153 FAILED on windows-2025 (14 RX-SET tests; CI failure 1 of this
+      cause): the runner's `core.autocrlf` checked `fixtures/set` out with CRLF, so the digests
+      mismatched; every CI "actual" digest is the CRLF form of a fixture. No product defect. macos-15
+      was cancelled in that run with zero steps (capacity).
+    - `7925cb3`: reax run 41698459561 attempt 1 failed only because macos-15 got no runner (zero
+      steps); one re-run of the failed jobs (no push): all green (fixtures, macos-15, ubuntu-24.04,
+      windows-2025, parity). Tests run 41698459481 green.
+    - Parity: darwin 361, linux-fixtures 361, linux 361, win32 357 tests; `RX-SET/config-intact`,
+      `doctor`, `idempotent`, `temp-home` and `uninstall-restore` covered; gate passed; "rea and
+      leanrea: covered 39 of 357; tested, partial 0".
+  - Review history:
+    1. FAIL (code): a symlink at the backup path was followed, so config bytes were written outside
+       the home; uninstall trusted the record's backup field.
+    2. FAIL (code): the record was written after the config, so a failed record write left an
+       unrecoverable entry and a raw errno.
+    3. PASS: a fresh Coding Agent from a handoff file (D-47's one-resumption rule); fault-injection
+       probe 660 runs, 0 problems.
+    4. CI fix (`7925cb3`): PASS.
+  - Rows: reax 49 to 54 of 55 covered (five RX-SET rows; `RX-SBX/windows-engines` planned). No rea
+    or leanrea row tagged (REA-C40 needs 15+ clients; the others describe other features): covered 39
+    of 357, tested, partial 0, unchanged. Breadth: SET PARTIAL_VERIFIED, 13 of 34.
+  - Costs (wall time, approximate tokens): Coding Agent R1 ~14 min / ~114k, R2 (resumed) ~6 min /
+    ~50k, R3 (fresh) ~10 min / ~93k, CI fix (fresh) ~5 min / ~40k; Reviewer-Debugger R1 ~6 min /
+    ~73k, R2 ~7 min / ~66k, R3 ~10 min / ~85k, CI-fix review ~2 min / ~28k.
+  - Processes: foreground only throughout; no surviving PID. `~/.reax` absent (the Orchestrator's
+    `test ! -e` at the SET checkpoint). Computer use: none.
+  - Follow-ups: under **Open follow-ups**, SET.
 
-## Wave 2 checkpoint
+## Active
+- **Wave 2 complete; waiting for the user.** No item is in progress. Next: per `BREADTH-COVERAGE.md`,
+  Wave 3 starts with SBX-W (see **Next**).
+
+## Wave 2 summary
+Supersedes the earlier "Wave 2 checkpoint" section. Wave 2 ran items 0 to 7; it ends at `7925cb3`.
 - **Items and commits:**
   - W2-0: `ac70493` (docs `bccf882`).
-  - DMN: `69dde2e` (docs `e7f2988`).
-  - SCH: `40467bd` (docs `9f5220a`).
-  - The user's hard limits and the consolidated follow-ups (docs): `d2800d4`.
-  - D-30, COD rows narrowed with win32 deferred, two-number reporting; SBX-W planned (docs): `acb55c9`.
-  - COD Part A: `681fae9`.
-  - COD Part B: parked after 3 reviewer FAILs, not committed (`git stash`, "cod-partB WIP (3 reviewer
-    FAILs)"); resumed under D-35 for one bounded round, which failed review (4th FAIL); parked again
-    until the breadth gate (stash "cod-partB WIP after D-35 round (4th FAIL; parked to breadth
-    gate)"). Not committed, so no CI.
-  - The COD Part A outcome, D-31, D-33 and this checkpoint (docs): `9d486ce`.
-  - D-35, D-36 and the ~/.reax rule (docs): `f7160f3`.
-  - COD Part B parked after the D-35 round (docs): `2b6c987`.
-  - The DMN flake (W2-4): `32b13c6`, then `b2f9be8`.
-  - RUN (W2-5): parked after 3 reviewer FAILs, until the breadth gate (D-35's rule); not committed
-    (`git stash` "run WIP (3 reviewer FAILs; parked to breadth gate)"), so no CI.
-  - D-47, the run-time limits (docs and agent files): `2db83e8`.
-  - MOB (W2-6): parked after 3 reviewer FAILs, until the breadth gate; not committed (`git stash`
-    "mob WIP (3 reviewer FAILs; parked to breadth gate)", which includes the `packages/core`
-    `zipEntryData` export), so no CI.
-- **CI per commit, all green in the end; no capacity re-runs in Wave 2; one re-run for a flake:**
-  - `ac70493`: reax 41521374732, tests 41521374941, assay 41521374728.
-  - `69dde2e`: reax 41540866637, tests 41540866667.
-  - `40467bd`: reax 41565482186, tests 41565482171.
-  - `9f5220a`: reax 41591538116, tests 41591537790.
-  - `681fae9`: reax 41597961652, tests 41597961651.
-  - `9d486ce` (docs only): tests 41612759424 green. reax 41612759551 attempt 1 failed: lane
-    macos-15 failed on `[-RX-DMN/lifecycle] … a 33rd connection gets daemon_busy and is closed`
-    (`test/daemon.test.ts:287-319`; the final ping got `daemon_busy`), and parity failed with it;
-    fixtures, ubuntu-24.04 and windows-2025 passed. The failed jobs were re-run once (attempt 2):
-    green. A known defect (see **Known defects**), not a capacity re-run; nothing in a docs-only
-    commit can cause it. Fixed by W2-4.
-  - `32b13c6`: reax 41630305393 failed on windows-2025 only (a test race in the new half-close
-    test; see **Done**); tests 41630305410 green. Fixed by `b2f9be8`, not by a re-run.
-  - `b2f9be8`: reax 41633622213, tests 41633622047.
+  - DMN (item 1): `69dde2e` (docs `e7f2988`). DMN PARTIAL_VERIFIED.
+  - SCH (item 2): `40467bd` (docs `9f5220a`). SCH PARTIAL_VERIFIED.
+  - COD Part A (item 3): `681fae9`. COD stays NOT_BUILT (no evidencing rea/leanrea row moved).
+  - COD Part B: parked after 3 reviewer FAILs; resumed once under D-35, 4th FAIL; parked until the
+    breadth gate. Not committed (stash), so no CI.
+  - DMN macOS flake (item 4): `32b13c6`, `b2f9be8`.
+  - RUN (item 5): parked until the breadth gate after 3 reviewer FAILs; stash, no CI.
+  - MOB (item 6): parked until the breadth gate after 3 reviewer FAILs; stash (includes the
+    `packages/core` `zipEntryData` export), no CI.
+  - SET (item 7): `884cad2`, `7925cb3`. SET PARTIAL_VERIFIED.
+  - Docs commits: `bccf882`, `e7f2988`, `9f5220a`, `d2800d4` (hard limits, consolidated
+    follow-ups), `acb55c9` (D-30, SBX-W planned), `9d486ce` (COD Part A outcome, D-31, D-33),
+    `f7160f3` (D-35, D-36, the `~/.reax` rule), `2b6c987` (COD Part B parked after D-35), the RUN
+    parking record `5ee423f`, `2db83e8` (D-47), the MOB parking record `84fe163`, and this record.
+- **CI per workflow, all green in the end:**
+  - reax: `ac70493` 41521374732; `69dde2e` 41540866637; `40467bd` 41565482186; `9f5220a`
+    41591538116; `681fae9` 41597961652; `9d486ce` 41612759551 (attempt 1 failed on the DMN macOS
+    flake, attempt 2 green); `32b13c6` 41630305393 FAILED on windows-2025 (a test race in the new
+    half-close test; fixed by `b2f9be8`, not by a re-run); `b2f9be8` 41633622213; `884cad2`
+    41693870153 FAILED on windows-2025 (CRLF checkout of `fixtures/set`; fixed by `7925cb3`), macos-15
+    cancelled with zero steps; `7925cb3` 41698459561 (attempt 1 macos-15 got no runner; re-run of
+    the failed jobs green).
+  - tests: `ac70493` 41521374941; `69dde2e` 41540866667; `40467bd` 41565482171; `9f5220a`
+    41591537790; `681fae9` 41597961651; `9d486ce` 41612759424; `32b13c6` 41630305410; `b2f9be8`
+    41633622047; `7925cb3` 41698459481.
+  - assay: `ac70493` 41521374728.
+- **Re-runs (no push):** two. One for a flake (`9d486ce`, reax 41612759551, the DMN macOS flake,
+  later fixed by W2-4) and one for macOS capacity (`7925cb3`, reax 41698459561). The other macos-15
+  capacity cancellation (`884cad2`) was superseded by `7925cb3`, not re-run.
 - **Review histories:** W2-0 PASS; DMN FAIL, FAIL, PASS (plus a D-21 text fix); SCH FAIL, PASS; COD
-  Part A text-only FAIL, narrow PASS; COD Part B FAIL, FAIL, FAIL, parked; D-35 round FAIL, parked
+  Part A text-only FAIL, narrow PASS; COD Part B FAIL, FAIL, FAIL, parked, D-35 round FAIL, parked
   until the breadth gate; DMN flake FAIL, PASS (and PASS for `b2f9be8`); RUN FAIL, FAIL, FAIL,
-  parked until the breadth gate; MOB FAIL, FAIL, FAIL, parked until the breadth gate.
-- **Rows:** reax's own rows 35 to 47 at SCH, then 49 of 50 at `681fae9` (`RX-ENG/nm-names`,
-  `RX-0b/deferred`; `RX-SBX/windows-engines` planned). rea and leanrea covered 39 of 357, tested,
-  partial 0: unchanged through Wave 2. Weak points 21 of 244 fixed: unchanged.
-- **Breadth:** DMN and SCH became PARTIAL_VERIFIED; 12 of 34 items PARTIAL_VERIFIED. COD stays
-  NOT_BUILT; RUN NOT_BUILT (parked); MOB NOT_BUILT (parked); SET active (W2-7).
-- **Incidents:** seven under **Hard limits**: five during COD Part B, two during MOB's reviews.
+  parked; MOB FAIL, FAIL, FAIL, parked; SET FAIL, FAIL, PASS (fresh agent from a handoff), CI-fix
+  PASS.
+- **Rows:** reax's own rows 35 to 47 at SCH, 49 of 50 at `681fae9` (`RX-ENG/nm-names`,
+  `RX-0b/deferred`), 54 of 55 at `7925cb3` (five RX-SET rows); `RX-SBX/windows-engines` planned.
+  rea and leanrea covered 39 of 357, tested, partial 0: unchanged across Wave 2. Weak points 21 of
+  244 fixed: unchanged.
+- **Breadth:** 13 of 34 items PARTIAL_VERIFIED: NAT, CLI, BEN, PROC, FIX, KEY, LED, SBX, ENG, PM,
+  DMN, SCH, SET. COD, RUN and MOB stay NOT_BUILT (Part B, RUN and MOB parked); NOT_BUILT 21.
+- **Parked stashes (5; refer to them by message, never by index):** "mob WIP (3 reviewer FAILs;
+  parked to breadth gate)"; "run WIP (3 reviewer FAILs; parked to breadth gate)"; "cod-partB WIP
+  after D-35 round (4th FAIL; parked to breadth gate)"; "cod-partB WIP (3 reviewer FAILs)"
+  (superseded by the D-35 entry); "arm64-pdata WIP (3 reviewer FAILs)".
+- **Hard-limit incidents (7, all recorded under **Hard limits**):** COD Part B: an oracle step
+  rewrote three answer keys' version strings (restored byte-identical); `ls ~/.reax` by the Coding
+  Agent; `ls ~/.reax` by a reviewer (denied); an out-of-scope edit of `.github/workflows/reax.yml`
+  (reverted before review); `status.ts` without `--check` (byte-identical). MOB: a reviewer looked up
+  an unrelated process's working directory; a reviewer ran `pgrep -f` once. None during SET.
+- **Decisions:** recorded D-24 to D-36 (except D-32 and D-34), D-47, D-48 to D-53 (SET; the
+  orchestrator's D-48 to D-50 plus D-51 to D-53 from the same work order and ADR 0012). Proposed,
+  not decided: D-32 and D-34 (COD Part B), D-37 to D-41 (RUN), D-42 to D-46 (MOB).
 - **Computer use:** none in Wave 2.
-- **Next:** SET (**Active**); SBX-W is Wave 3 item 0. COD Part B, RUN and MOB are parked until
-  the breadth gate (D-35's rule).
+- **Next:** waiting for the user. Then, per `BREADTH-COVERAGE.md`, Wave 3 starts with SBX-W (item 0).
+  COD Part B, RUN and MOB stay parked until the breadth gate.
 
 ## Parked
 - **MOB, first slice** (Wave 2 item 6, work order W2-6; parked 2026-11-03 after 3 reviewer FAILs,
@@ -992,15 +1047,16 @@ only where an entry below already records the closure.
 ## Next (in order)
 Wave 1 is complete; Wave 2 items 0, 1 (DMN) and 2 (SCH) are done; item 3 (COD) Part A is done, and
 Part B is parked until the breadth gate after its D-35 round failed review (see **Parked**); item 4
-(the DMN macOS flake) is done; items 5 (RUN) and 6 (MOB) are parked until the breadth gate.
+(the DMN macOS flake) is done; items 5 (RUN) and 6 (MOB) are parked until the breadth gate; item 7
+(SET) is done. Wave 2 is complete (see **Wave 2 summary**); waiting for the user.
 The Wave 2 queue, in order:
 1. ~~DMN macOS flake~~: done (`32b13c6`, `b2f9be8`; see **Done**).
 2. ~~RUN~~: parked until the breadth gate after 3 reviewer FAILs (see **Parked**). RUN inspects
    only processes that its own tests start.
 3. ~~MOB~~: parked until the breadth gate after 3 reviewer FAILs (see **Parked**). MOB builds
    static APK and IPA readers only; ADB and Frida stay BLOCKED_EXTERNAL.
-4. **SET (Active, work order W2-7).** SET works only against a temporary HOME.
-SBX-W is Wave 3 item 0.
+4. ~~SET~~: done (`884cad2`, `7925cb3`; see **Done**).
+Next: Wave 3 item 0, SBX-W (Windows engine enforcement, D-30), per `BREADTH-COVERAGE.md`.
 The breadth plan in `BREADTH-COVERAGE.md` (waves and dependencies there; D-13, D-14):
 1. **Wave 1:** SBX, the sandbox foundation; then ENG, the adapter registry with LLVM as the first
    provider; the program model (PM) beside them.

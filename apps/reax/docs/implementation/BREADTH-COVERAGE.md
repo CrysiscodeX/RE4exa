@@ -70,7 +70,7 @@ recorded; both were green on all three workflows, now recorded.
 | COD | Code-level analysis | NOT_BUILT | 2 |
 | RUN | Runtime and devices | NOT_BUILT (first slice parked to the breadth gate; Frida and ADB parts BLOCKED_EXTERNAL) | 2 |
 | MOB | Managed and mobile | NOT_BUILT (first slice parked to the breadth gate; JEB part BLOCKED_EXTERNAL) | 2 |
-| SET | Setup, skill, router | NOT_BUILT (first slice active, W2-7) | 2 |
+| SET | Setup, skill, router | PARTIAL_VERIFIED (since `884cad2`/`7925cb3`) | 2 |
 | DMN | Daemon, MCP, sessions, jobs | PARTIAL_VERIFIED (since `69dde2e`) | 2 |
 | ARC | Archives and app bundles | NOT_BUILT | 3 |
 | JSE | JavaScript and Electron | NOT_BUILT | 3 |
@@ -97,8 +97,8 @@ recorded; both were green on all three workflows, now recorded.
 | LED | Ledger, parity and status machinery | PARTIAL_VERIFIED | 4 |
 | GATE | Breadth gate and completeness checker | NOT_BUILT | 4 (last) |
 
-**Counts (34 items, updated at `681fae9`, unchanged since `40467bd`):** PARTIAL_VERIFIED 12 (NAT, CLI, BEN, PROC, FIX, KEY,
-LED, SBX, ENG, PM, DMN, SCH); NOT_BUILT 22; SCAFFOLDED 0; PARTIAL_UNVERIFIED 0; COMPLETE_UNVERIFIED 0; COMPLETE_VERIFIED 0;
+**Counts (34 items, updated at `7925cb3`):** PARTIAL_VERIFIED 13 (NAT, CLI, BEN, PROC, FIX, KEY,
+LED, SBX, ENG, PM, DMN, SCH, SET); NOT_BUILT 21; SCAFFOLDED 0; PARTIAL_UNVERIFIED 0; COMPLETE_UNVERIFIED 0; COMPLETE_VERIFIED 0;
 BLOCKED_EXTERNAL 0 as whole items, with three blocked parts inside RUN, MOB and NAT (41 ledger rows:
 Frida 10, ADB 25, JEB 5, PE certificates 1).
 
@@ -297,8 +297,11 @@ the fixtures job and the parity job, unless another run is named.
     (3 reviewer FAILs; parked to breadth gate)"); status stays NOT_BUILT. Detail in
     `EXECUTION-STATE.md` **Parked**.
 
-### SET, setup, skill and router: NOT_BUILT
-- **Evidence:** none in reax. Related: core's `probes/router-pack.json` (leanrea's router as data,
+### SET, setup, skill and router: PARTIAL_VERIFIED (since `884cad2`/`7925cb3`)
+- **Evidence:** `reax setup`, `reax doctor` and `reax uninstall` for Claude Code against a given
+  home (ADR 0012, D-48 to D-53); five RX-SET rows covered on every platform (reax run 41698459561).
+  No rea or leanrea row tagged (REA-C40 needs its full client list). Open: Codex (D-49), the MCP
+  stdio server (D-50), the generated skill, router, prompts and logging. Before this slice: none in reax. Related: core's `probes/router-pack.json` (leanrea's router as data,
   used by Assay). 18 rows.
 - **Next (Wave 2, after DMN's stdio server):** `reax setup` and `reax uninstall` for two clients
   (Claude Code and Codex) and `reax doctor`, only against a temporary HOME. A new reax row (for
