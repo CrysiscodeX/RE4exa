@@ -27,6 +27,11 @@ declare module "@re4exa/core/errors" {
     job_cancelled: true;
     job_timeout: true;
     job_failed: true;
+    home_unset: true;
+    config_malformed: true;
+    config_conflict: true;
+    config_changed: true;
+    setup_io_failed: true;
   }
 }
 
@@ -150,5 +155,32 @@ export const REAX_FAILURE_MODES = defineFailureModes({
     retryable: false,
     message: "The job failed with an internal error",
     fix: "Read detail.excerpt; report it if it persists",
+  },
+  home_unset: {
+    retryable: false,
+    message: "Neither HOME nor (on Windows) USERPROFILE is set to an absolute path, so there is no home to configure",
+    fix: "Set HOME (USERPROFILE on Windows) in the environment reax runs in; nothing was written",
+  },
+  config_malformed: {
+    retryable: false,
+    message: "The client's configuration file is not one setup can edit safely (detail.reason); it was left unchanged",
+    fix: "Fix the file by hand (syntax, duplicate_key, number_precision, not_object, servers_not_object), or replace the link, directory or oversized file (symlink, not_file, too_large) with a plain file, then run setup again",
+  },
+  config_conflict: {
+    retryable: false,
+    message:
+      "The configuration already holds something in reax's place that reax did not write (detail.reason); it was left unchanged",
+    fix: "Remove or rename the existing reax entry (or the stray .reax-backup file) by hand if it is not wanted, then run setup again",
+  },
+  config_changed: {
+    retryable: true,
+    message: "The configuration file changed while setup was writing it; the other writer's bytes were kept",
+    fix: "Run the command again once the other program (often the client itself) has stopped writing the file",
+  },
+  setup_io_failed: {
+    retryable: false,
+    message:
+      "A file operation of setup or uninstall failed (detail.op on detail.target, detail.errno); detail.rolled_back says whether the configuration is as it was before",
+    fix: "Make the reax home and the configuration's directory writable (or remove what is in the way at detail.target), then run the command again",
   },
 });

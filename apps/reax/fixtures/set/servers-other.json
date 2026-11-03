@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "other": {
+      "type": "stdio",
+      "command": "/usr/bin/other",
+      "args": []
+    }
+  },
+  "userID": "abc"
+}

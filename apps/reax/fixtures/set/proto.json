@@ -1,0 +1,7 @@
+{
+  "__proto__": {"polluted": true},
+  "mcpServers": {
+    "__proto__": {"command": "evil"},
+    "constructor": {"command": "c"}
+  }
+}

@@ -16,6 +16,10 @@
 //   reax op <operation> [key=value ...] [--json '{"path":"..."}'] [--workspace dir]
 //        [--format text|json|jsonl|yaml|markdown|toon] [--filter-output a.b,c] [--token-limit N]
 //   reax --llms          every operation, its arguments and an example, for a model's context
+//   reax setup [--client claude-code] [--yes] [--json]      add reax's MCP entry to the client's
+//                       user configuration (ADR 0012); without --yes, print the plan and write nothing
+//   reax uninstall [--client claude-code] [--yes] [--json]  take it out again
+//   reax doctor [--json]                                     each client's state; changes nothing
 // key=value needs no quoting in any shell (sh, PowerShell, cmd), so it is the form agents are told
 // to use; a value that parses as JSON (a number, true, a list) is taken as JSON, else as a string.
 import { spawn } from "node:child_process";
@@ -32,6 +36,7 @@ import { FORMATS, type Format, limitTokens, render } from "./format/index.ts";
 import { OPERATIONS, operation, runOperation } from "./ops/registry.ts";
 import type { JsonSchema, Operation, OpResult } from "./ops/types.ts";
 import { reaxHome } from "./pm/db.ts";
+import { CLIENTS, doctor, setup, uninstall } from "./setup/index.ts";
 
 /** Options that take a value; everything else after the operation name is key=value. */
 const VALUE_FLAGS = new Set(["--json", "--workspace", "--format", "--filter-output", "--token-limit"]);
@@ -316,6 +321,29 @@ async function daemonCommand(rest: string[], out: (s: string) => void): Promise<
   return null;
 }
 
+/** setup, uninstall and doctor: the home comes from this process's environment only. */
+function setupCommand(cmd: "setup" | "uninstall" | "doctor", rest: string[], out: (s: string) => void): number {
+  let yes = false;
+  let json = false;
+  for (let i = 0; i < rest.length; i++) {
+    const a = rest[i]!;
+    if (a === "--json") json = true;
+    else if (a === "--yes" && cmd !== "doctor") yes = true;
+    else if (a === "--client" && cmd !== "doctor" && i + 1 < rest.length) {
+      const c = rest[++i]!;
+      if (!(CLIENTS as readonly string[]).includes(c))
+        throw new UsageError(`--client is one of ${CLIENTS.join(", ")}, got ${c}`);
+    } else throw new UsageError(`unknown option ${a}`);
+  }
+  const env = { ...process.env };
+  const r = cmd === "doctor" ? doctor(env) : cmd === "setup" ? setup({ env, yes }) : uninstall({ env, yes });
+  const body = JSON.stringify(r, null, 1);
+  // the result quotes the user's configuration file: data, never instructions
+  out(json ? body : envelope(body, `reax ${cmd}`).text);
+  if (!json && cmd !== "doctor" && !yes) out("nothing was written; run again with --yes to apply");
+  return 0;
+}
+
 export async function main(argv: string[]): Promise<number> {
   const [cmd, ...rest] = argv;
   const out = (s: string) => process.stdout.write(`${s}\n`);
@@ -356,13 +384,14 @@ export async function main(argv: string[]): Promise<number> {
       printResult(r, op.untrusted, rest, out);
       return 0;
     }
+    if (cmd === "setup" || cmd === "uninstall" || cmd === "doctor") return setupCommand(cmd, rest, out);
     if (cmd === "serve") return await serve(rest, out);
     if (cmd === "daemon") {
       const code = await daemonCommand(rest, out);
       if (code !== null) return code;
     }
     process.stderr.write(
-      `usage: reax serve [--tcp [--host 127.0.0.1|::1] [--port N]] | reax daemon start [--tcp ...] | reax daemon ping|status|shutdown | reax daemon run <operation> [key=value ...] [--json '{...}'] [--workspace dir] [--timeout-ms N] [--format ...] [--filter-output ...] [--token-limit N] | reax daemon jobs | reax daemon cancel <job> | reax op --list | reax --llms | reax describe <operation> | reax op <operation> [key=value ...] [--json '{...}'] [--workspace dir] [--format ${FORMATS.join("|")}] [--filter-output a.b,c] [--token-limit N]\n`,
+      `usage: reax setup|uninstall [--client claude-code] [--yes] [--json] | reax doctor [--json] | reax serve [--tcp [--host 127.0.0.1|::1] [--port N]] | reax daemon start [--tcp ...] | reax daemon ping|status|shutdown | reax daemon run <operation> [key=value ...] [--json '{...}'] [--workspace dir] [--timeout-ms N] [--format ...] [--filter-output ...] [--token-limit N] | reax daemon jobs | reax daemon cancel <job> | reax op --list | reax --llms | reax describe <operation> | reax op <operation> [key=value ...] [--json '{...}'] [--workspace dir] [--format ${FORMATS.join("|")}] [--filter-output a.b,c] [--token-limit N]\n`,
     );
     return 2;
   } catch (e) {

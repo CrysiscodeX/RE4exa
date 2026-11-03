@@ -1,0 +1,10 @@
+{
+  "projects": {
+    "/x": {
+      "mcpServers": {
+        "reax": {"command": "old"}
+      }
+    }
+  },
+  "other": {"reax": true}
+}

@@ -12,7 +12,7 @@ deferred ones included.
 | | Tested on every listed platform | Tested, partial (missing: …) | Total |
 |---|---:|---:|---:|
 | rea and leanrea capability rows | 39 | 0 | 357 |
-| reax's own rows | 49 | 0 | 50 |
+| reax's own rows | 54 | 0 | 55 |
 | Recorded weak points | 21 | 0 | 244 |
 
 Open weak points by severity: degrades 150, cosmetic 32, blocks 41. Security review notes: 15 (status in `docs/review-notes.md`).
