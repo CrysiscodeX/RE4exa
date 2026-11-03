@@ -57,6 +57,13 @@ These come from the user and outrank any session's memory (a subset is also in D
   had it reverted before review. Nothing was committed from it.
 - W2-3 Part B (D-35 round), Reviewer-Debugger: it ran `scripts/status.ts` once without `--check`,
   which rewrote `CAPABILITY-MATRIX.md`; the rewrite was byte-identical, so it had no effect.
+- W2-6 MOB, round-1 Reviewer-Debugger: it looked up the working directory of an unrelated process
+  (pid 22145, a 15-day-old node test from another project) to identify it: inspection of a process
+  the session did not start. Nothing was signalled or changed.
+- W2-6 MOB, round-2 Reviewer-Debugger: it ran `pgrep -f` once, which scans every process's command
+  line; it matched nothing, and the reviewer disclosed it. Both are now forbidden in every brief:
+  never inspect a process the agent did not start (no `pgrep -f`, no cwd, command line or
+  environment of another process).
 
 ## Open follow-ups
 The single list of every open follow-up and advisory, gathered from the **Done**, **Parked** and
@@ -141,8 +148,8 @@ only where an entry below already records the closure.
   - aging (or "joins at the back") and priorities are a later slice; single-flight needs SNAP.
 - **COD Part B, disassembly** (parked until the breadth gate after the D-35 round's FAIL, the 4th;
   see **Parked**): the three tests (Yhitcov, Ycutcomplete, Yfirst) and the two text fixes are done in
-  the stash "cod-partB WIP after D-35 round (4th FAIL; parked to breadth gate)" (stash@{1} since RUN
-  was stashed; this line said stash@{0}, corrected) but not committed; open: the Yfirst cut-dump bypass (`src/cod/disasm.ts:427-431` in the
+  the stash "cod-partB WIP after D-35 round (4th FAIL; parked to breadth gate)" (stash@{2} since MOB
+  was stashed; refer to it by message) but not committed; open: the Yfirst cut-dump bypass (`src/cod/disasm.ts:427-431` in the
   stash: on a cut dump `procedureInsns` returns before the procedure-start check), with its proposed
   fix and a cut-dump test and mutant; advisory Ycomment survives (a comment line before any
   instruction throws TypeError rather than a clean refusal; both refuse); advisory Ylast looks
@@ -156,8 +163,15 @@ only where an entry below already records the closure.
   when `rootRow` is present at exit); Linux behaviour (procps's repeated column, `?` escaping) never
   run, as no CI lane ran RUN; D-37 to D-41 PROPOSED only; a production approval channel (CLI,
   daemon) is a later slice.
+- **MOB, first slice** (parked until the breadth gate after 3 reviewer FAILs; see **Parked**):
+  round 3's code FAIL (a result over the 1 MiB response budget is refused with `result_too_large`
+  instead of returned partial; proposed fix: a running total-characters cap on IPA info and the APK
+  manifest, with a note and tests of the serialized size); the untested "two app bundles" note cap
+  (`apps.slice`); text nits in `scripts/oracle-mob-crosscheck.py:9` and `src/readers/mobile.ts:270`
+  (stash line numbers); D-42 to D-46 PROPOSED only; the `packages/core` `zipEntryData` export (D-43)
+  is in the stash, not committed, so assay CI never ran on it.
 - **DMN macOS flake:** closed by W2-4 (`32b13c6`, `b2f9be8`; see **Done** and **Known defects**).
-- **Parked ARM64 `.pdata` stash** (stash@{3} now; see **Parked**): findings (a), (b) and the advisory (c) open;
+- **Parked ARM64 `.pdata` stash** (stash@{4} now; see **Parked**): findings (a), (b) and the advisory (c) open;
   (d) closed for x64 by `175f614`; its oracle entries never confirmed by CI's LLVM 18.1.3.
 - **Blocked and BLOCKED_EXTERNAL** (see **Blocked**): PE certificates (no signed sample); Frida
   (REA-C16, 10 rows) and ADB (REA-C26, 25 rows) BLOCKED_EXTERNAL (D-16); JEB (REA-C25, 5 rows)
@@ -725,10 +739,11 @@ only where an entry below already records the closure.
     holds its slot; three harmless surviving mutants.
 
 ## Active
-- **MOB, first slice** (Wave 2 item 6, work order W2-6, issued 2026-11-03; not started). Static APK
-  and IPA readers only, in memory, no extraction; ADB and Frida stay BLOCKED_EXTERNAL (the user's
-  constraint). Proposed decisions D-42 onwards are in the work order, not decided. RUN is parked
-  (see **Parked**).
+- **SET, first slice** (Wave 2 item 7, work order W2-7, issued 2026-11-03; not started). `reax
+  setup`, `reax doctor` and `reax uninstall` for two clients (Claude Code, Codex), developed and
+  tested only against a temporary HOME (the user's constraint: "SET works only against a temporary
+  HOME."). Proposed decisions D-48 onwards are in the work order, not decided. RUN and MOB are
+  parked (see **Parked**).
 
 ## Wave 2 checkpoint
 - **Items and commits:**
@@ -748,6 +763,10 @@ only where an entry below already records the closure.
   - The DMN flake (W2-4): `32b13c6`, then `b2f9be8`.
   - RUN (W2-5): parked after 3 reviewer FAILs, until the breadth gate (D-35's rule); not committed
     (`git stash` "run WIP (3 reviewer FAILs; parked to breadth gate)"), so no CI.
+  - D-47, the run-time limits (docs and agent files): `2db83e8`.
+  - MOB (W2-6): parked after 3 reviewer FAILs, until the breadth gate; not committed (`git stash`
+    "mob WIP (3 reviewer FAILs; parked to breadth gate)", which includes the `packages/core`
+    `zipEntryData` export), so no CI.
 - **CI per commit, all green in the end; no capacity re-runs in Wave 2; one re-run for a flake:**
   - `ac70493`: reax 41521374732, tests 41521374941, assay 41521374728.
   - `69dde2e`: reax 41540866637, tests 41540866667.
@@ -766,22 +785,71 @@ only where an entry below already records the closure.
 - **Review histories:** W2-0 PASS; DMN FAIL, FAIL, PASS (plus a D-21 text fix); SCH FAIL, PASS; COD
   Part A text-only FAIL, narrow PASS; COD Part B FAIL, FAIL, FAIL, parked; D-35 round FAIL, parked
   until the breadth gate; DMN flake FAIL, PASS (and PASS for `b2f9be8`); RUN FAIL, FAIL, FAIL,
-  parked until the breadth gate.
+  parked until the breadth gate; MOB FAIL, FAIL, FAIL, parked until the breadth gate.
 - **Rows:** reax's own rows 35 to 47 at SCH, then 49 of 50 at `681fae9` (`RX-ENG/nm-names`,
   `RX-0b/deferred`; `RX-SBX/windows-engines` planned). rea and leanrea covered 39 of 357, tested,
   partial 0: unchanged through Wave 2. Weak points 21 of 244 fixed: unchanged.
 - **Breadth:** DMN and SCH became PARTIAL_VERIFIED; 12 of 34 items PARTIAL_VERIFIED. COD stays
-  NOT_BUILT; RUN NOT_BUILT (parked); MOB active; SET not started.
-- **Incidents:** five, all during COD Part B, under **Hard limits**.
+  NOT_BUILT; RUN NOT_BUILT (parked); MOB NOT_BUILT (parked); SET active (W2-7).
+- **Incidents:** seven under **Hard limits**: five during COD Part B, two during MOB's reviews.
 - **Computer use:** none in Wave 2.
-- **Next:** MOB (**Active**); then SET; SBX-W is Wave 3 item 0. COD Part B and RUN are parked
-  until the breadth gate (D-35).
+- **Next:** SET (**Active**); SBX-W is Wave 3 item 0. COD Part B, RUN and MOB are parked until
+  the breadth gate (D-35's rule).
 
 ## Parked
+- **MOB, first slice** (Wave 2 item 6, work order W2-6; parked 2026-11-03 after 3 reviewer FAILs,
+  until the breadth gate under D-35's rule; not committed, not pushed, so no CI). The work is the
+  git stash "mob WIP (3 reviewer FAILs; parked to breadth gate)" (stash@{0} at `2db83e8`; refer to
+  it by message); it includes the `packages/core` change (`zipEntryData`, D-43). Work order
+  `workorder-w2-6-mob.md` and handoff `handoff-w2-6-mob.md` in the session scratchpad. Proposed
+  D-42 to D-46 stay PROPOSED (`DECISION-LOG.md`). BREADTH-COVERAGE's MOB stays NOT_BUILT.
+  - What it was: in-memory APK and IPA readers (`inventory.apk`, `inventory.ipa`; zip entries
+    through core's `zipEntryData`, no extraction): the binary `AndroidManifest.xml`, `Info.plist`
+    in XML and binary form, framework markers. 54 new fixtures. The key `bench/oracle/mob.json`
+    from Python's stdlib, equal under Python 3.9.6 and 3.12.13. A third-party cross-check with
+    pyaxmlparser 0.3.31 (Apache-2.0; its dependencies lxml 5.3.0 BSD-3, click 8.1.7 BSD-3,
+    asn1crypto 1.5.1 MIT) in a hash-locked venv under /tmp, as a separate process: every positive
+    APK agrees except `mob-idswap.apk`, where pyaxmlparser matches attributes by name and Android
+    by resource id (reax follows Android). Literal tags for `leanrea/LEAN-T08` and
+    `leanrea/LEAN-T17` (row text checked to match); with them rea and leanrea would have been
+    covered 41. Not verified in CI.
+  - Review history (Reviewer-Debugger):
+    1. FAIL (code): shared references in a binary plist amplified N by N and crashed
+       `inventory.ipa` (RangeError); tags built at run time were invisible to `status.ts`; an
+       over-long URL scheme became `""`; no third-party AXML cross-check (judged weak
+       independence).
+    2. FAIL (code): amplification still possible through non-string or over-long items that did not
+       advance the scheme counter (a 105 KB IPA ran V8 out of memory; 200 KB took 26 s); untested
+       guards (the 50-note cap, `break outer`, dedup); text overclaims; dependency licences not
+       recorded.
+    3. FAIL (code): a result over the 1 MiB response budget is refused outright
+       (`result_too_large` from `fitPage`, `src/ops/registry.ts:73` and `:81`) instead of returned
+       partial: the per-list caps allow 1000 items of 65,536 characters. Repros in
+       `/tmp/rv3-mob`: `fan.ipa` (70 KB, 65.5 MB of output), `priv.ipa`, `xml17.ipa` (1.1 MB, 17
+       distinct long schemes, no amplification). Proposed fix: a running total-characters cap (for
+       example 512 KiB) on IPA info and the APK manifest, items past it omitted with one note,
+       tests asserting a partial result whose serialized size is within the budget. Also: the "two
+       app bundles" note cap (at most 10, `apps.slice`) is untested; text nits in
+       `scripts/oracle-mob-crosscheck.py:9` and `src/readers/mobile.ts:270`. Round 3's extra fixes
+       held: an AXML note cap (after a crash on 1M chunks) and a byte-claim limit on binary-plist
+       objects (after an overlap case that took 16.8 s and 3.9 GB).
+  - Process: round 2 used the one resume; round 3 was a fresh agent from the handoff file (D-47).
+    The round-1 and round-2 coding agents did not list their PIDs (a D-47 finding); the round-3
+    coding agent did, and the Orchestrator confirmed each gone with `ps -p`. Two incidents against
+    **Hard limits** (the round-1 reviewer's cwd lookup of pid 22145; the round-2 reviewer's
+    `pgrep -f`); see there. Computer use: none.
+  - Cost (approximate): coding round 1 ~30 min, ~246k tokens; round 2 (resume) ~10 min, ~60k;
+    round 3 (fresh) ~12 min, ~115k. Reviewers ~13 min, ~117k; ~7 min, ~73k; ~8 min, ~82k.
+  - Rows: none moved. rea and leanrea covered 39 of 357, tested, partial 0; reax 49 of 50.
+  - To resume after the breadth gate: `git stash apply` the entry by message; add the total-size
+    cap with its tests, the `apps.slice` test and the two text fixes; then a full review, and CI
+    including assay's (for the core export) and the fixtures job's `oracle.ts --check` of
+    `mob.json`.
 - **RUN, first slice** (Wave 2 item 5, work order W2-5; parked 2026-11-03 after 3 reviewer FAILs,
   until the breadth gate under D-35's rule: "an item parked after 3 FAILs stays parked until the
   breadth gate"; not committed, not pushed, so no CI). The work is the git stash "run WIP (3 reviewer
-  FAILs; parked to breadth gate)" (stash@{0} at `fbcec73`; refer to it by message). ADR 0010 is in
+  FAILs; parked to breadth gate)" (stash@{1} since MOB was stashed; made at `fbcec73`; refer to it
+  by message). ADR 0010 is in
   the stash. Proposed D-37 to D-41 stay PROPOSED (`DECISION-LOG.md`).
   - What it was: `observe.process`, a sandboxed capture of a workspace Node fixture, approval-gated
     and off by default (the CLI and the daemon cannot supply an approval in this slice), and
@@ -824,8 +892,8 @@ only where an entry below already records the closure.
 - **COD Part B, disassembly** (Wave 2 item 3; parked 2026-11-03 after 3 reviewer FAILs, resumed
   for the one D-35 round, which failed; parked again until the breadth gate; not committed, not
   pushed). The work is the git stash "cod-partB WIP after D-35 round (4th FAIL; parked to breadth
-  gate)" (stash@{1} since RUN was stashed, at `f7160f3`; refer to it by message); it includes round 4's
-  three tests and text fixes. The earlier stash "cod-partB WIP (3 reviewer FAILs)" (stash@{2}) is superseded by it; kept,
+  gate)" (stash@{2} since MOB was stashed, made at `f7160f3`; refer to it by message); it includes round 4's
+  three tests and text fixes. The earlier stash "cod-partB WIP (3 reviewer FAILs)" (stash@{3}) is superseded by it; kept,
   not dropped. Scope: an llvm-objdump provider in the sandbox, dumped once and
   sliced; `read.disassembly` and `search.disassembly`; the answer key `bench/oracle/disasm.json` from
   GNU objdump and GNU readelf; rows `rea.tool/procedure_assembly`,
@@ -889,7 +957,7 @@ only where an entry below already records the closure.
     review and CI including the fixtures job's `oracle.ts --check` of `bench/oracle/disasm.json`
     against binutils 2.42. This is the reviewer's proposed fix, not yet reviewed.
 - **NAT-4, ARM64 `.pdata`** (parked 2026-11-01 under the breadth rule, D-13; not committed, not
-  pushed). The work is the git stash `arm64-pdata WIP (3 reviewer FAILs)` (stash@{3} since RUN was
+  pushed). The work is the git stash `arm64-pdata WIP (3 reviewer FAILs)` (stash@{4} since MOB was
   stashed; refer to it by message), on `bc38202`, 13 files. Applying it is expected to conflict with `175f614` in
   `src/readers/symbols.ts` (not tried). The files:
   - new: `fixtures/extra/pdata-hello-aarch64-windows-gnu.exe`,
@@ -924,14 +992,14 @@ only where an entry below already records the closure.
 ## Next (in order)
 Wave 1 is complete; Wave 2 items 0, 1 (DMN) and 2 (SCH) are done; item 3 (COD) Part A is done, and
 Part B is parked until the breadth gate after its D-35 round failed review (see **Parked**); item 4
-(the DMN macOS flake) is done; item 5 (RUN) is parked until the breadth gate.
+(the DMN macOS flake) is done; items 5 (RUN) and 6 (MOB) are parked until the breadth gate.
 The Wave 2 queue, in order:
 1. ~~DMN macOS flake~~: done (`32b13c6`, `b2f9be8`; see **Done**).
 2. ~~RUN~~: parked until the breadth gate after 3 reviewer FAILs (see **Parked**). RUN inspects
    only processes that its own tests start.
-3. **MOB (Active, work order W2-6).** MOB builds static APK and IPA readers only; ADB and Frida stay
-   BLOCKED_EXTERNAL.
-4. **SET.** SET works only against a temporary HOME.
+3. ~~MOB~~: parked until the breadth gate after 3 reviewer FAILs (see **Parked**). MOB builds
+   static APK and IPA readers only; ADB and Frida stay BLOCKED_EXTERNAL.
+4. **SET (Active, work order W2-7).** SET works only against a temporary HOME.
 SBX-W is Wave 3 item 0.
 The breadth plan in `BREADTH-COVERAGE.md` (waves and dependencies there; D-13, D-14):
 1. **Wave 1:** SBX, the sandbox foundation; then ENG, the adapter registry with LLVM as the first

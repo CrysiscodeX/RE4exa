@@ -69,8 +69,8 @@ recorded; both were green on all three workflows, now recorded.
 | ENG | Engine adapters and provider registry | PARTIAL_VERIFIED (since `95c82c1`) | 1 |
 | COD | Code-level analysis | NOT_BUILT | 2 |
 | RUN | Runtime and devices | NOT_BUILT (first slice parked to the breadth gate; Frida and ADB parts BLOCKED_EXTERNAL) | 2 |
-| MOB | Managed and mobile | NOT_BUILT (JEB part BLOCKED_EXTERNAL) | 2 |
-| SET | Setup, skill, router | NOT_BUILT | 2 |
+| MOB | Managed and mobile | NOT_BUILT (first slice parked to the breadth gate; JEB part BLOCKED_EXTERNAL) | 2 |
+| SET | Setup, skill, router | NOT_BUILT (first slice active, W2-7) | 2 |
 | DMN | Daemon, MCP, sessions, jobs | PARTIAL_VERIFIED (since `69dde2e`) | 2 |
 | ARC | Archives and app bundles | NOT_BUILT | 3 |
 | JSE | JavaScript and Electron | NOT_BUILT | 3 |
@@ -293,6 +293,9 @@ the fixtures job and the parity job, unless another run is named.
   - Moved out by the constraint: the .NET metadata reader (inspect_managed_artifact, LEAN-C30) that
     this entry planned before. It is not an APK or IPA reader; it waits for a later MOB slice
     (after the breadth gate, or sooner if the user says so).
+  - Outcome (2026-11-03): parked until the breadth gate after 3 reviewer FAILs (git stash "mob WIP
+    (3 reviewer FAILs; parked to breadth gate)"); status stays NOT_BUILT. Detail in
+    `EXECUTION-STATE.md` **Parked**.
 
 ### SET, setup, skill and router: NOT_BUILT
 - **Evidence:** none in reax. Related: core's `probes/router-pack.json` (leanrea's router as data,
@@ -302,6 +305,9 @@ the fixtures job and the parity job, unless another run is named.
   example RX-2/setup-clients); REA-C40 stays open until its full client list. Positive: install twice
   equals install once; uninstall restores the original files byte for byte. Negative: a malformed
   existing configuration is left untouched and reported. Oracle: JSON and Python `tomllib` parsers.
+  - Work order W2-7 (2026-11-03) narrows the first slice to Claude Code only (JSON; key from
+    Python's `json`); Codex waits for a TOML decision (proposed D-49). No rea or leanrea row is
+    satisfied by it; five new RX-SET rows.
 
 ### DMN, daemon, MCP, sessions and jobs: PARTIAL_VERIFIED (since `69dde2e`)
 - **Evidence:** `src/daemon/{paths,lock,token,protocol,server,client}.ts`; entry `reax serve` and

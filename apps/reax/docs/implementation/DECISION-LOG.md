@@ -608,6 +608,24 @@ them:
 To be decided when RUN resumes after the breadth gate and passes review. Detail in
 `EXECUTION-STATE.md` **Parked**.
 
+## D-42 to D-46 (PROPOSED, not decided) MOB's first slice
+Proposed in work order W2-6 (MOB, parked until the breadth gate after 3 reviewer FAILs; `git stash`
+"mob WIP (3 reviewer FAILs; parked to breadth gate)"). Not recorded as decisions: nothing was
+committed or verified in CI. Numbers reserved:
+- **D-42:** static APK and IPA readers only (the user's constraint); the names `inventory.apk` and
+  `inventory.ipa`; five RX-MOB rows; `leanrea/LEAN-T08` and `LEAN-T17` tagged; .NET moved to a
+  later MOB slice; no extraction, resources, DEX, signatures or entitlements.
+- **D-43:** core gains `localHeaderOffset` and `zipEntryData` (bounded, never throws on bad input).
+  The additive export was cleared for the slice; it exists only in the stash, and assay CI never
+  ran on it.
+- **D-44:** MOB's limits, and the rule that ambiguity is never resolved by picking one.
+- **D-45:** the MOB key: `scripts/oracle-mob.py` (Python stdlib), fixtures from
+  `scripts/mob-fixtures.py` pinned by digest, and the offline cross-check against pyaxmlparser
+  0.3.31 (Apache-2.0) as a separate process.
+- **D-46:** MOB takes ADR 0011; ADR 0010 stays reserved for RUN.
+To be decided when MOB resumes after the breadth gate and passes review. Detail in
+`EXECUTION-STATE.md` **Parked**. D-48 onwards: SET (work order W2-7), proposed.
+
 ## D-47 (2026-11-03) Run-time limits: time budgets, timeouts, bounded mutation checks, one resumption, PIDs
 Numbering: the user named this decision D-36, but D-36 is already taken (adversarial cases for
 tool-output parsers, 2026-11-03), D-37 to D-41 are reserved for RUN and D-42 to D-46 for MOB (in the
