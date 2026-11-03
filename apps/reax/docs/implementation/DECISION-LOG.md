@@ -529,3 +529,38 @@ Proposed in COD Part B (parked): the names `read.disassembly` and `search.disass
 target, cached and re-verified before it is served (every code section, first and last instruction,
 no duplicate section; a `cut` dump is never complete); refusals documented by doctests. Not recorded
 as a decision for the same reason as D-32.
+
+## D-35 (2026-11-03) COD Part B: one bounded resumption, and the last exception to the 3-FAIL rule
+The user's decision, in their words: "COD Part B: one bounded resumption, recorded as D-35. Reason:
+Part B is Wave 2's only path to moving a capability row, and round 3's findings were test gaps and
+text, not code defects. This is the last exception of this kind. From now on, an item parked after 3
+FAILs stays parked until the breadth gate."
+- **Scope:** "exactly round 3's findings: the three missing tests (including output that is both
+  truncated and reported complete, and a procedure that starts inside an instruction) and the two
+  text fixes. No other changes." That is: Yhitcov (`src/cod/disasm.ts:319`), Ycutcomplete (`:228`)
+  and Yfirst (`:431`) each get a test that kills its mutant; ADR 0009 names both byte-limited map
+  entries (`66 90` and `f348ab`); `search.disassembly`'s description says a hit outside a sized
+  procedure has no procedure (null). The CI fixtures step name stays open (`.github` is out of
+  scope).
+- **On PASS:** pre-push, commit, push, CI including the fixtures job's `oracle.ts --check` of
+  `bench/oracle/disasm.json` against CI's binutils 2.42; the stash entry is dropped only after CI is
+  green. D-32 and D-34 are then decided on the evidence.
+- **On FAIL:** stash again, record it, move on; Part B stays parked until the breadth gate.
+- **The rule from now on:** an item parked after 3 FAILs stays parked until the breadth gate. No
+  further exception round of this kind (D-19, D-35) will be granted. D-21 (narrow confirmation for
+  text-only findings) is unchanged.
+
+## D-36 (2026-11-03) Work orders for parsers of external tool output list the adversarial cases up front
+The user's rule, in their words: "every work order for code that parses an external tool's output
+lists these adversarial cases up front, and the reviewer gets the same list. The cases: truncated
+output; missing sections or records; ambiguous lines (newlines, separators); records split across
+lines; entries starting inside another entry; and differences between the local tool version and
+CI's."
+- **Where:** `WORK-ORDER-TEMPLATE.md` (this directory) has the section; `EXECUTION-STATE.md`'s
+  **Hard limits** points to it.
+- **How:** for each case the work order names the test that covers it, or the new test to add, or
+  why the case cannot arise for that tool (with evidence); the Reviewer-Debugger checks each one and
+  mutation-checks the guards.
+- **Why:** COD Part B's three FAILs were each one of these cases found late (prefix-only lines split
+  across records; a missing section served as complete; a cut dump reported complete; a procedure
+  starting inside an instruction).
