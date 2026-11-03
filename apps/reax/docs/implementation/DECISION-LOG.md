@@ -483,3 +483,49 @@ Task Master's feasibility analysis, "with two conditions".
   decision after review.
 **Reopen if** SBX-W lands (lift the deferrals; the rows must then pass on win32 to count as covered),
 or the user changes the reporting rule.
+
+## D-31 (2026-11-03) ENG: llvm-nm output is framed per run
+The Orchestrator's decision (Wave 2 item 3, work order W2-3, Part A), recorded after the
+Reviewer-Debugger's narrow PASS and green CI on `681fae9` (reax run 41597961652). Row
+`RX-ENG/nm-names`. Closes the newline-forgery limit (`docs/engines-known-limits.md`); the pinned test
+is flipped.
+- **Framing:** each run passes llvm-nm an unguessable path prefix through `-A`, so every record starts
+  with it. A line without the prefix is a continuation and joins the previous name (names with line
+  breaks, spaces or control bytes are read exactly).
+- **Unframed output** gives `engine_output_invalid`.
+- **A name that is not valid UTF-8** makes the result `partial`.
+- **Archives** are refused with `bad_request`. Advisory: an archive form that passes the magic check
+  (fat Mach-O archive, AIX `<bigaf>`) with no defined symbols returns an empty complete list; nothing
+  is forgeable.
+- **Answer key:** `bench/oracle/names.json`, new, generated with LLVM 18.1.8 on the Mac and re-derived
+  by CI with LLVM 18.1.3 (equal).
+**Reopen if** llvm-nm's `-A` output format changes.
+
+## D-32 (PROPOSED, not decided) COD: GNU objdump and GNU readelf as the disassembly key
+Proposed in COD Part B (parked; `git stash` "cod-partB WIP (3 reviewer FAILs)"). The answer key
+`bench/oracle/disasm.json` comes from GNU objdump and GNU readelf, run as separate processes from
+`scripts/` only, never Capstone (D-30). Not recorded as a decision: Part B was not committed or
+verified in CI. To be decided when Part B passes review.
+
+## D-33 (2026-11-03) LED: the `deferred` mechanism, as built
+The Orchestrator's decision (W2-3 Part A), recorded after review and green CI on `681fae9`. It is the
+mechanism D-30 asked for. Row `RX-0b/deferred`.
+- **Field:** an optional `deferred {platforms, decision, until}` on a ledger row; `platforms` stays the
+  original list.
+- **The loader refuses:** an empty `deferred.platforms`; one that is not a subset of the row's
+  platforms; one that lists all of them; a malformed `decision`; an unknown `until`; `deferred`
+  together with `wont`.
+- **The seed** (`scripts/seed-register.ts`) preserves it.
+- **Status:** a row is `covered` only when every listed platform, the deferred ones included, passed
+  both polarities.
+- **Reports** (`scripts/status.ts`, the parity report, `CAPABILITY-MATRIX.md`) print "covered" and
+  "tested, partial (missing: …)" as separate numbers.
+- **Scope:** it also applies to reax's own rows and to weak points.
+- On HEAD no row is deferred yet (the COD rows are in the parked Part B).
+**Reopen if** SBX-W lands (D-30), or the user changes the reporting rule.
+
+## D-34 (PROPOSED, not decided) COD: operation names, the dump cache, and refusal doctests
+Proposed in COD Part B (parked): the names `read.disassembly` and `search.disassembly`; one dump per
+target, cached and re-verified before it is served (every code section, first and last instruction,
+no duplicate section; a `cut` dump is never complete); refusals documented by doctests. Not recorded
+as a decision for the same reason as D-32.

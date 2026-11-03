@@ -5,11 +5,12 @@
 2. Read this file.
 3. Continue with the first package under **Next**.
 
-**Last verified checkpoint: `40467bd`** (Wave 2 item 2, SCH). CI green: reax run 41565482186
-(fixtures, three lanes, parity), tests 41565482171; assay not triggered (core unchanged). Rows: 39 of
-357 rea and leanrea rows covered (unchanged), 47 of 47 reax rows covered (41 before), 21 of 244 weak
-points fixed (unchanged). The previous checkpoint was `69dde2e` (Wave 2 item 1, DMN; reax run
-41540866637). The baseline reconciled at `bc38202` is in `BREADTH-COVERAGE.md`.
+**Last verified checkpoint: `681fae9`** (Wave 2 item 3, COD Part A; see **Wave 2 checkpoint**). CI
+green: reax run 41597961652 (fixtures, three lanes, parity), tests 41597961651. Rows (D-30's two
+numbers): rea and leanrea covered 39 of 357, tested, partial 0 (unchanged); reax's own rows 49 of 50
+tested on every listed platform, tested, partial 0 (`RX-SBX/windows-engines` planned); weak points 21
+of 244 fixed (unchanged). The previous checkpoint was `40467bd` (Wave 2 item 2, SCH; reax run
+41565482186). The baseline reconciled at `bc38202` is in `BREADTH-COVERAGE.md`.
 
 ## Hard limits
 These come from the user and outrank any session's memory (a subset is also in DECISION-LOG D-16 and `BREADTH-COVERAGE.md`; this list is the complete one).
@@ -24,6 +25,18 @@ These come from the user and outrank any session's memory (a subset is also in D
 - The loop: work order, then coding-agent, then reviewer-debugger. After 3 FAILs, park the item. D-21 applies.
 - GitHub research gives ideas only: no copied code, record licences, and GPL tools only as separate processes.
 - Each report lists computer-use actions ("none" expected).
+
+**Incidents against these limits (recorded plainly; none had a lasting effect):**
+- W2-3 Part B, Coding Agent: it ran an oracle step by accident that rewrote existing answer keys
+  (only the Python version strings in `bench/oracle/strings.json`, `search.json` and
+  `entropy.json`), and restored them with `git checkout --` on those three files; verified
+  byte-identical afterwards.
+- W2-3 Part B, Coding Agent: it once ran `ls ~/.reax` (printed nothing). This breaks the
+  "never read the real ~/.reax" limit.
+- W2-3 Part B, round-3 Reviewer-Debugger: one command included `ls ~/.reax` by mistake; the
+  permission system denied it and nothing was read.
+- W2-3 Part B, Coding Agent: it edited `.github/workflows/reax.yml` (out of scope); the Orchestrator
+  had it reverted before review. Nothing was committed from it.
 
 ## Open follow-ups
 The single list of every open follow-up and advisory, gathered from the **Done**, **Parked** and
@@ -52,16 +65,17 @@ only where an entry below already records the closure.
 - **Reporting rule (D-30, the user's):** every report gives rea and leanrea rows as two numbers:
   "covered" (passing on every listed platform) and "tested, partial" (with the missing platform
   named). A row whose platforms are narrowed is never counted as covered. The 39 stay covered. The
-  COD rows of W2-3 count only as "tested, partial (missing: win32)".
+  COD rows of W2-3 count only as "tested, partial (missing: win32)". Built as the `deferred` field
+  (D-33, `681fae9`); no row uses it on HEAD yet, because COD Part B is parked.
 - **SBX-W, Windows engine enforcement** (planned, D-30; Wave 3 item 0; key
   `RX-SBX/windows-engines`): a Job Object plus AppContainer through a small pinned helper, with no
   system-wide install. It would complete the rows deferred on win32 by D-30: procedure_assembly,
   read_function_instructions, LEAN-C08 (and LEAN-C18 if tagged).
 - **ENG:**
-  - the `parseNm` newline forgery (`docs/engines-known-limits.md`): must be mitigated, and the pinned
-    test flipped, before COD exposes symbols to callers (COD is **Active**);
-  - M16 survives: an abort after the engine exits 0 is reported as success; add a deterministic
-    `mapRun` test (code 0 with an aborted signal gives `engine_cancelled`);
+  - closed by `681fae9` (COD Part A): the `parseNm` newline forgery (framing per run, D-31; the
+    pinned test flipped); M16 (an abort after exit 0 now gives `engine_cancelled`, tested);
+  - advisory (Part A review): an archive form that passes the magic check (a fat Mach-O archive, AIX
+    `<bigaf>`) with no defined symbols returns an empty, complete list; nothing is forgeable;
   - the symlink test's title ("REAX_LLVM_BIN is used first: …") overclaims; reword;
   - two `RX-ENG/contract` tests use the real llvm-nm while the row says "against fake engines";
     retitle the row or retag the tests;
@@ -97,6 +111,10 @@ only where an entry below already records the closure.
   - no end-to-end SIGINT or SIGTERM test for `reax daemon run`;
   - the child-`serve` shutdown test cannot prove the job waited in `withImmediate`;
   - aging (or "joins at the back") and priorities are a later slice; single-flight needs SNAP.
+- **COD Part B, disassembly** (parked after 3 FAILs; see **Parked**): the three missing tests
+  (Yhitcov, Ycutcomplete, Yfirst) and three text fixes (ADR 0009's byte-limited map entries,
+  `search.disassembly`'s null procedure, the CI fixtures step name, which is outside `apps/reax`);
+  D-32 and D-34 are PROPOSED only. Waiting for the user's choice of resume option.
 - **Parked ARM64 `.pdata` stash** (see **Parked**): findings (a), (b) and the advisory (c) open;
   (d) closed for x64 by `175f614`; its oracle entries never confirmed by CI's LLVM 18.1.3.
 - **Blocked and BLOCKED_EXTERNAL** (see **Blocked**): PE certificates (no signed sample); Frida
@@ -345,10 +363,10 @@ only where an entry below already records the closure.
     result, so the fix will flip it.
   - LEAN-C14 and LEAN-C46 stay untagged: reax has no consent-gated install step, only an install line.
   - Follow-ups and advisories (all consolidated under **Open follow-ups**):
-    - **Before COD exposes symbols to callers:** mitigate the newline forgery, for example by
+    - (Closed by `681fae9`, D-31.) **Before COD exposes symbols to callers:** mitigate the newline forgery, for example by
       cross-checking against `--format=just-symbols`, or llvm-readobj JSON for ELF; then flip the
       pinned test.
-    - M16 survives: an abort that arrives after the engine exits 0 is reported as success. Fix with a
+    - (Closed by `681fae9`.) M16 survives: an abort that arrives after the engine exits 0 is reported as success. Fix with a
       deterministic `mapRun` test (code 0 with an aborted signal gives `engine_cancelled`).
     - The symlink test's title ("REAX_LLVM_BIN is used first: …") overclaims the discovery order it
       proves; reword it.
@@ -590,13 +608,111 @@ only where an entry below already records the closure.
     - A stream of short-lived connections can keep delaying a job of an older connection: aging (or
       "joins at the back") and priorities are a later slice; single-flight needs SNAP.
 
+- **Wave 2, item 3, Part A: unforgeable llvm-nm framing; deferred platforms and two-number status**
+  (`681fae9`; D-30, D-31, D-33). Work order W2-3. This is ENG and LED work done for COD; COD's own
+  capability is Part B, which is parked, so COD stays **NOT_BUILT**. Computer use: none.
+  - What it is:
+    - llvm-nm output is framed per run with an unguessable `-A` path prefix; continuation lines join
+      the name; unframed output gives `engine_output_invalid`; a name that is not valid UTF-8 gives
+      `partial`; archives are refused with `bad_request` (D-31). Row `RX-ENG/nm-names`.
+    - The ledger's optional `deferred {platforms, decision, until}` with its loader refusals, seed
+      preservation, and the two-number reports "covered" / "tested, partial (missing: …)" in
+      `scripts/status.ts`, the parity report and `CAPABILITY-MATRIX.md` (D-33). Row `RX-0b/deferred`.
+      Planned row `RX-SBX/windows-engines` added (D-30).
+    - ENG M16 closed: an abort after exit 0 gives `engine_cancelled`, with a test.
+  - Answer key: `bench/oracle/names.json`, a new key generated on the Mac with LLVM 18.1.8 and
+    re-derived by CI's fixtures job (`oracle.ts --check`, LLVM 18.1.3): equal.
+  - CI on `681fae9`, all green: reax run 41597961652 (fixtures, macos-15, ubuntu-24.04, windows-2025,
+    parity); tests 41597961651. `RX-ENG/nm-names` passed + and - on linux and darwin; on win32 the
+    four engine-based tests skip by design (no sandbox) and the two in-process ones pass.
+  - Parity report: darwin 324, linux-fixtures 324, linux 324, win32 320 tests; rea and leanrea
+    covered 39 of 357, tested, partial 0. `scripts/status.ts` at HEAD: reax rows 49 of 50 tested on
+    every listed platform, 0 partial (`RX-SBX/windows-engines` planned); weak points 21 of 244.
+  - Rows newly tested: `RX-ENG/nm-names`, `RX-0b/deferred` (reax 47 to 49 of 50). No rea or leanrea
+    row moved.
+  - Follow-ups closed: the ENG newline forgery (pinned test flipped); ENG M16.
+  - Review history:
+    1. FAIL, text only (D-21): the `RX-ENG/nm-names` title claimed archive members give `partial`;
+       fixed.
+    2. Narrow confirmation: PASS.
+  - Advisory: an archive form that passes the magic check (fat Mach-O archive, AIX `<bigaf>`) with no
+    defined symbols returns an empty complete list; nothing forgeable (under **Open follow-ups**).
+
 ## Active
-- **Wave 2, item 3: COD, code-level analysis** is in progress. Work order W2-3: Part A fixes the
-  llvm-nm forgery; Part B is disassembly keyed by GNU objdump. The user decided D-30: the COD rows
-  defer win32, and the ledger and reports gain the "covered" / "tested, partial" split. Wave 2
-  items 0, 1 and 2 are done (`ac70493`, `69dde2e`, `40467bd`, under **Done**).
+- **Wave 2 checkpoint; waiting for the user.** Wave 2 items 0 to 2 are done, item 3 (COD) Part A is
+  done (`681fae9`) and Part B is **Parked**. The user is asked to choose how COD Part B resumes (see
+  **Parked**). Nothing else is in progress.
+
+## Wave 2 checkpoint
+- **Items and commits:**
+  - W2-0: `ac70493` (docs `bccf882`).
+  - DMN: `69dde2e` (docs `e7f2988`).
+  - SCH: `40467bd` (docs `9f5220a`).
+  - The user's hard limits and the consolidated follow-ups (docs): `d2800d4`.
+  - D-30, COD rows narrowed with win32 deferred, two-number reporting; SBX-W planned (docs): `acb55c9`.
+  - COD Part A: `681fae9`.
+  - COD Part B: parked after 3 reviewer FAILs, not committed (`git stash`, "cod-partB WIP (3 reviewer
+    FAILs)").
+- **CI per commit, all green, no capacity re-runs in Wave 2:**
+  - `ac70493`: reax 41521374732, tests 41521374941, assay 41521374728.
+  - `69dde2e`: reax 41540866637, tests 41540866667.
+  - `40467bd`: reax 41565482186, tests 41565482171.
+  - `9f5220a`: reax 41591538116, tests 41591537790.
+  - `681fae9`: reax 41597961652, tests 41597961651.
+- **Review histories:** W2-0 PASS; DMN FAIL, FAIL, PASS (plus a D-21 text fix); SCH FAIL, PASS; COD
+  Part A text-only FAIL, narrow PASS; COD Part B FAIL, FAIL, FAIL, parked.
+- **Rows:** reax's own rows 35 to 47 at SCH, then 49 of 50 at `681fae9` (`RX-ENG/nm-names`,
+  `RX-0b/deferred`; `RX-SBX/windows-engines` planned). rea and leanrea covered 39 of 357, tested,
+  partial 0: unchanged through Wave 2. Weak points 21 of 244 fixed: unchanged.
+- **Breadth:** DMN and SCH became PARTIAL_VERIFIED; 12 of 34 items PARTIAL_VERIFIED. COD stays
+  NOT_BUILT; RUN, MOB and SET not started.
+- **Incidents:** four, all during COD Part B, under **Hard limits**.
+- **Computer use:** none in Wave 2.
+- **Next:** the user's decision on COD Part B; then RUN, MOB, SET; SBX-W is Wave 3 item 0.
 
 ## Parked
+- **COD Part B, disassembly** (Wave 2 item 3; parked 2026-11-03 after 3 reviewer FAILs; not
+  committed, not pushed). The work is the git stash "cod-partB WIP (3 reviewer FAILs)" (first in the
+  stash list; refer to it by message). Scope: an llvm-objdump provider in the sandbox, dumped once and
+  sliced; `read.disassembly` and `search.disassembly`; the answer key `bench/oracle/disasm.json` from
+  GNU objdump and GNU readelf; rows `rea.tool/procedure_assembly`,
+  `rea.tool/read_function_instructions`, `leanrea/LEAN-C08` deferred on win32 (D-30). Its rows are not
+  tagged on HEAD.
+  - Review history (Reviewer-Debugger):
+    1. FAIL (code): LLVM prefix-only lines (`lock` alone before a REX prefix) were counted as
+       instructions while coverage said complete (musl `0x100a9e5`, PE `0x14000125a`); the musl and
+       PE count gaps (36 and 2) were those prefix-only lines plus one `fwait`, not "data in `.text`";
+       test gaps (cache re-verification on serve, B10, combined integrity cases); an overclaiming
+       title.
+    2. FAIL (code): `verifyDump` did not require every code section (a cache without `.plt` was served
+       as complete: 110 of 122); `cut` was conflated with coverage `partial` (a false "ends at the
+       cut" note, end checks skipped).
+    3. FAIL (tests only; the reviewer found the code correct): three checks have no test, and their
+       mutants survive:
+       - Yhitcov (`disasm.ts:319`, cache-hit coverage forced to complete: a cut dump read back from
+         cache reported complete). Fix: touch the cache file's mtime in the cut test; assert partial
+         and a cache hit.
+       - Ycutcomplete (`disasm.ts:228`, the guard against a forged header `{cut: true, coverage:
+         "complete"}`). Fix: a forgeCache case with that header and no `.plt`, expecting a re-dump
+         (122).
+       - Yfirst (`disasm.ts:431`, a procedure whose start is inside an instruction). Fix: a procedure
+         starting 1 byte inside a multi-byte instruction, expecting `engine_output_invalid`.
+       - Text: ADR 0009 says one map entry is byte-limited (two are: `66 90` and `f348ab`);
+         `search.disassembly` says each hit names its procedure, but a hit outside a sized procedure
+         gets null; the CI fixtures step name was not changed (`.github` is out of scope).
+  - What held at round 3: every required mutation killed; forged caches refused (cut and partial
+    without the first section; cut and complete; uncut missing the last section or instruction; a
+    duplicate section); the key comes from GNU tools only (separate processes, `scripts/` only, no
+    Capstone); the `ctx.engine` seam is unreachable in production; existing keys and fixtures
+    byte-identical; nothing outside `apps/reax`; the maps are genuine notation differences
+    (`MNEMONIC_EQUIV` 7 entries, `BOUNDARY_EQUIV` 1). Its local figures would have been rea and
+    leanrea covered 39, tested, partial 3 (missing: win32: procedure_assembly,
+    read_function_instructions, LEAN-C08); reax 52 of 53. Not verified in CI.
+  - Proposed, not recorded as decisions: D-32 (GNU objdump key) and D-34 (COD names, cache, refusal
+    doctests), in `DECISION-LOG.md` as PROPOSED.
+  - Resume options (the user's choice): grant an exception round (precedent D-19) to add the three
+    tests and the text fixes; or resume later as a new item. Either way: `git stash apply` the entry
+    by its message, then review again.
 - **NAT-4, ARM64 `.pdata`** (parked 2026-11-01 under the breadth rule, D-13; not committed, not
   pushed). The work is the git stash `arm64-pdata WIP (3 reviewer FAILs)` (now second in the stash
   list; refer to it by message), on `bc38202`, 13 files. Applying it is expected to conflict with `175f614` in
@@ -631,8 +747,8 @@ only where an entry below already records the closure.
   dumps (recorded crashes and Apple IPS), and ARM64 `.pdata` (parked above).
 
 ## Next (in order)
-Wave 1 is complete; Wave 2 items 0, 1 (DMN) and 2 (SCH) are done and item 3 (COD) is **Active**;
-then RUN, MOB and SET.
+Wave 1 is complete; Wave 2 items 0, 1 (DMN) and 2 (SCH) are done; item 3 (COD) Part A is done and
+Part B is **Parked**, waiting for the user's decision. Then RUN, MOB and SET; SBX-W is Wave 3 item 0.
 The breadth plan in `BREADTH-COVERAGE.md` (waves and dependencies there; D-13, D-14):
 1. **Wave 1:** SBX, the sandbox foundation; then ENG, the adapter registry with LLVM as the first
    provider; the program model (PM) beside them.

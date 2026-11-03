@@ -97,7 +97,7 @@ recorded; both were green on all three workflows, now recorded.
 | LED | Ledger, parity and status machinery | PARTIAL_VERIFIED | 4 |
 | GATE | Breadth gate and completeness checker | NOT_BUILT | 4 (last) |
 
-**Counts (34 items, updated at `40467bd`):** PARTIAL_VERIFIED 12 (NAT, CLI, BEN, PROC, FIX, KEY,
+**Counts (34 items, updated at `681fae9`, unchanged since `40467bd`):** PARTIAL_VERIFIED 12 (NAT, CLI, BEN, PROC, FIX, KEY,
 LED, SBX, ENG, PM, DMN, SCH); NOT_BUILT 22; SCAFFOLDED 0; PARTIAL_UNVERIFIED 0; COMPLETE_UNVERIFIED 0; COMPLETE_VERIFIED 0;
 BLOCKED_EXTERNAL 0 as whole items, with three blocked parts inside RUN, MOB and NAT (41 ledger rows:
 Frida 10, ADB 25, JEB 5, PE certificates 1).
@@ -218,11 +218,11 @@ the fixtures job and the parity job, unless another run is named.
 - **Gaps:**
   - LEAN-C14, LEAN-C46 and REA-C38 stay open;
   - one provider and one LLVM tool;
-  - the newline-forgery limit (`docs/engines-known-limits.md`), to fix before COD;
-  - M16 (an abort after exit 0);
+  - closed by `681fae9` (COD Part A; reax run 41597961652, where `RX-ENG/nm-names` passed + and -
+    on linux and darwin): the newline-forgery limit (framing per run, D-31) and M16;
   - Windows engine runs are refused (no enforcement);
   - the nightly real-engine workflow (RCI).
-- **Next:** COD (Wave 2) exposes it through operations, after the forgery mitigation.
+- **Next:** COD (Wave 2) exposes it through operations; the forgery mitigation is done (`681fae9`).
 
 ### PM, program model: PARTIAL_VERIFIED (since `fb1e03e`/`d804135`)
 - **Evidence:** `src/pm/{db,schema}.ts`, `src/ops/pm.ts`; entry `reax op session.index` and
@@ -248,8 +248,12 @@ the fixtures job and the parity job, unless another run is named.
 - **Next:** COD (Wave 2) adds functions and xrefs; DMN takes ownership.
 
 ### COD, code-level analysis: NOT_BUILT
-- **Evidence:** none. Builds on `inventory.procedures` and `read.symbol` (NAT). 63 rows, 56 of them
-  phase 2.
+- **Evidence:** none of its rows is tagged on HEAD, so by the rules above it is NOT_BUILT. Builds on
+  `inventory.procedures` and `read.symbol` (NAT). 63 rows, 56 of them phase 2.
+  - W2-3 Part A (`681fae9`, green CI) is real, tested work done for COD, but it evidences ENG and LED
+    rows (`RX-ENG/nm-names`, `RX-0b/deferred`), not COD's.
+  - W2-3 Part B (the disassembly below) is parked after 3 reviewer FAILs, in `git stash` "cod-partB
+    WIP (3 reviewer FAILs)"; not committed (`EXECUTION-STATE.md`, **Parked**).
 - **Next (Wave 2):** disassembly of one procedure through the LLVM provider, written once to a file
   in the work directory and sliced (procedure_assembly, read_function_instructions, LEAN-C08,
   LEAN-C18). Positive: each instruction's address and bytes equal `read.bytes` at the procedure's
@@ -476,7 +480,8 @@ the fixtures job and the parity job, unless another run is named.
 ### LED, ledger, parity and status: PARTIAL_VERIFIED
 - **Evidence:** `src/ledger/*`, `scripts/{seed-register,parity-check,status}.ts`; tests
   `parity.test.ts`, `register.test.ts`; the 8 RX-0b rows `covered`; the parity job's phase 0 gate
-  for reax rows.
+  for reax rows. Since `681fae9` (green CI): the `deferred` field and the two-number reports (D-30,
+  D-33; row `RX-0b/deferred`, tested by `status.ts`).
 - **Gaps:** the full phase-0 gate (adding leanrea's benchmark rows) is not on; no generator for
   `MISSING-CAPABILITIES.md`.
 

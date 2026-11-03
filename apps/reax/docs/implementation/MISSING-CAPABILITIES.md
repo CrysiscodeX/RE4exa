@@ -285,11 +285,12 @@ correctness 30 and 10, coverage 32 and 3, tests 20 and 0, state 18 and 2, instal
 
 ## COD: Code-level analysis (63 open)
 
-- **Component status:** NOT_BUILT.
+- **Component status:** NOT_BUILT. The first slice (W2-3 Part B, disassembly) is parked, not
+  committed; its rows are untagged on HEAD (`EXECUTION-STATE.md`, **Parked**).
 - **Required implementation:** disassembly of one procedure through the LLVM provider, dumped once to a file and sliced; then xrefs, call graphs, navigation, annotations, comparison and the CLI-engine adapters (rizin, gdb).
 - **Dependencies:** ENG (LLVM provider), PM (functions and cache), NAT-3's procedures.
 - **Acceptance criteria:** each instruction's address and bytes equal the file's bytes at the procedure's file offset; boundaries match NAT's procedure table; an address outside every procedure is refused; plus the common bar in `MASTER-PLAN.md`.
-- **Verification:** differential: the instruction bytes are checked against `read.bytes`, and the mnemonics against the compiler's own `-S` output for the zig fixture sources (a second disassembler when one is installed under /tmp).
+- **Verification:** differential: the instruction bytes are checked against `read.bytes`, and the mnemonics against GNU objdump run as a separate process in the fixtures job (W2-3, D-30; not Capstone, not the compiler's `-S` output). The first slice's rows defer win32 (D-30) until SBX-W.
 
 | Key | Description | Ph | Owner | Pri | Code today |
 |---|---|---:|---|---|---|
