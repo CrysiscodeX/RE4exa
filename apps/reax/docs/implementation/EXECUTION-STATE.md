@@ -14,36 +14,11 @@ Wave 2 complete, see **Wave 2 summary**; reax run 41698459561). The baseline rec
 `bc38202` is in `BREADTH-COVERAGE.md`.
 
 ## Hard limits
-These come from the user and outrank any session's memory (a subset is also in DECISION-LOG D-16 and `BREADTH-COVERAGE.md`; this list is the complete one).
-- Push only to claude/admiring-volta-uc87nj. No pull requests, tags, releases or npm publish. Never force-push, rebase, reset --hard or git clean.
-- No system-wide installs. Toolchains go only under /tmp or the project, pinned.
-- Never kill a process this session didn't start, and never by pattern; only by exact verified pid.
-- Never read or write the real ~/.claude, ~/.codex, ~/.config, ~/.kube or ~/.reax. Tests use temporary homes.
-- ~/.reax: only the Orchestrator checks it, only for existence, with `test ! -e "$HOME/.reax"` at
-  checkpoints. Subagents never name the path in any command. The repository's
-  `.claude/settings.local.json` denies Read and Edit on ~/.reax as a backstop.
-- No live model runs and no API keys. No credential stores or tokens.
-- The daemon and MCP listen on loopback or local sockets only, with a token.
-- RUN inspects only processes that reax's own tests start. ADB and Frida stay BLOCKED_EXTERNAL.
-- Never push a commit that fails the local pre-push checks. After 2 CI failures with the same cause, stop that item.
-- The loop: work order, then coding-agent, then reviewer-debugger. After 3 FAILs, park the item. D-21 applies.
-  An item parked after 3 FAILs stays parked until the breadth gate: D-35 (COD Part B) was the last
-  exception of its kind.
-- Work orders follow `WORK-ORDER-TEMPLATE.md` (this directory). Every work order for code that
-  parses an external tool's output lists the adversarial cases up front, and the reviewer gets the
-  same list (D-36): truncated output; missing sections or records; ambiguous lines (newlines,
-  separators); records split across lines; entries starting inside another entry; and differences
-  between the local tool version and CI's.
-- GitHub research gives ideas only: no copied code, record licences, and GPL tools only as separate processes.
-- Each report lists computer-use actions ("none" expected).
-- Run-time limits (D-47), in the user's words:
-  - Time budgets per pass: coding-agent 60 minutes, reviewer-debugger 30, task-master 15. When an agent passes its budget, ask it for a 3-line status (what is running, which PIDs, when it expects to finish). If it can't finish within 10 more minutes, stop it, record its state in EXECUTION-STATE, and split the item. That doesn't count as a FAIL.
-  - Every test command has a hard timeout: node's --test-timeout for each test, plus the Bash tool's timeout for the whole command. No background command runs without an explicit timeout. An agent never waits on a background run longer than its remaining budget.
-  - Mutation checks: each work order lists at most 15 mutants, and each mutant runs only the test files that cover the changed code, not the full suite. The full suite runs once at the end.
-  - Resuming: an agent is resumed at most once per item. After that, a fresh agent starts from a handoff file in the scratchpad (the work order, every FAIL list, `git diff --stat`, and the open questions).
-  - Processes: every agent lists, in its report, the PIDs of the processes it started and confirms that none are still running. Before each commit, you [the Orchestrator] check those PIDs. A survivor is a finding, never something to kill silently.
-  - Each item report adds a line: wall time and approximate tokens for each agent.
-  - The .claude/agents/ changes take effect in the next session; the Orchestrator applies the rules in this session from now on.
+The hard limits are in the repository's `CLAUDE.md`, section 1, which every session and subagent
+loads; that list is the complete one (D-56). The loop rules this section used to repeat are in
+`CLAUDE.md` section 2, the run-time limits (D-47, in the user's words in DECISION-LOG) in section
+3, the adversarial cases (D-36) in section 5 and the report fields in section 8. The incidents
+below stay here.
 
 **Incidents against these limits (recorded plainly; none had a lasting effect):**
 - W2-3 Part B, Coding Agent: it ran an oracle step by accident that rewrote existing answer keys

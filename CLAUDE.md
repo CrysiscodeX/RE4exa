@@ -21,7 +21,9 @@ user's word.
 - Never force-push, rebase, `reset --hard` or `git clean`. If a push is rejected because the
   branch moved, `git pull --no-rebase origin claude/admiring-volta-uc87nj`, then push.
 - Never push a commit that fails the local pre-push checks.
-- No model identifiers in commits, code or docs. Bench results stay out of the repository.
+- No model identifiers in commits, code or docs, except the Co-Authored-By attribution trailer
+  Claude Code adds to commits (D-56: the trailer goes back on commits from now on). Bench results
+  stay out of the repository.
 - Nothing from LearnHarness is committed; tests fetch it, pinned by commit and hash.
 
 **The machine**
@@ -29,6 +31,7 @@ user's word.
   Toolchains go only under `/tmp` or the project, pinned. Rust targets only through rustup with
   `RUSTUP_HOME` and `CARGO_HOME` under `/tmp`.
 - Change no system settings.
+- Each report lists computer-use actions ("none" expected).
 
 **Processes**
 - Never signal a process this session didn't start, never by name or pattern, only by exact
@@ -42,7 +45,9 @@ user's word.
 - Never read or write the real `~/.claude`, `~/.claude.json`, `~/.codex`, `~/.config`, `~/.kube`
   or `~/.reax`. Tests set a temporary `HOME` and `REAX_HOME` explicitly.
 - `~/.reax`: only the Orchestrator checks it, only for existence, with `test ! -e "$HOME/.reax"`
-  at checkpoints. Subagents never name the path in any command.
+  at checkpoints. Subagents never name the path in any command. The repository's
+  `.claude/settings.local.json` denies Read and Edit on it as a backstop.
+- SET is tested only against a temporary HOME (D-16).
 - No live model runs and no API keys. Never read credential stores or keychains, and never copy
   or refresh a token. Never disable TLS or unset `HTTPS_PROXY`.
 
@@ -79,6 +84,7 @@ independently and never fixes.
   text, coding-agent fixes the text and reviewer-debugger confirms with a narrow check. That isn't
   a round. A finding in code or tests always is.
 - One subject per item. Unrelated parts in one item share its fate: one failing part parks them all.
+  D-55 split W3-0a by the user's decision; it isn't a precedent.
 - Before naming a new decision, read the highest D-number in `DECISION-LOG.md`. Numbers the user
   names may already be taken; record the next free one and note the user's number.
 - Decisions the user hasn't made stay PROPOSED. Name new public things (operations, environment
@@ -98,7 +104,8 @@ independently and never fixes.
   tool's timeout. Background commands run only through `scripts/bounded.mjs <seconds> -- …`, at
   most 3600 seconds. No agent waits on a background run longer than its remaining budget. In a local
   terminal, background commands have no other time limit, and a foreground command that times
-  out moves to the background instead of being killed.
+  out moves to the background instead of being killed. (These two sentences: Claude Code
+  behaviour, from its documentation, checked 2026-11-04.)
 - **Mutations:** at most 15 per work order. Each runs only the test files covering the changed
   code; the full suite runs once at the end.
 - **Processes:** every agent reports the PIDs it started and confirms none survive. The
@@ -154,7 +161,9 @@ the reviewer gets the same list:
   them. Changes to `packages/core` or `apps/reax/src` trigger Assay too (dep-budget, typecheck, lint,
   coverage, generated docs, SBOM, install rehearsal). Only the oracle steps get the special PATH
   with GNU tools and LLVM; core and Assay run with the normal environment.
-- **Node:** `node --version` must be 24.22.1 or newer before any local result is trusted.
+- **Node:** Node 24.15 or newer (the engines field). CI runs 24.22.1 and is the authority. Local
+  results on an older 24.x are valid for pre-push. Check `node --version` before trusting a local
+  result (D-56).
 - **CI watch:** wait until every workflow expected for the changed paths has finished, report
   each by name, and read the parity report from the latest attempt.
 - **Re-runs:** a job that ran zero steps (no runner) gets one re-run with no push. If it happens

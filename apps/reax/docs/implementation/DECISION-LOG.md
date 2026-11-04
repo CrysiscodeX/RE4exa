@@ -735,3 +735,46 @@ Decided by the user after W3-0a's third reviewer FAIL. The user's text, verbatim
   already in its header ("Keeping it current") at `7a9fcc0`.
 - **Where:** `EXECUTION-STATE.md` **Active** and **Parked**; `CLAUDE.md` section 3;
   `packages/core/package.json`, `apps/assay/package.json`.
+
+## D-56 (2026-11-05) CLAUDE.md conflicts settled: commit trailer, Node version, background-command label, hard limits in one place, D-55 no precedent
+Numbering: the highest recorded decision is D-55, so this is D-56 (the user named D-56).
+Decided by the user. The user's text, verbatim:
+"1. CLAUDE.md §1: "No model identifiers in commits, code or docs, except the Co-Authored-By attribution trailer Claude Code adds to commits." Put the trailer back from now on.
+2. CLAUDE.md §6: "Node 24.15 or newer (the engines field). CI runs 24.22.1 and is the authority. Local results on an older 24.x are valid for pre-push." Results from this Mac on 24.18.0 stand.
+3. CLAUDE.md §3: mark the two background-command sentences "Claude Code behaviour, from its documentation, checked 2026-11-04".
+4. EXECUTION-STATE Hard limits: replace the list with a pointer to CLAUDE.md §1, keeping the incidents. Move anything missing from §1 into it first, and list what moved.
+5. CLAUDE.md §2: "D-55 split W3-0a by the user's decision; it isn't a precedent.""
+
+- **Part 1:** `CLAUDE.md` section 1 (Repository) carries the exception; commits carry the
+  Co-Authored-By trailer again from now on.
+- **Part 2:** `CLAUDE.md` section 6 (Node) carries the user's sentence. The engines field says
+  `>=24.15` in both `package.json` (root) and `apps/reax/package.json`, so the rule and the field
+  agree. Results from this Mac on Node 24.18.0 stand, including those recorded before this
+  decision. The section 7 lesson row ("The container's Node reset to v22") states no version and is
+  unchanged.
+- **Part 3:** `CLAUDE.md` section 3 (Timeouts): the two sentences ("In a local terminal, background
+  commands have no other time limit, and a foreground command that times out moves to the
+  background instead of being killed.") are labelled "Claude Code behaviour, from its
+  documentation, checked 2026-11-04".
+- **Part 4:** `EXECUTION-STATE.md` **Hard limits** is now a pointer to `CLAUDE.md` section 1 (with
+  the loop, run-time, adversarial-case and report rules pointed to sections 2, 3, 5 and 8); its
+  incidents list is kept as it was. Compared item by item with section 1, three items were
+  missing from section 1 and moved into it:
+  - "Each report lists computer-use actions ("none" expected)." (into The machine; section 8 already
+    named the field);
+  - the backstop: the repository's `.claude/settings.local.json` denies Read and Edit on the reax
+    home (into Homes, secrets and accounts; checked: its deny list has those entries);
+  - "SET is tested only against a temporary HOME (D-16)" (into Homes, secrets and accounts). It was
+    in D-16 but not in the old list, so the old list's claim to be "the complete one", with D-16 a
+    subset of it, was wrong; corrected here.
+  Not moved, because `CLAUDE.md` already covers them: push, force-push and pre-push rules,
+  system-wide installs, process signalling, the real homes, the reax home check, no live models or
+  keys, loopback with a token, RUN/ADB/Frida, GitHub research and GPL tools (section 1); the loop,
+  parking, D-21, D-35 and 2 CI failures (section 2); D-47's run-time limits (section 3; their
+  verbatim text stays in D-47); D-36's adversarial cases (section 5); wall time and tokens per agent
+  (section 8). Not moved, because it is not a limit: D-47's note that the `.claude/agents/` changes
+  take effect in the next session (it stays in D-47). No other older limits (Python venvs pinned by
+  hash, answer keys only with CI's tool versions, never rebuilding fixtures) were in the old list,
+  so none were moved; they were not added.
+- **Part 5:** `CLAUDE.md` section 2 (Rules inside the loop), under "One subject per item".
+- **Where:** `CLAUDE.md` sections 1, 2, 3 and 6; `EXECUTION-STATE.md` **Hard limits**.
