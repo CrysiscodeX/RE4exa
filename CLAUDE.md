@@ -106,6 +106,10 @@ independently and never fixes.
   silently.
 - **The Bash hook** refuses some commands. Quote such strings in files, not in heredocs on the
   command line.
+- **Test scripts (D-55):** the `test` scripts of reax, `packages/core` and `apps/assay` carry
+  `--test-timeout=300000`. The hook judges only commands that literally run `node … --test`; it
+  does not resolve `npm test`, `npm run` or other wrappers, so a script's own timeout is what bounds
+  them.
 
 ## 4. What counts as proof
 

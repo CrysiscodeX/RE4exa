@@ -667,3 +667,71 @@ failed jobs for macos-15 capacity), tests 41698459481.
   (`fixtures/.gitattributes`: `set/** -text`, `7925cb3`).
 - **D-53:** ADR 0012 is setup's ADR (0010 RUN and 0011 MOB stay reserved in their stashes).
 - **Where:** `docs/decisions/0012-setup.md` (accepted); `EXECUTION-STATE.md` **Done** (SET).
+
+## D-54 (2026-11-04) Bounded execution: runner, Bash guard hook, maxTurns, budget trimming, parked patches
+Numbering: the user named this decision D-48, but D-48 to D-53 are SET's (2026-11-03); so it is
+recorded as D-54. Status: decided by the user; implementation is item W3-0a (work order
+`workorder-w3-0a-bounded.md` in the session scratchpad). Split by D-55 (2026-11-04): part 4
+(`applyBudget`) is parked; parts 1-3, 5 and 6 land. Correction (2026-11-04): the hook took effect
+in the session in which `.claude/settings.json` appeared, not the next one.
+
+The user's text, verbatim:
+"I authorise this one change to the committed .claude/settings.json, limited to registering the hook below.
+1. A bounded runner, scripts/bounded.mjs, using Node built-ins only. Usage: `node scripts/bounded.mjs <seconds> -- <command...>`. It starts the command in its own process group, sends SIGTERM to that group at the deadline and SIGKILL 5 seconds later, and exits 124 on timeout. It prints the PIDs it started, and at exit lists any of them still alive. It never signals anything outside its own group. On Windows it uses taskkill /T on its own child's PID only.
+2. A PreToolUse hook, .claude/hooks/bash-guard.mjs, registered for Bash in .claude/settings.json. It denies, with exit 2 and a one-line reason: `node --test` without `--test-timeout`; any `run_in_background` command not started through scripts/bounded.mjs; any bounded.mjs deadline above 3600 seconds. The hook never rewrites commands. Test it by feeding recorded stdin JSON for the allowed and denied cases.
+3. Add `maxTurns` to each file in .claude/agents/. Base the values on the turn counts this session actually saw, with about 50% headroom. State the numbers and how you derived them. When an agent hits its limit, treat it like D-47's over-budget case: write the handoff file and split the item, with no FAIL.
+4. In the operation registry, an oversized result no longer gets result_too_large. applyBudget trims list fields to fit the 1 MiB budget and returns coverage "partial", with a note on what was cut. Keep result_too_large only for results that can't be trimmed. Check with positive and negative tests, and run every existing operation's tests.
+5. Save each of the five stashes as a patch in apps/reax/docs/parked/<item>.patch, using `git stash show -p --include-untracked`. Check each one with `git apply --check` against its base commit, and write its base commit in the file's first line. Commit them, but don't drop any stash.
+6. Add these to the adversarial checklist in the work-order template: amplification through shared references; caps that must advance on every item examined; and total output size against the 1 MiB response budget.
+After W3-0a, the hook and maxTurns take effect in the next session."
+
+Task Master's reading (in the work order; open to the user's correction):
+- **Paths:** `scripts/bounded.mjs` at the repository root (beside `scripts/with-source.mjs`), as
+  written; the hook accepts that path in the forms agents use (`scripts/...`, `../../scripts/...`
+  after `cd`, absolute under `$CLAUDE_PROJECT_DIR`). `.claude/settings.json` does not exist at
+  `53c31ce`; it is created holding only the PreToolUse Bash entry. `.claude/settings.local.json`
+  stays local and uncommitted. This narrows D-5 only for this hook; D-5 (no SessionStart hook) stands.
+- **Hook:** fails closed on malformed input for Bash calls (exit 2), allows other tools; scans every
+  segment of compound commands and `sh -c`/`$(...)` bodies. Corrected 2026-11-04 to match what was
+  built: the hook judges only commands that literally invoke `node ... --test`; `npm test`,
+  `npm run` and other wrappers are not resolved (the scripts they run are out of its scope). Instead
+  the `test` scripts of reax, `packages/core` and `apps/assay` carry `--test-timeout=300000` (core's
+  and Assay's authorised by D-55). The earlier reading said `npm test`/`npm run` were judged by the
+  target script; that was never built.
+- **maxTurns** (turns ~= observed tool uses + 1, x1.5): coding-agent 235 (max 156 tool uses, COD
+  part A/B; then 136 RUN, 114 DMN, 88 SCH, 82 MOB R1, 57 W2-0); reviewer-debugger 140 (max 92, RUN
+  R2; then 62, 52, 50, 49, 47); task-master 70 (max 45, RUN work order; then 42, 41).
+- **applyBudget:** paged results keep prefix-fit with `page.next` (complete through continuation);
+  other results trim array fields, largest first, ties by path, longest prefix kept, coverage
+  `partial`, one note per field (`<path>: kept k of n`); `result_too_large` only when all lists are
+  empty and the data is still over 1 MiB.
+- **Patches:** `--binary` is added to the user's command (binary fixtures otherwise do not apply);
+  first line `# base: <sha> (<stash message>)`, verified to be skipped by `git apply`; checked in a
+  temporary `git worktree` under the scratchpad at the base commit, then removed; no stash dropped.
+  Names: mob, run, cod-partB, cod-partB-superseded, arm64-pdata. `.gitattributes` keeps them
+  byte-exact.
+- **Rows:** three new reax rows, `RX-INFRA/bounded-runner`, `RX-INFRA/bash-guard`,
+  `RX-1/budget-trim`; no rea or leanrea row moves.
+- **Where:** `scripts/bounded.mjs`, `.claude/hooks/bash-guard.mjs`, `.claude/settings.json`,
+  `.claude/agents/*.md`, `src/ops/registry.ts`, `docs/parked/`, `WORK-ORDER-TEMPLATE.md`.
+
+## D-55 (2026-11-04) Split W3-0a: park applyBudget; land parts 1-3, 5 and 6; test timeouts in core and Assay; CLAUDE.md holds the standing rules
+Numbering: the highest recorded decision is D-54, so this is D-55 (the user named no number).
+Decided by the user after W3-0a's third reviewer FAIL. The user's text, verbatim:
+"Split W3-0a: revert src/ops/registry.ts and its tests to HEAD and save that change as apps/reax/docs/parked/w3-0a-applybudget.patch, with the reviewer's round-3 finding (notes not counted against the budget; 2,472 of 20,000 fuzz cases over) and the proposed fix in its header, parked until the breadth gate; parts 1-3, 5 and 6 get a narrow re-check that the tree equals what the reviews saw minus part 4, then pre-push, commit and CI. Addition 1: --test-timeout added to the test scripts in packages/core/package.json and apps/assay/package.json with reax's value (authorised change outside apps/reax); core's and Assay's full CI check steps run before pushing. Addition 2: CLAUDE.md (7a9fcc0) holds the standing rules; from now on task-master adds each new standing rule to CLAUDE.md in the same docs commit that records it."
+
+- **W3-0a review history:** R1 FAIL (hook evasions; the runner left its process group; `page.next`
+  not updated; false text); R2 FAIL (`fitPage`'s skip branch ran when other lists were the
+  obstacle); R3 FAIL (notes not counted against the budget: 2,472 of 20,000 fuzz cases over).
+- **Part 4** (`RX-1/budget-trim`, `src/ops/registry.ts` and its tests) is parked until the breadth
+  gate as `docs/parked/w3-0a-applybudget.patch`; `result_too_large` behaviour stays as at HEAD.
+- **Parts 1-3, 5, 6** (`scripts/bounded.mjs`, `.claude/hooks/bash-guard.mjs` with
+  `.claude/settings.json`, `maxTurns`, the five parked patches, the checklist lines) land after a
+  narrow re-check that the tree equals what the reviews saw minus part 4, then pre-push (reax, and
+  core's and Assay's full CI check steps), commit and CI.
+- **Standing rules added to `CLAUDE.md`:** section 3, the `test` scripts of reax, core and Assay
+  carry `--test-timeout=300000` and the hook does not resolve `npm` scripts. The rule that
+  task-master adds each new standing rule to `CLAUDE.md` in the docs commit that records it was
+  already in its header ("Keeping it current") at `7a9fcc0`.
+- **Where:** `EXECUTION-STATE.md` **Active** and **Parked**; `CLAUDE.md` section 3;
+  `packages/core/package.json`, `apps/assay/package.json`.

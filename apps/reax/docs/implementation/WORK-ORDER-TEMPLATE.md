@@ -20,7 +20,13 @@ adversarial-case list, and checks every item in it.
    - records split across lines;
    - entries starting inside another entry;
    - differences between the local tool version and CI's (which fields are compared, which are
-     labels; how `--check` in CI confirms it).
+     labels; how `--check` in CI confirms it);
+   - amplification through shared references (one object or array reached by several paths:
+     counted, cut and reported once per path, never changed for the others silently) (D-54);
+   - caps that must advance on every item examined (each loop, search or retry makes progress or
+     stops, and an item already handled is not revisited) (D-54);
+   - total output size against the 1 MiB response budget (the final result, notes and
+     limitations included, re-measured after every cut) (D-54).
 6. **Mutations that must die (D-47):** at most 15 mutants, each a guard whose removal or inversion
    a test must catch. For each mutant, name the test files that cover the changed code; the mutant
    runs only those files, not the full suite. The full suite runs once at the end.

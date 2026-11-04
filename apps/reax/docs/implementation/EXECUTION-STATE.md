@@ -788,8 +788,28 @@ only where an entry below already records the closure.
   - Follow-ups: under **Open follow-ups**, SET.
 
 ## Active
-- **Wave 2 complete; waiting for the user.** No item is in progress. Next: per `BREADTH-COVERAGE.md`,
-  Wave 3 starts with SBX-W (see **Next**).
+- **W3-0a split (D-55; bounded execution, D-54): parts 1-3, 5 and 6 landing.** Part 4
+  (`applyBudget`, `RX-1/budget-trim`) is parked (see **Parked**). The landing parts:
+  `scripts/bounded.mjs`, the PreToolUse Bash hook `.claude/hooks/bash-guard.mjs` registered in a new
+  `.claude/settings.json` (that entry only), `maxTurns` (coding-agent 235, reviewer-debugger 140,
+  task-master 70), the five stashes as patches in `docs/parked/` (no stash dropped), the checklist
+  lines in `WORK-ORDER-TEMPLATE.md`, and `--test-timeout=300000` in the `test` scripts of reax,
+  `packages/core` and `apps/assay` (D-55). Rows `RX-INFRA/bounded-runner`, `RX-INFRA/bash-guard`;
+  no rea or leanrea row moves. Status: not verified for landing; the steps still to run are the
+  narrow re-check (the tree equals what the reviews saw minus part 4), pre-push (reax, and core's
+  and Assay's full CI check steps), commit and CI.
+  - Review history: R1 FAIL (hook evasions; the runner left its process group; `page.next` not
+    updated; false text); R2 FAIL (`fitPage`'s skip branch ran when other lists were the obstacle);
+    R3 FAIL (notes not counted against the budget: 2,472 of 20,000 fuzz cases over). The user split
+    the item (D-55) instead of parking it whole.
+  - Costs (wall time, approximate tokens): coding-agent R1 ~27 min/171k, R2 (resume) ~14 min/~60k,
+    R3 (fresh agent from a handoff) ~15 min/~95k; reviewer-debugger R1 ~12 min/90k, R2 ~8 min/83k,
+    R3 ~9 min/61k.
+  - Incidents: none new. The hook took effect in the session in which `.claude/settings.json`
+    appeared, not the next one as D-54 and the earlier record said (corrected); it denied several
+    agents' commands that quoted the patterns it guards (expected).
+- **Next:** restart the CLI; check the hook in the new session; the Wave 2 summary; then wait for the
+  user. SBX-W (W3-0) follows when the user says.
 
 ## Wave 2 summary
 Supersedes the earlier "Wave 2 checkpoint" section. Wave 2 ran items 0 to 7; it ends at `7925cb3`.
@@ -852,6 +872,12 @@ Supersedes the earlier "Wave 2 checkpoint" section. Wave 2 ran items 0 to 7; it 
   COD Part B, RUN and MOB stay parked until the breadth gate.
 
 ## Parked
+- **W3-0a part 4, `applyBudget` trimming** (D-54 part 4; parked 2026-11-04 by the user's split,
+  D-55, after 3 reviewer FAILs, until the breadth gate). `src/ops/registry.ts` and its tests revert
+  to HEAD; the change is saved as `docs/parked/w3-0a-applybudget.patch`, whose header holds the
+  round-3 finding (notes not counted against the budget; 2,472 of 20,000 fuzz cases over) and the
+  proposed fix. Row `RX-1/budget-trim` is not added. Oversized results keep `result_too_large` as at
+  HEAD.
 - **MOB, first slice** (Wave 2 item 6, work order W2-6; parked 2026-11-03 after 3 reviewer FAILs,
   until the breadth gate under D-35's rule; not committed, not pushed, so no CI). The work is the
   git stash "mob WIP (3 reviewer FAILs; parked to breadth gate)" (stash@{0} at `2db83e8`; refer to
@@ -1056,7 +1082,9 @@ The Wave 2 queue, in order:
 3. ~~MOB~~: parked until the breadth gate after 3 reviewer FAILs (see **Parked**). MOB builds
    static APK and IPA readers only; ADB and Frida stay BLOCKED_EXTERNAL.
 4. ~~SET~~: done (`884cad2`, `7925cb3`; see **Done**).
-Next: Wave 3 item 0, SBX-W (Windows engine enforcement, D-30), per `BREADTH-COVERAGE.md`.
+Next: Wave 3 item 0a, bounded execution (D-54), split by D-55: parts 1-3, 5 and 6 landing, part 4
+parked (see **Active**); then restart the CLI, the hook check, the Wave 2 summary, and wait for the
+user; then item 0, SBX-W (Windows engine enforcement, D-30), per `BREADTH-COVERAGE.md`.
 The breadth plan in `BREADTH-COVERAGE.md` (waves and dependencies there; D-13, D-14):
 1. **Wave 1:** SBX, the sandbox foundation; then ENG, the adapter registry with LLVM as the first
    provider; the program model (PM) beside them.
