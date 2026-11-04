@@ -1,0 +1,12 @@
+{
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "sleep 1",
+    "run_in_background": "yes"
+  },
+  "cwd": "/proj",
+  "expect": {
+    "exit": 2,
+    "reason": "unreadable hook input"
+  }
+}

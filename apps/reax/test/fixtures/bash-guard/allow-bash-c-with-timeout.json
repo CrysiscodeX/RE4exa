@@ -1,0 +1,11 @@
+{
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "bash -c 'node --test --test-timeout=9 x'"
+  },
+  "cwd": "/proj",
+  "expect": {
+    "exit": 0,
+    "reason": null
+  }
+}

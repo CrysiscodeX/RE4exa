@@ -1,0 +1,12 @@
+{
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "node scripts/bounded.mjs 120 -- npm run lint\n",
+    "run_in_background": true
+  },
+  "cwd": "/proj",
+  "expect": {
+    "exit": 0,
+    "reason": null
+  }
+}

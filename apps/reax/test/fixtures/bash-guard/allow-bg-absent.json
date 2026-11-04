@@ -1,0 +1,11 @@
+{
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "ls -la"
+  },
+  "cwd": "/proj",
+  "expect": {
+    "exit": 0,
+    "reason": null
+  }
+}

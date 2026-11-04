@@ -1,0 +1,12 @@
+{
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "node ../scripts/bounded.mjs 60 -- x",
+    "run_in_background": true
+  },
+  "cwd": "/proj/apps/reax",
+  "expect": {
+    "exit": 2,
+    "reason": "run_in_background commands must be one call: node scripts/bounded.mjs <seconds> -- <command> (D-54)"
+  }
+}

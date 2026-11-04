@@ -1,0 +1,11 @@
+{
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "$(which node) --test x"
+  },
+  "cwd": "/proj",
+  "expect": {
+    "exit": 2,
+    "reason": "--test after a variable or command substitution cannot be checked; write node literally (D-54)"
+  }
+}

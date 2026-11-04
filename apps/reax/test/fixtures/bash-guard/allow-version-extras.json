@@ -1,0 +1,19 @@
+{
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "git status",
+    "description": "status",
+    "timeout": 5000,
+    "dangerouslyDisableSandbox": false
+  },
+  "cwd": "/proj",
+  "session_id": "x",
+  "hook_event_name": "PreToolUse",
+  "some_future_field": {
+    "nested": [1, 2, 3]
+  },
+  "expect": {
+    "exit": 0,
+    "reason": null
+  }
+}

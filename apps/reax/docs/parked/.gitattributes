@@ -1,0 +1,2 @@
+# The parked patches (D-54) keep their exact bytes on every checkout, so git apply accepts them.
+*.patch -text

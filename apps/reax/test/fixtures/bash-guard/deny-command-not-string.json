@@ -1,0 +1,11 @@
+{
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": 5
+  },
+  "cwd": "/proj",
+  "expect": {
+    "exit": 2,
+    "reason": "unreadable hook input"
+  }
+}

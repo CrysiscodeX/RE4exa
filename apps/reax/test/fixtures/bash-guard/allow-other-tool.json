@@ -1,0 +1,11 @@
+{
+  "tool_name": "Read",
+  "tool_input": {
+    "file_path": "/proj/README.md"
+  },
+  "cwd": "/proj",
+  "expect": {
+    "exit": 0,
+    "reason": null
+  }
+}

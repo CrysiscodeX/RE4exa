@@ -1,0 +1,11 @@
+{
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "node --test=true x.ts"
+  },
+  "cwd": "/proj",
+  "expect": {
+    "exit": 2,
+    "reason": "node --test without --test-timeout=<ms> among node's options (before the first file or --) (D-47, D-54)"
+  }
+}

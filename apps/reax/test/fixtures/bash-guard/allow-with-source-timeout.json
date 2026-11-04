@@ -1,0 +1,11 @@
+{
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "cd apps/reax && node ../../scripts/with-source.mjs node --test --test-timeout=120000 --test-concurrency=1 --disable-warning=ExperimentalWarning test/a.test.ts"
+  },
+  "cwd": "/proj",
+  "expect": {
+    "exit": 0,
+    "reason": null
+  }
+}

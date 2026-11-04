@@ -1,0 +1,11 @@
+{
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "node scripts/bounded.mjs 0 -- sleep 1"
+  },
+  "cwd": "/proj",
+  "expect": {
+    "exit": 2,
+    "reason": "bounded.mjs deadline must be an integer from 1 to 3600 seconds (D-54)"
+  }
+}

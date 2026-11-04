@@ -1,0 +1,18 @@
+{
+  "session_id": "00000000-0000-4000-8000-000000000000",
+  "transcript_path": "/tmp/transcript-fixture.jsonl",
+  "cwd": "/proj",
+  "permission_mode": "default",
+  "hook_event_name": "PreToolUse",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "cd apps/reax && node --test --test-timeout=60000 test/a.test.ts",
+    "description": "Run one test file",
+    "timeout": 120000
+  },
+  "tool_use_id": "toolu_fixture",
+  "expect": {
+    "exit": 0,
+    "reason": null
+  }
+}
