@@ -525,6 +525,12 @@ item's next package needs, not its full MASTER-PLAN dependencies.
 | 3 | SBX-W (Windows engine enforcement, D-30); ARC, then JSE; EVD; OTH; CLI; BEN | SBX-W: SBX, ENG. ARC: SBX (for extraction). JSE: ARC. EVD: core's store. OTH: FW, SBX. CLI: DMN (schema profiles). BEN: DMN, SET |
 | 4 | Supporting infrastructure: SNAP, POOL, RCI (nightly), CSF, SKL, REL, SBOM, ATT, SEC, FAIL, WFC, OBS, XST, LED, FIX and KEY gaps; then GATE | the components they serve |
 
+Before Wave 3's item 0, item 0a (bounded execution, D-54, split by D-55) landed at `6f98014` and
+`a781347` (CI green: reax run 41793582515): infrastructure only, rows `RX-INFRA/bounded-runner` and
+`RX-INFRA/bash-guard` covered (reax 56 of 57); no breadth item and no rea or leanrea row moves. Its
+part 4 (`applyBudget`, `RX-1/budget-trim`) is parked until the breadth gate. SBX-W follows after
+the user's word.
+
 After Wave 4 the breadth gate runs, and deep work resumes, starting with the parked and deferred
 NAT-4 items.
 

@@ -5,13 +5,13 @@
 2. Read this file.
 3. Continue with the first package under **Next**.
 
-**Last verified checkpoint: `7925cb3`** (Wave 2 item 7, SET; Wave 2 complete, see **Wave 2
-summary**). CI green: reax run 41698459561 (after one re-run of the failed jobs: macos-15 got no
-runner in attempt 1), tests 41698459481. Rows (D-30's two numbers): rea and leanrea covered 39 of
-357, tested, partial 0 (unchanged through Wave 2); reax's own rows 54 of 55 tested on every listed
-platform, tested, partial 0 (`RX-SBX/windows-engines` planned); weak points 21 of 244 fixed
-(unchanged). The previous checkpoint was `b2f9be8` (Wave 2 item 4, the DMN flake fix; reax run
-41633622213). The baseline reconciled at `bc38202` is in `BREADTH-COVERAGE.md`.
+**Last verified checkpoint: `a781347`** (Wave 3 item 0a, bounded execution, parts 1-3, 5 and 6;
+part 4 parked by D-55; code `6f98014`). CI green, all three workflows: reax run 41793582515, tests
+41793582339, assay 41793582472. Rows (D-30's two numbers): rea and leanrea covered 39 of 357,
+tested, partial 0 (unchanged); reax's own rows 56 of 57 covered (`RX-SBX/windows-engines` planned);
+weak points 21 of 244 fixed (unchanged). The previous checkpoint was `7925cb3` (Wave 2 item 7, SET;
+Wave 2 complete, see **Wave 2 summary**; reax run 41698459561). The baseline reconciled at
+`bc38202` is in `BREADTH-COVERAGE.md`.
 
 ## Hard limits
 These come from the user and outrank any session's memory (a subset is also in DECISION-LOG D-16 and `BREADTH-COVERAGE.md`; this list is the complete one).
@@ -185,6 +185,9 @@ only where an entry below already records the closure.
 - **DMN macOS flake:** closed by W2-4 (`32b13c6`, `b2f9be8`; see **Done** and **Known defects**).
 - **Parked ARM64 `.pdata` stash** (stash@{4} now; see **Parked**): findings (a), (b) and the advisory (c) open;
   (d) closed for x64 by `175f614`; its oracle entries never confirmed by CI's LLVM 18.1.3.
+- **W3-0a (bounded execution):** part 4, `applyBudget`, parked (see **Parked**); `maxTurns` not
+  yet observed (loads at the next session start); the local Node is v24.18.0, below CLAUDE.md
+  section 6's 24.22.1 (a conflict listed for the user, unresolved; CI is the authority meanwhile).
 - **Blocked and BLOCKED_EXTERNAL** (see **Blocked**): PE certificates (no signed sample); Frida
   (REA-C16, 10 rows) and ADB (REA-C26, 25 rows) BLOCKED_EXTERNAL (D-16); JEB (REA-C25, 5 rows)
   BLOCKED_EXTERNAL (no licence; the user has not ruled); the automatic session hook (D-5); the local
@@ -787,29 +790,46 @@ only where an entry below already records the closure.
     `test ! -e` at the SET checkpoint). Computer use: none.
   - Follow-ups: under **Open follow-ups**, SET.
 
-## Active
-- **W3-0a split (D-55; bounded execution, D-54): parts 1-3, 5 and 6 landing.** Part 4
-  (`applyBudget`, `RX-1/budget-trim`) is parked (see **Parked**). The landing parts:
-  `scripts/bounded.mjs`, the PreToolUse Bash hook `.claude/hooks/bash-guard.mjs` registered in a new
-  `.claude/settings.json` (that entry only), `maxTurns` (coding-agent 235, reviewer-debugger 140,
-  task-master 70), the five stashes as patches in `docs/parked/` (no stash dropped), the checklist
-  lines in `WORK-ORDER-TEMPLATE.md`, and `--test-timeout=300000` in the `test` scripts of reax,
-  `packages/core` and `apps/assay` (D-55). Rows `RX-INFRA/bounded-runner`, `RX-INFRA/bash-guard`;
-  no rea or leanrea row moves. Status: not verified for landing; the steps still to run are the
-  narrow re-check (the tree equals what the reviews saw minus part 4), pre-push (reax, and core's
-  and Assay's full CI check steps), commit and CI.
-  - Review history: R1 FAIL (hook evasions; the runner left its process group; `page.next` not
-    updated; false text); R2 FAIL (`fitPage`'s skip branch ran when other lists were the obstacle);
-    R3 FAIL (notes not counted against the budget: 2,472 of 20,000 fuzz cases over). The user split
-    the item (D-55) instead of parking it whole.
+- **Wave 3 item 0a, bounded execution** (D-54, split by D-55: parts 1-3, 5 and 6 landed; part 4,
+  `applyBudget`, parked, see **Parked**). Code `6f98014`, docs `a781347` (D-55, D-54 corrected,
+  checklist additions, CLAUDE.md's test-script rule). Merge base: the user's `7a9fcc0` (CLAUDE.md),
+  merged with `git pull --no-rebase` (a fast-forward).
+  - What landed: `scripts/bounded.mjs`; the PreToolUse Bash hook `.claude/hooks/bash-guard.mjs`,
+    registered in `.claude/settings.json` (that entry only); `maxTurns` in `.claude/agents`
+    (coding-agent 235, reviewer-debugger 140, task-master 70); the five stashes as patches in
+    `docs/parked/` plus `w3-0a-applybudget.patch` (no stash dropped); `--test-timeout=300000` in
+    the `test` scripts of reax, `packages/core` and `apps/assay`; rows `RX-INFRA/bounded-runner` and
+    `RX-INFRA/bash-guard`.
+  - CI on `a781347`, all green: reax run 41793582515 (fixtures, ubuntu-24.04, windows-2025,
+    macos-15, parity); tests 41793582339; assay 41793582472 (check, macos-15, windows-2025). Parity
+    report: darwin 374, linux-fixtures 374, linux 374, win32 370 tests; `RX-INFRA/bash-guard` and
+    `RX-INFRA/bounded-runner` covered; gate passed; "rea and leanrea: covered 39 of 357; tested,
+    partial 0".
+  - Rows: reax 54 of 55 to 56 of 57 covered (`RX-SBX/windows-engines` planned). No rea or leanrea
+    row moves. Breadth: no item moves (infrastructure); 13 of 34 PARTIAL_VERIFIED.
+  - Review history: R1 FAIL, R2 FAIL, R3 FAIL (findings under **Parked**, part 4); the user split
+    the item (D-55). Narrow re-check (D-55): PASS. The parked patch reproduces the reviewed part-4
+    blobs and the round-3 overshoot; parts 1-3, 5 and 6 unchanged since round 3 (by mtime); the
+    `package.json` changes are timeout-only.
+  - Pre-push on this Mac: every step exited 0, but on Node v24.18.0, below CLAUDE.md section 6's
+    24.22.1, so the local results are not trusted; CI is the authority. Listed as a conflict for
+    the user, unresolved.
+  - The hook took effect in this session as soon as `.claude/settings.json` existed; the
+    Orchestrator confirmed one denial (a test run without a per-test timeout). `maxTurns` loads at
+    the next session start, not yet observed.
+  - Commits from now on carry no model-name trailer (CLAUDE.md section 1); earlier commits keep
+    theirs (no history rewrite). The conflict list stays open for the user.
   - Costs (wall time, approximate tokens): coding-agent R1 ~27 min/171k, R2 (resume) ~14 min/~60k,
     R3 (fresh agent from a handoff) ~15 min/~95k; reviewer-debugger R1 ~12 min/90k, R2 ~8 min/83k,
-    R3 ~9 min/61k.
-  - Incidents: none new. The hook took effect in the session in which `.claude/settings.json`
-    appeared, not the next one as D-54 and the earlier record said (corrected); it denied several
-    agents' commands that quoted the patterns it guards (expected).
-- **Next:** restart the CLI; check the hook in the new session; the Wave 2 summary; then wait for the
-  user. SBX-W (W3-0) follows when the user says.
+    R3 ~9 min/61k; the narrow re-check and the landing were not itemised in the report.
+  - Incidents: none new. The hook denied several agents' commands that quoted the patterns it
+    guards (expected). Processes: no surviving PID reported.
+
+## Active
+- **W3-0a landed** (`6f98014`, `a781347`; see **Done**). Waiting for the user to restart the CLI
+  (`maxTurns` and CLAUDE.md load at session start); then the hook check in the new session, the
+  Wave 2 summary, and stop.
+- **Next:** Wave 3 item 0, SBX-W (Windows engine enforcement, D-30), after the user's word.
 
 ## Wave 2 summary
 Supersedes the earlier "Wave 2 checkpoint" section. Wave 2 ran items 0 to 7; it ends at `7925cb3`.
@@ -840,7 +860,10 @@ Supersedes the earlier "Wave 2 checkpoint" section. Wave 2 ran items 0 to 7; it 
   - tests: `ac70493` 41521374941; `69dde2e` 41540866667; `40467bd` 41565482171; `9f5220a`
     41591537790; `681fae9` 41597961651; `9d486ce` 41612759424; `32b13c6` 41630305410; `b2f9be8`
     41633622047; `7925cb3` 41698459481.
-  - assay: `ac70493` 41521374728.
+  - assay: `ac70493` 41521374728; `69dde2e` 41540866885; `40467bd` 41565482190; `681fae9`
+    41597961655; `32b13c6` 41630305448; `884cad2` 41693869861. Assay ran and passed on every Wave 2
+    commit that touched `apps/reax/src` or core (correction, conflict 7: the earlier record listed
+    only `ac70493`, because the Orchestrator's watcher had not waited for the others).
 - **Re-runs (no push):** two. One for a flake (`9d486ce`, reax 41612759551, the DMN macOS flake,
   later fixed by W2-4) and one for macOS capacity (`7925cb3`, reax 41698459561). The other macos-15
   capacity cancellation (`884cad2`) was superseded by `7925cb3`, not re-run.
@@ -1082,9 +1105,10 @@ The Wave 2 queue, in order:
 3. ~~MOB~~: parked until the breadth gate after 3 reviewer FAILs (see **Parked**). MOB builds
    static APK and IPA readers only; ADB and Frida stay BLOCKED_EXTERNAL.
 4. ~~SET~~: done (`884cad2`, `7925cb3`; see **Done**).
-Next: Wave 3 item 0a, bounded execution (D-54), split by D-55: parts 1-3, 5 and 6 landing, part 4
-parked (see **Active**); then restart the CLI, the hook check, the Wave 2 summary, and wait for the
-user; then item 0, SBX-W (Windows engine enforcement, D-30), per `BREADTH-COVERAGE.md`.
+Wave 3 item 0a, bounded execution (D-54, split by D-55): parts 1-3, 5 and 6 done (`6f98014`,
+`a781347`; see **Done**), part 4 parked (see **Parked**). Now: the user restarts the CLI, then the
+hook check, the Wave 2 summary, and stop. Next: item 0, SBX-W (Windows engine enforcement, D-30),
+per `BREADTH-COVERAGE.md`, after the user's word.
 The breadth plan in `BREADTH-COVERAGE.md` (waves and dependencies there; D-13, D-14):
 1. **Wave 1:** SBX, the sandbox foundation; then ENG, the adapter registry with LLVM as the first
    provider; the program model (PM) beside them.
