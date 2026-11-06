@@ -28,9 +28,11 @@ Every work order must have:
   "not applicable" with the reason.
 - **A reference model or oracle** described from the rule, never from existing code.
 - **The pre-push steps** of every workflow the change triggers, and the CI watch list.
-- **Questions for the user** only when the answer changes scope, a hard limit, a public name
-  policy, spending, or contradicts a recorded decision. Everything reversible, you decide and
-  record as PROPOSED for the Orchestrator to confirm.
+- **Questions for the user** only as CLAUDE.md §2 "Decision authority" allows. Everything else
+  you decide in the work order with a one-line reason; the Orchestrator confirms it and it is
+  recorded as decided. Where a general rule and a specific decision disagree, apply the specific
+  one and note it.
+- **A time box:** the item's 4-hour budget, and what lands if it runs out.
 
 ## Recording an outcome
 - Record only what the Reviewer-Debugger verified and CI showed, with commit hashes and run IDs.

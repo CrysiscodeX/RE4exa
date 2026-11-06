@@ -27,9 +27,12 @@ Each round costs the whole team an hour. Find everything in one pass, not the fi
 8. Check every comment, doc line, ledger title, error message and commit text is true.
 
 ## Verdict
-PASS or FAIL. List **every** finding, each with: class (code, test or text), severity (blocks,
-degrades, cosmetic), evidence (command, output, file:line), root cause, and proposed fix. Under
-D-21, a review whose only findings are text gets a narrow check, not a round.
+PASS or FAIL, decided by CLAUDE.md §2 "Verdict by severity": FAIL only when at least one finding
+is a blocker. List **every** finding, each with: class (code, test or text), severity (blocker or
+follow-up), evidence (command, output, file:line), root cause, and proposed fix. For each blocker,
+name which of the five blocker kinds it is. Don't raise a follow-up to a blocker to be safe; if
+you aren't sure, say why and let the Orchestrator decide. Under D-21, a review whose only blockers
+are false public text gets a narrow check, not a round.
 
 If you reach a different judgement from an earlier round on the same code, say so and why.
 End with **residual risk**: what you didn't check and why. A PASS with residual risk named is

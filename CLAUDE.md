@@ -7,8 +7,9 @@ hard limits, incidents, follow-ups), `DECISION-LOG.md` (D-n), `BREADTH-COVERAGE.
 `WORK-ORDER-TEMPLATE.md`.
 
 **Precedence:** the user's newest instruction, then this file, then `DECISION-LOG.md`, then
-`EXECUTION-STATE.md`, then anything remembered from a chat. If two of them disagree, stop and
-report the conflict; don't pick one.
+`EXECUTION-STATE.md`, then anything remembered from a chat. If two of them disagree, the more
+specific and more recent decision wins: apply it, record which one you applied, and say so in the
+report. Stop and ask only when the conflict touches a hard limit (section 1).
 
 **Keeping it current:** when the user sets a standing rule, task-master adds it here in the same docs
 commit that records the decision, with its D-number. Nothing is removed from this file without the
@@ -66,18 +67,53 @@ task-master writes work orders and records outcomes, and is the only role that e
 decision and plan files. coding-agent implements and never commits. reviewer-debugger verifies
 independently and never fixes.
 
+**Goal (D-58).** Get reax working: the Mac first run (0.1.0) first, then breadth. Rigour serves
+that goal. Prefer landing working code with recorded follow-ups over another review round.
+
 **Steps for every item.**
 1. Work order from `WORK-ORDER-TEMPLATE.md`: goal, ledger keys, files, independent oracle,
    acceptance criteria, the commands that prove each one, and the adversarial cases (section 5).
 2. coding-agent implements.
 3. reviewer-debugger verifies: re-runs every check judged by exit code, makes its own mutations,
-   checks the oracle's independence and that every comment, doc and title is true. PASS or FAIL.
-4. FAIL goes back to coding-agent. After 3 FAILs the item is parked: stash it by message, save it
-   as a patch in `apps/reax/docs/parked/`, record the open findings, and move on. A parked item
-   stays parked until the breadth gate (D-35 was the last exception).
+   checks the oracle's independence and that every comment, doc and title is true. PASS or FAIL,
+   decided by severity (below).
+4. FAIL goes back to coding-agent. After 3 FAILs on blockers the item is parked: stash it by
+   message, save it as a patch in `apps/reax/docs/parked/`, record the open findings, and move on.
+   A parked item can be re-triaged once under the severity rule: if none of its open findings is a
+   blocker, it lands after one verification pass, with the rest as follow-ups.
 5. PASS: pre-push checks, commit, push, CI. After 2 CI failures with the same cause, stop the item.
 6. Green CI: task-master records the outcome. Push the outcome-docs commit together with the next
    item's commit.
+
+**Verdict by severity (D-58).** A review FAILs only on a blocker:
+1. a result reax reports is wrong, or claims to be complete when it isn't;
+2. a crash, hang or unbounded memory or time on input a caller or a target file can supply;
+3. a hard-limit breach, or a security weakness a caller or a target file can reach;
+4. a change that breaks a check CI runs;
+5. false text in public docs, error messages or ledger titles (fixed under D-21, not a round).
+
+Everything else is a follow-up and the review PASSes: a missing test for a path no public input
+reaches, a surviving mutant on a guard that isn't about untrusted input, resources or a hard limit,
+a clear error where a partial result would be nicer, wording in comments, advisories. task-master
+records each follow-up in EXECUTION-STATE; it is fixed in a follow-up item or the next item that
+touches that code.
+
+**Decision authority (D-58).** The Orchestrator decides everything reversible inside the current
+milestone without asking: names, defaults, the choice between documented options, test approach,
+the order of items. It records each as decided, not PROPOSED. It asks the user only about: a hard
+limit; spending or accounts; reversing a decision the user made; a change of scope or milestone.
+When it asks, it gives a recommendation and keeps working on anything the answer doesn't affect.
+
+**Time box (D-58).** Each item has 4 hours of wall time across all agents and rounds. When it runs
+out, the Orchestrator decides: land it if no blocker is open, split it, or park it. It never just
+keeps going.
+
+**Light path (D-58).** Docs-only and test-only changes, and changes under about 150 lines that
+parse no untrusted input and touch no hard limit, get one review pass; mutation checks are optional.
+
+**Keep moving.** Every report ends with the next action, and the Orchestrator takes it without
+waiting, except at a milestone's end, on a question allowed above, or after 2 CI failures with the
+same cause.
 
 **Rules inside the loop.**
 - D-21: if a review passes every functional and safety criterion and its only findings are false
@@ -87,7 +123,7 @@ independently and never fixes.
   D-55 split W3-0a by the user's decision; it isn't a precedent.
 - Before naming a new decision, read the highest D-number in `DECISION-LOG.md`. Numbers the user
   names may already be taken; record the next free one and note the user's number.
-- Decisions the user hasn't made stay PROPOSED. Name new public things (operations, environment
+- Decisions that need the user (see Decision authority) stay PROPOSED. Name new public things (operations, environment
   variables, error codes) in the work order, and record them as decisions when the item lands.
 
 ## 3. Run-time limits (D-47, D-54)
@@ -106,8 +142,9 @@ independently and never fixes.
   terminal, background commands have no other time limit, and a foreground command that times
   out moves to the background instead of being killed. (These two sentences: Claude Code
   behaviour, from its documentation, checked 2026-11-04.)
-- **Mutations:** at most 15 per work order. Each runs only the test files covering the changed
-  code; the full suite runs once at the end.
+- **Mutations:** only for guards on untrusted input, resources and hard limits; at most 10 per work
+  order. Each runs only the test files covering the changed code; the full suite runs once at the
+  end.
 - **Processes:** every agent reports the PIDs it started and confirms none survive. The
   Orchestrator checks them before each commit. A survivor is a finding, never something to kill
   silently.
@@ -120,7 +157,9 @@ independently and never fixes.
 
 ## 4. What counts as proof
 
-- **Independent oracle.** Every answer key comes from a tool that shares no code with the code
+- **Independent oracle.** Required for the facts reax reports about files. Protocol and glue code
+  (MCP framing, CLI plumbing) may be checked against the specification's examples or another
+  implementation already in the repository. Every answer key comes from a tool that shares no code with the code
   under test, and never from the provider itself. Examples: GNU objdump for llvm-objdump output,
   not Capstone, which is built from LLVM's tables. Keys are committed and re-derived in CI. CI's
   tool versions are the authority, not the Mac's.
@@ -152,6 +191,8 @@ the reviewer gets the same list:
 - amplification through shared references (one object referenced N times);
 - caps that must advance on every item examined, not only on items accepted;
 - total output size against the 1 MiB response budget: trim to partial, don't refuse;
+  exception until the breadth gate (D-55): a non-paged result over budget returns
+  `result_too_large` with instructions on how to page, filter or narrow the request;
 - symlinks, hardlinks and junctions at every path the code writes or deletes;
 - a failure between two writes: roll back, or order the writes so nothing is left half done.
 
